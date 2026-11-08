@@ -26,7 +26,7 @@ service version); an extension passes the same gates before its code starts.
 ## Existing-product scope
 
 This product is already shipped. Apply the planning/execution/review gates to an explicitly
-authorized new story-based increment. The empty-repository bootstrap and initial20–25-story
+authorized new story-based increment. The empty-repository bootstrap and initial 20–25-story
 example are source context, not a quota for every extension or a requirement to replan delivered
 commands. Use the owner-approved bounded scope; this setup grants no inventory/story publication
 authority and does not start deferred work. Prerequisites and owner gates remain mandatory for

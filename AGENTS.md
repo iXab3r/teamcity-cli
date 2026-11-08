@@ -7,7 +7,7 @@ product behavior belongs in README/docs and scope in GitHub Issues.
 
 This repository owns its agent policies. Required reading is entirely local and works offline.
 The owner explicitly authorizes duplicated/adapted instruction text; this does not authorize copying
-or forking framework runtime implementations. Core remains the exact existing npm dependency0.7.1.
+or forking framework runtime implementations. Core remains the exact existing npm dependency 0.7.1.
 Instruction updates are manual, intentional and reviewed independently of dependency upgrades;
 there is no cross-repository auto-sync. Factory links are optional provenance, never required policy.
 

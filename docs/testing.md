@@ -1,3 +1,5 @@
+# Testing workflow
+
 This product uses mock-first development while keeping a narrow path to real-service evidence.
 
 > Locally owned instruction policy, adapted from the Core0.7.1 source snapshot.
@@ -258,6 +260,13 @@ Consumers own equivalent read/write/RPC/failure examples. These helpers do not i
 categories from HTTP methods or replace independent service expectations.
 
 
+
+## Diagnostic redaction regressions
+
+Diagnostic redaction regressions must vary each percent hex digit independently while retaining
+ordinary-letter case and regex literal semantics, including malformed Unicode. Copy control-bearing
+causes before supplying known values, then copy again to prove late redaction and stable escaping.
+Check native execute fields and human/JSON/RPC normal and verbose output retain useful codes/frames.
 
 ## Product workflow
 
