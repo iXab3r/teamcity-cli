@@ -5,23 +5,21 @@ It consumes an exact published Core pin and never publishes Factory packages. .N
 Node 22+ and pinned `packageManager` npm are required; TeamCity uses `node:24-bookworm`.
 The Cake driver is adapted from pinned nexus-cli/opensearch-cli; see [build/NOTICE](../build/NOTICE).
 
-## Current migration gate
+## Core dependency and product approval
 
-Candidate **0.7.1** pins Core **0.7.1** for the merged broken-pipe guarantee. That Core patch
-has not yet been published. The lock binds the locally packed Core candidate's integrity to its
-future registry URL; this is preparation, **not** successful clean registry-based adoption.
-After parent-reviewed Factory merge, exact Core staging and owner approval, download the
-published archive, compare integrity with the lock, update instruction links to its verified
-release revision, and run a clean `npm ci`/Verify/Pack/DryRun. Any byte difference requires an
-explicit reviewed lock update. Local tarball rehearsals are not final acceptance evidence.
-No workspace/file dependency belongs in this package or its final lock.
+This product's **0.7.1** candidate pins published Core **0.7.1** at
+[release revision bf79b80636bcdd790bbd6c25648842ae5213f267](https://github.com/iXab3r/EyeAuras.CliFactory/commit/bf79b80636bcdd790bbd6c25648842ae5213f267).
+The owner approved Core's exact npm stage. Core VerifyRegistry build **33314** completed with a
+`published-verified` receipt; npm's version/latest and SHA-512, installed Core behavior, and
+[GitHub Release v0.7.1](https://github.com/iXab3r/EyeAuras.CliFactory/releases/tag/v0.7.1) were verified.
+The independently downloaded npm, stage, CI and GitHub archives are byte-identical (SHA-1
+`b075dc6eeef9a778d3d5317b24d7a36b50ea7632`). This product's exact dependency and lock integrity
+already match; no local file/workspace reference or lock substitution is needed.
 
-New TeamCity project `EyeAuras_TeamCityCli`, anonymous main root
-`EyeAuras_TeamCityCli_Repo` and quota-one `teamcity-cli-release` resource exist. The project is
-**archived**. Native job copying was rejected with HTTP 403 on the first Verify copy; no
-protected-token copies or jobs were created. The local Credentials gate was restored disabled.
-Do not resolve credentials, widen token permissions or treat invalid configuration as an
-approval gate. Parent owns access diagnosis, review and cutover.
+Each product release still requires clean registry-based `npm ci`/Verify/Pack/DryRun at its
+reviewed revision, platform checks and its own verified npm stage. **Core approval does not
+approve this product's publication.** Stage only from reviewed, clean current main; the owner
+approves that exact verified product stage with 2FA. Pre-merge branch checks use Verify or DryRun.
 
 ## Local driver
 
@@ -48,26 +46,31 @@ only `npm publish --dry-run`. Stage and Release call only `npm stage publish`; R
 `--dry-run` follows DryRun. `Stage --dry-run` rejects before staging. Cake `--dryrun` only prints
 the task plan. `--exclusive` is a reviewed recovery mechanism, not fresh Verify/Pack evidence.
 
-## TeamCity configuration to complete
+## TeamCity configuration
 
 | Object | Identity |
 |---|---|
-| Project under EyeAuras | `EyeAuras_TeamCityCli` (created, archived) |
-| Public anonymous main root | `EyeAuras_TeamCityCli_Repo` (created) |
-| Verify | `EyeAuras_TeamCityCli_Verify` (pending native copy) |
-| Manual stage/registry verification | `EyeAuras_TeamCityCli_NpmStage` (pending native copy) |
-| Exclusive shared resource | `teamcity-cli-release writeLock` (resource created) |
+| Project under EyeAuras | `EyeAuras_TeamCityCli` (configured) |
+| Public anonymous main root | `EyeAuras_TeamCityCli_Repo` (configured) |
+| Verify | `EyeAuras_TeamCityCli_Verify` (configured) |
+| Manual stage/registry verification | `EyeAuras_TeamCityCli_NpmStage` (configured) |
+| Exclusive shared resource | `teamcity-cli-release writeLock` (quota one) |
 
-Use installed teamcity-cli 0.7.0+ and native server-side copies of
-`EyeAuras_OpenSearchCli_Verify` / `EyeAuras_OpenSearchCli_NpmStage`. Keep the new project archived,
-pause each copy immediately and disable its Verify trigger before configuration. Replace only
-these copies' root attachments with the product root, set `RUNNER_1` script to `bash
-build/teamcity.sh`, retain Linux/Docker rules, and replace the copied lock with this product's
-writeLock. Verify's VCS filter must be `+:<default>`; stage has no triggers or upstream dependencies.
-Set `env.RELEASE_MODE=--dry-run`, `env.RELEASE_REVISION` empty and a usable `release.build` label
-(the reference job's build-number pattern needs it). Preserve protected npm.token,
-`env.NPM_TOKEN=%npm.token%` and inherited protected `env.GITHUB_TOKEN` without resolving them.
-Do not change shared VCS roots, unrelated jobs or token permissions.
+The jobs were provisioned with installed teamcity-cli through native server-side copies of
+`EyeAuras_OpenSearchCli_Verify` / `EyeAuras_OpenSearchCli_NpmStage`, preserving protected bindings
+inside TeamCity. Copies were paused while the project was archived. Each job uses only
+`EyeAuras_TeamCityCli_Repo`, one `RUNNER_1` executing `bash build/teamcity.sh` in
+`node:24-bookworm` on Linux, and this product's exclusive staging lock.
+
+The root defaults to `refs/heads/main`; its branch specification allows manual PR checks.
+Verify's VCS filter is `+:<default>` and stays disabled until the entrypoint is merged and exact
+main Verify passes. Staging has no triggers or upstream dependencies. Its default is
+`env.RELEASE_MODE=--dry-run`, `env.RELEASE_REVISION` empty and `release.build=0.7.1-candidate`
+(the copied number pattern needs a label). Native copy retains protected `npm.token`, the
+`env.NPM_TOKEN=%npm.token%` reference and inherited protected `env.GITHUB_TOKEN` without reading
+or resolving their values. The local Credentials gate is restored disabled after copying.
+Do not change shared VCS roots, unrelated jobs or token permissions. Parent owns activation and
+merge/cutover; projects/jobs may stay archived/paused between controlled validation runs.
 
 Prove roots, lock, script, checkout and configuration validity before unpausing. Enable the
 main-only trigger only after entrypoint merge and exact-head manual Verify. Bootstrap never
@@ -76,7 +79,7 @@ The wrapper admits named system/tool variables; Cake isolates ordinary children 
 configs. Only stage receives NPM_TOKEN; GitHub Release creation uses a private temporary header.
 No secret appears in command args or artifact output. Temporary auth files are removed on exit.
 
-After Core adoption, reviewed merge and CI setup, select exact main `<sha>`:
+After reviewed merge and exact-head CI, select exact main `<sha>`:
 
 ```text
 teamcity-cli jobs run EyeAuras_TeamCityCli_Verify --wait --timeout 30m

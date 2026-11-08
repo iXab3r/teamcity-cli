@@ -5,18 +5,18 @@ product behavior belongs in README/docs and scope in GitHub Issues.
 
 ## Framework baseline
 
-This migration targets Core **0.7.1**, whose required runtime behavior is present at
-`6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8`. The source contract is pinned below; [release.md](docs/release.md)
-records the pending registry adoption gate. Update these links to the verified Core release
-revision at adoption. Do not claim the candidate published before registry verification.
+This product pins published Core **0.7.1** and its verified release revision
+`bf79b80636bcdd790bbd6c25648842ae5213f267`. The registry archive matches the approved stage and GitHub Release;
+[release.md](docs/release.md) describes independent product qualification and publication.
+Keep these instruction links aligned with the exact Core dependency.
 
 Read the relevant pinned contracts before changing their surfaces:
 
-- [Universal laws](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/AGENTS.md)
-- [Runtime and public API](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/DESIGN.md)
-- [Integration authoring](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/integrations.md)
-- [Offline tests and sanitization](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/testing.md)
-- [CLI writer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/roles/cli-writer.md) for every terminal-facing string
+- [Universal laws](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/AGENTS.md)
+- [Runtime and public API](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/DESIGN.md)
+- [Integration authoring](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/integrations.md)
+- [Offline tests and sanitization](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/testing.md)
+- [CLI writer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/cli-writer.md) for every terminal-facing string
 
 Framework laws apply here. Framework paths describe its ownership; this repository owns this
 product's service client, DTOs, commands, authentication protocol, pagination and proof inventory.
@@ -44,9 +44,9 @@ file or floating Git dependencies.
 
 GitHub Issues is the primary tracker. Use the owning integration role plus the relevant function:
 
-- [GH issue dev](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/roles/gh-issue-dev.md) and [lifecycle](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/practices/github-issues.md)
-- [Reconciliation Lead](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/roles/reconciliation-lead.md) and [workstreams](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/practices/workstreams.md) for bounded migrations/audits
-- [Reviewer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/roles/reviewer.md) and [independent review](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/practices/independent-review.md) for completed changes
+- [GH issue dev](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/gh-issue-dev.md) and [lifecycle](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/github-issues.md)
+- [Reconciliation Lead](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/reconciliation-lead.md) and [workstreams](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/workstreams.md) for bounded migrations/audits
+- [Reviewer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/reviewer.md) and [independent review](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/independent-review.md) for completed changes
 
 New branches default to `bugfix/`. Transient coordination stays Git-ignored under
 `.workspace/workstreams/<id>/` of this repository's verified absolute root. Partial PRs have no

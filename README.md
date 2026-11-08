@@ -154,7 +154,7 @@ filters by direct project. Local v2 coverage is **449/449 unique REST method/pat
 235/235 GET and214/214 mutation routes; no inventory rows remain unexposed. This does not promise
 every parameter/payload variant or live mutation verification. Config-parameter reset and bulk
 unmute report native acknowledgement without verified postconditions. Review counters exclude the
-17-route baseline; future expansion follows the [authoring-review practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/practices/integration-authoring-reviews.md).
+17-route baseline; future expansion follows the [authoring-review practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/integration-authoring-reviews.md).
 
 ## Author a job
 
@@ -803,7 +803,7 @@ JSON-RPC returns the same fields, apart from `message`, in `error.data`, and add
 failed outcome. Every `next` argv can be sent back to `cli.execute` unchanged. Core's codes
 (`usage`, `permission.denied`, `profile.*`, `auth.*`, `secrets.unavailable`, `download.failed`,
 `interrupted`, `error`, the `http.*` statuses of its shared `HttpError` and the `request.*`
-transport reasons) are listed in the [design](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/DESIGN.md#machine-output-is-a-first-class-contract).
+transport reasons) are listed in the [design](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/DESIGN.md#machine-output-is-a-first-class-contract).
 TeamCity adds these:
 
 | Code | Meaning |
@@ -850,9 +850,9 @@ The proof is outside `npm test` and refuses CI/CD environments before launching 
 local development tool, not a regression suite or production availability monitor.
 The shared Core proof invoker limits each child to 30 seconds and each stdout/stderr stream to
 64 KiB. Oversized responses now fail instead of using unbounded capture. It strips inherited
-`TEAMCITY_TOKEN` case-insensitively and applies the [shared CI preflight](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/testing.md).
+`TEAMCITY_TOKEN` case-insensitively and applies the [shared CI preflight](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/testing.md).
 
-See [the integration authoring guide](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/integrations.md) for how this product references
+See [the integration authoring guide](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/integrations.md) for how this product references
 the common package and how to start the next in-repo or external integration.
 
 ## Source development

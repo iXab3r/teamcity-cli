@@ -15,6 +15,7 @@ No runtime library implementation was copied here.
 
 npm package/executable/application identity, profiles, permissions and credentials stay unchanged.
 No user data migration or deletion is required. Core 0.7.1 is needed for the merged output-boundary
-EPIPE guarantee; publication and clean registry-based qualification remain separate release gates.
+EPIPE guarantee and is now independently registry/GitHub-verified. Clean product qualification
+and owner-approved product publication remain separate release gates.
 See [release.md](release.md). Migration acceptance remains in
 [Factory #98](https://github.com/iXab3r/EyeAuras.CliFactory/issues/98).

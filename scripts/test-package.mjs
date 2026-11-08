@@ -138,7 +138,8 @@ try {
         jsonrpc: "2.0", id: 1, method: "cli.execute", params: { argv: ["--help"] },
       }) + "\n");
       if (!windows) {
-        const pipeline = spawnSync("bash", ["-o", "pipefail", "-c", `${entry.bin} --help | head -n 1`], {
+        // Shell startup may rewrite PATH; keep the pipe on this installed shim and Node.
+        const pipeline = spawnSync("bash", ["-o", "pipefail", "-c", 'PATH="$2" "$1" --help | head -n 1', "installed-cli", join(bins, entry.bin), environment[pathKey]], {
           cwd: working, env: environment, encoding: "utf8", timeout: 10_000,
         });
         assert.equal(pipeline.error, undefined);
