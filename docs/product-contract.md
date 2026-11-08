@@ -1,8 +1,9 @@
 # Preserved product contract
 
 [README](../README.md) is the full shipped command guide. This extraction preserves
-the 0.7 paging contract and Core output guarantees from
-[the Factory source baseline](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/DESIGN.md).
+the 0.7 paging contract and Core output guarantees under
+[the pinned Core 0.7.1 contract](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/DESIGN.md).
+Historical extraction provenance remains in [migration](migration.md).
 
 ## Paging
 
