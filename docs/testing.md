@@ -1,0 +1,282 @@
+# Testing workflow
+
+This product uses mock-first development while keeping a narrow path to real-service evidence.
+
+> Locally owned instruction policy, adapted from the Core0.7.1 source snapshot.
+> [Attribution, scope and manual updates](policy-provenance.md). External citations are optional provenance/API references.
+> Public-API code excerpts are illustrative source examples, not additional repository files or build steps.
+
+The default test suite must be safe to run offline and must never require credentials.
+
+Windows Core storage tests use real DPAPI CurrentUser with synthetic values and injected temporary
+AppData roots. They cover encrypted persistence, application/profile/name binding, corruption,
+concurrent publication, cleanup and the default CLI store. They never access Credential Manager
+or real profiles. Other platforms skip the Windows-native tests and retain keyring-backed storage.
+
+## The auth-first development loop
+
+1. Start with a walking skeleton: profile fields, authentication, and the cheapest identity/status
+   command that proves the service is reachable.
+2. Build the real CLI and configure a named current-user profile through `profile configure`; let
+   the normal platform secret store own its secret.
+3. Run the integration's explicit local read-only proof through the packaged CLI process.
+4. Inspect only the fields needed for the next user-visible command. Obtain them from that proof or
+   from official documentation.
+5. Sanitize the smallest useful example before it enters the repository.
+6. Write an MSW handler at the native `fetch` boundary and a failing client/command test.
+7. For side effects, prove a disabled permission rejects before the MSW handler is reached.
+8. Implement only the behavior required by that test, then re-run the local proof while debugging.
+9. Run focused mocked tests and the repository check before merging.
+
+This is TDD with service evidence: authentication opens the door to discover the real contract;
+mocked tests make the discovered contract fast, deterministic, and reviewable.
+
+## Fixture safety
+
+Never commit:
+
+- access/refresh tokens, cookies, authorization headers, passwords, or private keys;
+- internal user e-mail addresses or personal names;
+- private hostnames unless the repository owner has explicitly made them part of the product;
+- build logs, source fragments, artifact URLs with signatures, or environment variables;
+- identifiers that are not required to explain the contract.
+
+Prefer the smallest hand-authored fixture that preserves the fields the client consumes. If a
+recorded response is used, redact it before saving and review the staged diff as if it were public.
+Tests should fail when required fields drift, not snapshot every byte returned by a service.
+
+## Test tiers
+
+| Tier | Runs by default | Purpose |
+|---|---:|---|
+| Unit | Yes | Command definitions, output, profile and auth behavior |
+| Mocked service | Yes | HTTP request/response contracts through MSW |
+| CLI process | Yes | Actual command links/shims, exit/stdio, cancellation and shutdown |
+| Local profile-backed proof | Never | Explicit development/debug evidence through a real CLI profile |
+
+`npm run test:package` is a separate distribution check in CI. It may download public
+npm dependencies, but never contacts a service. It checks actual archives and
+installs them into a temporary global prefix outside the repository, then exercises npm's
+real command links/shims with help, version and persistent RPC. JSON profile listing uses
+the installed integration exports and Core's temporary fixture. It never accesses real
+profiles or credentials. See [product release](release.md) for the exact release set and gates.
+
+## Local profile-backed integration proof
+
+Every real integration should grow one explicit proof command as soon as authentication works. The
+proof uses the compiled executable, a required profile name, the normal current-user profile store,
+and the normal platform secret store. It must not accept a test-only endpoint or credential: URL/token injection
+can prove a client while bypassing the product path that users actually depend on.
+
+The proof is physically separate from unit/mocked test globs and from `npm test`. Its script refuses
+known CI environments before starting a child process or network call. Do not add it to GitHub
+Actions, scheduled automation, release workflows, or a generic workspace test command. Running it is
+an explicit local developer action and its result is proof-of-work for the current machine/profile,
+not a merge gate or availability monitor.
+
+Safety comes from construction:
+
+- require an explicit profile and invoke only the packaged CLI;
+- keep a fixed internal command inventory containing only bounded `ReadOnly` leaves;
+- never accept arbitrary argv, even if the selected profile currently has `Update` enabled;
+- limit collection sizes and treat empty pages as valid, with dependent detail calls skipped;
+- parse responses in memory and print only method/pass/count summaries;
+- never persist raw payloads, credentials, discovered URLs, IDs, logs, or proof artifacts;
+- convert any useful real response into a separately reviewed, minimal sanitized MSW fixture.
+
+Mocked tests remain the durable regression suite because they are deterministic and safe. The local
+proof answers a different question: “Does the real built product work with this real profile now?”
+
+Integrations import the separate `@eyeauras/cli-factory/proof` entry. Their runners call
+`parseProofProfile(argv, environment)` before invoking even an injected test invoker. It accepts
+only `--profile <name>` using Core's profile-name rules. CI preflight recognizes nonempty `CI`,
+`GITHUB_ACTIONS`, `TF_BUILD`, `BUILD_BUILDID`, `TEAMCITY_VERSION`, `JENKINS_URL` and `BUILDKITE`
+variables regardless of casing; a value of `false` still means the variable is present.
+
+`createProofInvoker({ executable, environment?, credentialEnvironment?, timeoutMs?, maxOutputBytes? })`
+takes a packaged-entry file URL and returns a function accepting code-owned `{ argv, stdin? }`.
+It checks CI again before every spawn, removes named credential variables case-insensitively,
+closes stdin after writing, and returns stdout only on exit zero. Defaults are 30 seconds per child
+and 65,536 bytes **per stream**, with stderr drained without retention. Limits must be positive
+safe integers; timeout is at most 2,147,483,647 ms. Startup/input/output failure, timeout and byte
+overflow terminate the child and close its pipes before settlement; errors never include raw child
+diagnostics. Integration code parses JSON/RPC and prints only its own safe method/count summaries.
+
+Offline Core tests use synthetic Node children to exercise this process boundary without profiles,
+keyrings or a network. Integration tests still assert their complete fixed inventories and service
+shapes. Success requires the expected number of rows, at least one passed row, and no failed rows;
+dependent skips cannot hide a failed source read. There is no shared endpoint registry or report DSL.
+
+### Independent products
+
+Each product repository owns its fixed local proof inventory, synthetic HTTP contracts and
+installed-package acceptance. Factory release checks use a small service-neutral Core fixture;
+there is no dependency on product source, service DTOs or a real service.
+
+## Cross-tool redirect and diagnostic contract
+
+Core's deterministic output subprocess fixture waits for its parent to close the reader before
+writing help/version, human/JSON results, NDJSON and RPC. It asserts exit 141, quiet stderr and
+resource/iterator cleanup. Write-boundary tests cover small asynchronous EIO failures, handler EPIPE,
+cleanup failures and cancellation followed by late EPIPE without process-global listeners.
+Installed Core checks close the stdout reader of a synthetic executable for help, NDJSON and RPC;
+on Unix they also exercise `--help | head -n 1` with `pipefail`.
+
+The [shared policy](DESIGN.md#cross-tool-redirect-and-diagnostic-policy) is exercised offline.
+Preserve evidence for these behaviors; tests must not endorse blanket redirect refusal or
+destroyed causes:
+
+- Redirect success for ordinary reads, auth validation and downloads; relative Location values,
+  same-host HTTP-to-HTTPS with successful authentication, and supported method/body semantics.
+  Exercise cross-origin transitions without leaking credentials, loops/redirect limits, and
+  non-replayable request bodies. No implicit application retry of an uncertain mutation.
+- Core and the in-repository HTTP example exercise the common behavior through their actual
+  HTTP boundary; external products own their corresponding regression evidence. Use native fetch against synthetic local servers when mocks cannot establish
+  real redirect/header semantics; external network access is not required.
+- Contextual English errors retain native type/code, stack and nested causes for DNS, TLS,
+  connection, timeout, HTTP, decoding and storage failures. An authentication GET never claims
+  an unknown write outcome. Inject synthetic failures to keep these cases deterministic.
+- Human stderr contains the explanation, at most one `Cause:` line and `Next:` commands, and no
+  stack frame without `--verbose`. With `--verbose`, human, `--json` and JSON-RPC output carry the
+  cause chain with frames; without it, JSON and JSON-RPC still carry the chain's names, codes and
+  messages. `execute` preserves the complete error object. Assert the concise form exactly and the
+  verbose form by content.
+- Redaction covers messages, stack headers, nested/aggregate causes and credential-bearing URLs.
+  Assert both absence of synthetic secrets and presence of useful cause codes and stack locations;
+  an empty or generic diagnostic is not a passing privacy test. Non-Error throws and cycles do
+  not crash serialization. Do not snapshot engine-specific full stacks or tool-authored prose.
+- English is the standard language of tool-authored output; service/user content is preserved.
+  Review authored help, prompts, examples and diagnostics without adding localization machinery.
+
+Core owns shared diagnostic tests; integrations prove service context and actual client behavior.
+Use the existing focused suites and run `npm test` before completing runtime implementation.
+
+## Response consumption regressions
+
+The shared response-reader tests cover absent/empty bodies, declared-length syntax and identity
+length mismatches, explicit-budget chunked-byte overflow, split UTF-8/BOM bytes, empty chunks and reused
+producer buffers, abort/read failures, and deterministic reader-lock cleanup. A synthetic local
+HTTP server verifies native fetch decompression: compressed overhead may exceed the decoded bound
+when the actual body fits, while decoded overflow still fails. This loopback test uses no profile,
+credentials or real service. MSW tests in both integrations retain service decoding, status,
+empty/null mutation and privacy contracts, and an unread response clone cannot block cancellation.
+
+## Safe output-file regressions
+
+Core publication tests use only synthetic temporary output directories. They cover basename/path/device
+preflight before acquisition, directory links and replacement, private stage/file identity,
+complete partial writes, empty and bounded streams, cancellation, validation, no-clobber races,
+unsupported hard links, post-link destination replacement and cleanup failure before/after
+publication. Replacement tests assert that unknown files are retained rather than deleted.
+Integration MSW tests retain 206, Content-Length, stream/cancellation and service format/auth rules.
+Encoded whole-file responses skip encoded length equality; explicit caller budgets still enforce
+emitted-byte overflow. Default requests and downloads have no local byte ceiling. No live download
+belongs in any tier. Installed-package offline smokes cover cwd defaults, relative/absolute output,
+profile-independent destinations, persistent RPC collisions, missing parents and retention of old
+profile files.
+
+## Required evidence
+
+Shared option-parser regressions cover signed/unsigned decimal spelling, leading zeros, safe bounds,
+invalid JSON and non-echoing errors. The diagnostic contract above requires redacted causes
+to remain useful. Core exercises required options and declared defaults through CLI, execute and
+persistent RPC. Consumers exercise native-fetch paging and invalid input before authentication
+in their own tests; Factory retains the generic parser and admission contract.
+
+Changes to application-data behavior use an injected `AppArgumentsEnvironment`; tests never redirect
+the real user's folders. Cover the exact `RoamingAppDataDirectory/Profile` composition, separation of
+at least two profiles, and deletion of a profile-owned directory when lifecycle semantics change.
+For JSON-RPC, prove that two requests selecting different profiles receive different
+`AppDataDirectory` values without restarting the process.
+
+External Core source verification belongs to its separately authorized owner. For a product
+client/command change, run affected mocked tests. Before a commit intended for `main`, run:
+
+```text
+npm test
+```
+
+Do not call a test mocked when it bypasses the actual HTTP parsing or command handler under test.
+Mock the boundary, not the implementation.
+
+For the end-to-end authoring sequence and repository placement, see
+[`integrations.md`](integrations.md).
+
+## Shared offline CLI fixture
+
+Import `createCliFixture` from `@eyeauras/cli-factory/testing`; the ordinary package export
+does not initialize or re-export testing utilities. The fixture creates a canonical temporary
+root, isolated AppArguments, memory secrets and a real ProfileStore view. Omitted `profiles`
+leaves the virtual default unconfigured. Explicit profile entries contain `name`, non-secret
+`values`, optional exact `permissions` and optional synthetic `secrets` keyed by credential name.
+Nothing logs in, launches a browser, grants Update, installs mocks or contacts a service.
+
+Create every application through `fixture.createApplication(runtime => ...)`. It passes the
+isolated runtime to the real integration factory and records its application for disposal.
+The exposed ProfileStore supports preparation/inspection of the real document; it is not injected
+by default, because Core must preserve the integration's profile defaults and validation.
+A non-default `defaultProfile` requires explicit profile preparation to persist that identity.
+
+Register the fixture with the current node:test context before other setup. Cleanup is registered
+before profile preparation and application creation; it disposes all registered applications in
+reverse order before checking the root's identity and removing only that owned directory.
+A changed root is retained and reported. A failed application shutdown also retains temporary data,
+since resources may still use it. Failed test assertions still run the registered cleanup.
+
+Use the application's `execute` for domain results and the fixture's `stdout()`, `stderr()` and
+`resetOutput()` for existing runtime-stream tests. `run(app, argv, invocation?)` returns
+`{ exitCode, stdout, stderr }` using fresh captured streams, fixture cwd and an empty environment
+unless explicitly supplied. `json(app, argv, invocation?)` parses successful JSON output;
+`rpc(app, commandArgvList, invocation?)` sends successive requests through one real RPC session.
+Both require a successful transport/CLI exit; RPC command errors remain response objects.
+The raw application's `execute` and `run` retain their normal environment semantics; auth tests
+must explicitly provide synthetic environment inputs when those inputs are under test.
+
+Integration support adapters may retain service defaults around this shared fixture. Hostile
+file-root and browser/process fixtures remain specialized where their purposes differ; do not
+make those service-aware fixture options in Core.
+
+### Shared command-contract assertions
+
+The testing entry point also exports small independent assertions. `assertHttpRequest` checks
+an independently authored method, origin/path, exact query (including repeated values), selected
+headers and optional JSON/text body. Omitted body means no request body. Service response shaping,
+unusual multipart/preflight behavior and MSW handlers remain ordinary integration callbacks.
+
+Wrap a catch-all MSW handler with `trackRequests(t, expectedCount, respond)` and delegate to its
+`handle(request)`. It records every request, rejects excess calls and registers final verification
+with the test context. Resolver assertion failures are rethrown outside MSW, rather than disappearing
+behind the CLI's sanitized HTTP error. Tests still compare the independently authored domain result.
+
+`assertPermissionDenied(app, argv, category, requests)` requires an explicit category and zero
+service requests. It never infers permissions or grants them. `assertCliOutput(fixture, app, argv,
+expected, humanPattern, requests)` is specifically for repeatable mocked commands with exactly one
+HTTP request per invocation: it verifies human and JSON output separately on the same application,
+including the per-mode request count. Multi-request workflows retain their direct assertions.
+`assertSafeCliFailure` checks exit status, empty stdout, expected stderr and caller-supplied forbidden
+patterns. No automatic redaction or broad snapshot comparison is implied.
+
+Consumers own equivalent read/write/RPC/failure examples. These helpers do not infer permission
+categories from HTTP methods or replace independent service expectations.
+
+
+
+## Diagnostic redaction regressions
+
+Diagnostic redaction regressions must vary each percent hex digit independently while retaining
+ordinary-letter case and regex literal semantics, including malformed Unicode. Copy control-bearing
+causes before supplying known values, then copy again to prove late redaction and stable escaping.
+Check native execute fields and human/JSON/RPC normal and verbose output retain useful codes/frames.
+
+## Product workflow
+
+The actual [product tests and local proof](../README.md#tests-and-local-integration-proof) and
+[fixed profile-backed proof runner](../integration-tests/profile-proof.ts) own the service inventory.
+Default npm test is offline. npm run test:package exercises installed artifacts with synthetic data;
+public dependency downloads do not make it live-service proof. Running the fixed local real-profile
+proof requires explicit task authority; it is separate from npm test and refuses CI. This setup
+runs no live proof, creates no API inventory and grants no service writes.
+
+Core parser/stdio/DPAPI infrastructure tests remain upstream ownership; product tests prove the
+actual client/tree/profile/paging/output behavior. Browser/IPC/RANDOM setup in source documents is
+excluded from this standalone HTTP product, not a missing test dependency.

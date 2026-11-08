@@ -8,10 +8,10 @@ The Cake driver is adapted from pinned nexus-cli/opensearch-cli; see [build/NOTI
 ## Core dependency and product approval
 
 Published product **0.7.1** pins published Core **0.7.1** at
-[release revision bf79b80636bcdd790bbd6c25648842ae5213f267](https://github.com/iXab3r/EyeAuras.CliFactory/commit/bf79b80636bcdd790bbd6c25648842ae5213f267).
+[optional provenance: release revision bf79b80636bcdd790bbd6c25648842ae5213f267](https://github.com/iXab3r/EyeAuras.CliFactory/commit/bf79b80636bcdd790bbd6c25648842ae5213f267).
 The owner approved Core's exact npm stage. Core VerifyRegistry build **33314** completed with a
 `published-verified` receipt; npm's version/latest and SHA-512, installed Core behavior, and
-[GitHub Release v0.7.1](https://github.com/iXab3r/EyeAuras.CliFactory/releases/tag/v0.7.1) were verified.
+[optional provenance: GitHub Release v0.7.1](https://github.com/iXab3r/EyeAuras.CliFactory/releases/tag/v0.7.1) were verified.
 The independently downloaded npm, stage, CI and GitHub archives are byte-identical (SHA-1
 `b075dc6eeef9a778d3d5317b24d7a36b50ea7632`). This product's exact dependency and lock integrity
 already match; no local file/workspace reference or lock substitution is needed.
@@ -108,4 +108,4 @@ retained and missing ones resumed. These are provenance records, not npm OIDC at
 
 After a lost response, inspect `npm stage list @eyeauras/teamcity-cli --json` before retrying.
 On E403/E404 stop for owner access diagnosis; do not widen a token, disable 2FA, approve/reject a
-stage or switch to direct publication. [Official npm staged-publishing reference](https://docs.npmjs.com/staged-publishing/).
+stage or switch to direct publication. [optional API reference: Official npm staged-publishing reference](https://docs.npmjs.com/staged-publishing/).

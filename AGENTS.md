@@ -3,38 +3,30 @@
 A standalone TeamCity CLI built on AI CLI Factory. Keep this entry point compact;
 product behavior belongs in README/docs and scope in GitHub Issues.
 
-## Framework baseline
+## Local instruction ownership and runtime boundary
 
-This product pins published Core **0.7.1** and its verified release revision
-`bf79b80636bcdd790bbd6c25648842ae5213f267`. The registry archive matches the approved stage and GitHub Release;
-[release.md](docs/release.md) describes independent product qualification and publication.
-Keep every canonical instruction link aligned with this exact Core dependency.
-The pinned [role index](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/README.md) defines domain/function composition;
-the local [agent setup index](docs/agent-setup.md) maps all adapters and maintenance obligations.
+This repository owns its agent policies. Required reading is entirely local and works offline.
+The owner explicitly authorizes duplicated/adapted instruction text; this does not authorize copying
+or forking framework runtime implementations. Core remains the exact existing npm dependency 0.7.1.
+Instruction updates are manual, intentional and reviewed independently of dependency upgrades;
+there is no cross-repository auto-sync. Factory links are optional provenance, never required policy.
 
-Read the relevant pinned contracts before changing their surfaces:
-
-- [Universal laws](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/AGENTS.md)
-- [Runtime and public API](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/DESIGN.md)
-- [Integration authoring path](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/integrations.md)
-- [Offline tests and sanitization](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/testing.md)
-- [CLI writer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/cli-writer.md) for every terminal-facing string
-
-Framework laws apply here. Framework paths describe its ownership; this repository owns this
-product's service client, DTOs, commands, authentication protocol, pagination and proof inventory.
-Do not copy framework implementations. Use an exact npm Core pin and lock; no final workspace,
-file or floating Git dependencies.
+Read [universal laws](docs/universal-laws.md), [runtime contract](docs/DESIGN.md),
+[authoring](docs/integrations.md), [testing](docs/testing.md), the [role index](docs/roles/README.md)
+and [local completeness index](docs/agent-setup.md) for the surface you touch.
+[Policy provenance and adaptations](docs/policy-provenance.md) record the original MIT source snapshot;
+[the local release guide](docs/release.md) owns product release decisions.
 
 ## Route by owning surface
 
 | Surface | Read and adopt |
 |---|---|
-| `src/**`, service DTOs, auth and commands | **Service integration author**: [domain guide](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/integrations/AGENTS.md), [authoring path](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/integrations.md), [product contract](docs/product-contract.md) and [README](README.md) |
-| `tests/**`, synthetic fixtures, `scripts/*contract*`, packaged checks | Integration domain plus [testing/fixture policy](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/testing.md) and the local tests/proof section below |
+| `src/**`, service DTOs, auth and commands | **Service integration author**: [domain guide](docs/roles/integration-author.md), [authoring path](docs/integrations.md), [product contract](docs/product-contract.md) and [README](README.md) |
+| `tests/**`, synthetic fixtures, `scripts/*contract*`, packaged checks | Integration domain plus [testing/fixture policy](docs/testing.md) and the local tests/proof section below |
 | `integration-tests/**` and explicitly authorized local proof | The same testing policy, [fixed proof runner](integration-tests/profile-proof.ts) and local proof instructions below; proof remains separate from offline tests/CI |
 | `.github/ISSUE_TEMPLATE/**`, issues and PRs | GH issue dev and its lifecycle below; [local issue forms](docs/agent-setup.md#issue-intake) |
 | `build/**`, `scripts/**`, docs and agent setup | Local repository tooling/docs owner: this router, [agent setup index](docs/agent-setup.md), relevant shared design/practice and [release guide](docs/release.md) |
-| Shared Core runtime/API defect | External escalation: [Factory-core maintainer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/packages/core/AGENTS.md); propose separately within task authority, never implement/copy Core here |
+| Shared Core runtime/API defect | External escalation: [Factory-core maintainer](docs/roles/core-escalation.md); propose separately within task authority, never implement/copy Core here |
 
 Use [local test/fixture and proof instructions](README.md#tests-and-local-integration-proof) for this product.
 
@@ -60,15 +52,15 @@ Use [local test/fixture and proof instructions](README.md#tests-and-local-integr
 GitHub Issues is the primary tracker. Adopt the owning domain above and each applicable function;
 reading a role or installing an adapter does not spawn an agent or authorize remote actions.
 
-| Function / trigger | Canonical role and practice |
+| Function / trigger | Local role and practice |
 |---|---|
-| Issue intake through verified delivery | [GH issue dev](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/gh-issue-dev.md) + [practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/github-issues.md) |
-| Read-only completed-change review | [Reviewer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/reviewer.md) + [practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/independent-review.md) |
-| Terminal help, errors, prompts, views and examples | [CLI writer](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/cli-writer.md) |
-| Migration, expansion or audit of a declared inventory | [Reconciliation Lead](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/reconciliation-lead.md) + [practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/workstreams.md) |
-| An authorized story-based product increment | [Story Delivery Lead](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/roles/story-delivery-lead.md) + [practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/story-driven-delivery.md) |
+| Issue intake through verified delivery | [GH issue dev](docs/roles/gh-issue-dev.md) + [practice](docs/practices/github-issues.md) |
+| Read-only completed-change review | [Reviewer](docs/roles/reviewer.md) + [practice](docs/practices/independent-review.md) |
+| Terminal help, errors, prompts, views and examples | [CLI writer](docs/roles/cli-writer.md) |
+| Migration, expansion or audit of a declared inventory | [Reconciliation Lead](docs/roles/reconciliation-lead.md) + [practice](docs/practices/workstreams.md) |
+| An authorized story-based product increment | [Story Delivery Lead](docs/roles/story-delivery-lead.md) + [practice](docs/practices/story-driven-delivery.md) |
 
-Broad API expansion also adopts the [integration authoring review practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/integration-authoring-reviews.md)
+Broad API expansion also adopts the [integration authoring review practice](docs/practices/integration-authoring-reviews.md)
 from universal law 13: declare a baseline, normally review each 50 newly accepted operations and
 the final shorter batch before continuing. Role composition does not multiply test runs.
 
@@ -81,4 +73,4 @@ owner authorization and the practice's planning gates remain required.
 New branches default to `bugfix/`. Transient coordination stays Git-ignored under
 `.workspace/workstreams/<id>/` of this repository's verified absolute root. Partial PRs have no
 closing keywords. Preserve deferred backlog; setup changes do not implement deferred operations.
-Framework-wide official skill policy remains [Factory #29](https://github.com/iXab3r/EyeAuras.CliFactory/issues/29).
+Official skill distribution is not implemented by this setup; it requires separately scoped product work.

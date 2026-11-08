@@ -1,0 +1,965 @@
+# Product runtime and authoring contract
+
+> Locally owned instruction policy, adapted from the Core0.7.1 source snapshot.
+> [Attribution, scope and manual updates](policy-provenance.md). External citations are optional provenance/API references.
+> Public-API code excerpts are illustrative source examples, not additional repository files or build steps.
+
+This locally owned contract describes the Core0.7.1 behavior this product consumes and the
+service-authoring obligations it preserves. Product code and shorter documentation must agree
+with it. Shared implementation stays in the exact dependency; this document is policy, not a fork.
+
+## Product goal
+
+Expose the service in its own vocabulary through one discoverable human/JSON/RPC command tree.
+Reuse the existing Core APIs rather than reimplementing runtime behavior. Authoring simplicity
+and reliability both matter: count concepts and total Core-plus-consumer cost, not just shorter
+handlers. This repository owns its client/DTOs/auth/paging/contracts/tests and release guide.
+Factory workspace layouts and RANDOM/IPC/browser procedures are excluded source context, not
+product directories or prerequisites. Locally maintained instructions update only by intentional
+review; dependency changes do not auto-sync these copies.
+
+## Core invariants
+
+### Cross-tool redirect and diagnostic policy
+
+This policy is binding for Core and every integration, including new tools. Core owns
+`fetchWithRedirects` and causal diagnostic rendering; integrations supply service context.
+Blanket redirect rejection and cause-dropping catch blocks are not patterns to copy.
+
+**English is the standard tool language.** Tool-authored help, prompts, errors, progress,
+presentation labels and examples use English. Preserve service/user content in its original
+language. Multilingual output is future work; no localization framework is required now.
+
+**Normal HTTP redirects work by default.** This applies to authentication checks, ordinary API
+calls and downloads across integrations. A valid HTTP-to-HTTPS redirect must not require the user
+to discover and re-enter a different URL. Follow standard HTTP redirect semantics for relative
+locations, status-dependent methods/bodies and redirect limits. Redirects are not application
+retries: do not replay an uncertain mutation as a new attempt. Preserve credential scoping across
+origins; enabling redirects does not mean forwarding authorization to an unrelated destination.
+Cover the same-host HTTP-to-HTTPS authentication flow explicitly so it still authenticates,
+including upgrades from a non-default port. Other origin changes and HTTPS-to-HTTP downgrades
+remove credential headers, including on subsequent redirects back to the original host.
+Any endpoint-specific restriction needs a concrete service requirement, documented rationale and
+tests; it must not silently become the default for future tools. A redirect failure reports its
+actual reason, such as a loop or limit, rather than being collapsed into a generic network error.
+
+**Wrap errors with context and preserve the evidence.** Use standard JavaScript `Error.cause`
+when translating a failure; `CliError` must support it. Keep the original error type, message,
+native code, stack and nested causes. Each wrapper adds meaningful operation context rather than
+another generic "request failed". Explain what failed, what is known about local/remote state,
+and a supported next step when one is known, given as `next` argv rather than prose so Core prints
+it with the CLI name. Distinguish connection, DNS, TLS, timeout, redirect,
+HTTP authentication/authorization and decoding failures where the evidence permits. Do not invent
+a diagnosis or recovery command. Reserve "unknown outcome" for side effects that may actually
+have happened; an authentication GET is not an uncertain write.
+
+`HttpError(status, message, { cause?, next? })` is the shared typed failure for an error status.
+It maps `401 http.unauthorized` (with `next: auth login`), `403 http.forbidden`, `404 http.notFound`,
+`409 http.conflict`, `429 http.rateLimited`, `5xx http.serverError` and other statuses to
+`http.rejected`, and exposes `status`. The integration supplies the sentence; the body is never
+read into it. Transport failures from `fetchWithRedirects` carry `request.dns`, `request.tls`,
+`request.timeout`, `request.connection` or `request.failed` with one classified sentence.
+
+**One diagnostic model serves people and agents.** Core owns wrapping support, redaction and
+rendering/serialization. Integrations supply service context and stable codes, not their own
+error printers. A failure is short by default and complete on request:
+
+- Human mode prints the English explanation, then at most one `Cause:` line — the nearest cause
+  whose text adds information, with the deepest native detail in parentheses — then `Next:`
+  commands. An untyped failure (`code: error`) ends with `Re-run with --verbose for the full
+  diagnostic.` No stack frame and no `Caused by:` chain appear without `--verbose`. Usage and
+  interrupted failures never print a cause line.
+- `--verbose` is a global option, accepted like `--json` on the CLI, in `execute` argv and in
+  JSON-RPC argv. On stderr it adds the failure's frames and the recursive `Caused by:` /
+  `Related error:` chain with frames; in the machine form it adds the `name` and `stack` fields.
+  Everything stays redacted. It never changes results, exit codes or stdout.
+- JSON and JSON-RPC always carry `code`, `message`, `exitCode`, `profile`, `next`, `result` and
+  the recursive `cause` chain (`name`, native `code`, `message`, `cause`, `errors` for aggregates);
+  the top-level `name` and every `stack` field are present only with `--verbose`.
+- `execute` rejects with the complete `CliError` object; nothing is rendered.
+
+A plain `Error` thrown by a handler becomes an untyped `CliError` that keeps the original type
+name, message, frames and cause; it is never nested under itself, so no headline prints twice.
+An aggregate or native coded error is nested as the cause so its related failures or native code survive. A wrapper that
+states its reason in the sentence (`Token validation failed: <reason>`) renders as one line, because
+a cause whose text the message already contains is not repeated. Keep native cause codes distinct
+from the wrapper's stable CLI code. Serialize errors explicitly; plain `JSON.stringify(Error)` does
+not carry this contract. Handle non-Error throws (type-only diagnostics), aggregate errors and cyclic
+causes without losing independent failures or breaking the output protocol. CLI diagnostics remain
+on stderr; RPC uses its error envelope.
+
+**Redact sensitive content, not the entire cause.** Credentials, cookies, authorization values
+and secret-bearing URL components must never appear in messages, stacks or nested diagnostics.
+Known-value matching treats percent-triplet hex letters equivalently across case, while ordinary
+characters remain case-sensitive and literal. C0/C1 terminal controls are visibly escaped as
+\uXXXX; LF and TAB retain diagnostic layout. Later copies also match these escaped known values,
+so early transport/body/publication copying does not prevent subsequent redaction.
+Do not dump arbitrary request/response objects, bodies or environment variables. Preserve useful
+types, codes and stack locations when redacting sensitive text. Apply the same rules to every
+output surface; retaining diagnostics does not authorize publishing private data in GitHub or
+fixtures. Unexpected errors must not be hidden wholesale under a static privacy message.
+
+These policies do not require a universal HTTP client or a new framework. Reuse the smallest
+proven common mechanisms; new integration authors must not rediscover these decisions or copy
+diagnostic rendering/redaction glue. Verification obligations are in
+[testing](testing.md#cross-tool-redirect-and-diagnostic-contract).
+
+### Commands are a tree
+
+`localCommand(name, description, handler, settings)` declares package metadata in that same
+recursive tree, including next to profile-scoped leaves. Its `runLocal` handler receives only
+cwd, environment, signal, I/O and progress: no profile, secrets or fetch. It runs without profile
+selection/readiness/permissions. Do not use it for service reads, mutations or owned process
+operations; those remain ordinary gated commands. A node cannot combine `runLocal` with `run`
+or a permission. Local human views have no selected profile; their follow-ups do not append one.
+
+`application.classify(argv, invocation?)` returns `local` or `owner` using the normal parser,
+without executing handlers or reading profiles/auth/storage. Option value parsers must be pure.
+Metadata, help, version, bare groups and usage errors are local. Profile/permission commands and
+service handlers belong to the owner; a persistent `--json-rpc` session does too. A bare root is
+local for redirected input/output and retains owner-side onboarding in a TTY. Classification
+never replaces authoritative parsing, readiness or permission checks when the owner executes.
+The optional IPC host consumes this classification and opens a connection lazily.
+IPC permission denial is an inaccessible/unknown owner state, not proof of absence. The host
+fails before sending research work or spawning a redundant owner when its initial connection
+is denied; status must not report `running: false` for that denial. Ownership failure guidance
+asks for storage/endpoint access diagnosis rather than prescribing a shared-owner stop.
+A private Node child channel cancels a caller-owned startup only before readiness. The ready
+owner disconnects that channel; a later denied caller cannot terminate a shared owner. Denial
+classification matches the transport code position, not words in an endpoint path. Local metadata
+and help do not require a build marker or IPC endpoint; nested owner leaves still validate the
+prepared build and execute in the shared owner.
+
+A CLI is a recursive command declaration. Every node has a name and description; branch nodes
+contain children and leaf nodes execute handlers. The framework generates help at every node.
+Authors must not hand-write a dispatch switch or separate help pages.
+
+Help presentation comes from the same declaration. A node may name a help `group`. Siblings then
+appear under that heading, with groups and their members in declaration order. A node or the CLI
+definition may list `examples`: invocations without the CLI name, which Core prefixes and shows
+after that help. A bare group shows exactly its `--help` text, examples included. Root help lists
+service commands first. Core's local profile, auth and permission commands follow under
+`Configuration`. A parser error prints one error line and that command's one-line usage with a
+`--help` hint, never its complete help. A stray word after a group is an unknown command, with
+Commander's suggestion. One exception remains: Commander's `help <name>` for an unknown name
+prints the root help to stderr and exits 1.
+
+A service option may declare `required: true` in its existing `OptionDefinition`. The parser
+rejects a missing required value before profile onboarding, secret-store access or the handler, in
+ordinary CLI, programmatic and JSON-RPC execution. A declared default satisfies this requirement;
+existing option parsing still applies to supplied values. This is distinct from required profile
+fields, which the interactive configurator may prompt for.
+Generated help marks required options without defaults. Help and argument errors never terminate
+the host process.
+
+Core's `integerParser({ min, max, signed, errorMessage })` and `jsonParser(errorMessage)`
+return callbacks for the existing `OptionDefinition.parse`; they add no declaration layer.
+Integer parsing accepts decimal digits (including leading zeros), with an optional minus only
+when `signed` is true. Whitespace, plus signs, fractions, exponents and nondecimal notation reject.
+The result must be a safe integer within the inclusive caller-supplied bounds; invalid bounds
+reject when the parser is created. JSON parsing returns `unknown`, not a body schema. Callers
+supply non-secret English error messages; rejected input is not echoed. Preserve useful parser
+causes under the shared diagnostic policy, redacting input embedded in native messages or stacks.
+Defaults remain in the option declaration and are not passed through the parser. Independently
+callable service methods keep their own domain validation.
+
+`durationParser({ min, max, errorMessage })` returns milliseconds for up to three ordered
+segments: `<digits>h`, `<digits>m`, `<digits>s`, as in `90s`, `10m` or `1h30m`. Other spellings,
+fractions, signs and values outside the inclusive millisecond bounds reject with the static message.
+
+`jsonParser` itself preserves JSON `null`. Existing Commander handling of required-value options
+normalizes a null callback result to an empty string; this helper does not change that behavior.
+Null fields inside objects and null items inside returned arrays are unaffected.
+
+
+Literal leaf declarations infer required positional strings in their inline callback from the
+existing command name. The small inferred grammar uses ASCII letters, digits, underscores and
+hyphens in names, with single spaces between the command and required `<argument>` tokens.
+A supported declaration without arguments has an empty argument object. Options keep their broad
+unknown-record type; service validators still own numeric IDs and other domain constraints.
+
+The complete declaration falls back to `Record<string, unknown>` for dynamic or union names,
+duplicate arguments, optional/variadic tokens, other whitespace or unsupported syntax. Runtime
+parsing remains unchanged, including its wider Commander syntax. Existing explicitly annotated
+`CommandInput` and `CommandHandler` callbacks retain their broad types. Inference describes the
+literal callback when invoked through the factory parser. The stored mutable `CommandDefinition`
+remains broad; changing its name/run or manually invoking its erased handler is outside that
+inference guarantee.
+
+Thin integration wrappers preserve this inference by keeping the command name generic and using
+the exported `InferredCommandHandler<Syntax>` callback type (or its input parameter type).
+The same complete-declaration fallbacks and broad stored definitions apply. A service client
+binding uses this type without changing runtime parsing, options or domain validation.
+
+`targetCommands(resolve)` is the shared form of that binding for profile-scoped clients and other
+invocation-owned targets. `read`, `update`, and `gated(category)` keep the permission category at
+the declaration site while Core resolves the target only after profile selection, readiness, and
+permission admission. Resolution is fresh for every ordinary or JSON-RPC invocation; integrations
+must not use the binder to cache clients or current-profile state. Service paths, DTOs, validation,
+options, projections, and response policy remain in the integration.
+
+### Handlers return domain data
+
+Command handlers return values and do not decide whether output is human-readable or JSON. The
+runner owns presentation. `--json` emits exactly one JSON value for a non-streaming command and
+writes diagnostics to stderr.
+
+This separation is the basis for future output formats. A new format must be implemented once in
+the runner, not once per command.
+
+Core awaits output write callbacks for help/version, human and JSON results, NDJSON items,
+diagnostics and JSON-RPC frames, including writes below the stream's high-water mark. The exported
+`writeResult` returns `Promise<void>` and callers must await it. Commander text is captured during
+parsing and written through the same boundary afterward. No process-global error handler is installed.
+
+When a stdout write fails with native `EPIPE`, ordinary CLI and JSON-RPC `run` return **141**
+(the shell convention for SIGPIPE) without a diagnostic. A small write may finish before the reader
+closes, in which case success remains 0. This policy applies only to failures observed at the output
+boundary; a handler or service error with the same native code remains an ordinary failure.
+If writing an already-failed command's result fails too, preserve the original command failure and
+both causes; its result moves to the JSON stderr envelope because stdout could not carry it.
+Other output errors retain diagnostics; a failed diagnostic write rejects `run` rather than being
+silenced. Interrupts retain exit 130. Output disconnect still aborts lazy producers and awaits iterator
+cleanup; an additional cleanup failure retains both causes and exits 1. Standalone entry
+points continue to dispose application resources in `finally`, without forced process termination.
+Cancellation can return before a pending write completes; that write retains its error listener
+until its callback succeeds or the stream emits error/close. Caller-owned streams stay open.
+
+`streamResult<T>((signal: AbortSignal) => AsyncIterable<T>)` opts a handler into a lazy finite
+sequence of domain items. The factory callback must acquire resources only when called, pass its
+supplied signal to pending work, and release resources in `finally`. Construct signal-bound clients
+inside that callback; a client bound only to the original handler signal cannot observe output
+disconnect. Service paging/cleanup, cancellation between page reads and result budgets remain
+integration-owned; offset arithmetic may use the shared mechanism described below.
+
+Ordinary CLI `--json` emits one unchanged JSON item per NDJSON line, awaiting each output write
+before requesting another item. An empty sequence emits no lines. Human CLI, `execute` (including
+argv containing `--json`) and JSON-RPC collect the finite sequence into an array; a human view sees
+that array, and RPC returns one existing response frame. Plain values, including ordinary arrays
+and unmarked async iterables, retain their existing behavior. This is not a subscription protocol.
+
+Consumption stays inside permission/profile admission, scheduling, diagnostics and the active
+operation lifetime. Invocation cancellation, application disposal and output close/error abort the
+producer's signal; Core awaits iterator closure and cleanup before releasing the command. Producers
+must cooperate with cancellation; Core cannot force arbitrary JavaScript to finish. Caller-owned
+streams are never ended or destroyed. Primary and iterator-cleanup failures retain their diagnostics.
+
+For a streamed JSON failure, already-emitted item lines remain on stdout and the CLI exits nonzero.
+The error and any `CliError.result` metadata go to stderr in the error envelope; no failed-result
+object is appended to the item stream. Human, `execute` and RPC failures keep the normal failed-result
+contract below. Nonstreaming JSON failures also keep their existing stdout result contract.
+
+A leaf may declare an optional human `view` next to its handler. `tableView` lists rows, taken
+from an array result or from the view's `rows` accessor, under column headers, or prints its
+`empty` message; it may add one `footer` line. `tableView` may add `next` follow-ups through
+the same CLI/profile-aware rendering as records.
+`recordView` prints an optional title, then
+aligned `Label: value` fields, omitting empty values. Accessors return values; they never print.
+Core owns the layout and the `age`, `duration` and `bytes` formats. There is no template language.
+Without a view, or when a table's rows are not an array, the generic fallback renders the value,
+so a shape mismatch never reads as "no results". At the outermost result, arrays of nonempty
+simple records use an aligned table. An empty row, a nested plain-record/array cell, or
+inter-column padding exceeding actual cell content switches the collection to vertical record
+blocks. Every empty row says `(empty record)`; an empty outer collection says `No results.`.
+Nested plain records and arrays render recursively, with two-space indentation and list markers,
+retaining all keys, values and order. Nested arrays of records stay lists, and a nested `items`
+key is ordinary data. Empty nested values say `(empty record)` or `(empty list)`. Scalar-only
+records keep their existing formatting; non-plain instances keep their existing scalar fallback.
+Values stay complete: no depth, string or collection truncation is applied. Ancestor cycles in
+the recursive branch throw a serialization-style error; repeated acyclic references are valid.
+`--json`, JSON-RPC and `execute` always return
+the unchanged domain value. A record may also have titled `sections`, one line per item. An empty
+section says `none`; an accessor that returns `undefined` omits it. Section lines are never cut:
+a long one wraps.
+
+Tables fit a terminal. The width is the output TTY's columns minus one. Pipes, files and other
+non-TTY streams are never truncated. Only columns marked `shrink` lose characters, widest first,
+ending in `…`. Identifiers are never marked: IDs and names that commands take to select an object,
+such as file names. An impossible fit therefore wraps rather than cuts one. Descriptive text and
+filter values such as branch names may shrink; they stay complete in the object's detail view and
+in JSON. Views use no colour: text such as `FAILURE` carries the meaning.
+
+A record may suggest `next` commands of the same CLI as argv arrays. Core prefixes the CLI name
+and appends `--profile <selected>` when the selected profile is not the default, so copying a
+suggestion never switches profile. An action whose tokens are not all plain safe characters
+(letters, digits and `._:/@+=-`) is omitted rather than quoted. Suggestions only print; nothing
+runs automatically.
+
+#### Human output formats
+
+Every human-mode result is one of the four Core-rendered shapes below; integrations choose the
+shape and the words, never the layout. `--json` and JSON-RPC return the unchanged domain value.
+
+- **Table** (`tableView`): short upper-case headers, one row per item, `shrink` only on descriptive
+  text, identifiers never cut. An empty table prints its `empty` sentence.
+- **Record** (`recordView`): an optional title line naming the object and what happened to it
+  (`Created DEMO-99: Login page crashes`), aligned `Label:  value` fields with empty values omitted,
+  titled sections, then `Next:`.
+- **Tree** (`treeView`): a flat selection with IDs, parent IDs and a line per item. Selected
+  parents indent their children; missing parents become roots, and cycles still print each item
+  once. It never fetches missing ancestors or changes the result.
+- **List** (`listView`): one line per item, never cut, for names, identifiers and short phrases;
+  an empty list prints its `empty` sentence.
+
+Every view receives the command's parsed `input` (arguments and options) in its context, so a
+title can say `Removed tag 7 from DEMO-12` for a `null` result and a footer can name the option
+that continues a page. A view may decline an invocation through `when(context)`: an explicit
+field projection such as an explicit `--fields` then prints the generic shape, so a person sees
+exactly what they asked for. A table, list or tree prints one footer line only when there is more to
+read (`More results: --start 50`, from `offsetFooter` for offset pages) and nothing when the
+selection is complete. Timestamps print as `age` in tables and as ISO instants in records;
+calendar dates such as a sprint's start print as `YYYY-MM-DD`; sizes use binary units; service
+metadata such as `$type`, epoch numbers and nested JSON never appear in a view. Without a view,
+or when a record's accessors find nothing to show, a list of strings prints one per line and
+other values keep the generic shape. `helpLayout` orders a branch's children under named help
+groups, the rest under `More`.
+
+`context.progress(message)` writes one plain line to stderr, only when a person runs the command
+without `--json`. JSON, JSON-RPC and `execute` callers never receive progress. There is no cursor
+control, so redirected stderr stays readable, and progress is never part of the result.
+
+### Failures keep their domain result
+
+A handler reports a failed domain outcome, such as a finished build with `FAILURE`, by throwing
+Core's `CliError` with the `result` it would otherwise have returned. The error has these fields:
+- `code`: a stable, dotted machine reason;
+- `message`: safe text without response bodies or credentials;
+- `exitCode`: 1 unless another documented status is given;
+- optional `result`;
+- optional `cause`, with stack/cause diagnostics governed by the cross-tool policy above;
+- optional `next`: argv suggestions of the same CLI, without the CLI name or `--profile`.
+
+Core records the selected `profile`. Each caller receives the same failure in its own form:
+- **Ordinary CLI:** except for streamed JSON as described above, the result goes to stdout exactly as success would render it (view or
+  `--json`), the message goes to stderr, and the process exits with `exitCode`. In human mode,
+  `next` is printed on stderr with the CLI name, only when there is no result; a result's view
+  shows its own suggestions. A printed suggestion names `--profile <selected>` only when the
+  selected profile is not the default.
+- **JSON-RPC:** the response is the error `{ code: -32000, message, data: { code, exitCode,
+  profile, next?, result?, name?, stack?, cause? } }`. Each `next` argv already ends with
+  `--profile <selected>` and can be sent back to `cli.execute`.
+- **`execute`:** the returned promise rejects with the `CliError`, `result` included.
+
+A result is never printed as success next to a contradicting error, and it is never discarded.
+Reading a failed build with `show` is still a successful read. Only commands whose contract is the
+outcome itself throw, such as waiting for a build. A write over several items should also throw
+when any item did not complete, with every item's result preserved.
+
+Only a completed batch succeeds. Exit codes are:
+- 0 — success;
+- 1 — errors and failed outcomes;
+- 2 — misuse of the `--json-rpc` transport;
+- 124 — a deadline expired;
+- 130 — an interrupt stopped the command.
+
+An interrupt is an abort of the caller's own signal, such as the first Ctrl+C of a packaged
+executable. Any failure after it exits 130 on every transport, even one before the handler runs.
+A `CliError` keeps its code, message, `next`, `result` and cause chain. Any other error becomes
+`interrupted` with the message `Interrupted.`, except a download error, which keeps its static
+message about the saved data. Wrapping preserves the original failure as a cause. Core does not
+map closing the application to 130.
+
+Every other failure has the same machine form; see
+[machine output](DESIGN.md#machine-output-is-a-first-class-contract).
+
+#### API-faithful validation
+
+The service's authoritative contract governs accepted values. Do not close a string to documentation
+examples, invent ID grammars, trim service text, impose undocumented numeric/length bounds, reject
+additional native JSON fields, or insert service defaults without a contract basis. A missing Swagger
+enum alone does not overrule an explicit enum elsewhere in the primary reference. State reference
+versions and gaps; when a service-value rule is uncertain, preserve the value and let the API validate it.
+
+Validate JSON value types and representable numbers, encode identifiers and locator dimensions without
+changing their values, and retain explicit permissions, profile isolation, secret protection and safe
+errors. Give each separate transport/security check its concrete reason: for example, dot segments
+would change URL routing, bearer text cannot enter a plain argv property, and a download destination
+must stay under the active profile without overwriting another file. Local controls such as polling
+duration and caller byte budgets are CLI behavior, not claims about service limits. Compact CLI forms
+may translate flags or selectors into service DTOs; document that translation and preserve additional
+native fields rather than silently discarding them. Output projections may omit private fields without
+claiming that those fields are unsupported by the service. Exercise newly admitted values at the
+offline HTTP boundary, including unchanged requests and safe remote rejection without retries.
+
+## Profiles own non-secret configuration
+
+A profile is a named JSON object containing values such as a base URL, tenant, project, or user
+name. One profile is the default. A default profile exists even before configuration is persisted,
+and the collection can never become empty. Profile files contain no passwords, access tokens,
+refresh tokens, private keys, or cookies.
+
+Profile fields that are prerequisites for service commands are declared `required`. The virtual
+default profile may therefore exist in an incomplete state without inventing a product-specific
+endpoint. In an ordinary TTY, starting the root command or a service leaf enters the same generic
+configuration flow. `profile configure [name]` is its explicit form: it accepts the integration's
+profile field options and completes authentication when required. JSON, JSON-RPC, redirected
+stdin/stdout, and programmatic execution never prompt; they fail before the handler with an
+actionable configuration command.
+
+Outside interactive onboarding, a root invocation only shows help and does not read profile or
+authentication storage. Service leaves still check configuration/readiness before their handler.
+`profile show [name]` uses the selected `--profile` (or default) when the positional name is absent;
+an explicit name chooses the profile to display without changing the default.
+
+Profile fields may declare `normalize(value)` for newly supplied values. Core applies it to
+`profile create/set/configure` options and prompted input before profile validation, authentication
+or storage, identically in CLI, `execute` and JSON-RPC. Omitted/stored fields are not rewritten.
+Normalizers must be idempotent and throw static, non-secret diagnostics. The generic ProfileStore
+remains a storage API: callers using it directly own their field normalization/validation.
+
+`parseServerUrl(value, message)` trims outer whitespace, parses an absolute HTTP(S) base address,
+rejects credentials, query/fragment, backslashes, embedded whitespace/controls and invalid path
+encoding, and returns a readonly `{ href, pathname }` configuration record with one trailing slash.
+Its `href` preserves an explicitly written port; it is not a WHATWG `URL` instance.
+Integrations own supported deployment contexts and trailing-slash policy; never guess roots
+from resource-like path segment names.
+
+**Every CLI preserves the supported user-selected scheme, host, context path and explicit port
+presence/value in stored and displayed profile URLs**, including HTTP :80 and HTTPS :443.
+Approved outer-whitespace and trailing-slash normalization remains allowed. Do not persist
+a native URL serializer's output when it erases explicit default ports. Use the shared parser
+for HTTP(S) base-address normalization; any additional service-specific scheme/path restriction requires primary contract evidence.
+RANDOM REST and Playwright retain their HTTPS-origin-only policy and literal stored URLs.
+
+The initial HTTP request or browser base URL must use the configured effective endpoint. Native
+transport serialization may omit a default port on the wire; literal Host-header spelling is not
+required. Redirects may change the request destination under the shared redirect policy, but must
+never rewrite saved profile configuration. Loss of explicit default-port spelling is configuration
+information loss, not a change of effective port or evidence of an HTTPS downgrade.
+
+URL diagnostics use synthetic examples. Existing profile files are not migrated or deleted.
+Previously erased explicit-port information cannot be inferred: re-enter the desired URL with
+`profile set` or `profile configure` after upgrading. External parser consumers use the record's
+`href` for configuration and construct a native `URL` only for transport operations.
+
+The standard lifecycle is explicit: `profile create <name>` creates, `profile set <name>` updates
+an existing profile, `profile set-default <name>` chooses the default, and `profile delete <name>`
+removes a non-default profile. The default profile cannot be deleted until another profile is made
+default; the final remaining profile cannot be deleted. Deletion also removes the integration's
+known stored authentication credential for that profile.
+
+Profile names are ASCII and must be unique ignoring letter case on every supported platform, so
+names such as `Fixture` and `fixture` cannot share a case-insensitive filesystem directory.
+A single existing mixed-case name keeps its spelling, data path and credential identity; explicit
+profile lookup remains exact and does not introduce case-insensitive aliases. Creating or
+configuring a new colliding name fails before prompting, validation or any persisted change.
+An existing document containing case-colliding names fails closed before profile or credential
+mutation, including deletion. Core never chooses a winner or automatically migrates, renames or
+deletes data. To recover, first back up `profiles.json` and profile-owned data, then manually
+resolve conflicting names to distinct identities and reconfigure credentials for renamed profiles.
+
+Profile identity is part of the secret key. Switching from `uat` to `production` must never reuse
+the other profile's credential accidentally.
+
+Profile identity also owns a current-user application-data root. Configuration, logs, temporary
+files, caches, and other profile-specific files derive from that root. User-requested downloads and
+exports use the invocation working directory or explicit output path. Profile-owned state must never
+construct a path from the current working directory or the executable directory.
+
+### Permission gates are profile-specific safety policy
+
+An integration may enable the permission gate. Once enabled, every service leaf command must name
+one known category or CLI construction fails. The standard categories are `ReadOnly` and `Update`:
+`ReadOnly` starts enabled; `Update` starts disabled. Integrations may append categories when a real
+operator boundary needs more precision.
+
+Permission selection follows the profile. Granting an update category for UAT must not grant it
+for Production. The runner checks the category before configuration/authentication side effects and the handler.
+
+The gate is defense-in-depth for humans and AI agents, not an authentication or authorization
+boundary. A remote service still enforces actual identity and rights. Built-in configuration
+commands remain ungated so users can inspect and recover their local setup.
+
+### Credential persistence is explicit
+
+The default `PlatformSecretStore` selects Windows DPAPI CurrentUser encrypted files,
+macOS Keychain, or a system keyring on Linux. Integrations use `context.secrets` unchanged.
+The native Windows DPAPI binding ships prebuilt x64 and ARM64 binaries.
+On Windows each secret lives at `AppDataDirectory/secrets/<sha256(secret-name)>.dpapi`.
+Files contain only DPAPI ciphertext. Application ID, exact profile name and secret name are
+bound as DPAPI optional entropy, so moving ciphertext between identities fails closed.
+Writes encrypt in memory, create a unique temporary ciphertext file in the same directory,
+then atomically replace the destination. Independent secret writes do not rewrite a shared map.
+Directories inherit the current user's AppData permissions, including access provisioned by
+the sandbox; do not replace them with a protected DACL that excludes AppContainer access.
+DPAPI protects data at rest, not from an authorized same-user process that can read the file.
+On Windows, help and absent-secret reads do not load native credential bindings or create files.
+
+Windows Credential Manager is no longer read, written, migrated or used as a fallback.
+Existing Windows users must sign in again for each CLI/profile and reimport auxiliary secrets.
+Existing profiles and permission grants remain; old Credential Manager entries are left untouched.
+There is no plaintext fallback for standalone secrets. If the secure store is needed and unavailable,
+the operation fails with an actionable error. The owner explicitly permits browser authentication
+state under the selected profile's AppDataDirectory: cookies/origin storage from Playwright
+storageState may persist without mandatory application-level encryption. These are credential files,
+not profile JSON, logs or fixtures. Restrict access to the current user, replace snapshots atomically,
+and serialize each complete snapshot-capture/write checkpoint per profile, coordinated with
+logout/deletion. Runtime disposal retains login state; logout removes
+it. Never attach to the user's personal browser profile or use these files for arbitrary secrets.
+
+Integrations define the authorization protocol and validation call. The factory defines the
+storage lifecycle and standard `auth login`, `auth status`, and `auth logout` commands. The first
+shipped helper covers static bearer/API tokens; OAuth/device-code helpers are planned when a real
+consumer needs them.
+
+### Machine output is a first-class contract
+
+Every leaf command supports `--json`. JSON values use stable service/domain field names and do not
+contain ANSI decoration.
+
+Every failure has one machine form: `{ code, message, exitCode, profile?, next?, cause?, errors? }`,
+plus `name` and `stack` fields with `--verbose`. The diagnostics follow the cross-tool policy above.
+- `message` is the same safe text a person sees.
+- `profile` is present once one was selected, whether or not the error was typed.
+- Each `next` argv ends with `--profile <selected>`.
+
+The form reaches each caller as follows:
+- **CLI with `--json`:** the failure is one line on stderr, `{"error": {...}}`. Other stderr lines
+  an integration documents, such as saved artifact paths, may precede it. stdout stays empty,
+  except for a failed outcome, whose result is printed there. Streamed JSON keeps emitted item lines
+  on stdout and includes any failed-result metadata as `error.result` on stderr instead.
+- **JSON-RPC:** every command failure (error `-32000`) carries the form, minus `message`, as
+  `error.data`, plus `result` for a failed outcome. Protocol errors have no `data`.
+- **`execute`:** rejects with a `CliError` that has these fields, `result` included, once the
+  command runs. A failure before that, such as invalid argv or a closing application, is the
+  original error.
+- **Human mode:** the explanation is printed first, then one `Cause:` line when it adds
+  information, `Next:` lines when no result was shown, and the `--verbose` hint for an untyped
+  failure; frames only with `--verbose`.
+
+Core owns these codes:
+- `usage` — parser errors, including option values that a parser rejects;
+- `usage.jsonRpc` — misuse of the `--json-rpc` transport, exit 2;
+- `permission.denied` — the next step is `permissions grant <category>`;
+- `profile.notFound` — the next step is `profile create <name>` where creation is possible;
+- `profile.notConfigured`;
+- `profile.protected` — the only or the default profile cannot be deleted;
+- `profile.saveFailed` — configuration or credential storage failed after validation;
+- `auth.missing` — no stored credential; the next step is `auth login`;
+- `auth.missingToken`, `auth.validationFailed`, `auth.storeFailed` — the token flow;
+- `secrets.unavailable` — the platform secret store could not be used;
+- `download.failed` — a saved-file operation, with `published`/`cleanupFailed` on the error;
+- `http.*` and `request.*` — `HttpError` statuses and transport failures;
+- `interrupted` — an untyped failure after an interrupt, exit 130;
+- `error` — any other error that has no type.
+
+Integrations add their own dotted codes by throwing `CliError` or a subclass. There is no parallel
+plain-text error format for JSON callers.
+
+Without a view, an outermost object whose `items` is a list of records is a paged selection.
+The generic renderer prints its items first using the table/record rules above, then its scalar
+fields on one summary line, with `null` spelled out so an unknown `hasMore` stays visible.
+Nested detail fields follow as labeled indented blocks. This envelope groups items, scalar
+details and nested details in that order, preserving field order within each detail group;
+ordinary nested records do not use this exception. A table view may add one `footer` line,
+for example whether more results exist.
+
+### JSON-RPC is a persistent transport
+
+`--json-rpc` starts newline-delimited JSON-RPC 2.0 on stdin/stdout. The initial method is
+`cli.execute` with `{ "argv": string[] }`. A request executes the same command tree as a normal
+invocation and returns the command's domain value.
+
+Transport startup is exactly `run(["--json-rpc"])`. Other parsed uses of that global option are
+rejected before handlers (CLI exit code 2); execute/RPC requests cannot start a nested transport.
+A literal argument after `--`, or an attached option value such as `--value=--json-rpc`, is data
+and has the same command semantics on CLI, execute and JSON-RPC paths. For an option value that
+matches a global flag, use the attached `--option=value` form; normal global-option parsing is
+unchanged and there is no second custom argv parser.
+
+Command validation checks argv is an array of strings without count or byte ceilings. JSON-RPC
+request lines and IPC protobuf messages have no tool-imposed size ceiling. Native process argv,
+Node allocations, available memory, the filesystem and remote services still have real limits;
+resource failures are allowed instead of imposing smaller local policy limits. Invalid argv returns
+an invalid-params response. Unterminated input remains cancellable. See [content policy](content-limits.md).
+Reading follows command completion and output backpressure, without a queue of parsed future requests.
+
+The process remains alive until stdin closes or it receives a termination signal. Protocol output
+owns stdout while the transport is active; logs and diagnostics belong on stderr. Server-pushed
+notifications and long-running subscriptions are **planned** and will build on the same channel.
+
+### Service boundaries stay visible
+
+The core package knows nothing about service resources. Integrations own endpoint paths, DTOs,
+pagination rules, browser selectors, and service terminology. HTTP clients depend on `fetch`;
+browser clients use the optional Playwright owner. Tests replace the actual HTTP/browser boundary.
+
+### Finite page traversal
+
+Core exports `advanceOffset(start, count)` for nonnegative safe-integer addition without a local
+content ceiling. Consumers use it to validate caller windows, generated request windows
+before dispatch (including later pages), and offset advancement. This removes duplicate arithmetic
+validation from their collection adapters without introducing a traversal callback convention.
+There is no shared traversal API, page DTO, mode registry or HTTP adapter.
+
+Each integration uses an ordinary service loop, checks cancellation before and after every awaited
+page step (including the final one), and passes the same invocation signal to requests. It owns
+position, accumulation, identity, budgets, ordering, end evidence and errors; every continued step
+must make progress under the service's continuation contract. No retry or default request, time or
+content ceiling is imposed. Command authors reuse their integration's collection adapter instead
+of copying its loop or safety checks into each endpoint declaration.
+
+Service-specific collection envelopes, defaults, continuation syntax, deduplication, completeness,
+caller budgets and native cursors belong in the independently versioned products. Core only owns
+checked offset arithmetic. See each product's command guide and offline paging tests for its
+contract; Factory does not maintain a second service paging specification.
+
+Core's `readResponseBody(response, { signal, maxBytes? })` consumes one response into owned bytes
+without choosing HTTP status, media, UTF-8 decoding or JSON semantics. There is no default byte
+ceiling. An explicit caller budget must be a positive safe integer and bounds actual emitted
+(normally decoded) bytes. Content-Length must be a nonnegative safe integer; identity bodies must
+match the completed length. Encoded wire length is not compared with decoded size. The reader
+owns copied chunks, observes cancellation and releases its lock without awaiting unread tee siblings.
+Errors contain no response bytes; underlying causes follow the shared diagnostic policy.
+No retries occur.
+
+Downloads use `publishFile({ cwd, name, output?, ... })` with the
+absolute working directory captured once per invocation (also shared by commands in an RPC session).
+Without `output`, the integration supplies the actual metadata filename or known command resource
+name. Core rejects unsafe or ambiguous basenames, including traversal, reserved devices and controls;
+no filename sanitization invents a different resource name. Relative `output` paths resolve against
+cwd; absolute paths are used as supplied. The destination parent must already exist.
+
+Core verifies the link-free parent chain before acquisition, stages bytes in a fresh private
+`.download-*` directory beside the destination, and publishes with an exclusive hard link.
+It snapshots/rechecks directory and file identities, writes complete chunks, syncs before publication,
+verifies the published inode and never falls back to rename/copy or overwrites. Directory identity
+rather than spelling governs verification. Validation callbacks are read-only: detected size,
+modification-time or change-time mutations are rejected. The exclusive handle remains open through
+validation and publication. Cleanup matches the path to a fresh handle snapshot, closes successfully,
+rechecks, and only then unlinks. Optional byte budgets come from the caller; response inspection and
+file validation callbacks are awaited.
+
+The result is `{ path, bytes, sha256 }` only after verified publication and staging cleanup.
+`FilePublicationError.published` records whether the link completed; `cleanupFailed` records incomplete
+owned-stage cleanup. Core computes those flags. Only static errors explicitly thrown by
+`inspectResponse` or `validateFile` as `FilePublicationError` retain their message after clean
+unpublished cleanup. Fetch, stream, filesystem and abort errors are wrapped with contextual diagnostics
+and preserved, redacted causes. A cleanup error takes precedence while retaining the original failure
+and distinguishes unpublished from already-published data. Cleanup verifies the destination parent
+chain and staged-file identity before unlinking; it never
+follows a replacement or deletes an unknown destination.
+
+Endpoints, authentication, status/media checks, whole-file 206 rejection, compressed wire
+Content-Length bounds, filename conventions, service limits, file signatures and result DTOs remain
+integration-owned. `privateDirectory` is applied only to the newly created staging directory, never
+existing destination ancestors. The hard-linked file retains its private file access.
+These path checks protect the selected destination and detectable replacement; no path-based Node API can
+eliminate every same-user replacement race after the last check, including exotic in-place mutation
+with forged metadata. There is no retry, resume, opening, execution or extraction.
+
+`saveFile({ cwd, name, output?, content, signal? })` publishes generated text (exports and
+result manifests) through the same publisher. Profile configuration, credentials, browser state
+and internal caches remain profile-owned. User outputs are not tracked by download management.
+The former profile-file publisher and `downloads list/delete/clean` commands are removed. Existing
+AppData downloads are left untouched; users may copy or remove them explicitly. There is no silent
+migration or cleanup of old files.
+
+## Runtime shape
+
+```mermaid
+flowchart TB
+    declaration["Recursive command declaration"] --> commander["Commander command tree"]
+    commander --> handler["Integration handler"]
+    profiles["Profile JSON"] --> context["Command context"]
+    appdata["Profile AppArguments"] --> context
+    policy["Profile permissions"] --> commander
+    secrets["Platform secret store"] --> context
+    context --> handler
+    handler --> renderer["Human / JSON renderer"]
+    handler --> rpc["JSON-RPC result"]
+```
+
+Commander is used for parsing and automatic nested help. `@primno/dpapi` provides native Windows
+DPAPI; `@napi-rs/keyring` provides macOS/Linux keyring access. These are implementation choices,
+not APIs exposed to integrations.
+Core's profile/auth/permissions commands use the same recursive declarations and adapter as
+service commands. Their configuration and exclusive-admission policies are private Core details,
+not additional command types that an integration author needs to learn.
+Invoking a group without a leaf displays its help successfully, for built-in and service groups
+alike. Unknown options and missing required leaf arguments remain parser failures on every path.
+
+## Application lifecycle and optional runtimes
+
+A CLI application supports async idempotent `dispose()`. Executable/embedding owners dispose in
+finally; a hosted application's lifetime belongs to its server. Invocation I/O, cancellation,
+cwd and environment are local to each call. Cleanup retains credentials and persisted browser
+state; explicit logout/deletion owns removal. Help/errors never exit an embedding process.
+
+Definitions declare flat owned `resources`: each has `dispose()` and optionally
+`invalidateProfile(appArguments)`. Core deduplicates them, invalidates the affected profile on
+configuration/update/deletion, and attempts all disposals in reverse order even after an error.
+For profile updates and non-authenticated configuration, invalidation completes before the
+candidate profile is persisted. A resource veto therefore leaves the original settings intact,
+including when retained data or an interrupted migration prevents reconfiguration.
+No resource lookup, scopes, DI or manual forwarding of profile hooks is required.
+
+`concurrency` limits logical commands (positive integer, otherwise unbounded), not connections.
+Parsed command identity determines exclusive profile/auth/permission coordination, never argument
+values or profile names. Interactive onboarding releases shared admission and rechecks configuration
+and policy under exclusive admission before effects, without replaying the service handler.
+
+This product uses the standalone runner. IPC hosting, build compatibility manifests and browser
+mode/video procedures are source-only optional-module material, not product setup or dependencies.
+
+## AppArguments and current-user application data
+
+Core exports the familiar PoeShared-style `AppArguments` API. Its public storage names and path
+composition intentionally match the C#/Rust contract:
+
+```text
+EnvironmentAppData/<AppName>              = RoamingAppDataDirectory
+EnvironmentLocalAppData/<AppName>         = LocalAppDataDirectory
+RoamingAppDataDirectory/<Profile>          = AppDataDirectory
+AppDataDirectory/temp                      = TempDirectory
+AppDataDirectory/log                       = LogDirectory()
+```
+
+`AppName` is the CLI's stable `applicationId`; changing it selects a different user-data and
+credential namespace. Document the required reconfiguration rather than adding old-namespace
+fallbacks, and leave existing user data untouched. `profiles.json` is application-wide and lives directly in
+`RoamingAppDataDirectory`. All other profile-owned files derive from `AppDataDirectory` using
+ordinary `node:path` composition. Standalone secrets use Core's platform secret store; on Windows
+their encrypted DPAPI files also derive from `AppDataDirectory`. Declared browser auth files and
+explicitly requested sensitive browser videos remain the only unencrypted credential-bearing
+file exceptions in profile AppData.
+
+The environment roots belong to the current OS user:
+
+| Platform | `EnvironmentAppData` | `EnvironmentLocalAppData` |
+|---|---|---|
+| Windows | `%APPDATA%` | `%LOCALAPPDATA%` |
+| macOS | `~/Library/Application Support` | same |
+| Linux | `$XDG_DATA_HOME` or `~/.local/share` | same |
+
+CliFactory applications are deliberately non-portable. There is no `--dataFolder`, sibling
+`data` directory detection, executable-relative fallback, or public environment-variable override.
+Tests inject an `AppArgumentsEnvironment` or `AppArguments` instance instead of redirecting a real
+application through process-global state.
+
+Unlike a PoeShared desktop process, a persistent CLI process may execute commands against different
+profiles. Core therefore creates a profile-specific `AppArguments` view for every command and exposes
+it as `context.appArguments`. There is no mutable process-wide active AppData directory.
+
+Profile-document mutations serialize read-modify-write within the owner process, then use a
+temporary file and rename. Case-colliding profile names are rejected without automatic migration. Deleting a profile deletes its known credential and its complete
+`AppDataDirectory`; default-profile and final-profile protections run before deletion.
+
+The profile document has a versioned shape:
+
+```json
+{
+  "version": 1,
+  "active": "default",
+  "profiles": {
+    "default": { "url": "https://service.example.test" }
+  },
+  "permissions": {
+    "default": ["ReadOnly"]
+  }
+}
+```
+
+The `permissions` property is absent until a user changes a profile away from integration
+defaults. An explicit empty array means every service permission is disabled for that profile.
+
+## Authentication contract
+
+`AuthDefinition` delegates login/status/logout and optional login options to the integration.
+Core supplies the standard command tree and persistence; it does not infer an authorization
+protocol. `tokenAuth` is one implementation of that contract. Browser authentication may compose
+the optional Playwright owner with application-specific login completion and logout semantics.
+See [optional source reference: runtime modules](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/runtime-modules.md) for lifecycle, IPC and browser state details.
+
+Service commands never implicitly call `status(context)`: it belongs to explicit `auth status`
+and may contact the service or browser. Optional `isReady(context)` supplies only a cheap local
+preflight after permission checks and required-field checks. It must not launch/reconfigure browser
+resources or contact a service. Its narrow context provides the selected profile, AppArguments,
+scoped secrets, cancellation and caller environment, not fetch/streams. False enters ordinary
+configuration/onboarding handling. `tokenAuth` checks scoped secret presence; it does not validate
+on every command. Readiness is only a local hint, never proof of remote authorization.
+
+If passive readiness is unavailable, omit `isReady`: the service handler owns authentication
+enforcement and actionable errors (for example, asking the user to run auth login). Core does not
+guess browser login state or automatically trigger login for such a definition. Explicit
+`auth login`/`profile configure` still call app-owned login. There is no status validation boolean.
+
+`CliDefinition.environmentKeys` declares extra invocation inputs. `AuthDefinition.environmentKeys`
+declares auth-owned inputs; `tokenAuth({env})` contributes its key automatically. Hosted calls union
+these declarations, snapshot only those values from each caller and reject undeclared keys.
+Handlers/auth read `context.environment`, never the long-lived host's process.env. Hosting adds
+no second public env list or secret persistence mechanism.
+
+Profile deletion calls app-owned logout/revocation before resource invalidation and deletion.
+If logout fails, Core leaves the profile and resources available for retry; effects already made
+by the application's logout cannot be rolled back. All of this runs under exclusive admission.
+
+The built-in token flow resolves a candidate in this order during `profile configure` or
+`auth login`:
+
+1. stdin when `--token-stdin` is present;
+2. the integration-specific environment variable;
+3. a masked interactive terminal prompt when a real TTY is available.
+
+The terminal prompt writes only a `*` mask to stderr. Typing, pasting and Backspace update
+the mask; long input uses a single-row clipped mask marked with `+`, while retaining the full
+candidate. Enter submits nonempty input; Ctrl+C, cancellation and input closure restore raw mode
+and end the prompt without exposing the candidate. A delayed LF from the preceding text prompt
+cannot submit an empty token.
+
+All new bearer token candidates pass through `normalizeBearerToken` before validation and secret
+storage: stdin, the declared environment variable, and interactive input. It trims only outer
+whitespace, rejects empty values, copied Bearer/Authorization headers, enclosing quotes and internal
+control characters, and preserves internal symbols. Explicit empty input fails without falling back
+to another source. Directly callable bearer HTTP clients should use the same helper.
+This is a bearer-input contract, not a transformation of arbitrary secrets or existing stored credentials.
+`tokenAuth.tokenSource` supplies the integration's token-settings location; the `--token-stdin`
+help names it, and the interactive prompt adds one sentence about pasting the bare value. A
+missing token fails with `auth.missingToken` and the `profile configure <name> --token-stdin`
+follow-up. Errors never echo the candidate.
+
+Stored credentials are not configure/login candidates. Prompting requires ordinary rendered
+execution without `--json`, with stdin, stdout and stderr all attached to a TTY. JSON-RPC and
+programmatic execution never prompt or consume `--token-stdin`; an explicit rendered CLI stdin
+flow remains available.
+
+`profile configure` validates the profile name, non-secret configuration and new authentication
+candidate before changing persistent state. Missing or rejected candidates preserve the existing
+profile and credential and do not create a new profile. After successful authentication validation,
+configure removes the previous credential, saves the candidate profile, then saves the validated
+credential. A removal failure leaves configuration unchanged. A later storage failure can leave
+an unauthenticated profile; the error directs the user to `profile configure <name> --token-stdin`.
+This fails closed across two stores; it is not an atomic transaction, and it never rolls back an
+old credential onto a new endpoint. `auth login` validates against the current profile and changes
+only the credential. Configure/login storage failures explain the failed storage operation and
+preserve backend causes under the shared diagnostic/redaction policy.
+Ordinary `profile set` remains a non-auth configuration operation.
+
+For app-owned auth, configure supplies candidate profile values and defers `context.secrets`
+set/delete operations until login returns authenticated. Reads see pending writes; failed login
+discards them. Commit removes replaced credentials before saving the profile and new credentials.
+This protection covers only the injected secret store, not app-owned browser files or remote
+effects. Invalidation runs before configure login (after non-secret validation), so a fresh login
+is not immediately invalidated. Failed login can therefore retire cached resources; it cannot
+roll back browser or remote changes made by the application. Auth implementations use the supplied
+context and await all their work before returning; do not retain it or bypass its secret store.
+
+No-auth integrations and profiles that opt out of token authentication configure without accessing
+credentials. `auth login` rejects such profiles.
+
+The token is validated by the integration before it is persisted. An integration may declare
+that a configured profile does not require a token, for example anonymous guest access; the
+service-specific switch and HTTP behavior stay in that integration. Explicit authentication status
+uses the supplied validator for the stored token, but must never print it. Logout deletes only the active
+profile's credential.
+
+## Permission contract
+
+Enabling `permissions: {}` adds standard `permissions list/grant/revoke` commands. Integration
+authors attach one category to each service leaf in the same command declaration that owns its
+handler. `list`, `get`, `status`, search, and inspection normally use `ReadOnly`. Create, trigger,
+cancel, comment, upload, edit, and delete operations use at least `Update`.
+
+Custom categories contain a stable CLI-safe name, description, and optional default. They are not
+hierarchical: enabling `Update` does not implicitly enable a custom `DeployProduction` category.
+Category changes are ordinary profile configuration and intentionally never contain secrets.
+
+A service leaf may add `additionalPermissions(input, {cwd, signal})` alongside its static
+`permission`. Core admits the static category first, then invokes this local preparation once,
+before configuration, authentication, secrets or service work. Every returned category must be
+declared and enabled for the selected profile. Unknown categories fail closed with
+`permission.unknown`; disabled categories use the existing `permission.denied` contract.
+Help and classification never invoke preparation. CLI, `execute` and RPC use the same admission.
+If onboarding reacquires exclusive execution, Core rechecks all grants without repeating preparation.
+The resolver and handler receive the same invocation-owned `CommandInput` object. A consumer can
+retain an inspected snapshot in a command-local `WeakMap` keyed by that input; the handler must use
+that snapshot rather than reread mutable input. Preparation receives no profile, secrets, transport
+or output. This option requires a service handler and an enabled permission gate; local metadata
+commands cannot declare it. Existing commands with static permissions retain their behavior.
+
+## Testing model
+
+Development follows a thin vertical TDD loop:
+
+1. Add the minimum authentication/profile skeleton needed to reach the service.
+2. Configure a real current-user profile through the built CLI and platform secret store.
+3. Run an explicit local, read-only integration proof through the compiled CLI process, or use an
+   official documentation sample when a real service is unavailable.
+4. Remove credentials and sensitive/customer data before saving a minimal fixture.
+5. Express the desired command as a failing test against an HTTP mock.
+6. For a side effect, first prove its permission denial occurs before the mock sees a request.
+7. Implement the smallest client and command code that passes the test.
+8. Re-run the local proof while debugging; keep mocked tests deterministic and in the default suite.
+
+MSW intercepts the native `fetch` boundary in Node tests. Fixtures are data, not a second client
+implementation. Full rules are in [`testing.md`](testing.md).
+
+The separate `@eyeauras/cli-factory/testing` entry point supplies offline fixture mechanics
+without entering the default production export. It owns canonical temporary AppArguments,
+memory credentials, a real profile-document view, output capture and registered application
+disposal before guarded directory cleanup. Service definitions, auth protocols, synthetic HTTP
+contracts and explicit permission choices remain with integrations. Preparation never logs in
+or grants permissions implicitly; unconfigured state is supported. An application's normal profile
+store retains its service validation rather than being replaced by a generic fixture store.
+
+A profile-backed integration proof is development evidence, not regression coverage. It uses a
+named profile from the current user's normal AppData and credentials from the normal platform secret store; it
+does not accept a test URL or token. It invokes the packaged CLI boundary and a fixed, bounded
+inventory of `ReadOnly` commands. It is a separate explicit script, refuses CI environments before
+networking, never prints or persists raw responses, and is never included in `npm test`. Mocked tests
+remain the only service-contract tests required in CI.
+
+External integrations consume `@eyeauras/cli-factory/proof`, separate from both the runtime and
+offline-fixture exports. `parseProofProfile` performs strict profile/CI preflight before the
+inventory runs. `createProofInvoker` launches the packaged Node entry point with code-owned argv
+and optional stdin, refusing known CI variables case-insensitively before every spawn and removing
+declared credential environment overrides. Each child defaults to 30 seconds and 64 KiB separately
+for stdout and stderr, counted as bytes before decoding. Positive integer limits may be declared
+in proof source, never supplied as user arguments. Failures terminate the child, close its pipes
+and await process closure; errors contain contextual diagnostics and redacted causes, never raw
+captured service output.
+Only successful stdout is returned for in-memory validation. These helpers do not discover
+commands, manage service state, or turn raw responses into safe reports. Integrations own fixed
+inventories, response validation, dependency skips and compact reporting; a failed prerequisite,
+incomplete inventory or zero successful executions cannot pass. The local product retains its existing service-specific proof inventory.
+
+## Package boundaries
+
+This repository owns its service client, DTOs, command tree, auth integration, paging, tests,
+proof inventory, packaging, agent instructions and releases. Runtime mechanisms come from the
+exact published Core dependency; no Core/IPC/Playwright implementation is copied or forked here.
+Local policy ownership and permitted documentation duplication do not change runtime ownership.
+[The product release guide](release.md) governs publication; Factory release/workspace procedures
+are not local commands. Source-only submodules, RANDOM examples, optional IPC/browser builds and
+planned CliWrap tooling are not product prerequisites.
+
+## Non-goals for the foundation
+
+- A code generator before two real integrations demonstrate repeated authoring work.
+- A plugin runtime or dependency-injection container.
+- A universal service DTO, pagination model, traversal API or HTTP client wrapper. Shared checked
+  offset arithmetic leaves those service contracts and ordinary page loops local.
+- A plaintext or silently degraded secret store.
+- Portable or executable-relative application data.
+- Treating local permission gates as a replacement for remote authorization or human policy.
+- Claiming streaming subscriptions before JSON-RPC notifications have cancellation and
+  backpressure tests.
+
+## Evolution rule
+
+While the project is in its initial stage, changes are clean breaks. There is no obligation to
+preserve an earlier API, CLI syntax, configuration shape, or development workflow. Remove superseded
+implementations in the same change that introduces their replacement; update in-repo consumers,
+tests, and docs together. Do not add legacy branches, compatibility shims, deprecated aliases,
+automatic old-format migrations, or transition periods with two supported paths. External consumers
+update to the new contract when they update their pinned factory version. Explain any required
+reconfiguration without silently deleting user-owned configuration or credentials.
+
+Promote-on-use: a feature enters core only when a current integration consumes it. When two
+integrations differ, preserve the difference until their shared shape is demonstrated. The goal is
+homogeneous operation, not forced homogeneity of unrelated service domains.
+
+The implementation path for new products is documented in [`integrations.md`](integrations.md).
+Feature and bug scope enters the development loop through
+[`practices/github-issues.md`](practices/github-issues.md). Phased integrations use the
+Reconciliation Lead practice in [`practices/workstreams.md`](practices/workstreams.md).
