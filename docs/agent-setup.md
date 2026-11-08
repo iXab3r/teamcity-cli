@@ -32,6 +32,16 @@ separate practice. Adapters select guides and harness tools; they do not copy po
 stays read-only. Other harnesses use the same Markdown router/guides without duplicate settings.
 Adopting a role is distinct from spawning an agent; task authority governs delegation.
 
+## Issue intake
+
+The local [bug report](../.github/ISSUE_TEMPLATE/bug-report.md),
+[feature/design form](../.github/ISSUE_TEMPLATE/feature-design.md) and
+[chooser configuration](../.github/ISSUE_TEMPLATE/config.yml) preserve safe evidence, ownership,
+acceptance and verification prompts from Factory. They are product intake forms, not copied role
+policies. Story increments still follow Story Delivery Lead, including Given/When/Then scenarios,
+API dependencies, owner-approved milestones and milestone closure. Installing these forms creates
+no issues, labels or milestones; existing `bug` and `enhancement` labels are used.
+
 ## Story prerequisites
 
 This setup does not supply or claim a generated complete service API inventory, pinned official
@@ -47,6 +57,7 @@ Publishing an inventory/story backlog, live proof, CI changes and releases each 
 
 When changing agent setup or the Core pin, compare the pinned Factory `AGENTS.md`,
 `docs/roles/README.md`, `integrations/AGENTS.md`, `packages/core/AGENTS.md`,
+`.github/ISSUE_TEMPLATE/` intake forms and chooser configuration,
 all five `docs/roles/*.md` function guides and matching `.claude/agents/*.md`, and all five
 `docs/practices/*.md` documents against the router and adapter table above. Re-enumerate rather
 than assuming the function/practice count stays five. Classify each addition/removal by owning
@@ -54,7 +65,7 @@ surface and update this index, router and adapter set together; explain exclusio
 
 Follow every applicable instruction link, including relative links inside pinned guides, to its
 actual file and heading. Check local README/product-contract/test/proof routes, all five roles,
-all five practices and adapter-to-router/domain reachability. Verify one exact Factory pin for
+all five practices, issue templates and adapter-to-router/domain reachability. Verify one exact Factory pin for
 all canonical links; historical extraction provenance in migration docs is not a policy baseline.
 Review changes to canonical Core guides in Factory, not by patching or copying them here.
 
