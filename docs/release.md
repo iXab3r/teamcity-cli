@@ -7,7 +7,7 @@ The Cake driver is adapted from pinned nexus-cli/opensearch-cli; see [build/NOTI
 
 ## Core dependency and product approval
 
-This product's **0.7.1** candidate pins published Core **0.7.1** at
+Published product **0.7.1** pins published Core **0.7.1** at
 [release revision bf79b80636bcdd790bbd6c25648842ae5213f267](https://github.com/iXab3r/EyeAuras.CliFactory/commit/bf79b80636bcdd790bbd6c25648842ae5213f267).
 The owner approved Core's exact npm stage. Core VerifyRegistry build **33314** completed with a
 `published-verified` receipt; npm's version/latest and SHA-512, installed Core behavior, and
@@ -63,17 +63,17 @@ inside TeamCity. Copies were paused while the project was archived. Each job use
 `node:24-bookworm` on Linux, and this product's exclusive staging lock.
 
 The root defaults to `refs/heads/main`; its branch specification allows manual PR checks.
-Verify's VCS filter is `+:<default>` and stays disabled until the entrypoint is merged and exact
-main Verify passes. Staging has no triggers or upstream dependencies. Its default is
-`env.RELEASE_MODE=--dry-run`, `env.RELEASE_REVISION` empty and `release.build=0.7.1-candidate`
+Verify's enabled VCS trigger uses `+:<default>` after successful verification of the merged main.
+Staging has no triggers or upstream dependencies. Its default is
+`env.RELEASE_MODE=--dry-run`, `env.RELEASE_REVISION` empty and `release.build=0.7.1`
 (the copied number pattern needs a label). Native copy retains protected `npm.token`, the
 `env.NPM_TOKEN=%npm.token%` reference and inherited protected `env.GITHUB_TOKEN` without reading
 or resolving their values. The local Credentials gate is restored disabled after copying.
-Do not change shared VCS roots, unrelated jobs or token permissions. Parent owns activation and
-merge/cutover; projects/jobs may stay archived/paused between controlled validation runs.
+Both jobs and their project are active. Do not change shared VCS roots, unrelated jobs or token
+permissions. Publication still requires owner approval of each verified npm stage.
 
-Prove roots, lock, script, checkout and configuration validity before unpausing. Enable the
-main-only trigger only after entrypoint merge and exact-head manual Verify. Bootstrap never
+When provisioning a replacement job, verify its root, lock, script, checkout and configuration
+before activation. Enable its main-only trigger after exact-head manual Verify. Bootstrap never
 configures TeamCity. TeamCity is CI; no GitHub Actions or PowerShell infrastructure is added.
 The wrapper admits named system/tool variables; Cake isolates ordinary children and private npm
 configs. Only stage receives NPM_TOKEN; GitHub Release creation uses a private temporary header.
