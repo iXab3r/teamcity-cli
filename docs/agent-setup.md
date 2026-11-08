@@ -61,7 +61,7 @@ Run the [offline completeness check](../scripts/check-agent-setup.mjs) with
 an expected set, not just existing links: five function roles, five practices, five adapters,
 three issue-template files, local domain/runtime/test/authoring contracts and product routes.
 It rejects missing or extra entries, unreachable required policies, broken local file/heading links,
-mandatory external policy links and obsolete remote-policy instructions. Code-fence examples and
+mandatory external policy links, unclassified bare external URLs and obsolete remote-policy instructions. Code-fence examples and
 provenance paths are not claimed to be additional local source files.
 
 When changing this setup, intentionally review the router, local policy/adapter/template inventories,
