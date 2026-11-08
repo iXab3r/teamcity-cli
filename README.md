@@ -21,7 +21,7 @@ for each profile and reimport auxiliary secrets. Existing profiles and permissio
 Copy the service base address, for example `https://teamcity.example.test/` or `https://example.test/teamcity/`. Include any context path and port; omit `/app/rest`, build/project pages and query strings. HTTP and HTTPS are supported. Context segments named `api`, `app/rest`, `admin` or `issues` are
 valid deployment contexts; the CLI appends its own service endpoints to the configured base.
 Create/copy an access token in **My Settings & Tools > Access Tokens** (the user profile).
-See the [TeamCity user-profile guide](https://www.jetbrains.com/help/teamcity/configuring-your-user-profile.html). Paste only its value: `FICTIONAL_TOKEN_VALUE` is a fictional example.
+See the [optional API reference: TeamCity user-profile guide](https://www.jetbrains.com/help/teamcity/configuring-your-user-profile.html). Paste only its value: `FICTIONAL_TOKEN_VALUE` is a fictional example.
 Do not include `Bearer `, `Authorization:`, or surrounding quotes. The same guidance appears in
 `profile configure --help`, `auth login --help`, and before interactive input.
 
@@ -154,7 +154,7 @@ filters by direct project. Local v2 coverage is **449/449 unique REST method/pat
 235/235 GET and214/214 mutation routes; no inventory rows remain unexposed. This does not promise
 every parameter/payload variant or live mutation verification. Config-parameter reset and bulk
 unmute report native acknowledgement without verified postconditions. Review counters exclude the
-17-route baseline; future expansion follows the [authoring-review practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/practices/integration-authoring-reviews.md).
+17-route baseline; future expansion follows the [authoring-review practice](docs/practices/integration-authoring-reviews.md).
 
 ## Author a job
 
@@ -228,7 +228,7 @@ teamcity-cli builds diagnose 101
   `--branch` it searches all branches; in human mode stderr names the scope.
 - Without `--state`, `builds list` includes queued, running and finished builds across all branches.
   It sends `defaultFilter:false` without a state dimension. JetBrains'
-  [BuildPromotionFinder source](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildPromotionFinder.java#L936)
+  [optional API reference: BuildPromotionFinder source](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildPromotionFinder.java#L936)
   defaults the missing state to `any`; `setLocatorDefaults` returns early for `defaultFilter:false`.
   The locator remains unchanged: an explicit default would add no selection guarantee.
 - Queued and running builds are listed with `builds list --state queued|running`. TeamCity lists
@@ -244,7 +244,7 @@ teamcity-cli builds diagnose 101
   `build.parameterNames` contains only submitted names confirmed by that response, deduplicated;
   inherited names and all values are discarded. An empty array means no names were confirmed.
   The names remain in the final result with `--wait`, including a failed wait. This uses the
-  [Build properties contract](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/model/build/Build.java#L632),
+  [optional API reference: Build properties contract](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/model/build/Build.java#L632),
   which includes custom-build parameters.
 - Parameter values are not echoed in output or errors. Never pass secrets in argv; secret
   parameters are not supported here.
@@ -258,7 +258,7 @@ teamcity-cli builds diagnose 101
   untracked files and build caches, then fetch its sources again. It applies only to the queued
   build; it does not request cleanup of dependency builds or change persistent job settings. Omitted by default,
   it sends only `triggeringOptions.cleanSources=true` when selected. See TeamCity's
-  [BuildTriggeringOptions](https://www.jetbrains.com/help/teamcity/rest/buildtriggeringoptions.html).
+  [optional API reference: BuildTriggeringOptions](https://www.jetbrains.com/help/teamcity/rest/buildtriggeringoptions.html).
 
 **Waiting.** `jobs run --wait` (still `Update`) and `builds wait <id>` (`ReadOnly`) only read the
 build: GET `/builds/id:<id>`, every `--interval` (default 5s, 1s–10m). `--timeout` (default 10m,
@@ -537,7 +537,7 @@ that protection is rejected. The server decides omitted-field and mode/root requ
 Context replacement removes omitted entries; values are never returned in context lists.
 
 Config replacement and `config fields set <project> format <value>` pass the format string
-unchanged to the server. The [API entity contract](https://www.jetbrains.com/help/teamcity/rest/versionedsettingsconfig.html)
+unchanged to the server. The [optional API reference: API entity contract](https://www.jetbrains.com/help/teamcity/rest/versionedsettingsconfig.html)
 gives `kotlin` and `xml` as examples, rather than a closed set. The server validates the supplied
 format; forwarding a string does not establish support for executing that language.
 
@@ -611,11 +611,11 @@ parameter resolution; job VCS reads disable parameter resolution.
 
 Artifact lists add `directory` and `archive` booleans. NAME marks directories with `/` and archives
 with `(archive)`. These indicators come from the presence of `children` and `content` in the
-[File model](https://www.jetbrains.com/help/teamcity/rest/file.html): directories have children;
+[optional API reference: File model](https://www.jetbrains.com/help/teamcity/rest/file.html): directories have children;
 archives have both children and content. The request selects `children($none),content($none)`
 and enables archive recognition (`browseArchives:true`) while keeping `recursive:false`; it
 returns no nested children or hrefs. See JetBrains'
-[archive projection](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildArtifactsFinder.java#L464).
+[optional API reference: archive projection](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildArtifactsFinder.java#L464).
 Each listing reads one extra entry to establish `hasMore` without another request; only the
 requested number is returned. A complete list has `hasMore:false` and no footer; when more exist,
 the shared footer suggests a larger selection, such as `More results: --limit 21`. At the safe-integer boundary completeness can
@@ -803,7 +803,7 @@ JSON-RPC returns the same fields, apart from `message`, in `error.data`, and add
 failed outcome. Every `next` argv can be sent back to `cli.execute` unchanged. Core's codes
 (`usage`, `permission.denied`, `profile.*`, `auth.*`, `secrets.unavailable`, `download.failed`,
 `interrupted`, `error`, the `http.*` statuses of its shared `HttpError` and the `request.*`
-transport reasons) are listed in the [design](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/DESIGN.md#machine-output-is-a-first-class-contract).
+transport reasons) are listed in the [design](docs/DESIGN.md#machine-output-is-a-first-class-contract).
 TeamCity adds these:
 
 | Code | Meaning |
@@ -850,9 +850,9 @@ The proof is outside `npm test` and refuses CI/CD environments before launching 
 local development tool, not a regression suite or production availability monitor.
 The shared Core proof invoker limits each child to 30 seconds and each stdout/stderr stream to
 64 KiB. Oversized responses now fail instead of using unbounded capture. It strips inherited
-`TEAMCITY_TOKEN` case-insensitively and applies the [shared CI preflight](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/testing.md).
+`TEAMCITY_TOKEN` case-insensitively and applies the [shared CI preflight](docs/testing.md).
 
-See [the integration authoring guide](https://github.com/iXab3r/EyeAuras.CliFactory/blob/bf79b80636bcdd790bbd6c25648842ae5213f267/docs/integrations.md) for how this product references
+See [the integration authoring guide](docs/integrations.md) for how this product references
 the common package and how to start the next in-repo or external integration.
 
 ## Source development

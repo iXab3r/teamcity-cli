@@ -1,0 +1,45 @@
+# Agent roles
+
+> Locally owned instruction policy, adapted from the Core0.7.1 source snapshot.
+> [Attribution, scope and manual updates](../policy-provenance.md). External citations are optional provenance/API references.
+> Public-API code excerpts are illustrative source examples, not additional repository files or build steps.
+
+Roles are small sets of applicable instructions, not personas or additional checklists. The root
+[router](../../AGENTS.md) selects them. Reading and adopting a domain role does not require spawning
+an agent; independent review does require a separate context.
+
+## Domain and function roles
+
+Domain roles define correct behavior for their files. Function roles define how a task is delivered;
+they compose with the domains they touch and never replace those domains' invariants.
+
+| Role | Trigger / local guide |
+|---|---|
+| Factory-core maintainer | Shared CLI mechanisms: [Core escalation guide](core-escalation.md) |
+| Service integration author | Service-shaped commands and clients: [integration guide](integration-author.md) plus any deeper router |
+| Repository tooling/docs owner | Tooling, CI and documentation: [root router](../../AGENTS.md), the relevant design/practice and [testing](../testing.md) when applicable |
+| GH issue dev | Issue intake through verified delivery: [role](gh-issue-dev.md), [lifecycle](../practices/github-issues.md) |
+| Reviewer | Independent read-only audit of a completed diff: [role](reviewer.md) |
+| CLI writer | Text a person reads at the terminal, when authored or reviewed: [role](cli-writer.md) |
+| Reconciliation Lead | Migration, expansion or audit of a declared inventory: [role](reconciliation-lead.md), [workstreams](../practices/workstreams.md) |
+| Story Delivery Lead | Product delivery through user stories, test-first milestones and review loops: [role](story-delivery-lead.md), [practice](../practices/story-driven-delivery.md) |
+
+Select checks for the actual risk under the [verification policy](../practices/github-issues.md#verification-and-setup-limits)
+and preserve mandatory repository/domain gates. Several roles do not imply several copies of a test run.
+One delivery owner controls branch changes and publication. Delegated writers need disjoint agreed
+scopes; reviewers remain read-only. A small fix needs no workstream.
+
+## Local guides and adapters
+
+Keep a guide focused: trigger, mission/territory, load-bearing invariants, evidence by risk and hand-off.
+Domain guidance lives in the local integration-author and Core-escalation guides.
+Shared lifecycle rules belong in the practice, not in every role.
+
+The existing `.claude/agents/` adapters point to local guides and carry only discovery metadata,
+role/guide selection and harness controls (such as read-only tools). Adapters do not duplicate policy
+or install tool prerequisites. Other harnesses receive the same `AGENTS.md` router and Markdown role
+guides directly; do not maintain a duplicate `CLAUDE.md` or prompt-only TOML role definitions. Native
+model/tool controls remain in the adapters. Personal configuration changes are outside repository work.
+
+Independent architecture, planning and diff audits follow [fresh-context intake](../practices/independent-review.md).
+The owning domain supplies architecture expertise; a new persona or model tier is unnecessary.
