@@ -1,6 +1,6 @@
 {
   "name": "@eyeauras/teamcity-cli",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "AI-friendly TeamCity CLI built with AI CLI Factory.",
   "type": "module",
   "main": "./dist/src/index.js",
@@ -12,28 +12,34 @@
     "build": "tsc --project tsconfig.json",
     "start": "node dist/src/bin.js",
     "test:compiled": "node --test dist/tests/*.test.js",
-    "pretest:integration": "npm run build --workspace @eyeauras/cli-factory && npm run build",
+    "pretest:integration": "npm run build",
     "test:integration": "node dist/integration-tests/profile-proof.js",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "test": "npm run build && npm run test:compiled",
+    "check": "npm test",
+    "test:package": "node scripts/test-package.mjs",
+    "test:registry": "node scripts/test-package.mjs --registry",
+    "test:release": "node --test scripts/test-release.mjs"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
-    "@eyeauras/cli-factory": "0.7.0"
+    "@eyeauras/cli-factory": "0.7.1"
   },
   "devDependencies": {
-    "msw": "^2.11.0"
+    "msw": "^2.11.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iXab3r/EyeAuras.CliFactory.git",
-    "directory": "integrations/teamcity"
+    "url": "git+https://github.com/iXab3r/teamcity-cli.git"
   },
-  "homepage": "https://github.com/iXab3r/EyeAuras.CliFactory/tree/main/integrations/teamcity",
+  "homepage": "https://github.com/iXab3r/teamcity-cli",
   "bugs": {
-    "url": "https://github.com/iXab3r/EyeAuras.CliFactory/issues"
+    "url": "https://github.com/iXab3r/teamcity-cli/issues"
   },
   "publishConfig": {
     "access": "public",
@@ -41,5 +47,6 @@
   },
   "files": [
     "dist/src"
-  ]
+  ],
+  "packageManager": "npm@11.20.0"
 }

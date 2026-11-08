@@ -3,7 +3,7 @@
 `teamcity-cli` is the first executable integration built on the reusable
 `@eyeauras/cli-factory` npm package. The package under this directory owns TeamCity REST paths,
 locators, DTOs, and command vocabulary; generic command-tree, profile, credential, permission,
-output, and JSON-RPC behavior stays in `packages/core`.
+output, and JSON-RPC behavior is supplied by the pinned `@eyeauras/cli-factory` dependency.
 
 Ordinary text, JSON and XML responses have no tool-imposed byte ceiling. Invalid Content-Length
 and incomplete or mismatched unencoded/identity transfers still fail. Compressed wire length is
@@ -46,7 +46,7 @@ Requires Node.js 22+ and npm. The package includes compiled JavaScript and insta
 automatically; no repository checkout, .NET, TypeScript compiler or browser is needed.
 Interactive profile configuration guides endpoint/authentication setup; standalone secrets
 use the platform secret store. Existing `teamcity-cli` profiles and permissions are unchanged.
-Licensed under MIT. See the [release guide](https://github.com/iXab3r/EyeAuras.CliFactory/blob/main/docs/npm-release.md).
+Licensed under MIT. See the [release guide](docs/release.md).
 
 ## Command tree
 
@@ -154,7 +154,7 @@ filters by direct project. Local v2 coverage is **449/449 unique REST method/pat
 235/235 GET and214/214 mutation routes; no inventory rows remain unexposed. This does not promise
 every parameter/payload variant or live mutation verification. Config-parameter reset and bulk
 unmute report native acknowledgement without verified postconditions. Review counters exclude the
-17-route baseline; future expansion follows the [authoring-review practice](../../docs/practices/integration-authoring-reviews.md).
+17-route baseline; future expansion follows the [authoring-review practice](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/practices/integration-authoring-reviews.md).
 
 ## Author a job
 
@@ -803,7 +803,7 @@ JSON-RPC returns the same fields, apart from `message`, in `error.data`, and add
 failed outcome. Every `next` argv can be sent back to `cli.execute` unchanged. Core's codes
 (`usage`, `permission.denied`, `profile.*`, `auth.*`, `secrets.unavailable`, `download.failed`,
 `interrupted`, `error`, the `http.*` statuses of its shared `HttpError` and the `request.*`
-transport reasons) are listed in the [design](../../docs/DESIGN.md#machine-output-is-a-first-class-contract).
+transport reasons) are listed in the [design](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/DESIGN.md#machine-output-is-a-first-class-contract).
 TeamCity adds these:
 
 | Code | Meaning |
@@ -831,7 +831,7 @@ npm test
 For development/debug proof-of-work, configure a real local profile once and run:
 
 ```text
-npm run test:integration --workspace @eyeauras/teamcity-cli -- --profile <name>
+npm run test:integration -- --profile <name>
 ```
 
 This command builds Core and TeamCity and then runs the compiled CLI as child processes. It uses
@@ -850,7 +850,12 @@ The proof is outside `npm test` and refuses CI/CD environments before launching 
 local development tool, not a regression suite or production availability monitor.
 The shared Core proof invoker limits each child to 30 seconds and each stdout/stderr stream to
 64 KiB. Oversized responses now fail instead of using unbounded capture. It strips inherited
-`TEAMCITY_TOKEN` case-insensitively and applies the [shared CI preflight](../../docs/testing.md).
+`TEAMCITY_TOKEN` case-insensitively and applies the [shared CI preflight](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/testing.md).
 
-See [the integration authoring guide](../../docs/integrations.md) for how this product references
+See [the integration authoring guide](https://github.com/iXab3r/EyeAuras.CliFactory/blob/6b226682ef762dd49bd1c9d7eb8e7bf18e80acc8/docs/integrations.md) for how this product references
 the common package and how to start the next in-repo or external integration.
+
+## Source development
+
+`npm ci`, `npm test`, and `npm run test:package` build and test this repository independently.
+See [release and Core adoption gates](docs/release.md) and [migration provenance](docs/migration.md).
