@@ -1,4 +1,4 @@
-import { fieldsOption } from "./projection.js";
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
   CliError,
@@ -135,7 +135,7 @@ export function createTriageCommands(
       "artifact-changes <id>",
       "Inspect changed artifact dependency builds",
       Permission.ReadOnly,
-      (c, { args, options }) => c.getArtifactDependencyChanges(num(args, "id"), options.fields as string | undefined),
+      (c, { args, options }) => c.getArtifactDependencyChanges(num(args, "id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     leaf(
@@ -170,7 +170,7 @@ export function createTriageCommands(
         "list <id>",
         "List problem occurrences",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listBuildOccurrences(num(args, "id"), "problem", options.fields as string | undefined),
+        (c, { args, options }) => c.listBuildOccurrences(num(args, "id"), "problem", fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -185,7 +185,7 @@ export function createTriageCommands(
       "related-issues <id>",
       "Read related issue IDs",
       Permission.ReadOnly,
-      (c, { args, options }) => c.getBuildRelatedIssues(num(args, "id"), options.fields as string | undefined),
+      (c, { args, options }) => c.getBuildRelatedIssues(num(args, "id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     leaf(
@@ -207,7 +207,7 @@ export function createTriageCommands(
       "test-occurrences <id>",
       "List test occurrences",
       Permission.ReadOnly,
-      (c, { args, options }) => c.listBuildOccurrences(num(args, "id"), "test", options.fields as string | undefined),
+      (c, { args, options }) => c.listBuildOccurrences(num(args, "id"), "test", fieldsFromOptions(options)),
       [fieldsOption],
     ),
     command("vcs-labels", "Inspect and create VCS labels", [
@@ -215,7 +215,7 @@ export function createTriageCommands(
         "list <id>",
         "Read labels with individual statuses",
         Permission.ReadOnly,
-        (c, { args, options }) => c.getBuildVcsLabels(num(args, "id"), options.fields as string | undefined),
+        (c, { args, options }) => c.getBuildVcsLabels(num(args, "id"), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -240,7 +240,7 @@ export function createTriageCommands(
           "list <id>",
           "List parameter names",
           Permission.ReadOnly,
-          (c, { args, options }) => c.listBuildRuntimeParameterNames(num(args, "id"), kind, options.fields as string | undefined),
+          (c, { args, options }) => c.listBuildRuntimeParameterNames(num(args, "id"), kind, fieldsFromOptions(options)),
           [fieldsOption],
         )),
         leaf(

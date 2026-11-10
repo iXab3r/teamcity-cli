@@ -182,3 +182,17 @@ for (const example of failures) {
     }
   });
 }
+
+for (const fields of [undefined, "text"]) {
+  for (const status of [200, 404]) {
+    test(`cancellation absence: status ${status}, fields ${fields}`, async t => {
+      const rt = await runtime(t);
+      const cli = rt.createCli();
+      const requests = trackRequests(t, 1, () => new HttpResponse(null, { status }));
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      const argv = ["builds", "canceled-info", "42", ...(fields === undefined ? [] : ["--fields", fields])];
+      if (status === 200) assert.equal(await cli.execute(argv), null);
+      else await assert.rejects(cli.execute(argv), (error: any) => error.code === "http.notFound");
+    });
+  }
+}

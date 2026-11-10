@@ -1633,12 +1633,11 @@ export class TeamCityClient {
   }
 
   public async getBuildCanceledInfo(id: number, fields?: string) {
-    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/canceledInfo`, {}, value => safeComment(value as OperationComment), fields);
     const result = await this.#optionalJson<OperationComment>(
       `${buildPath(id)}/canceledInfo`,
-      "text,timestamp",
+      fields === undefined ? "text,timestamp" : fieldsProjection(fields),
     );
-    return result === null ? null : safeComment(result);
+    return this.#projectedValue(result, fields, value => value === null ? null : safeComment(value as OperationComment));
   }
 
   public async getChange(id: number) {

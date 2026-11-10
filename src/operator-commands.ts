@@ -1,4 +1,4 @@
-import { fieldsOption } from "./projection.js";
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
   command,
@@ -228,7 +228,7 @@ export function createOperatorCommands(
     ...bulk.queue,
     tags("queue"),
     leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args, options }) =>
-      c.getQueuedBuild(number(args, "build-id"), options.fields as string | undefined),
+      c.getQueuedBuild(number(args, "build-id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     leaf(
@@ -236,7 +236,7 @@ export function createOperatorCommands(
       "List compatible agent identities",
       Permission.ReadOnly,
       (c, { args, options }) =>
-        c.listQueueCompatibleAgents(number(args, "build-id"), options.fields as string | undefined),
+        c.listQueueCompatibleAgents(number(args, "build-id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     command("position", "Inspect positions or move a queued build", [
@@ -245,7 +245,7 @@ export function createOperatorCommands(
         "Show the build at a queue position",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.getQueuePosition(args.position, options.fields as string | undefined),
+          c.getQueuePosition(args.position, fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -292,7 +292,7 @@ export function createOperatorCommands(
       "canceled-info <build-id>",
       "Read the cancellation comment",
       Permission.ReadOnly,
-      (c, { args, options }) => c.getBuildCanceledInfo(number(args, "build-id"), options.fields as string | undefined),
+      (c, { args, options }) => c.getBuildCanceledInfo(number(args, "build-id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     command("comment", "Change a build comment", [
@@ -313,7 +313,7 @@ export function createOperatorCommands(
         "show <build-id>",
         "Show pinned status and comment",
         Permission.ReadOnly,
-        (c, { args, options }) => c.getBuildPin(number(args, "build-id"), options.fields as string | undefined),
+        (c, { args, options }) => c.getBuildPin(number(args, "build-id"), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -334,7 +334,7 @@ export function createOperatorCommands(
         "list <build-id>",
         "List named numeric text values",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listBuildStatistics(number(args, "build-id"), options.fields as string | undefined),
+        (c, { args, options }) => c.listBuildStatistics(number(args, "build-id"), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(

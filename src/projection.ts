@@ -13,3 +13,8 @@ export const fieldsOption: OptionDefinition = {
   description: "Select native TeamCity fields",
   parse: fieldsProjection,
 };
+
+/** Read the native projection from a command leaf. */
+export function fieldsFromOptions(options: Readonly<Record<string, unknown>>): string | undefined {
+  return options.fields as string | undefined;
+}
