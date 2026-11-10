@@ -99,9 +99,23 @@ export const cases: Case[] = [
       "fields": "project(id,name)"
     },
     "body": "",
-    "baselineResponse": {},
-    "baselineResult": [],
-    "human": "No results.\n",
+    "baselineResponse": {
+      "project": [
+        {
+          "id": "Example",
+          "name": "Example",
+          "href": "/app/rest/projects/id:Example",
+          "webUrl": "https://teamcity.test/project/Example"
+        }
+      ]
+    },
+    "baselineResult": [
+      {
+        "id": "Example",
+        "name": "Example"
+      }
+    ],
+    "human": "id       name\n-------  -------\nExample  Example\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
