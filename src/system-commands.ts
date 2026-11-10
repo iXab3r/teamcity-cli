@@ -40,8 +40,8 @@ export function createSystemCommands(
         "list",
         "Read one dashboard page",
         R,
-        (c, { options }) => c.listDashboards(page(options), optional(options, "project")),
-        [...pageOptions, project],
+        (c, { options }) => c.listDashboards({ ...page(options), fields: fieldsFromOptions(options) }, optional(options, "project")),
+        [...pageOptions, project, fieldsOption],
       ),
       leaf(
         "create <id>",
@@ -51,7 +51,7 @@ export function createSystemCommands(
           c.createDashboard(args.id, text(options, "name"), text(options, "project")),
         [option("--name <text>", "Set the name", true), { ...project, required: true }],
       ),
-      leaf("show <id>", "Read one dashboard", R, (c, { args }) => c.getDashboard(args.id)),
+      leaf("show <id>", "Read one dashboard", R, (c, { args, options }) => c.getDashboard(args.id, fieldsFromOptions(options)), [fieldsOption]),
       leaf(
         "delete <id>",
         "Delete dashboard",
@@ -65,8 +65,8 @@ export function createSystemCommands(
           "Read one instance page",
           R,
           (c, { args, options }) =>
-            c.listDeploymentInstances(args.dashboard, page(options)),
-          pageOptions,
+            c.listDeploymentInstances(args.dashboard, { ...page(options), fields: fieldsFromOptions(options) }),
+          [...pageOptions, fieldsOption],
         ),
         leaf(
           "upsert <dashboard> <id>",
@@ -82,8 +82,9 @@ export function createSystemCommands(
             ),
           [...stateOptions, confirm],
         ),
-        leaf("show <dashboard> <id>", "Read one instance", R, (c, { args }) =>
-          c.getDeploymentInstance(args.dashboard, args.id),
+        leaf("show <dashboard> <id>", "Read one instance", R, (c, { args, options }) =>
+          c.getDeploymentInstance(args.dashboard, args.id, fieldsFromOptions(options)),
+          [fieldsOption],
         ),
         leaf(
           "append-state <dashboard> <id>",
@@ -151,7 +152,7 @@ export function createSystemCommands(
   ]);
   const server = [
     leaf("rest-info", "Read REST landing metadata", R, (c) => c.getRestInfo()),
-    leaf("rest-plugin", "Read REST plugin metadata", R, (c) => c.getRestPlugin()),
+    leaf("rest-plugin", "Read REST plugin metadata", R, (c, { options }) => c.getRestPlugin(fieldsFromOptions(options)), [fieldsOption]),
     command("authentication", "Manage authentication modules", [
       leaf("show", "Read authentication module settings", R, (c) => c.getAuthenticationSettings()),
       command(

@@ -3449,7 +3449,7 @@ export class TeamCityClient {
       infrastructure.safeVcsInstance,
     );
   }
-  public listDashboards(page: TeamCityPageOptions, project?: string) {
+  public listDashboards<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
     return this.#list(
       "/app/rest/deploymentDashboards",
       [project ? nestedId("project", project, "Project ID") : undefined],
@@ -3473,16 +3473,15 @@ export class TeamCityClient {
       ),
     );
   }
-  public async getDashboard(id: string) {
-    return system.safeDashboard(
-      await this.#requestJson("GET", system.dashboardPath(id), { fields: system.dashboardFields }),
-    );
+  public async getDashboard<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", system.dashboardPath(id), { fields: system.dashboardFields },
+      system.safeDashboard, fields);
   }
   public async deleteDashboard(id: string) {
     await this.#request("DELETE", system.dashboardPath(id));
     return { id, deleted: true };
   }
-  public listDeploymentInstances(id: string, page: TeamCityPageOptions) {
+  public listDeploymentInstances<F extends string | undefined = undefined>(id: string, page: TeamCityPageOptions & { fields?: F }) {
     return this.#list(system.dashboardPath(id) + "/instances", [], "deploymentInstance",
       system.instanceFields, system.safeInstance, page);
   }
@@ -3507,12 +3506,9 @@ export class TeamCityClient {
       ),
     );
   }
-  public async getDeploymentInstance(dashboard: string, id: string) {
-    return system.safeInstance(
-      await this.#requestJson("GET", system.instancePath(dashboard, id), {
-        fields: system.instanceFields,
-      }),
-    );
+  public async getDeploymentInstance<F extends string | undefined = undefined>(dashboard: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", system.instancePath(dashboard, id), { fields: system.instanceFields },
+      system.safeInstance, fields);
   }
   public async appendDeploymentState(
     dashboard: string,
@@ -3564,17 +3560,18 @@ export class TeamCityClient {
       }),
     );
   }
-  public async getRestPlugin() {
-    return system.pluginXml(
-      await this.#request(
+  public async getRestPlugin<F extends string | undefined = undefined>(fields?: F): Promise<Projected<ReturnType<typeof system.pluginXml>, F>> {
+    if (fields !== undefined) return this.#projectedJson("GET", "/app/rest/info", {},
+      system.safePlugin, fields);
+    const contents = await this.#request(
         "GET",
         "/app/rest/info",
         { fields: system.pluginFields },
         undefined,
         "application/xml",
         { requireMedia: "application/xml" },
-      ),
-    );
+      );
+    return this.#projectedValue(contents, fields, value => system.pluginXml(value as string));
   }
   public async deleteMutes<F extends string | undefined = undefined>(ids: readonly string[], fields?: F) {
     const selected = triage
