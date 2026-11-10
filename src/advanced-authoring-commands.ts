@@ -57,7 +57,8 @@ export function createAdvancedAuthoringCommands(
         `list <job-id> <${arg}>`,
         "List redacted property metadata",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listPluginParameters(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.listPluginParameters(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -142,15 +143,21 @@ export function createAdvancedAuthoringCommands(
     return command(kind, "Manage job rules", [
       bulk.replaceAll(kind),
       entityFields(kind),
-      leaf("list <job-id>", "List rules in server order", Permission.ReadOnly, (c, { args, options }) =>
-        c.listRules(kind, args["job-id"], fieldsFromOptions(options)),
+      leaf(
+        "list <job-id>",
+        "List rules in server order",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listRules(kind, args["job-id"], fieldsFromOptions(options)),
         [fieldsOption],
+
       ),
       leaf(
         `show <job-id> <${arg}>`,
         "Show a safe rule summary",
         Permission.ReadOnly,
-        (c, { args, options }) => c.getRule(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.getRule(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -179,15 +186,25 @@ export function createAdvancedAuthoringCommands(
   const featureOptions = [option("--type <type>", "Set the project feature type", true), propertyOption];
   const features = command("features", "Manage project features", [
     bulk.replaceAll("projectFeatures"),
-    leaf("list <project-id>", "List redacted features", Permission.ReadOnly, (c, { args, options }) =>
-      c.listProjectFeatures(args["project-id"], fieldsFromOptions(options), options.locator as string | undefined),
+    leaf(
+      "list <project-id>",
+      "List redacted features",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listProjectFeatures(
+          args["project-id"],
+          fieldsFromOptions(options),
+          options.locator as string | undefined,
+        ),
       [fieldsOption, { ...locatorOption, description: "Filter native TeamCity project features" }],
+
     ),
     leaf(
       "show <project-id> <feature-id>",
       "Show a redacted feature",
       Permission.ReadOnly,
-      (c, { args, options }) => c.getProjectFeature(args["project-id"], args["feature-id"], fieldsFromOptions(options)),
+      (c, { args, options }) =>
+        c.getProjectFeature(args["project-id"], args["feature-id"], fieldsFromOptions(options)),
       [fieldsOption],
     ),
     leaf(
@@ -225,8 +242,14 @@ export function createAdvancedAuthoringCommands(
     ),
   ]);
   const templates = command("templates", "Create templates and manage the project default", [
-    leaf("list <project-id>", "List own templates", Permission.ReadOnly, (c, { args, options }) =>
-      c.listProjectTemplates(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
+    leaf(
+      "list <project-id>",
+      "List own templates",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listProjectTemplates(args["project-id"], fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     leaf(
       "create <project-id> <template-id>",
@@ -247,7 +270,8 @@ export function createAdvancedAuthoringCommands(
         "Show the effective default template",
         Permission.ReadOnly,
         (c, { args, options }) =>
-        c.getDefaultTemplate(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
+          c.getDefaultTemplate(args["project-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <project-id>",
@@ -293,16 +317,22 @@ export function createAdvancedAuthoringCommands(
         "Show parent project identity",
         Permission.ReadOnly,
         (c, { args, options }) =>
-        c.getProjectParent(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
+          c.getProjectParent(args["project-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ],
     jobs: [
       rules("agent-requirements"),
       rules("artifact-dependencies"),
       fields("jobs"),
-      leaf("aliases <job-id>", "List historical external IDs", Permission.ReadOnly, (c, { args, options }) =>
-        c.listJobAliases(args["job-id"], options.field as string | undefined),
+      leaf(
+        "aliases <job-id>",
+        "List historical external IDs",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listJobAliases(args["job-id"], options.field as string | undefined),
         [fieldOption],
+
       ),
       leaf(
         "branches <job-id>",

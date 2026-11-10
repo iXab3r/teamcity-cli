@@ -44,9 +44,16 @@ export function createAdminCommands(
       "properties",
       "Manage property names and assignments",
       [
-        withView(stringList, leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args, options }) =>
-          c.listAccountPropertyNames(kind, args.id, fieldsFromOptions(options)),
-          [fieldsOption],
+        withView(
+          stringList,
+          leaf(
+            "list <id>",
+            "List property names",
+            Permission.ReadOnly,
+            (c, { args, options }) =>
+              c.listAccountPropertyNames(kind, args.id, fieldsFromOptions(options)),
+            [fieldsOption],
+
         )),
         leaf(
           "exists <id> <name>",
@@ -121,9 +128,14 @@ export function createAdminCommands(
   }
   function memberships(kind: AccountKind) {
     return [
-      leaf("list <id>", "List directly assigned groups", Permission.ReadOnly, (c, { args, options }) =>
-        c.listAccountGroups(kind, args.id, fieldsFromOptions(options)),
+      leaf(
+        "list <id>",
+        "List directly assigned groups",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listAccountGroups(kind, args.id, fieldsFromOptions(options)),
         [fieldsOption],
+
       ),
       leaf(
         "replace <id>",
@@ -138,9 +150,14 @@ export function createAdminCommands(
     ];
   }
   const tokens = command("tokens", "Manage current-user tokens", [
-    leaf("list", "List token metadata", Permission.ReadOnly, (c, { options }) =>
-      c.listCurrentUserTokens(fieldsFromOptions(options)),
+    leaf(
+      "list",
+      "List token metadata",
+      Permission.ReadOnly,
+      (c, { options }) =>
+        c.listCurrentUserTokens(fieldsFromOptions(options)),
       [fieldsOption],
+
     ),
     command(
       "create <name>",
@@ -210,12 +227,19 @@ export function createAdminCommands(
       "List account identities",
       Permission.ReadOnly,
       (c, { options }) =>
-        c.listAccountUsers({ limit: Number(options.limit), start: Number(options.start), fields: fieldsFromOptions(options) }),
+        c.listAccountUsers(
+          { limit: Number(options.limit), start: Number(options.start), fields: fieldsFromOptions(options) },
+        ),
       [...pageOptions, fieldsOption],
     ),
-    leaf("show <id>", "Read one account identity", Permission.ReadOnly, (c, { args, options }) =>
-      c.getAccountUser(args.id, fieldsFromOptions(options)),
+    leaf(
+      "show <id>",
+      "Read one account identity",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getAccountUser(args.id, fieldsFromOptions(options)),
       [fieldsOption],
+
     ),
     leaf(
       "create <username>",
@@ -233,7 +257,9 @@ export function createAdminCommands(
         c.updateAccountUser(args.id, {
           ...optionalText(options, "username"),
           ...optionalText(options, "name"),
-        }, fieldsFromOptions(options)),
+        },
+          fieldsFromOptions(options)
+        ),
       [fieldsOption, option("--username <text>", "Set the username"), option("--name <text>", "Set the display name")],
     ),
     leaf("delete <id>", "Delete the remote account", "Admin", (c, { args }) =>
@@ -262,9 +288,14 @@ export function createAdminCommands(
         (c, { args, options }) => c.getAccountUserGroup(args.id, args.key, fieldsFromOptions(options)),
         [fieldsOption],
       ),
-      leaf("remove <id> <key>", "Remove one membership", "Admin", (c, { args, options }) =>
-        c.removeAccountUserGroup(args.id, args.key, fieldsFromOptions(options)),
+      leaf(
+        "remove <id> <key>",
+        "Remove one membership",
+        "Admin",
+        (c, { args, options }) =>
+          c.removeAccountUserGroup(args.id, args.key, fieldsFromOptions(options)),
         [fieldsOption],
+
       ),
     ]),
     command("permissions", "Inspect resolved remote permission assignments", [
@@ -293,9 +324,14 @@ export function createAdminCommands(
     ]),
   ]);
   const groups = command("groups", "Inspect and administer user groups", [
-    leaf("list", "List group identities", Permission.ReadOnly, (c, { options }) =>
-      c.listAccountGroupsAll(fieldsFromOptions(options)),
+    leaf(
+      "list",
+      "List group identities",
+      Permission.ReadOnly,
+      (c, { options }) =>
+        c.listAccountGroupsAll(fieldsFromOptions(options)),
       [fieldsOption],
+
     ),
     leaf(
       "create <key>",
@@ -310,9 +346,14 @@ export function createAdminCommands(
         ),
       [fieldsOption, option("--name <text>", "Set the name", true), option("--description <text>", "Set the description")],
     ),
-    leaf("show <key>", "Read one group identity", Permission.ReadOnly, (c, { args, options }) =>
-      c.getAccountGroup(args.key, fieldsFromOptions(options)),
+    leaf(
+      "show <key>",
+      "Read one group identity",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getAccountGroup(args.key, fieldsFromOptions(options)),
       [fieldsOption],
+
     ),
     leaf("delete <key>", "Delete one remote group", "Admin", (c, { args }) =>
       c.deleteAccountGroup(args.key),
@@ -342,15 +383,25 @@ export function createAdminCommands(
           option("--state <state>", "Select online, offline, stopping or starting"),
         ],
       ),
-      leaf("show <id>", "Read node identity/state", Permission.ReadOnly, (c, { args, options }) =>
-        c.getServerNode(args.id, fieldsFromOptions(options)),
+      leaf(
+        "show <id>",
+        "Read node identity/state",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.getServerNode(args.id, fieldsFromOptions(options)),
         [fieldsOption],
+
       ),
       command("responsibilities", "Inspect node responsibility", [
         ...(["disabled", "effective", "enabled"] as const).map((kind) =>
-          leaf(kind + " <id>", "Read responsibility metadata", Permission.ReadOnly, (c, { args, options }) =>
-            c.getNodeResponsibilities(text(args, "id"), kind, fieldsFromOptions(options)),
+          leaf(
+            kind + " <id>",
+            "Read responsibility metadata",
+            Permission.ReadOnly,
+            (c, { args, options }) =>
+              c.getNodeResponsibilities(text(args, "id"), kind, fieldsFromOptions(options)),
             [fieldsOption],
+
           ),
         ),
         leaf(

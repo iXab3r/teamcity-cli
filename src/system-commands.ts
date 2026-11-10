@@ -40,7 +40,11 @@ export function createSystemCommands(
         "list",
         "Read one dashboard page",
         R,
-        (c, { options }) => c.listDashboards({ ...page(options), fields: fieldsFromOptions(options) }, optional(options, "project")),
+        (c, { options }) =>
+          c.listDashboards(
+            { ...page(options), fields: fieldsFromOptions(options) },
+            optional(options, "project"),
+          ),
         [...pageOptions, project, fieldsOption],
       ),
       leaf(
@@ -51,7 +55,13 @@ export function createSystemCommands(
           c.createDashboard(args.id, text(options, "name"), text(options, "project")),
         [option("--name <text>", "Set the name", true), { ...project, required: true }],
       ),
-      leaf("show <id>", "Read one dashboard", R, (c, { args, options }) => c.getDashboard(args.id, fieldsFromOptions(options)), [fieldsOption]),
+      leaf(
+        "show <id>",
+        "Read one dashboard",
+        R,
+        (c, { args, options }) => c.getDashboard(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+      ),
       leaf(
         "delete <id>",
         "Delete dashboard",
@@ -65,7 +75,10 @@ export function createSystemCommands(
           "Read one instance page",
           R,
           (c, { args, options }) =>
-            c.listDeploymentInstances(args.dashboard, { ...page(options), fields: fieldsFromOptions(options) }),
+            c.listDeploymentInstances(
+              args.dashboard,
+              { ...page(options), fields: fieldsFromOptions(options) }
+            ),
           [...pageOptions, fieldsOption],
         ),
         leaf(
@@ -82,9 +95,14 @@ export function createSystemCommands(
             ),
           [...stateOptions, confirm],
         ),
-        leaf("show <dashboard> <id>", "Read one instance", R, (c, { args, options }) =>
-          c.getDeploymentInstance(args.dashboard, args.id, fieldsFromOptions(options)),
+        leaf(
+          "show <dashboard> <id>",
+          "Read one instance",
+          R,
+          (c, { args, options }) =>
+            c.getDeploymentInstance(args.dashboard, args.id, fieldsFromOptions(options)),
           [fieldsOption],
+
         ),
         leaf(
           "append-state <dashboard> <id>",
@@ -111,8 +129,14 @@ export function createSystemCommands(
     ],
   );
   const roles = command("roles", "Manage server role definitions", [
-    leaf("list", "Read role definitions", R, (c, { options }) =>
-      c.listRoleDefinitions(fieldsFromOptions(options)), [fieldsOption]),
+    leaf(
+      "list",
+      "Read role definitions",
+      R,
+      (c, { options }) =>
+        c.listRoleDefinitions(fieldsFromOptions(options)),
+      [fieldsOption],
+    ),
     leaf(
       "create",
       "Create a role definition",
@@ -131,9 +155,14 @@ export function createSystemCommands(
         repeatOption("--include <id>", "Repeat included role IDs"),
       ],
     ),
-    leaf("show <id>", "Read role definition", R, (c, { args, options }) =>
-      c.getRoleDefinition(args.id, fieldsFromOptions(options)),
+    leaf(
+      "show <id>",
+      "Read role definition",
+      R,
+      (c, { args, options }) =>
+        c.getRoleDefinition(args.id, fieldsFromOptions(options)),
       [fieldsOption],
+
     ),
     leaf(
       "delete <id>",
@@ -147,9 +176,20 @@ export function createSystemCommands(
         kind,
         "Edit selected role relation",
         (["add", "remove"] as const).map((action) =>
-          leaf(`${action} <id> <child>`, `${action === "add" ? "Add" : "Remove"} one ${kind} entry`, "Admin", (c, { args, options }) =>
-            c.editRoleDefinition(text(args, "id"), kind, text(args, "child"), action === "remove", fieldsFromOptions(options)),
+          leaf(
+            `${action} <id> <child>`,
+            `${action === "add" ? "Add" : "Remove"} one ${kind} entry`,
+            "Admin",
+            (c, { args, options }) =>
+              c.editRoleDefinition(
+                text(args, "id"),
+                kind,
+                text(args, "child"),
+                action === "remove",
+                fieldsFromOptions(options),
+              ),
             [fieldsOption],
+
           ),
         ),
       ),
@@ -157,7 +197,13 @@ export function createSystemCommands(
   ]);
   const server = [
     leaf("rest-info", "Read REST landing metadata", R, (c) => c.getRestInfo()),
-    leaf("rest-plugin", "Read REST plugin metadata", R, (c, { options }) => c.getRestPlugin(fieldsFromOptions(options)), [fieldsOption]),
+    leaf(
+      "rest-plugin",
+      "Read REST plugin metadata",
+      R,
+      (c, { options }) => c.getRestPlugin(fieldsFromOptions(options)),
+      [fieldsOption],
+    ),
     command("authentication", "Manage authentication modules", [
       leaf("show", "Read authentication module settings", R, (c) => c.getAuthenticationSettings()),
       command(
@@ -176,15 +222,19 @@ export function createSystemCommands(
         "start <name>",
         "Schedule a configuration and database backup",
         "Admin",
-        (c, { args, options }) => c.startBackup(args.name, {
-          addTimestamp: optional(options, "addTimestamp"),
-          includeConfigs: optional(options, "includeConfigs"),
-          includeDatabase: optional(options, "includeDatabase"),
-          includeBuildLogs: optional(options, "includeBuildLogs"),
-          includePersonalChanges: optional(options, "includePersonalChanges"),
-          includeRunningBuilds: optional(options, "includeRunningBuilds"),
-          includeSupplimentaryData: optional(options, "includeSupplementaryData"),
-        }),
+        (c, { args, options }) =>
+          c.startBackup(
+            args.name,
+            {
+              addTimestamp: optional(options, "addTimestamp"),
+              includeConfigs: optional(options, "includeConfigs"),
+              includeDatabase: optional(options, "includeDatabase"),
+              includeBuildLogs: optional(options, "includeBuildLogs"),
+              includePersonalChanges: optional(options, "includePersonalChanges"),
+              includeRunningBuilds: optional(options, "includeRunningBuilds"),
+              includeSupplimentaryData: optional(options, "includeSupplementaryData"),
+            },
+          ),
         [
           confirm,
           booleanOption("--add-timestamp <boolean>", "Add a timestamp to the backup name"),
@@ -218,13 +268,29 @@ export function createSystemCommands(
       ),
     ]),
     command("licenses", "Inspect and manage licenses", [
-      leaf("summary", "Read licensed capacities", R, (c, { options }) => c.getLicenseSummary(fieldsFromOptions(options)), [fieldsOption]),
-      leaf("list", "Read license metadata", R, (c, { options }) => c.listLicenses(fieldsFromOptions(options)), [fieldsOption]),
+      leaf(
+        "summary",
+        "Read licensed capacities",
+        R,
+        (c, { options }) => c.getLicenseSummary(fieldsFromOptions(options)),
+        [fieldsOption],
+      ),
+      leaf(
+        "list",
+        "Read license metadata",
+        R,
+        (c, { options }) => c.listLicenses(fieldsFromOptions(options)),
+        [fieldsOption],
+      ),
       command(
         "add",
         "Add key from alias",
         async ({ options }, context) =>
-          (await clientFor(context)).addLicense(text(options, "secret"), context.secrets, fieldsFromOptions(options)),
+          (await clientFor(context)).addLicense(
+            text(options, "secret"),
+            context.secrets,
+            fieldsFromOptions(options),
+          ),
         {
           permission: "Admin",
           options: [fieldsOption, option("--secret <alias>", "Select an input-secret alias", true)],
@@ -245,10 +311,21 @@ export function createSystemCommands(
         { permission: "Admin", options: [confirm] },
       ),
     ]),
-    leaf("metrics", "Read numeric metric series", R, (c, { options }) => c.getMetrics(fieldsFromOptions(options)), [fieldsOption]),
-    leaf("plugins", "Read plugin metadata", R, (c, { options }) =>
-      c.getPlugins(fieldsFromOptions(options), optional(options, "locator")),
+    leaf(
+      "metrics",
+      "Read numeric metric series",
+      R,
+      (c, { options }) => c.getMetrics(fieldsFromOptions(options)),
+      [fieldsOption],
+    ),
+    leaf(
+      "plugins",
+      "Read plugin metadata",
+      R,
+      (c, { options }) =>
+        c.getPlugins(fieldsFromOptions(options), optional(options, "locator")),
       [fieldsOption, { ...locatorOption, description: "Filter native TeamCity plugins" }],
+
     ),
     leaf(
       "field <field>",
@@ -258,24 +335,54 @@ export function createSystemCommands(
     ),
   ];
   const projects = [
-    leaf("default-value-sets <id>", "List named value-set types", R, (c, { args, options }) =>
-      c.getDefaultValueSets(args.id, fieldsFromOptions(options)), [fieldsOption],
+    leaf(
+      "default-value-sets <id>",
+      "List named value-set types",
+      R,
+      (c, { args, options }) =>
+        c.getDefaultValueSets(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     command("deployments", "Inspect project dashboards", [
-      leaf("list <id>", "List project dashboards", R, (c, { args, options }) =>
-        c.listProjectDashboards(args.id, fieldsFromOptions(options)), [fieldsOption],
+      leaf(
+        "list <id>",
+        "List project dashboards",
+        R,
+        (c, { args, options }) =>
+          c.listProjectDashboards(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
-      leaf("show <project> <id>", "Read one child dashboard", R, (c, { args, options }) =>
-        c.getProjectDashboard(args.project, args.id, fieldsFromOptions(options)), [fieldsOption],
+      leaf(
+        "show <project> <id>",
+        "Read one child dashboard",
+        R,
+        (c, { args, options }) =>
+          c.getProjectDashboard(args.project, args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
     ]),
   ];
   const jobs = [
-    leaf("investigations <id>", "Read scoped investigations", R, (c, { args, options }) =>
-      c.getJobInvestigations(args.id, fieldsFromOptions(options)), [fieldsOption],
+    leaf(
+      "investigations <id>",
+      "Read scoped investigations",
+      R,
+      (c, { args, options }) =>
+        c.getJobInvestigations(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
-    leaf("vcs-instances <id>", "Read attached VCS instances", R, (c, { args, options }) =>
-      c.getJobVcsInstances(args.id, fieldsFromOptions(options)), [fieldsOption],
+    leaf(
+      "vcs-instances <id>",
+      "Read attached VCS instances",
+      R,
+      (c, { args, options }) =>
+        c.getJobVcsInstances(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
   ];
   const users = [
@@ -334,17 +441,25 @@ export function createSystemCommands(
         "list",
         "List results",
         R,
-        (c, { options }) => c.listAudit({ ...page(options), fields: fieldsFromOptions(options) }, optional(options, "project")),
+        (c, { options }) =>
+          c.listAudit({ ...page(options), fields: fieldsFromOptions(options) }, optional(options, "project")),
         [...pageOptions, project, fieldsOption],
       ),
-      leaf("show <id>", "Read one audit event", R, (c, { args, options }) => c.getAudit(args.id, fieldsFromOptions(options)), [fieldsOption]),
+      leaf(
+        "show <id>",
+        "Read one audit event",
+        R,
+        (c, { args, options }) => c.getAudit(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+      ),
     ]),
     command("health", "Inspect server health items", [
       leaf(
         "list",
         "Read health items within a scope",
         R,
-        (c, { options }) => c.listHealth(healthScope(options), { ...page(options), fields: fieldsFromOptions(options) }),
+        (c, { options }) =>
+          c.listHealth(healthScope(options), { ...page(options), fields: fieldsFromOptions(options) }),
         [...healthOptions, ...pageOptions, fieldsOption],
       ),
       leaf(
@@ -352,14 +467,28 @@ export function createSystemCommands(
         "Read a scoped health category match",
         R,
         (c, { options }) =>
-          c.getHealth({ ...healthScope(options), category: text(options, "category") }, fieldsFromOptions(options)),
+          c.getHealth(
+            { ...healthScope(options), category: text(options, "category") },
+            fieldsFromOptions(options),
+          ),
         [fieldsOption, ...healthOptions, option("--category <id>", "Select a health category", true)],
       ),
       command("categories", "Discover native health categories", [
-        leaf("list", "Read category metadata", R, (c, { options }) => c.listHealthCategories(fieldsFromOptions(options), optional(options, "locator")), [fieldsOption, { ...locatorOption, description: "Filter native TeamCity health categories" }]),
-        leaf("show <id>", "Read one category", R, (c, { args, options }) =>
-          c.getHealthCategory(args.id, fieldsFromOptions(options)),
+        leaf(
+          "list",
+          "Read category metadata",
+          R,
+          (c, { options }) => c.listHealthCategories(fieldsFromOptions(options), optional(options, "locator")),
+          [fieldsOption, { ...locatorOption, description: "Filter native TeamCity health categories" }],
+        ),
+        leaf(
+          "show <id>",
+          "Read one category",
+          R,
+          (c, { args, options }) =>
+            c.getHealthCategory(args.id, fieldsFromOptions(options)),
           [fieldsOption],
+
         ),
       ]),
     ]),

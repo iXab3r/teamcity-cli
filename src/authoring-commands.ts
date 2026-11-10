@@ -65,14 +65,21 @@ export function createAuthoringCommands(
           `list <${ownerArg}>`,
           "List parameters in server order",
           Permission.ReadOnly,
-          (c, { args, options }) => c.listParameters(owner, text(args, ownerArg), fields(options), options.locator as string | undefined),
+          (c, { args, options }) =>
+            c.listParameters(
+              owner,
+              text(args, ownerArg),
+              fields(options),
+              options.locator as string | undefined,
+            ),
           [...projections, { ...locatorOption, description: "Filter native TeamCity parameters" }],
         ),
         leaf(
           `show <${ownerArg}> <name>`,
           "Show parameter metadata and a safe value",
           Permission.ReadOnly,
-          (c, { args, options }) => c.getParameter(owner, text(args, ownerArg), text(args, "name"), fields(options)),
+          (c, { args, options }) =>
+            c.getParameter(owner, text(args, ownerArg), text(args, "name"), fields(options)),
           projections,
         ),
         leaf(
@@ -94,7 +101,13 @@ export function createAuthoringCommands(
           "Set a plain parameter after checking its type",
           Permission.Update,
           (c, { args, options }) =>
-            c.setParameter(owner, text(args, ownerArg), text(args, "name"), text(options, "value"), fields(options)),
+            c.setParameter(
+              owner,
+              text(args, ownerArg),
+              text(args, "name"),
+              text(options, "value"),
+              fields(options),
+            ),
           [valueOption, ...projections],
         ),
         leaf(
@@ -128,19 +141,30 @@ export function createAuthoringCommands(
       bulk.replaceAll(kind),
       advanced.entityFields(kind),
       ...(kind === "features" ? [advanced.pluginParameters(kind)] : []),
-      leaf("list <job-id>", "List in server order", Permission.ReadOnly, (c, { args, options }) =>
-        c.listExtensions(kind, args["job-id"], fieldsFromOptions(options)),
+      leaf(
+        "list <job-id>",
+        "List in server order",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listExtensions(kind, args["job-id"], fieldsFromOptions(options)),
         [fieldsOption],
+
       ),
-      leaf(`show <job-id> <${idArg}>`, "Show a safe summary", Permission.ReadOnly, (c, { args, options }) =>
-        c.getExtension(kind, text(args, "job-id"), text(args, idArg), fieldsFromOptions(options)),
+      leaf(
+        `show <job-id> <${idArg}>`,
+        "Show a safe summary",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.getExtension(kind, text(args, "job-id"), text(args, idArg), fieldsFromOptions(options)),
         [fieldsOption],
+
       ),
       leaf(
         "create <job-id>",
         "Add an extension",
         Permission.Update,
-        (c, { args, options }) => c.createExtension(kind, args["job-id"], input(options), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.createExtension(kind, args["job-id"], input(options), fieldsFromOptions(options)),
         [...extensionOptions, fieldsOption],
       ),
       leaf(
@@ -148,7 +172,13 @@ export function createAuthoringCommands(
         "Replace an extension",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceExtension(kind, text(args, "job-id"), text(args, idArg), input(options), fieldsFromOptions(options)),
+          c.replaceExtension(
+            kind,
+            text(args, "job-id"),
+            text(args, idArg),
+            input(options),
+            fieldsFromOptions(options),
+          ),
         [...extensionOptions, fieldsOption],
       ),
       leaf(`delete <job-id> <${idArg}>`, "Delete one extension", Permission.Update, (c, { args }) =>
@@ -180,7 +210,8 @@ export function createAuthoringCommands(
         "show <job-id> <dependency-id>",
         "Show a dependency summary",
         Permission.ReadOnly,
-        (c, { args, options }) => c.getSnapshotDependency(args["job-id"], args["dependency-id"], fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.getSnapshotDependency(args["job-id"], args["dependency-id"], fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -219,7 +250,8 @@ export function createAuthoringCommands(
       "show <job-id> <template-id>",
       "Show one attached template",
       Permission.ReadOnly,
-      (c, { args, options }) => c.getAttachedTemplate(args["job-id"], args["template-id"], fieldsFromOptions(options)),
+      (c, { args, options }) =>
+        c.getAttachedTemplate(args["job-id"], args["template-id"], fieldsFromOptions(options)),
       [fieldsOption],
     ),
     leaf(
@@ -271,9 +303,14 @@ export function createAuthoringCommands(
     bulk.replaceAll("steps"),
     advanced.entityFields("steps"),
     advanced.pluginParameters("steps"),
-    leaf("list <job-id>", "List steps in execution order", Permission.ReadOnly, (c, { args, options }) =>
-      c.listSteps(args["job-id"], fieldsFromOptions(options)),
+    leaf(
+      "list <job-id>",
+      "List steps in execution order",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listSteps(args["job-id"], fieldsFromOptions(options)),
       [fieldsOption],
+
     ),
     leaf(
       "show <job-id> <step-id>",
@@ -457,7 +494,9 @@ export function createAuthoringCommands(
           name: text(options, "name"),
           project: text(options, "project"),
           ...optionalText(options, "description"),
-        }, fieldsFromOptions(options)),
+        },
+          fieldsFromOptions(options)
+        ),
       [nameOption, projectOption, descriptionOption, fieldsOption],
     ),
     leaf(
