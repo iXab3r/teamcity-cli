@@ -7,6 +7,11 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Deployment `deployments list` and `deployments instances list` accept item fields;
+`deployments show`, `deployments instances show`, and `server rest-plugin` accept
+whole-response fields. REST plugin info keeps its XML request/parser by default and
+requests native JSON for explicit fields.
+
 Cloud `images/instances/profiles list` accept item fields; their `show` commands
 and `cloud instances start` accept whole-response fields. Image/instance selectors use
 `--cloud-profile`, `--image`, and (for instance reads) `--instance`. Start retains its
