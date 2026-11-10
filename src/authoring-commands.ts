@@ -421,8 +421,8 @@ export function createAuthoringCommands(
       "move <id>",
       "Move a project to a parent",
       Permission.Update,
-      (c, { args, options }) => c.moveProject(args.id, text(options, "parent")),
-      [parentOption],
+      (c, { args, options }) => c.moveProject(args.id, text(options, "parent"), fieldsFromOptions(options)),
+      [fieldsOption, parentOption],
     ),
     leaf(
       "delete <id>",

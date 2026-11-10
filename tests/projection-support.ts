@@ -160,22 +160,23 @@ for (const scenario of buildProjectionCases) {
   }
 }
 
+const errorCase = cases.find(c => !c.acknowledgement && !c.field) ?? cases[0]!;
 const failures = [
   { name: "401", code: "http.unauthorized", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 401 }) },
   { name: "403", code: "http.forbidden", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 403 }) },
   { name: "404", code: "http.notFound", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 404 }) },
   { name: "503", code: "http.serverError", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 503 }) },
-  { name: "transport", code: cases[0]!.method === "GET" ? "request.failed" : "request.unknownOutcome", response: () => HttpResponse.error() },
+  { name: "transport", code: errorCase.method === "GET" ? "request.failed" : "request.unknownOutcome", response: () => HttpResponse.error() },
   { name: "decoding", code: "error", response: () => HttpResponse.text(`invalid JSON synthetic-server-payload ${token}`) },
 ];
 for (const example of failures) {
   test(`${story}-A${acceptance.error} ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
-    const rt = await runtime(t, [cases[0]!.permission]);
+    const rt = await runtime(t, [errorCase.permission]);
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, () => example.response());
     server.use(http.all("*", ({ request }) => requests.handle(request)));
     for (const surface of surfaces) {
-      const evidence = await failure(rt, cli, [...cases[0]!.argv, "--fields", projection], surface, example.code);
+      const evidence = await failure(rt, cli, [...errorCase.argv, "--fields", projection], surface, example.code);
       if (surface !== "human" && ["transport", "decoding"].includes(example.name)) assert.match(evidence, /cause/);
     }
   });

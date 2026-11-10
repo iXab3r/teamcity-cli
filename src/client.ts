@@ -697,10 +697,11 @@ export class TeamCityClient {
     return { id: id, field, value };
   }
 
-  public async moveProject(id: string, parent: string) {
+  public async moveProject<F extends string | undefined = undefined>(id: string, parent: string, fields?: F) {
     const parentProjectId = requiredText(parent, "Parent project ID");
-    await this.#request("PUT", `${projectPath(id)}/parentProject`, {}, { id: parentProjectId });
-    return { id: id, parentProjectId, moved: true };
+    const contents = await this.#request("PUT", `${projectPath(id)}/parentProject`,
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, { id: parentProjectId });
+    return this.#projectedAcknowledgement(contents, fields, { id: id, parentProjectId, moved: true });
   }
 
   public async moveJob(id: string, project: string) {
@@ -1052,15 +1053,9 @@ export class TeamCityClient {
       { fields: `buildType(${identityFields})` }, value => ((value as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields);
   }
 
-  public async createProjectTemplate(projectId: string, id: string, name: string) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "POST",
-        `${projectPath(projectId)}/templates`,
-        { fields: identityFields },
-        { id: requiredText(id, "Template ID"), name: requiredText(name, "Template name") },
-      ),
-    );
+  public async createProjectTemplate<F extends string | undefined = undefined>(projectId: string, id: string, name: string, fields?: F) {
+    return this.#projectedJson("POST", `${projectPath(projectId)}/templates`,
+      { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields, { id: requiredText(id, "Template ID"), name: requiredText(name, "Template name") });
   }
 
   public async getDefaultTemplate<F extends string | undefined = undefined>(projectId: string, fields?: F) {
@@ -1068,20 +1063,15 @@ export class TeamCityClient {
       { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields);
   }
 
-  public async setDefaultTemplate(projectId: string, id: string) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "PUT",
-        `${projectPath(projectId)}/defaultTemplate`,
-        { fields: identityFields },
-        { id: requiredText(id, "Template ID") },
-      ),
-    );
+  public async setDefaultTemplate<F extends string | undefined = undefined>(projectId: string, id: string, fields?: F) {
+    return this.#projectedJson("PUT", `${projectPath(projectId)}/defaultTemplate`,
+      { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields, { id: requiredText(id, "Template ID") });
   }
 
-  public async clearDefaultTemplate(projectId: string) {
-    await this.#request("DELETE", `${projectPath(projectId)}/defaultTemplate`);
-    return { projectId: projectId, cleared: true };
+  public async clearDefaultTemplate<F extends string | undefined = undefined>(projectId: string, fields?: F) {
+    const contents = await this.#request("DELETE", `${projectPath(projectId)}/defaultTemplate`,
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, undefined);
+    return this.#projectedAcknowledgement(contents, fields, { projectId: projectId, cleared: true });
   }
 
   public async getAttachedTemplate<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
@@ -1646,19 +1636,14 @@ export class TeamCityClient {
     );
   }
 
-  public async replaceProjectPools(projectId: string, ids: readonly number[]) {
+  public async replaceProjectPools<F extends string | undefined = undefined>(projectId: string, ids: readonly number[], fields?: F) {
     const body = {
       agentPool: textIds(ids.map((id) => String(poolNumber(id)))).map((id) => ({
         id: Number(id),
       })),
     };
-    const result = await this.#requestJson<{ agentPool?: AgentPoolSummary[] }>(
-      "PUT",
-      `${projectPath(projectId)}/agentPools`,
-      { fields: "agentPool(id,name)" },
-      body,
-    );
-    return (result.agentPool ?? []).map(safeNamed);
+    return this.#projectedJson("PUT", `${projectPath(projectId)}/agentPools`,
+      { fields: "agentPool(id,name)" }, value => ((value as { agentPool?: AgentPoolSummary[] }).agentPool ?? []).map(safeNamed), fields, body);
   }
 
   public async unassignProjectPool(projectId: string, poolId: number) {
@@ -1676,23 +1661,17 @@ export class TeamCityClient {
     }, options);
   }
 
-  public async createProjectJob(projectId: string, id: string, name: string) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "POST",
-        `${projectPath(projectId)}/buildTypes`,
-        { fields: identityFields },
-        { id: requiredText(id, "Job ID"), name: requiredText(name, "Job name") },
-      ),
-    );
+  public async createProjectJob<F extends string | undefined = undefined>(projectId: string, id: string, name: string, fields?: F) {
+    return this.#projectedJson("POST", `${projectPath(projectId)}/buildTypes`,
+      { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields, { id: requiredText(id, "Job ID"), name: requiredText(name, "Job name") });
   }
 
-  public getProjectOrder(projectId: string, kind: "jobs" | "projects") {
-    return this.#projectOrder("GET", projectId, kind);
+  public getProjectOrder(projectId: string, kind: "jobs" | "projects", field?: string) {
+    return this.#projectOrder("GET", projectId, kind, undefined, field);
   }
 
-  public setProjectOrder(projectId: string, kind: "jobs" | "projects", ids: readonly string[]) {
-    return this.#projectOrder("PUT", projectId, kind, textIds(ids));
+  public setProjectOrder(projectId: string, kind: "jobs" | "projects", ids: readonly string[], field?: string) {
+    return this.#projectOrder("PUT", projectId, kind, textIds(ids), field);
   }
 
   async #projectOrder(
@@ -1700,12 +1679,13 @@ export class TeamCityClient {
     projectId: string,
     kind: "jobs" | "projects",
     ids?: readonly string[],
+    field?: string,
   ) {
     const key = kind === "jobs" ? "buildType" : "project";
     const result = await this.#requestJson<Record<string, BuildTypeIdentity[]>>(
       method,
       `${projectPath(projectId)}/order/${kind === "jobs" ? "buildTypes" : "projects"}`,
-      { field: `${key}(id,name${kind === "jobs" ? ",projectId" : ""})` },
+      { field: field === undefined ? `${key}(id,name${kind === "jobs" ? ",projectId" : ""})` : field },
       ids === undefined ? undefined : { [key]: ids.map((id) => ({ id })) },
     );
     return (result[key] ?? []).map(safeIdentity);

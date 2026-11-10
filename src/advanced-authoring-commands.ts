@@ -233,8 +233,9 @@ export function createAdvancedAuthoringCommands(
           args["project-id"],
           args["template-id"],
           text(options, "name"),
+          fieldsFromOptions(options),
         ),
-      [option("--name <name>", "Set the template name", true)],
+      [fieldsOption, option("--name <name>", "Set the template name", true)],
     ),
     command("default", "Manage the default template", [
       leaf(
@@ -249,14 +250,15 @@ export function createAdvancedAuthoringCommands(
         "Set the default template",
         Permission.Update,
         (c, { args, options }) =>
-          c.setDefaultTemplate(args["project-id"], text(options, "template")),
-        [option("--template <template-id>", "Select an existing template", true)],
+          c.setDefaultTemplate(args["project-id"], text(options, "template"), fieldsFromOptions(options)),
+        [fieldsOption, option("--template <template-id>", "Select an existing template", true)],
       ),
       leaf(
         "clear <project-id>",
         "Remove the project default template",
         Permission.Update,
-        (c, { args }) => c.clearDefaultTemplate(args["project-id"]),
+        (c, { args, options }) => c.clearDefaultTemplate(args["project-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
   ]);
