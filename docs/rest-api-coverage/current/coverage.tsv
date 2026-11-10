@@ -168,15 +168,15 @@ GET /app/rest/builds/{p1}/tags	Build	ReadOnly	covered	builds tags list <build-id
 GET /app/rest/builds/{p1}/testOccurrences	Build	ReadOnly	covered	builds test-occurrences <id>	listBuildOccurrences		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/vcsLabels	Build	ReadOnly	covered	builds vcs-labels list <id>	getBuildVcsLabels		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/{p2}	Build	ReadOnly	covered	builds fields show <build-id> <field>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/changes	Change	ReadOnly	partial	builds changes <id>		fields	evidence-gap	
-GET /app/rest/changes/{p1}	Change	ReadOnly	partial	changes show <change-id>	getChange	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/changes/{p1}/attributes	Change	ReadOnly	partial	changes attributes <id>	listChangeAttributeNames	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/presentation.test.ts
-GET /app/rest/changes/{p1}/duplicates	Change	ReadOnly	partial	changes duplicates <id>	getChangeDuplicates	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/changes/{p1}/firstBuilds	Change	ReadOnly	partial	changes first-builds <id>	getChangeFirstBuilds	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/changes	Change	ReadOnly	covered	builds changes <id>			exercised-in-passing-suite	tests/changes-projection.test.ts
+GET /app/rest/changes/{p1}	Change	ReadOnly	covered	changes show <change-id>	getChange		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts;tests/operator.test.ts
+GET /app/rest/changes/{p1}/attributes	Change	ReadOnly	covered	changes attributes <id>	listChangeAttributeNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts;tests/presentation.test.ts
+GET /app/rest/changes/{p1}/duplicates	Change	ReadOnly	covered	changes duplicates <id>	getChangeDuplicates		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts
+GET /app/rest/changes/{p1}/firstBuilds	Change	ReadOnly	covered	changes first-builds <id>	getChangeFirstBuilds		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts
 GET /app/rest/changes/{p1}/issues	Change	ReadOnly	covered	changes issues <id>	getChangeIssues		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/changes/{p1}/parentChanges	Change	ReadOnly	partial	changes parents <change-id>	listChangeParents	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/changes/{p1}/parentChanges	Change	ReadOnly	covered	changes parents <change-id>	listChangeParents		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts;tests/operator.test.ts
 GET /app/rest/changes/{p1}/parentRevisions	Change	ReadOnly	covered	changes parent-revisions <id>	getChangeParentRevisions		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/changes/{p1}/vcsRootInstance	Change	ReadOnly	partial	changes root-instance <id>	getChangeRootInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/changes/{p1}/vcsRootInstance	Change	ReadOnly	covered	changes root-instance <id>	getChangeRootInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts
 GET /app/rest/changes/{p1}/{p2}	Change	ReadOnly	covered	changes field <id> <field>	getChangeField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/cloud/images	CloudInstance	ReadOnly	partial	cloud images list		fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/cloud/images/{p1}	CloudInstance	ReadOnly	partial	cloud images show	getCloudImage	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts

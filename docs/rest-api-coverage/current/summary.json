@@ -1,16 +1,16 @@
 {
-  "baselineHead": "6c1698c680de4bff4cc46dd2ba1bec4738bed99e",
+  "baselineHead": "d55422925cf28a6076bf2dd6ed5dc3c88c52a37c",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 234,
-  "partial": 214,
+  "covered": 241,
+  "partial": 207,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 99,
-      "partial": 135,
+      "covered": 106,
+      "partial": 128,
       "missing": 1
     },
     "Update": {
@@ -71,8 +71,8 @@
     },
     "Change": {
       "total": 10,
-      "covered": 3,
-      "partial": 7,
+      "covered": 10,
+      "partial": 0,
       "missing": 0
     },
     "CloudInstance": {
@@ -206,7 +206,7 @@
     "addTimestamp": 1,
     "basePath": 9,
     "field": 6,
-    "fields": 202,
+    "fields": 195,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -219,10 +219,9 @@
     "requestor": 1,
     "resolveParameters": 5
   },
-  "partialOnlyBecauseOfFields": 188,
+  "partialOnlyBecauseOfFields": 181,
   "verificationEvidenceGaps": [
     "GET /app/rest/agents/{p1}",
-    "GET /app/rest/changes",
     "GET /app/rest/projects/{p1}"
   ],
   "nonLeafTransportOperations": [
