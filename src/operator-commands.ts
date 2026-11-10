@@ -229,7 +229,7 @@ export function createOperatorCommands(
     tags("queue"),
     leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args, options }) =>
       c.getQueuedBuild(number(args, "build-id"), options.fields as string | undefined),
-    [fieldsOption],
+      [fieldsOption],
     ),
     leaf(
       "compatible-agents <build-id>",

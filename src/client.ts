@@ -185,6 +185,7 @@ export interface ListBuildTestsOptions extends TeamCityPageOptions {
 }
 
 export interface ListQueueOptions extends TeamCityPageOptions {
+  fields?: string;
   job?: string;
   project?: string;
 }
