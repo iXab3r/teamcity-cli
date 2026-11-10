@@ -277,8 +277,9 @@ export function createInfrastructureCommands(
     ]),
   ]);
   const versioned = command("versioned-settings", "Manage versioned project settings", [
-    leaf("affected <id>", "Read affected project identities", Permission.ReadOnly, (c, { args }) =>
-      c.getVersionedAffectedProjects(args.id),
+    leaf("affected <id>", "Read affected project identities", Permission.ReadOnly, (c, { args, options }) =>
+      c.getVersionedAffectedProjects(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "check-changes <id>",
@@ -294,21 +295,23 @@ export function createInfrastructureCommands(
       [confirm],
     ),
     command("config", "Manage versioned settings configuration", [
-      leaf("show <id>", "Read project configuration", Permission.ReadOnly, (c, { args }) =>
-        c.getVersionedConfig(args.id),
+      leaf("show <id>", "Read project configuration", Permission.ReadOnly, (c, { args, options }) =>
+        c.getVersionedConfig(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
       ),
       leaf(
         "effective <id>",
         "Read inherited project/config pair",
         Permission.ReadOnly,
-        (c, { args }) => c.getEffectiveVersionedConfig(args.id),
+        (c, { args, options }) => c.getEffectiveVersionedConfig(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
       ),
       leaf(
         "replace <id>",
         "Replace versioned settings configuration",
         Permission.Update,
-        (c, { args, options }) => c.replaceVersionedConfig(args.id, options.item),
-        [jsonOption("--item <json>", "Supply versioned settings configuration")],
+        (c, { args, options }) => c.replaceVersionedConfig(args.id, options.item, fieldsFromOptions(options)),
+        [jsonOption("--item <json>", "Supply versioned settings configuration"), fieldsOption],
       ),
       command("fields", "Manage versioned settings fields", [
         leaf(
@@ -353,14 +356,15 @@ export function createInfrastructureCommands(
       "load <id>",
       "Load current configuration from VCS",
       Permission.Update,
-      (c, { args }) => c.loadVersionedSettings(args.id),
-      [confirm],
+      (c, { args, options }) => c.loadVersionedSettings(args.id, fieldsFromOptions(options)),
+      [confirm, fieldsOption],
     ),
     leaf(
       "status <id>",
       "Read synchronization state",
       Permission.ReadOnly,
-      (c, { args }) => c.getVersionedStatus(args.id),
+      (c, { args, options }) => c.getVersionedStatus(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("tokens", "Manage versioned secure-value mappings", [
       leaf(

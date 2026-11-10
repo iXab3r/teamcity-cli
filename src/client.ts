@@ -2839,13 +2839,9 @@ export class TeamCityClient {
     return { instanceId: id, field, cleared: true };
   }
 
-  public async getVersionedAffectedProjects(id: string) {
-    const value = await this.#requestJson<{ project?: unknown[] }>(
-      "GET",
-      infrastructure.versionedPath(id) + "/affectedProjects",
-      { fields: "count,project(id,name)" },
-    );
-    return (value.project ?? []).map((item) => triage.safeScalars(item, ["id", "name"]));
+  public async getVersionedAffectedProjects<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.versionedPath(id) + "/affectedProjects",
+      { fields: "count,project(id,name)" }, (value) => ((value as { project?: unknown[] }).project ?? []).map((item) => triage.safeScalars(item, ["id", "name"])), fields);
   }
 
   public async checkVersionedSettings(id: string) {
@@ -2858,40 +2854,27 @@ export class TeamCityClient {
     return { projectId: id, commitRequested: true };
   }
 
-  public async getVersionedConfig(id: string) {
-    return infrastructure.safeVersionedConfig(
-      await this.#requestJson("GET", infrastructure.versionedPath(id) + "/config", {
-        fields: infrastructure.versionedConfigFields,
-      }),
-    );
+  public async getVersionedConfig<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.versionedPath(id) + "/config",
+      { fields: infrastructure.versionedConfigFields }, infrastructure.safeVersionedConfig, fields);
   }
 
-  public async replaceVersionedConfig(id: string, input: unknown) {
+  public async replaceVersionedConfig<F extends string | undefined = undefined>(id: string, input: unknown, fields?: F) {
     const body = infrastructure.versionedConfigBody(input);
-    return infrastructure.safeVersionedConfig(
-      await this.#requestJson(
-        "PUT",
-        infrastructure.versionedPath(id) + "/config",
-        { fields: infrastructure.versionedConfigFields },
-        body,
-      ),
-    );
+    return this.#projectedJson("PUT", infrastructure.versionedPath(id) + "/config",
+      { fields: infrastructure.versionedConfigFields }, infrastructure.safeVersionedConfig, fields, body);
   }
 
-  public async getEffectiveVersionedConfig(id: string) {
-    const value = await this.#requestJson<{ project?: unknown; config?: unknown }>(
-      "GET",
-      infrastructure.versionedPath(id) + "/config/effective",
-      { fields: `project(id),config(${infrastructure.versionedConfigFields})` },
-    );
-    return {
+  public async getEffectiveVersionedConfig<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.versionedPath(id) + "/config/effective",
+      { fields: `project(id),config(${infrastructure.versionedConfigFields})` }, (raw) => { const value = raw as { project?: unknown; config?: unknown }; return ({
       ...(value.project === undefined
         ? {}
         : { project: triage.safeScalars(value.project, ["id"]) }),
       ...(value.config === undefined
         ? {}
         : { config: infrastructure.safeVersionedConfig(value.config) }),
-    };
+    }); }, fields);
   }
 
   public async getVersionedConfigField(id: string, field: string) {
@@ -2938,21 +2921,14 @@ export class TeamCityClient {
     );
   }
 
-  public async loadVersionedSettings(id: string) {
-    const value = await this.#requestJson<{ project?: unknown[] }>(
-      "POST",
-      infrastructure.versionedPath(id) + "/loadSettings",
-      { fields: "count,project(id,name)" },
-    );
-    return (value.project ?? []).map((item) => triage.safeScalars(item, ["id", "name"]));
+  public async loadVersionedSettings<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("POST", infrastructure.versionedPath(id) + "/loadSettings",
+      { fields: "count,project(id,name)" }, (value) => ((value as { project?: unknown[] }).project ?? []).map((item) => triage.safeScalars(item, ["id", "name"])), fields);
   }
 
-  public async getVersionedStatus(id: string) {
-    return infrastructure.versionedStatus(
-      await this.#requestJson("GET", infrastructure.versionedPath(id) + "/status", {
-        fields: "type,timestamp,dslOutdated,missingContextParameters",
-      }),
-    );
+  public async getVersionedStatus<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.versionedPath(id) + "/status",
+      { fields: "type,timestamp,dslOutdated,missingContextParameters" }, infrastructure.versionedStatus, fields);
   }
 
   public async listVersionedTokenNames(id: string, status?: string) {
