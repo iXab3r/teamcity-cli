@@ -21,14 +21,14 @@ and [local completeness index](docs/agent-setup.md) for the surface you touch.
 
 | Surface | Read and adopt |
 |---|---|
-| `src/**`, service DTOs, auth and commands | **Service integration author**: [domain guide](docs/roles/integration-author.md), [authoring path](docs/integrations.md), [product contract](docs/product-contract.md) and [README](README.md) |
+| `src/**`, service DTOs, auth and commands | **Service integration author**: [domain guide](docs/roles/integration-author.md), [authoring path](docs/integrations.md), [product contract](docs/product-contract.md), [README](README.md) and [command reference](docs/reference.md) |
 | `tests/**`, synthetic fixtures, `scripts/*contract*`, packaged checks | Integration domain plus [testing/fixture policy](docs/testing.md) and the local tests/proof section below |
 | `integration-tests/**` and explicitly authorized local proof | The same testing policy, [fixed proof runner](integration-tests/profile-proof.ts) and local proof instructions below; proof remains separate from offline tests/CI |
 | `.github/ISSUE_TEMPLATE/**`, issues and PRs | GH issue dev and its lifecycle below; [local issue forms](docs/agent-setup.md#issue-intake) |
 | `build/**`, `scripts/**`, docs and agent setup | Local repository tooling/docs owner: this router, [agent setup index](docs/agent-setup.md), relevant shared design/practice and [release guide](docs/release.md) |
 | Shared Core runtime/API defect | External escalation: [Factory-core maintainer](docs/roles/core-escalation.md); propose separately within task authority, never implement/copy Core here |
 
-Use [local test/fixture and proof instructions](README.md#tests-and-local-integration-proof) for this product.
+Use [local test/fixture and proof instructions](docs/reference.md#tests-and-local-integration-proof) for this product.
 
 ## Product rules
 

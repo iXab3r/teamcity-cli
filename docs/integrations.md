@@ -74,7 +74,7 @@ each. This product uses the existing standalone entry point; optional upstream r
 ## Product repository layout
 
 This existing product already owns its standalone source, tests, fixtures and fixed proof runner.
-Use [the command guide](../README.md), [shipped product contract](product-contract.md),
+Use [the command reference](reference.md), [shipped product contract](product-contract.md),
 [local test/proof workflow](testing.md#product-workflow) and [release guide](release.md).
 Install declared dependencies with npm ci; use the actual local npm build/test/package scripts.
 Keep the exact Core dependency unchanged unless a task explicitly authorizes an upgrade.

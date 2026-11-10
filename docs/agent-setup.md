@@ -10,7 +10,7 @@ records the MIT source snapshot; external links are optional history/API referen
 
 - **Service integration author** owns product source, DTOs, auth, command trees, tests and proof.
   Follow the explicit domain/authoring/testing links in the router, [product contract](product-contract.md)
-  and [command guide](../README.md).
+  and [command reference](reference.md).
 - **Repository tooling/docs owner** owns product build/scripts/docs/agent setup under the local router
   and relevant shared practice. Factory workspace/build examples are not local commands.
 - **Factory-core maintainer** is external escalation for shared mechanisms; the router links its guide.

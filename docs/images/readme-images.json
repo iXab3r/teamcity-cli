@@ -1,0 +1,45 @@
+{
+  "matrix": {
+    "columns": [
+      { "title": "teamcity-cli 0.7.1", "subtitle": "this package" },
+      { "title": "teamcity-cli 0.1.0", "subtitle": "before the expansion" },
+      { "title": "teamcity 1.6.3", "subtitle": "JetBrains TeamCity CLI" }
+    ],
+    "rowHeader": "API area",
+    "countHeader": "operations",
+    "legend": "Share of published REST operations reachable",
+    "ariaLabel": "REST API coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations, teamcity-cli 0.1.0 reached 17, the JetBrains teamcity 1.6.3 reaches 75 through dedicated commands",
+    "rows": [
+      { "name": "Builds", "total": 57, "values": [57, 3, 10] },
+      { "name": "Build queue", "total": 15, "values": [15, 3, 5] },
+      { "name": "Build configurations", "total": 109, "values": [109, 2, 14] },
+      { "name": "Projects", "total": 48, "values": [48, 2, 13] },
+      { "name": "Versioned settings", "total": 16, "values": [16, 0, 3] },
+      { "name": "VCS roots and instances", "total": 31, "values": [31, 0, 4] },
+      { "name": "Changes, tests and problems", "total": 18, "values": [18, 3, 3] },
+      { "name": "Investigations and mutes", "total": 12, "values": [12, 0, 0] },
+      { "name": "Agents and agent pools", "total": 30, "values": [30, 2, 10] },
+      { "name": "Cloud profiles, images, instances", "total": 10, "values": [10, 0, 9] },
+      { "name": "Users, groups and roles", "total": 56, "values": [56, 1, 2] },
+      { "name": "Server, nodes, audit and health", "total": 38, "values": [38, 1, 2] },
+      { "name": "Deployment dashboards", "total": 9, "values": [9, 0, 0] }
+    ],
+    "total": { "name": "All operations", "total": 449, "values": [449, 17, 75] }
+  },
+  "flow": {
+    "ariaLabel": "People, AI agents and Node.js code use one teamcity-cli command tree, which applies profiles, the secret store, a permission gate and redaction before calling the TeamCity REST API",
+    "callers": [
+      { "title": "People", "sub": "readable tables and trees" },
+      { "title": "AI agents and scripts", "sub": "--json  ·  --json-rpc" },
+      { "title": "Node.js code", "sub": "import the same operations" }
+    ],
+    "product": { "title": "teamcity-cli", "sub": "one command tree, 456 service commands" },
+    "layers": [
+      { "title": "Profiles", "sub": "several servers, separate permissions" },
+      { "title": "Secret store", "sub": "tokens never in profile JSON or arguments" },
+      { "title": "Permission gate", "sub": "ReadOnly on · three other categories off", "accent": true },
+      { "title": "Redaction", "sub": "password values and error bodies withheld" }
+    ],
+    "service": { "title": "TeamCity REST API", "sub": "449 of 449 operations" }
+  }
+}
