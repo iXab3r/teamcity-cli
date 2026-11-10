@@ -72,3 +72,13 @@ for (const guest of [false, true]) test(`#69 ${guest ? "guest" : "one-character 
     echo: guest ? "1" : "[redacted]", number: 1, flag: false, empty: null,
   });
 });
+
+test("#69 known credential masking preserves Unicode and literal matching", async () => {
+  const { knownCredentialMask } = await import("../src/projection.js");
+  for (const credential of ["synthetic-😀-credential", "synthetic-\ud800-credential", "synthetic.*[a]+credential"]) {
+    const mask = knownCredentialMask(credential);
+    assert.equal(mask(`before ${credential} after`), "before [redacted] after");
+    assert.equal(mask(JSON.stringify(credential).slice(1, -1)), "[redacted]");
+  }
+  assert.equal(knownCredentialMask("")("native"), "native");
+});
