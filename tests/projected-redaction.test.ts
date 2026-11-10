@@ -82,3 +82,75 @@ test("#69 known credential masking preserves Unicode and literal matching", asyn
   }
   assert.equal(knownCredentialMask("")("native"), "native");
 });
+
+for (const scenario of cases) for (const surface of ["human", "json", "execute", "rpc"] as const) {
+  test(`#74 ${scenario.name} masks nested encodings on ${surface}`, async t => {
+    const token = 'synthetic/a+b:cred?"\\end-ü😀';
+    const rt = await createTestRuntime(t, {
+      profiles: [{ name: "default", url: "https://teamcity.test", permissions: ["ReadOnly", "Update"] }],
+      tokens: { default: token },
+    });
+    const twice = encodeURIComponent(encodeURIComponent(token));
+    const thrice = encodeURIComponent(twice);
+    const unicode = token.split("").map(char => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`).join("");
+    const escaped = JSON.stringify(token).slice(1, -1).replaceAll("/", "\\/");
+    const variants = [twice, thrice, encodeURI(encodeURIComponent(token)), encodeURIComponent(encodeURI(token)),
+      encodeURI(encodeURIComponent(encodeURI(token))), unicode, escaped, encodeURIComponent(unicode),
+      JSON.stringify(JSON.stringify(escaped).slice(1, -1)).slice(1, -1),
+    ].flatMap(value => [value, value.replace(/%[\da-f]{2}/gi, part => part.toLowerCase()),
+      value.replace(/\\u[\da-f]{4}/gi, part => "\\u" + part.slice(2).toUpperCase()),
+    ]);
+    const rows = variants.map(value => ({ [value]: { exact: value, longer: `before ${value} after`, array: [value, { echo: value }, 7, false, null] } }));
+    const masked = variants.map(() => ({ "[redacted]": { exact: "[redacted]", longer: "[redacted]", array: ["[redacted]", { echo: "[redacted]" }, 7, false, null] } }));
+    const body = { ...scenario.body, rows, literal: `before ${token} after ${token}`,
+      fourth: encodeURIComponent(thrice), untouched: "ordinary %oops \\uZZZZ \\q",
+      url: "https://fixture.test/path%2f?q=%252F+value#fragment", number: 7, flag: false, empty: null };
+    const expected = { ...body, rows: masked, literal: "before [redacted] after [redacted]" };
+    server.use(http.all("*", () => HttpResponse.json(body)));
+    const cli = rt.createCli();
+    const argv = [...scenario.argv, "--fields", "custom(*)"];
+    if (surface === "execute") {
+      if (scenario.code) await assert.rejects(cli.execute(argv), error => {
+        assert.equal((error as CliError).code, scenario.code);
+        assert.equal((error as CliError).exitCode, 1);
+        assert.deepEqual((error as CliError).result, expected);
+        return true;
+      });
+      else assert.deepEqual(await cli.execute(argv), expected);
+    } else if (surface === "rpc") {
+      const replies = await rt.rpc(cli, [argv, argv]) as Array<{ result?: unknown; error?: { data: { code: string; exitCode: number; result: unknown } } }>;
+      for (const reply of replies) {
+        assert.equal(reply.error?.data.code, scenario.code);
+        if (scenario.code) assert.equal(reply.error?.data.exitCode, 1);
+        assert.deepEqual(scenario.code ? reply.error?.data.result : reply.result, expected);
+      }
+    } else {
+      const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
+      assert.equal(rendered.exitCode, scenario.code ? 1 : 0);
+      if (surface === "json") {
+        if (scenario.code) assert.equal(JSON.parse(rendered.stderr).error.code, scenario.code);
+        assert.deepEqual(JSON.parse(rendered.stdout), expected);
+      } else {
+        assert.match(rendered.stdout, /before \[redacted\] after \[redacted\]/);
+        assert.ok(rendered.stdout.includes(body.fourth));
+        assert.ok(rendered.stdout.includes(body.untouched));
+        assert.ok(rendered.stdout.includes(body.url));
+      }
+      for (const variant of [token, ...variants]) assert.equal((rendered.stdout + rendered.stderr).includes(variant), false);
+    }
+  });
+}
+
+test("#74 tolerant decoding preserves malformed escapes and unrelated text", async () => {
+  const { knownCredentialMask } = await import("../src/projection.js");
+  const token = 'synthetic/"\\\b\f\n\r\t-ü😀';
+  const mask = knownCredentialMask(token);
+  const escaped = JSON.stringify(token).slice(1, -1).replaceAll("/", "\\/");
+  assert.equal(mask(`%oops \\q ${encodeURIComponent(token)} %FF`), "[redacted]");
+  assert.equal(mask(`%oops \\q ${escaped} %FF`), "[redacted]");
+  for (const text of ["%FF%E0%A4%A", "\\uZZZZ \\U0061 \\N \\q trailing\\", "ordinary", "https://fixture.test/a%2f?q=%25+value"]) {
+    assert.equal(mask(text), text);
+  }
+  assert.equal(knownCredentialMask("")(`before ${escaped} after`), `before ${escaped} after`);
+  assert.equal(knownCredentialMask("q")("before \\q after"), "before \\[redacted] after");
+});
