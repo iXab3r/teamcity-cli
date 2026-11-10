@@ -794,23 +794,23 @@ export class TeamCityClient {
     return { owner, id: id, name: name, deleted: true };
   }
 
-  public listSteps<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+  public async listSteps<F extends string | undefined = undefined>(jobId: string, fields?: F) {
     return this.#projectedJson("GET", `${jobPath(jobId)}/steps`,
       { fields: `step(${stepFields})` },
       value => ((value as { step?: RawStep[] }).step ?? []).map(safeStep), fields);
   }
 
-  public getStep<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
+  public async getStep<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
     return this.#projectedJson("GET", `${jobPath(jobId)}/steps/${pathSegment(id)}`,
       { fields: stepFields }, value => safeStep(value as RawStep), fields);
   }
 
-  public createStep<F extends string | undefined = undefined>(jobId: string, input: StepInput, fields?: F) {
+  public async createStep<F extends string | undefined = undefined>(jobId: string, input: StepInput, fields?: F) {
     return this.#projectedJson("POST", `${jobPath(jobId)}/steps`,
       { fields: stepFields }, value => safeStep(value as RawStep), fields, stepBody(input));
   }
 
-  public replaceStep<F extends string | undefined = undefined>(jobId: string, id: string, input: StepInput, fields?: F) {
+  public async replaceStep<F extends string | undefined = undefined>(jobId: string, id: string, input: StepInput, fields?: F) {
     return this.#projectedJson("PUT", `${jobPath(jobId)}/steps/${pathSegment(id)}`,
       { fields: stepFields }, value => safeStep(value as RawStep), fields, stepBody(input));
   }
@@ -820,24 +820,24 @@ export class TeamCityClient {
     return { jobId: jobId, id: id, deleted: true };
   }
 
-  public listExtensions<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, fields?: F) {
+  public async listExtensions<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, fields?: F) {
     const key = kind === "triggers" ? "trigger" : "feature";
     return this.#projectedJson("GET", `${jobPath(jobId)}/${kind}`,
       { fields: `${key}(${extensionFields})` },
       value => ((value as { trigger?: RawExtension[]; feature?: RawExtension[] })[key] ?? []).map(safeExtension), fields);
   }
 
-  public getExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, id: string, fields?: F) {
+  public async getExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, id: string, fields?: F) {
     return this.#projectedJson("GET", extensionPath(kind, jobId, id),
       { fields: extensionFields }, value => safeExtension(value as RawExtension), fields);
   }
 
-  public createExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, input: ExtensionInput, fields?: F) {
+  public async createExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, input: ExtensionInput, fields?: F) {
     return this.#projectedJson("POST", `${jobPath(jobId)}/${kind}`,
       { fields: extensionFields }, value => safeExtension(value as RawExtension), fields, extensionBody(input));
   }
 
-  public replaceExtension<F extends string | undefined = undefined>(
+  public async replaceExtension<F extends string | undefined = undefined>(
     kind: ExtensionKind, jobId: string, id: string, input: ExtensionInput, fields?: F,
   ) {
     return this.#projectedJson("PUT", extensionPath(kind, jobId, id),
@@ -1000,13 +1000,13 @@ export class TeamCityClient {
     return { jobId: jobId, id: id, field, value: result };
   }
 
-  public listPluginParameters<F extends string | undefined = undefined>(kind: "steps" | "features", jobId: string, id: string, fields?: F) {
+  public async listPluginParameters<F extends string | undefined = undefined>(kind: "steps" | "features", jobId: string, id: string, fields?: F) {
     return this.#projectedJson("GET", `${entityPath(kind, jobId, id)}/parameters`,
       { fields: `property(${propertyFields})` },
       value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)), fields);
   }
 
-  public replacePluginParameters<F extends string | undefined = undefined>(
+  public async replacePluginParameters<F extends string | undefined = undefined>(
     kind: "steps" | "features", jobId: string, id: string,
     properties: readonly PlainProperty[], fields?: F,
   ) {
