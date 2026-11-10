@@ -889,6 +889,9 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Pool projections are available on `pools list` and `pools agents list` (item fields),
+and `pools show`, `pools projects list`, and `pools agents assign` (whole response).
+
 Investigations and mutes accept item `--fields` on `investigations list` and `mutes list`,
 and whole-response fields on `investigations show/create/create-many/replace` and
 `mutes show/create/create-many/delete-many`. Bulk unmute keeps its fixed preflight reads;

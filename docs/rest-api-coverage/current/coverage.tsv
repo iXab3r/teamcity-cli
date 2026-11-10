@@ -60,10 +60,10 @@ DELETE /app/rest/vcs-roots/{p1}	VcsRoot	Update	covered	vcs roots delete <id>	del
 DELETE /app/rest/vcs-roots/{p1}/properties	VcsRoot	Update	covered	vcs roots properties clear <id>	clearVcsRootProperties		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/vcs-roots/{p1}/properties/{p2}	VcsRoot	Update	covered	vcs roots properties delete <id> <name>	deleteVcsRootProperty		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest	Root	ReadOnly	covered	server rest-info	getRestInfo		exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/agentPools	AgentPool	ReadOnly	partial	pools list		fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agentPools/{p1}	AgentPool	ReadOnly	partial	pools show <pool-id>	getPool	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/validation-contract.test.ts
-GET /app/rest/agentPools/{p1}/agents	AgentPool	ReadOnly	partial	pools agents list <pool-id>		fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agentPools/{p1}/projects	AgentPool	ReadOnly	partial	pools projects list <pool-id>	listPoolProjects	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agentPools	AgentPool	ReadOnly	covered	pools list			exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts
+GET /app/rest/agentPools/{p1}	AgentPool	ReadOnly	covered	pools show <pool-id>	getPool		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts;tests/validation-contract.test.ts
+GET /app/rest/agentPools/{p1}/agents	AgentPool	ReadOnly	covered	pools agents list <pool-id>			exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts
+GET /app/rest/agentPools/{p1}/projects	AgentPool	ReadOnly	covered	pools projects list <pool-id>	listPoolProjects		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts
 GET /app/rest/agentPools/{p1}/{p2}	AgentPool	ReadOnly	covered	pools fields show <pool-id> <field>	getPoolField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/agentTypes/{p1}	AgentType	ReadOnly	covered	agents types show <type-id>	getAgentType		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/bulk-configuration.test.ts
 GET /app/rest/agents	Agent	ReadOnly	covered	agents list			exercised-in-passing-suite	tests/agents-projection.test.ts;tests/cli.test.ts;tests/presentation.test.ts
@@ -295,7 +295,7 @@ GET /app/rest/vcs-roots/{p1}/settingsFile	VcsRoot	ReadOnly	covered	vcs roots set
 GET /app/rest/vcs-roots/{p1}/{p2}	VcsRoot	ReadOnly	covered	vcs roots fields get <id> <field>	getVcsRootField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/version	Root	ReadOnly	covered	server rest-version	getRestVersion		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/agentPools	AgentPool	Update	covered	pools create	createPool		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-POST /app/rest/agentPools/{p1}/agents	AgentPool	Update	partial	pools agents assign <pool-id> <agent-id>	assignPoolAgent	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+POST /app/rest/agentPools/{p1}/agents	AgentPool	Update	covered	pools agents assign <pool-id> <agent-id>	assignPoolAgent		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts
 POST /app/rest/agentPools/{p1}/authorizationTokens	AgentPool	Update	covered	pools tokens create <id>	createPoolTokens		exercised-in-passing-suite	tests/system.test.ts
 POST /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools projects assign <pool-id> <project-id>	assignPoolProject		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 POST /app/rest/buildQueue	BuildQueue	Update	covered	jobs run <job-id>	runJob		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-flow.test.ts;tests/cli.test.ts;tests/errors.test.ts;tests/queue-action-projection.test.ts

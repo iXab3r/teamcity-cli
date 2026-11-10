@@ -1,22 +1,22 @@
 {
-  "baselineHead": "1a272d9f9d7ce1806e9f56ad7595542eeba21042",
+  "baselineHead": "2a0dbee91d139533396b81bfd07f458d50e88702",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 264,
-  "partial": 184,
+  "covered": 269,
+  "partial": 179,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 119,
-      "partial": 115,
+      "covered": 123,
+      "partial": 111,
       "missing": 1
     },
     "Update": {
       "total": 214,
-      "covered": 145,
-      "partial": 69,
+      "covered": 146,
+      "partial": 68,
       "missing": 0
     }
   },
@@ -29,8 +29,8 @@
     },
     "AgentPool": {
       "total": 14,
-      "covered": 9,
-      "partial": 5,
+      "covered": 14,
+      "partial": 0,
       "missing": 0
     },
     "AgentType": {
@@ -206,7 +206,7 @@
     "addTimestamp": 1,
     "basePath": 9,
     "field": 6,
-    "fields": 172,
+    "fields": 167,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -219,7 +219,7 @@
     "requestor": 1,
     "resolveParameters": 5
   },
-  "partialOnlyBecauseOfFields": 158,
+  "partialOnlyBecauseOfFields": 153,
   "verificationEvidenceGaps": [
     "GET /app/rest/projects/{p1}"
   ],
