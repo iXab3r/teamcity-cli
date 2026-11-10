@@ -2476,14 +2476,13 @@ export class TeamCityClient {
     return { userId: id, field, cleared: true };
   }
 
-  public async listAccountGroupsAll() {
-    const value = await this.#requestJson<{ group?: unknown[] }>("GET", "/app/rest/userGroups", {
-      fields: `count,group(${admin.groupFields})`,
-    });
-    return (value.group ?? []).map(admin.safeGroup);
+  public async listAccountGroupsAll<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/userGroups",
+      { fields: `count,group(${admin.groupFields})` },
+      raw => ((raw as { group?: unknown[] }).group ?? []).map(admin.safeGroup), fields);
   }
 
-  public async createAccountGroup(key: string, name: string, description?: string) {
+  public async createAccountGroup<F extends string | undefined = undefined>(key: string, name: string, description?: string, fields?: F) {
     const body = {
       key: triage.inputText(key, "Group key"),
       name: triage.inputText(name, "Name"),
@@ -2491,17 +2490,13 @@ export class TeamCityClient {
         ? {}
         : { description: triage.inputText(description, "Description") }),
     };
-    return admin.safeGroup(
-      await this.#requestJson("POST", "/app/rest/userGroups", { fields: admin.groupFields }, body),
-    );
+    return this.#projectedJson("POST", "/app/rest/userGroups",
+      { fields: admin.groupFields }, admin.safeGroup, fields, body);
   }
 
-  public async getAccountGroup(key: string) {
-    return admin.safeGroup(
-      await this.#requestJson("GET", admin.accountPath("groups", key), {
-        fields: admin.groupFields,
-      }),
-    );
+  public async getAccountGroup<F extends string | undefined = undefined>(key: string, fields?: F) {
+    return this.#projectedJson("GET", admin.accountPath("groups", key),
+      { fields: admin.groupFields }, admin.safeGroup, fields);
   }
 
   public async deleteAccountGroup(key: string) {

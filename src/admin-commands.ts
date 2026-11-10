@@ -46,7 +46,7 @@ export function createAdminCommands(
       [
         withView(stringList, leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args, options }) =>
           c.listAccountPropertyNames(kind, args.id, fieldsFromOptions(options)),
-          kind === "users" ? [fieldsOption] : [],
+          [fieldsOption],
         )),
         leaf(
           "exists <id> <name>",
@@ -123,7 +123,7 @@ export function createAdminCommands(
     return [
       leaf("list <id>", "List directly assigned groups", Permission.ReadOnly, (c, { args, options }) =>
         c.listAccountGroups(kind, args.id, fieldsFromOptions(options)),
-        kind === "users" ? [fieldsOption] : [],
+        [fieldsOption],
       ),
       leaf(
         "replace <id>",
@@ -133,7 +133,7 @@ export function createAdminCommands(
         "Admin",
         (c, { args, options }) =>
           c.replaceAccountGroups(kind, args.id, (options.group ?? []) as string[], fieldsFromOptions(options)),
-        [groupOption, ...(kind === "users" ? [fieldsOption] : [])],
+        [groupOption, fieldsOption],
       ),
     ];
   }
@@ -293,8 +293,9 @@ export function createAdminCommands(
     ]),
   ]);
   const groups = command("groups", "Inspect and administer user groups", [
-    leaf("list", "List group identities", Permission.ReadOnly, (c) =>
-      c.listAccountGroupsAll(),
+    leaf("list", "List group identities", Permission.ReadOnly, (c, { options }) =>
+      c.listAccountGroupsAll(fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create <key>",
@@ -305,11 +306,13 @@ export function createAdminCommands(
           args.key,
           text(options, "name"),
           optional(options, "description"),
+          fieldsFromOptions(options),
         ),
-      [option("--name <text>", "Set the name", true), option("--description <text>", "Set the description")],
+      [fieldsOption, option("--name <text>", "Set the name", true), option("--description <text>", "Set the description")],
     ),
-    leaf("show <key>", "Read one group identity", Permission.ReadOnly, (c, { args }) =>
-      c.getAccountGroup(args.key),
+    leaf("show <key>", "Read one group identity", Permission.ReadOnly, (c, { args, options }) =>
+      c.getAccountGroup(args.key, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf("delete <key>", "Delete one remote group", "Admin", (c, { args }) =>
       c.deleteAccountGroup(args.key),
