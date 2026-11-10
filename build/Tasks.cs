@@ -9,7 +9,7 @@ public sealed class VerifyTask : AsyncFrostingTask<BuildContext>
     public override async Task RunAsync(BuildContext context)
     {
         await context.Run("npm", "ci", "--no-audit", "--no-fund");
-        Console.WriteLine(await context.Run("npm", "test"));
+        Console.WriteLine(await context.Run("npm", "run", "test:coverage"));
         Console.WriteLine(await context.Run("npm", "run", "test:package"));
         Console.WriteLine(await context.Run("node", "--test", "scripts/test-release.mjs"));
     }
