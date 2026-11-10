@@ -191,7 +191,8 @@ export interface ListQueueOptions<F extends string | undefined = string | undefi
   project?: string;
 }
 
-export interface ListAgentsOptions extends TeamCityPageOptions {
+export interface ListAgentsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   connected?: TeamCityTriState;
   enabled?: TeamCityTriState;
   authorized?: TeamCityTriState;
@@ -546,7 +547,7 @@ export class TeamCityClient {
     );
   }
 
-  public listAgents(options: ListAgentsOptions = {}): Promise<TeamCityPage<TeamCityAgent>> {
+  public listAgents<F extends string | undefined = undefined>(options: ListAgentsOptions<F> = {}): Promise<TeamCityPage<Projected<TeamCityAgent, F>>> {
     return this.#list(
       "/app/rest/agents",
       [
@@ -561,11 +562,12 @@ export class TeamCityClient {
     );
   }
 
-  public getAgent(id: number): Promise<TeamCityAgent> {
-    return this.#requestJson<TeamCityAgent>(
+  public getAgent<F extends string | undefined = undefined>(id: number, fields?: F): Promise<Projected<TeamCityAgent, F>> {
+    return this.#projectedJson(
       "GET",
       `/app/rest/agents/id:${integerId(id, "TeamCity agent ID")}`,
       { fields: agentFields },
+      raw => raw as TeamCityAgent, fields,
     );
   }
 
@@ -1422,88 +1424,79 @@ export class TeamCityClient {
     return { agentId: id, deleted: true };
   }
 
-  public async getAgentStatus(id: number, kind: "enabled" | "authorized") {
-    return safeBooleanStatus(
-      await this.#requestJson<BooleanStatus>("GET", `${agentPath(id)}/${kind}Info`, {
-        fields: booleanStatusFields,
-      }),
-    );
+  public async getAgentStatus<F extends string | undefined = undefined>(id: number, kind: "enabled" | "authorized", fields?: F) {
+    return this.#projectedJson("GET", `${agentPath(id)}/${kind}Info`, {
+      fields: booleanStatusFields,
+    }, raw => safeBooleanStatus(raw as BooleanStatus), fields);
   }
 
-  public async setAgentStatus(
+
+  public async setAgentStatus<F extends string | undefined = undefined>(
     id: number,
     kind: "enabled" | "authorized",
     status: boolean,
     comment?: string,
+    fields?: F,
   ) {
-    return safeBooleanStatus(
-      await this.#requestJson<BooleanStatus>(
-        "PUT",
-        `${agentPath(id)}/${kind}Info`,
-        { fields: booleanStatusFields },
-        this.#statusBody(status, comment),
-      ),
+    return this.#projectedJson(
+      "PUT", `${agentPath(id)}/${kind}Info`, { fields: booleanStatusFields },
+      raw => safeBooleanStatus(raw as BooleanStatus), fields, this.#statusBody(status, comment),
     );
   }
 
-  public async getAgentPolicy(id: number) {
-    return safePolicy(
-      await this.#requestJson<RawAgentPolicy>("GET", `${agentPath(id)}/compatibilityPolicy`, {
-        fields: policyFields,
-      }),
-    );
+
+  public async getAgentPolicy<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson("GET", `${agentPath(id)}/compatibilityPolicy`, {
+      fields: policyFields,
+    }, raw => safePolicy(raw as RawAgentPolicy), fields);
   }
 
-  public async setAgentPolicy(id: number, policy: string, jobs: readonly string[]) {
+
+  public async setAgentPolicy<F extends string | undefined = undefined>(id: number, policy: string, jobs: readonly string[], fields?: F) {
     if (!["any", "selected"].includes(requiredText(policy, "Policy").trim().toLowerCase()))
       throw new Error("Policy must be any or selected.");
     const ids = jobs.map((job) => requiredText(job, "Job ID"));
-    return safePolicy(
-      await this.#requestJson<RawAgentPolicy>(
-        "PUT",
-        `${agentPath(id)}/compatibilityPolicy`,
-        { fields: policyFields },
-        { policy, buildTypes: { buildType: ids.map((id) => ({ id })) } },
-      ),
+    return this.#projectedJson(
+      "PUT", `${agentPath(id)}/compatibilityPolicy`, { fields: policyFields },
+      raw => safePolicy(raw as RawAgentPolicy), fields,
+      { policy, buildTypes: { buildType: ids.map((id) => ({ id })) } },
     );
   }
 
-  public async listAgentCompatibleJobs(id: number) {
-    const result = await this.#requestJson<{ buildType?: BuildTypeIdentity[] }>(
-      "GET",
-      `${agentPath(id)}/compatibleBuildTypes`,
-      { fields: `buildType(${identityFields})` },
-    );
-    return (result.buildType ?? []).map(safeIdentity);
-  }
 
-  public async listAgentIncompatibleJobs(id: number) {
-    const result = await this.#requestJson<{
-      compatibility?: { compatible: boolean; buildType: BuildTypeIdentity }[];
-    }>("GET", `${agentPath(id)}/incompatibleBuildTypes`, {
-      fields: `compatibility(compatible,buildType(${identityFields}))`,
-    });
-    return (result.compatibility ?? []).map((entry) => ({
-      compatible: entry.compatible,
-      buildType: safeIdentity(entry.buildType),
-    }));
-  }
-
-  public async getAgentPool(id: number) {
-    const result = await this.#optionalJson<AgentPoolSummary>(`${agentPath(id)}/pool`, "id,name");
-    return result === null ? null : safeNamed(result);
-  }
-
-  public async setAgentPool(id: number, poolId: number) {
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>(
-        "PUT",
-        `${agentPath(id)}/pool`,
-        { fields: "id,name" },
-        { id: poolNumber(poolId) },
-      ),
+  public async listAgentCompatibleJobs<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET", `${agentPath(id)}/compatibleBuildTypes`, { fields: `buildType(${identityFields})` },
+      raw => ((raw as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields,
     );
   }
+
+
+  public async listAgentIncompatibleJobs<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET", `${agentPath(id)}/incompatibleBuildTypes`,
+      { fields: `compatibility(compatible,buildType(${identityFields}))` },
+      raw => ((raw as { compatibility?: { compatible: boolean; buildType: BuildTypeIdentity }[] }).compatibility ?? []).map((entry) => ({
+        compatible: entry.compatible,
+        buildType: safeIdentity(entry.buildType),
+      })), fields,
+    );
+  }
+
+
+  public async getAgentPool<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const result = await this.#optionalJson<AgentPoolSummary>(`${agentPath(id)}/pool`, fields === undefined ? "id,name" : fieldsProjection(fields));
+    return this.#projectedValue(result, fields, value => value === null ? null : safeNamed(value as AgentPoolSummary));
+  }
+
+
+  public async setAgentPool<F extends string | undefined = undefined>(id: number, poolId: number, fields?: F) {
+    return this.#projectedJson(
+      "PUT", `${agentPath(id)}/pool`, { fields: "id,name" },
+      raw => safeNamed(raw as AgentPoolSummary), fields, { id: poolNumber(poolId) },
+    );
+  }
+
 
   public async getAgentField(id: number, field: string) {
     plainProperty(field, "");
@@ -1987,17 +1980,19 @@ export class TeamCityClient {
     return { buildId: id, deleted: true };
   }
 
-  public async getAgentType(id: number) {
-    const value = await this.#requestJson<AgentPoolSummary & { isCloud?: boolean }>(
-      "GET",
-      `/app/rest/agentTypes/id:${integerId(id, "Agent type ID")}`,
-      { fields: "id,name,isCloud" },
+  public async getAgentType<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET", `/app/rest/agentTypes/id:${integerId(id, "Agent type ID")}`, { fields: "id,name,isCloud" },
+      raw => {
+        const value = raw as AgentPoolSummary & { isCloud?: boolean };
+        return {
+          ...safeNamed(value),
+          ...(value.isCloud === undefined ? {} : { isCloud: value.isCloud }),
+        };
+      }, fields,
     );
-    return {
-      ...safeNamed(value),
-      ...(value.isCloud === undefined ? {} : { isCloud: value.isCloud }),
-    };
   }
+
 
   public async getBuildBatchStatus(ids: readonly number[]) {
     const status = await this.#requestText(

@@ -76,11 +76,10 @@ for (const scenario of buildProjectionCases) {
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, async request => {
       await assertHttpRequest(request, {
-        method: scenario.method, url: origin + scenario.path,
+        method: scenario.method, url: origin + scenario.path, body: { text: scenario.body },
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), fields: scenario.fields(projection) },
         headers: { accept: "application/json", authorization: `Bearer ${token}` },
       });
-      assert.equal(await request.text(), scenario.body);
       return HttpResponse.json(scenario.response(native));
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -95,16 +94,15 @@ for (const scenario of buildProjectionCases) {
     }
   });
 
-  test(`US-012-A3 ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
+  test(`US-012-A4 ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
     const rt = await runtime(t, [scenario.permission]);
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, async request => {
       await assertHttpRequest(request, {
-        method: scenario.method, url: origin + scenario.path,
+        method: scenario.method, url: origin + scenario.path, body: { text: scenario.body },
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), fields: scenario.defaultFields },
         headers: { accept: "application/json", authorization: `Bearer ${token}` },
       });
-      assert.equal(await request.text(), scenario.body);
       return HttpResponse.json(scenario.baselineResponse);
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -115,7 +113,7 @@ for (const scenario of buildProjectionCases) {
     }
   });
 
-  test(`US-012-A4 ${scenario.name}: denied ReadOnly has no HTTP, credential or file effects`, async t => {
+  test(`US-012-A5 ${scenario.name}: denied ReadOnly has no HTTP, credential or file effects`, async t => {
     const rt = await runtime(t, []);
     const cli = rt.createCli();
     const snapshot = async (path: string): Promise<unknown> => Promise.all((await readdir(path, { withFileTypes: true })).map(async entry => [entry.name,
@@ -136,7 +134,7 @@ for (const scenario of buildProjectionCases) {
   });
 
   for (const fields of ["", " \t\n "]) {
-    test(`US-012-A6 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
+    test(`US-012-A7 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
       const rt = await runtime(t, [scenario.permission]);
       const cli = rt.createCli();
       const requests = trackRequests(t, 0, () => HttpResponse.json({}));
@@ -158,7 +156,7 @@ const failures = [
   { name: "decoding", code: "error", response: () => HttpResponse.text(`invalid JSON synthetic-server-payload ${token}`) },
 ];
 for (const example of failures) {
-  test(`US-012-A5 ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
+  test(`US-012-A6 ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
     const rt = await runtime(t);
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, () => example.response());

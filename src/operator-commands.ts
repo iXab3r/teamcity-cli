@@ -111,7 +111,8 @@ export function createOperatorCommands(
         "show <agent-id>",
         "Show status and comment metadata",
         Permission.ReadOnly,
-        (c, { args }) => c.getAgentStatus(number(args, "agent-id"), kind),
+        (c, { args, options }) => c.getAgentStatus(number(args, "agent-id"), kind, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <agent-id> <status>",
@@ -123,8 +124,9 @@ export function createOperatorCommands(
             kind,
             booleanText(args.status) === "true",
             comment(options),
+            fieldsFromOptions(options),
           ),
-        [commentOption],
+        [commentOption, fieldsOption],
       ),
     ]);
   }
@@ -142,17 +144,20 @@ export function createOperatorCommands(
       "compatible-jobs <agent-id>",
       "List compatible build configurations",
       Permission.ReadOnly,
-      (c, { args }) => c.listAgentCompatibleJobs(number(args, "agent-id")),
+      (c, { args, options }) => c.listAgentCompatibleJobs(number(args, "agent-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "incompatible-jobs <agent-id>",
       "List incompatible jobs",
       Permission.ReadOnly,
-      (c, { args }) => c.listAgentIncompatibleJobs(number(args, "agent-id")),
+      (c, { args, options }) => c.listAgentIncompatibleJobs(number(args, "agent-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("policy", "Manage allowed build configurations", [
-      leaf("show <agent-id>", "Show policy and selected jobs", Permission.ReadOnly, (c, { args }) =>
-        c.getAgentPolicy(number(args, "agent-id")),
+      leaf("show <agent-id>", "Show policy and selected jobs", Permission.ReadOnly, (c, { args, options }) =>
+        c.getAgentPolicy(number(args, "agent-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <agent-id> <policy>",
@@ -163,8 +168,9 @@ export function createOperatorCommands(
             number(args, "agent-id"),
             args.policy,
             (options.job ?? []) as string[],
+            fieldsFromOptions(options),
           ),
-        [repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
+        [fieldsOption, repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
       ),
     ]),
     command("pool", "Inspect or move pool membership", [
@@ -172,13 +178,15 @@ export function createOperatorCommands(
         "show <agent-id>",
         "Show the assigned pool",
         Permission.ReadOnly,
-        (c, { args }) => c.getAgentPool(number(args, "agent-id")),
+        (c, { args, options }) => c.getAgentPool(number(args, "agent-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <agent-id> <pool-id>",
         "Move the agent to a pool",
         Permission.Update,
-        (c, { args }) => c.setAgentPool(number(args, "agent-id"), number(args, "pool-id")),
+        (c, { args, options }) => c.setAgentPool(number(args, "agent-id"), number(args, "pool-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
     command("fields", "Manage agent fields", [

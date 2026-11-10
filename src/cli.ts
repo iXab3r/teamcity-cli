@@ -406,6 +406,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...(enabled === undefined ? {} : { enabled }),
               ...(authorized === undefined ? {} : { authorized }),
               ...pageValues(options),
+              fields: fieldsFromOptions(options),
             });
           },
           [
@@ -421,6 +422,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               flags: "--authorized <value>",
               description: "Select true, false or any",
             },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -428,7 +430,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "show <id>",
           "Show one build agent",
           Permission.ReadOnly,
-          (c, { args }) => c.getAgent(integerValue(args.id)),
+          (c, { args, options }) => c.getAgent(integerValue(args.id), fieldsFromOptions(options)),
+          [fieldsOption],
         ),
       ], "Control")),
       command("vcs", "Inspect and configure version control", [
