@@ -93,7 +93,10 @@ export function createTriageCommands(
         "cancel",
         "Cancel selected builds",
         Permission.Update,
-        (c, { options }) => partial(c.cancelBuildBatch(ids(options), text(options, "comment"), fieldsFromOptions(options))),
+        (c, { options }) =>
+          partial(
+            c.cancelBuildBatch(ids(options), text(options, "comment"), fieldsFromOptions(options)),
+          ),
         [batchIds, comment, fieldsOption],
       ),
       leaf(
@@ -108,14 +111,22 @@ export function createTriageCommands(
           "set",
           "Set comments",
           Permission.Update,
-          (c, { options }) => partial(c.setBuildBatchComment(ids(options), text(options, "text"), fieldsFromOptions(options))),
+          (c, { options }) =>
+            partial(
+              c.setBuildBatchComment(
+                ids(options),
+                text(options, "text"),
+                fieldsFromOptions(options),
+              ),
+            ),
           [batchIds, message, fieldsOption],
         ),
         leaf(
           "clear",
           "Remove comments",
           Permission.Update,
-          (c, { options }) => partial(c.clearBuildBatchComment(ids(options), fieldsFromOptions(options))),
+          (c, { options }) =>
+            partial(c.clearBuildBatchComment(ids(options), fieldsFromOptions(options))),
           [batchIds, fieldsOption],
         ),
       ]),
@@ -124,7 +135,13 @@ export function createTriageCommands(
         "Pin/unpin selected builds",
         Permission.Update,
         (c, { options }) =>
-          partial(c.pinBuildBatch(ids(options), booleanText(text(options, "status")) === "true", fieldsFromOptions(options))),
+          partial(
+            c.pinBuildBatch(
+              ids(options),
+              booleanText(text(options, "status")) === "true",
+              fieldsFromOptions(options),
+            ),
+          ),
         [batchIds, fieldsOption, option("--status <boolean>", "Set true or false", true)],
       ),
       command(
@@ -136,7 +153,14 @@ export function createTriageCommands(
             "Change public tags",
             Permission.Update,
             (c, { options }) =>
-              partial(c.tagBuildBatch(ids(options), options.tag as string[], action === "remove", fieldsFromOptions(options))),
+              partial(
+                c.tagBuildBatch(
+                  ids(options),
+                  options.tag as string[],
+                  action === "remove",
+                  fieldsFromOptions(options),
+                ),
+              ),
             [batchIds, fieldsOption, repeatOption("--tag <name>", "Repeat public tags", true)],
           ),
         ),

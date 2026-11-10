@@ -197,6 +197,7 @@ export interface ListAgentsOptions extends TeamCityPageOptions {
 }
 
 export interface RunJobOptions {
+  moveToTop?: string;
   branch?: string;
   comment?: string;
   /** Clear this build's entire checkout and fetch its sources again. */
@@ -582,7 +583,10 @@ export class TeamCityClient {
       contents = await this.#request(
         "POST",
         "/app/rest/buildQueue",
-        { fields: `${buildFields}${options.properties?.length ? ",properties(property(name))" : ""}` },
+        {
+          fields: `${buildFields}${options.properties?.length ? ",properties(property(name))" : ""}`,
+          ...(options.moveToTop === undefined ? {} : { moveToTop: options.moveToTop }),
+        },
         {
           buildType: { id: jobId },
           ...(options.cleanSources === undefined
@@ -605,24 +609,26 @@ export class TeamCityClient {
       );
     } catch (error) {
       if (!(error instanceof HttpError) || error.status < 500) throw error;
-      throw new TeamCityUnknownOutcomeError(
-        error.message,
-        error,
-      );
+      throw new TeamCityUnknownOutcomeError(error.message, error);
     }
     const build = queuedBuild(contents);
     if (build === undefined) {
-      throw new TeamCityUnknownOutcomeError(
-        "TeamCity returned no readable build ID.",
-      );
+      throw new TeamCityUnknownOutcomeError("TeamCity returned no readable build ID.");
     }
     // The server can return extra fields: retain no parameter values even then.
-    const { properties, ...summary } = build as TeamCityBuild & { properties?: { property?: { name?: unknown }[] } };
+    const { properties, ...summary } = build as TeamCityBuild & {
+      properties?: { property?: { name?: unknown }[] };
+    };
     if (!options.properties?.length) return summary;
-    const requested = new Set(options.properties.map(property => property.name));
+    const requested = new Set(options.properties.map((property) => property.name));
     const returned = Array.isArray(properties?.property) ? properties.property : [];
-    const parameterNames = [...new Set(returned
-      .map(property => property?.name).filter((name): name is string => typeof name === "string" && requested.has(name)))];
+    const parameterNames = [
+      ...new Set(
+        returned
+          .map((property) => property?.name)
+          .filter((name): name is string => typeof name === "string" && requested.has(name)),
+      ),
+    ];
     return { ...summary, parameterNames };
   }
 
@@ -1534,15 +1540,17 @@ export class TeamCityClient {
     );
   }
 
-  public async setQueuePosition(position: string, id: number) {
+  public async setQueuePosition(position: string, id: number, fields?: string) {
     integerId(id, "Build ID");
-    return safeOperationBuild(
+    return this.#projectedValue(
       await this.#requestJson<OperationBuild>(
         "PUT",
         `/app/rest/buildQueue/order/${queuePosition(position)}`,
-        { fields: operationBuildFields },
+        { fields: fields === undefined ? operationBuildFields : fieldsProjection(fields) },
         { id },
       ),
+      fields,
+      (value) => safeOperationBuild(value as OperationBuild),
     );
   }
 
@@ -1584,32 +1592,60 @@ export class TeamCityClient {
 
   public async setBuildPin(id: number, status: boolean, comment?: string, fields?: string) {
     return this.#projectedJson(
-      "PUT", `${buildPath(id)}/pinInfo`, { fields: booleanStatusFields },
-      value => safeBooleanStatus(value as BooleanStatus), fields, this.#statusBody(status, comment),
+      "PUT",
+      `${buildPath(id)}/pinInfo`,
+      { fields: booleanStatusFields },
+      (value) => safeBooleanStatus(value as BooleanStatus),
+      fields,
+      this.#statusBody(status, comment),
     );
   }
 
   public async listTags(owner: "builds" | "queue", id: number, fields?: string, locator?: string) {
-    return this.#projectedJson("GET", `${buildPath(id, owner)}/tags`,
+    return this.#projectedJson(
+      "GET",
+      `${buildPath(id, owner)}/tags`,
       { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
-      value => ((value as { tag?: { name: string }[] }).tag ?? []).map(tag => tag.name), fields);
+      (value) => ((value as { tag?: { name: string }[] }).tag ?? []).map((tag) => tag.name),
+      fields,
+    );
   }
 
-  public async addTags(owner: "builds" | "queue", id: number, tags: readonly string[], fields?: string) {
+  public async addTags(
+    owner: "builds" | "queue",
+    id: number,
+    tags: readonly string[],
+    fields?: string,
+  ) {
     const body = publicTags(tags);
     if (fields !== undefined) {
       return this.#projectedJson(
-        "POST", `${buildPath(id, owner)}/tags`, {}, value => value, fields, body,
+        "POST",
+        `${buildPath(id, owner)}/tags`,
+        {},
+        (value) => value,
+        fields,
+        body,
       );
     }
     await this.#request("POST", `${buildPath(id, owner)}/tags`, {}, body);
     return { buildId: id, tags: body.tag.map((tag) => tag.name), added: true };
   }
 
-  public async replaceBuildTags(id: number, tags: readonly string[], fields?: string, locator?: string) {
-    return this.#projectedJson("PUT", `${buildPath(id)}/tags`,
+  public async replaceBuildTags(
+    id: number,
+    tags: readonly string[],
+    fields?: string,
+    locator?: string,
+  ) {
+    return this.#projectedJson(
+      "PUT",
+      `${buildPath(id)}/tags`,
       { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
-      value => ((value as { tag?: { name: string }[] }).tag ?? []).map(tag => tag.name), fields, publicTags(tags, true));
+      (value) => ((value as { tag?: { name: string }[] }).tag ?? []).map((tag) => tag.name),
+      fields,
+      publicTags(tags, true),
+    );
   }
 
   public async listBuildStatistics(id: number, fields?: string) {
@@ -1897,14 +1933,18 @@ export class TeamCityClient {
     return { poolId, cleared: true };
   }
 
-  public async deleteQueuePage(jobId: string, options: TeamCityPageOptions = {}) {
-    await this.#request("DELETE", "/app/rest/buildQueue", {
+  public async deleteQueuePage(jobId: string, options: TeamCityPageOptions = {}, fields?: string) {
+    const contents = await this.#request("DELETE", "/app/rest/buildQueue", {
       locator: joinLocator(nestedId("buildType", jobId, "Job ID"), ...pageDimensions(options)),
+      ...(fields === undefined ? {} : { fields: fieldsProjection(fields) }),
     });
+    if (fields !== undefined && contents.trim() !== "") {
+      return this.#projectedValue(decodeJson(contents), fields, (value) => value);
+    }
     return { jobId: jobId, pageDeleted: true };
   }
 
-  public async reorderQueue(ids: readonly number[]) {
+  public async reorderQueue(ids: readonly number[], fields?: string) {
     if (!ids.length) throw new Error("At least one build ID is required.");
     const body = {
       build: textIds(ids.map((id) => integerId(id, "Build ID"))).map((id) => ({
@@ -1914,10 +1954,14 @@ export class TeamCityClient {
     const result = await this.#requestJson<{ build?: OperationBuild[] }>(
       "PUT",
       "/app/rest/buildQueue/order",
-      { fields: `build(${operationBuildFields})` },
+      {
+        fields: fields === undefined ? `build(${operationBuildFields})` : fieldsProjection(fields),
+      },
       body,
     );
-    return (result.build ?? []).map(safeOperationBuild);
+    return this.#projectedValue(result, fields, (value) =>
+      ((value as { build?: OperationBuild[] }).build ?? []).map(safeOperationBuild),
+    );
   }
 
   public async setQueuePaused(paused: boolean, reason: string) {
@@ -1938,12 +1982,14 @@ export class TeamCityClient {
     );
   }
 
-  public async approveQueuedBuild(id: number) {
-    return safeApproval(
+  public async approveQueuedBuild(id: number, fields?: string, approveAll?: string) {
+    return this.#projectedValue(
       await this.#requestJson<ApprovalSummary>("POST", `${buildPath(id, "queue")}/approve`, {
-        fields: approvalFields,
-        approveAll: "false",
+        fields: fields === undefined ? approvalFields : fieldsProjection(fields),
+        approveAll: approveAll ?? "false",
       }),
+      fields,
+      (value) => safeApproval(value as ApprovalSummary),
     );
   }
 
@@ -1976,16 +2022,30 @@ export class TeamCityClient {
     const value = await this.#requestJson<{ build?: unknown[] }>(
       "GET",
       `/app/rest/builds/multiple/${triage.buildUnion(ids)}`,
-      { fields: fields === undefined ? `count,nextHref,build(${triage.evidenceBuildFields})` : fieldsProjection(fields) },
+      {
+        fields:
+          fields === undefined
+            ? `count,nextHref,build(${triage.evidenceBuildFields})`
+            : fieldsProjection(fields),
+      },
     );
-    return this.#projectedValue(value, fields, raw => ((raw as { build?: unknown[] }).build ?? []).map(triage.safeEvidenceBuild));
+    return this.#projectedValue(value, fields, (raw) =>
+      ((raw as { build?: unknown[] }).build ?? []).map(triage.safeEvidenceBuild),
+    );
   }
 
   public async cancelBuildBatch(ids: readonly number[], comment: string, fields?: string) {
-    return this.#buildBatch("POST", ids, "", {
-      comment: triage.inputText(comment, "Comment"),
-      readdIntoQueue: false,
-    }, "application/json", fields);
+    return this.#buildBatch(
+      "POST",
+      ids,
+      "",
+      {
+        comment: triage.inputText(comment, "Comment"),
+        readdIntoQueue: false,
+      },
+      "application/json",
+      fields,
+    );
   }
 
   public async deleteBuildBatch(ids: readonly number[], fields?: string) {
@@ -1998,7 +2058,8 @@ export class TeamCityClient {
       ids,
       "/comment",
       triage.inputText(comment, "Comment"),
-      "text/plain", fields,
+      "text/plain",
+      fields,
     );
   }
 
@@ -2007,11 +2068,30 @@ export class TeamCityClient {
   }
 
   public async pinBuildBatch(ids: readonly number[], status: boolean, fields?: string) {
-    return this.#buildBatch("PUT", ids, "/pinInfo", this.#statusBody(status), "application/json", fields);
+    return this.#buildBatch(
+      "PUT",
+      ids,
+      "/pinInfo",
+      this.#statusBody(status),
+      "application/json",
+      fields,
+    );
   }
 
-  public async tagBuildBatch(ids: readonly number[], tags: readonly string[], remove = false, fields?: string) {
-    return this.#buildBatch(remove ? "DELETE" : "POST", ids, "/tags", publicTags(tags), "application/json", fields);
+  public async tagBuildBatch(
+    ids: readonly number[],
+    tags: readonly string[],
+    remove = false,
+    fields?: string,
+  ) {
+    return this.#buildBatch(
+      remove ? "DELETE" : "POST",
+      ids,
+      "/tags",
+      publicTags(tags),
+      "application/json",
+      fields,
+    );
   }
 
   async #buildBatch(
@@ -2076,9 +2156,14 @@ export class TeamCityClient {
     const body = triage.inputText(message, "Log message");
     if (fields !== undefined) {
       const contents = await this.#request(
-        "POST", `${buildPath(id)}/log`, { fields: fieldsProjection(fields) }, body, "text/plain",
+        "POST",
+        `${buildPath(id)}/log`,
+        { fields: fieldsProjection(fields) },
+        body,
+        "text/plain",
       );
-      if (contents.trim() !== "") return this.#projectedValue(decodeJson(contents), fields, value => value);
+      if (contents.trim() !== "")
+        return this.#projectedValue(decodeJson(contents), fields, (value) => value);
       return { buildId: id, appended: true };
     }
     await this.#requestText("POST", `${buildPath(id)}/log`, body);
@@ -2105,10 +2190,13 @@ export class TeamCityClient {
       await this.#textJson(
         "POST",
         `${buildPath(id)}/problemOccurrences`,
-        { fields: fields === undefined ? triage.problemOccurrenceFields : fieldsProjection(fields) },
+        {
+          fields: fields === undefined ? triage.problemOccurrenceFields : fieldsProjection(fields),
+        },
         body,
       ),
-      fields, value => triage.safeOccurrence(value, "problem"),
+      fields,
+      (value) => triage.safeOccurrence(value, "problem"),
     );
   }
 
@@ -2129,7 +2217,9 @@ export class TeamCityClient {
         `${buildPath(id)}/runningData`,
         { fields: fields === undefined ? triage.evidenceBuildFields : fieldsProjection(fields) },
         triage.inputText(requestor, "Requestor"),
-      ), fields, triage.safeEvidenceBuild,
+      ),
+      fields,
+      triage.safeEvidenceBuild,
     );
   }
 
@@ -2141,10 +2231,19 @@ export class TeamCityClient {
     const value = await this.#requestJson<{ build?: unknown; errors?: { item?: unknown[] } }>(
       "POST",
       `${buildPath(id)}/status`,
-      { fields: fields === undefined ? `build(${triage.evidenceBuildFields}),errors(item)` : fieldsProjection(fields) },
+      {
+        fields:
+          fields === undefined
+            ? `build(${triage.evidenceBuildFields}),errors(item)`
+            : fieldsProjection(fields),
+      },
       body,
     );
-    if (fields !== undefined) return this.#projectedValue(value, fields, raw => raw) as typeof value & { errorCount: number; partialFailure: boolean };
+    if (fields !== undefined)
+      return this.#projectedValue(value, fields, (raw) => raw) as typeof value & {
+        errorCount: number;
+        partialFailure: boolean;
+      };
     const errorCount = triage.array(value.errors?.item).length;
     if (value.build === undefined && errorCount === 0)
       throw new Error("Missing build status result; success is unknown.");
@@ -2167,9 +2266,14 @@ export class TeamCityClient {
       await this.#textJson(
         "POST",
         `${buildPath(id)}/vcsLabels`,
-        { fields: fields === undefined ? triage.labelFields : fieldsProjection(fields), locator: idPath(rootInstance, "Root instance ID") },
+        {
+          fields: fields === undefined ? triage.labelFields : fieldsProjection(fields),
+          locator: idPath(rootInstance, "Root instance ID"),
+        },
         triage.inputText(label, "Label"),
-      ), fields, value => this.#vcsLabels(value),
+      ),
+      fields,
+      (value) => this.#vcsLabels(value),
     );
   }
 
@@ -3796,29 +3900,47 @@ export class TeamCityClient {
     controls: files.FileControls = {},
   ) {
     const suffix = path === undefined ? "" : "/" + files.remotePath(path);
-    if (kind !== "builds") return files.safeFiles(
-      await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
-        ...files.controlledFileQuery(kind, controls), locator: files.fileLocator(count),
-        fields: `count,file(${files.fileFields})`,
-      }),
-    );
+    if (kind !== "builds")
+      return files.safeFiles(
+        await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
+          ...files.controlledFileQuery(kind, controls),
+          locator: files.fileLocator(count),
+          fields: `count,file(${files.fileFields})`,
+        }),
+      );
     files.fileLocator(count); // Validate before adding the one-item lookahead.
     const requested = Math.min(count + 1, Number.MAX_SAFE_INTEGER);
-    const raw = triage.object(await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
-      ...files.controlledFileQuery(kind, controls), locator: files.fileLocator(requested, true),
-      fields: `count,file(${controls.fields ?? files.artifactFileFields})`,
-    }));
+    const raw = triage.object(
+      await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
+        ...files.controlledFileQuery(kind, controls),
+        locator: files.fileLocator(requested, true),
+        fields: `count,file(${controls.fields ?? files.artifactFileFields})`,
+      }),
+    );
     const entries = (raw.file === undefined ? [] : raw.file) as unknown[];
     if (!Array.isArray(entries)) throw new Error("Invalid file collection.");
-    const items = entries.slice(0, count).map(item => this.#projectedValue(item, controls.fields, files.safeArtifactFile));
-    return { count: items.length, items,
-      hasMore: entries.length > count ? true : entries.length < requested ? false : null };
+    const items = entries
+      .slice(0, count)
+      .map((item) => this.#projectedValue(item, controls.fields, files.safeArtifactFile));
+    return {
+      count: items.length,
+      items,
+      hasMore: entries.length > count ? true : entries.length < requested ? false : null,
+    };
   }
-  public async getFileMetadata(kind: files.FileTree, id: string, path: string, controls: files.FileControls = {}) {
-    return this.#projectedJson("GET",
+  public async getFileMetadata(
+    kind: files.FileTree,
+    id: string,
+    path: string,
+    controls: files.FileControls = {},
+  ) {
+    return this.#projectedJson(
+      "GET",
       files.treePath(kind, id) + "/metadata/" + files.remotePath(path),
       { ...files.controlledFileQuery(kind, controls), fields: files.fileFields },
-      files.safeFile, controls.fields);
+      files.safeFile,
+      controls.fields,
+    );
   }
   /** Save verified bytes without overwriting; cwd is the captured invocation directory. */
   public async downloadFile(

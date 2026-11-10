@@ -130,7 +130,8 @@ for (const c of actionCases) {
     for (const surface of surfaces) {
       const argv = [...c.argv, "--fields", projection];
       if (c.empty.code) await failure(rt, rt.createCli(), argv, surface, c.empty.code);
-      else await success(rt, rt.createCli(), argv, surface, (c.empty as { result?: unknown }).result);
+      else
+        await success(rt, rt.createCli(), argv, surface, (c.empty as { result?: unknown }).result);
     }
   });
   test(`US-006-A4 ${c.name}: permission denial`, async (t) => {
@@ -155,15 +156,18 @@ for (const c of actionCases) {
         await failure(rt, rt.createCli(), [...c.argv, "--fields", value], surface, "usage");
     });
 }
-test("US-006-A2 native partial batch result", async t => {
+test("US-006-A2 native partial batch result", async (t) => {
   const rt = await runtime(t, ["Update"]);
   const body = { count: 2, errorCount: 1, custom: false };
   server.use(http.all("*", () => HttpResponse.json(body)));
-  await assert.rejects(rt.createCli().execute([...actionCases[1]!.argv, "--fields", projection]), e => {
-    assert.equal((e as CliError).code, "batch.partial");
-    assert.deepEqual((e as CliError).result, body);
-    return true;
-  });
+  await assert.rejects(
+    rt.createCli().execute([...actionCases[1]!.argv, "--fields", projection]),
+    (e) => {
+      assert.equal((e as CliError).code, "batch.partial");
+      assert.deepEqual((e as CliError).result, body);
+      return true;
+    },
+  );
 });
 for (const [status, code] of [
   [401, "http.unauthorized"],

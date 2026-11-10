@@ -54,11 +54,8 @@ export function createOperatorCommands(
       (c, { options }) => c.createPool(text(options, "name")),
       [option("--name <name>", "Set the pool name", true)],
     ),
-    leaf(
-      "delete <pool-id>",
-      "Delete an agent pool",
-      Permission.Update,
-      (c, { args }) => c.deletePool(number(args, "pool-id")),
+    leaf("delete <pool-id>", "Delete an agent pool", Permission.Update, (c, { args }) =>
+      c.deletePool(number(args, "pool-id")),
     ),
     command("fields", "Manage the pool name", [
       leaf("show <pool-id> <field>", "Read name", Permission.ReadOnly, (c, { args }) =>
@@ -132,11 +129,8 @@ export function createOperatorCommands(
     bulk.agentTypes,
     agentStatus("enabled"),
     agentStatus("authorized"),
-    leaf(
-      "delete <agent-id>",
-      "Delete an inactive agent",
-      Permission.Update,
-      (c, { args }) => c.deleteAgent(number(args, "agent-id")),
+    leaf("delete <agent-id>", "Delete an inactive agent", Permission.Update, (c, { args }) =>
+      c.deleteAgent(number(args, "agent-id")),
     ),
     leaf(
       "compatible-jobs <agent-id>",
@@ -159,20 +153,13 @@ export function createOperatorCommands(
         "Replace the allowed-job policy",
         Permission.Update,
         (c, { args, options }) =>
-          c.setAgentPolicy(
-            number(args, "agent-id"),
-            args.policy,
-            (options.job ?? []) as string[],
-          ),
+          c.setAgentPolicy(number(args, "agent-id"), args.policy, (options.job ?? []) as string[]),
         [repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
       ),
     ]),
     command("pool", "Inspect or move pool membership", [
-      leaf(
-        "show <agent-id>",
-        "Show the assigned pool",
-        Permission.ReadOnly,
-        (c, { args }) => c.getAgentPool(number(args, "agent-id")),
+      leaf("show <agent-id>", "Show the assigned pool", Permission.ReadOnly, (c, { args }) =>
+        c.getAgentPool(number(args, "agent-id")),
       ),
       leaf(
         "set <agent-id> <pool-id>",
@@ -192,8 +179,7 @@ export function createOperatorCommands(
         "set <agent-id> <field> <value>",
         "Set enabled or authorized to true/false",
         Permission.Update,
-        (c, { args }) =>
-          c.setAgentField(number(args, "agent-id"), args.field, args.value),
+        (c, { args }) => c.setAgentField(number(args, "agent-id"), args.field, args.value),
       ),
     ]),
   ];
@@ -251,8 +237,12 @@ export function createOperatorCommands(
   const queue = [
     ...bulk.queue,
     tags("queue"),
-    leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args, options }) =>
-      c.getQueuedBuild(number(args, "build-id"), fieldsFromOptions(options)),
+    leaf(
+      "show <build-id>",
+      "Show one queued build",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getQueuedBuild(number(args, "build-id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     leaf(
@@ -268,8 +258,7 @@ export function createOperatorCommands(
         "show <position>",
         "Show the build at a queue position",
         Permission.ReadOnly,
-        (c, { args, options }) =>
-          c.getQueuePosition(args.position, fieldsFromOptions(options)),
+        (c, { args, options }) => c.getQueuePosition(args.position, fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -277,8 +266,8 @@ export function createOperatorCommands(
         "Move a build to a queue position",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePosition(args.position, number(options, "build")),
-        [option("--build <build-id>", "Select a queued build", true)],
+          c.setQueuePosition(args.position, number(options, "build"), fieldsFromOptions(options)),
+        [option("--build <build-id>", "Select a queued build", true), fieldsOption],
       ),
     ]),
   ];
@@ -300,11 +289,8 @@ export function createOperatorCommands(
     tags("builds"),
     buildScalar("number", "number"),
     buildScalar("statusText", "status-text"),
-    leaf(
-      "delete <build-id>",
-      "Delete a build and its history",
-      Permission.Update,
-      (c, { args }) => c.deleteBuild(number(args, "build-id")),
+    leaf("delete <build-id>", "Delete a build and its history", Permission.Update, (c, { args }) =>
+      c.deleteBuild(number(args, "build-id")),
     ),
     leaf("status <build-id>", "Read build status", Permission.ReadOnly, (c, { args }) =>
       c.getBuildScalar(number(args, "build-id"), "status"),
@@ -316,7 +302,8 @@ export function createOperatorCommands(
       "canceled-info <build-id>",
       "Read the cancellation comment",
       Permission.ReadOnly,
-      (c, { args, options }) => c.getBuildCanceledInfo(number(args, "build-id"), fieldsFromOptions(options)),
+      (c, { args, options }) =>
+        c.getBuildCanceledInfo(number(args, "build-id"), fieldsFromOptions(options)),
       [fieldsOption],
     ),
     command("comment", "Change a build comment", [
@@ -337,7 +324,8 @@ export function createOperatorCommands(
         "show <build-id>",
         "Show pinned status and comment",
         Permission.ReadOnly,
-        (c, { args, options }) => c.getBuildPin(number(args, "build-id"), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.getBuildPin(number(args, "build-id"), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
@@ -359,7 +347,8 @@ export function createOperatorCommands(
         "list <build-id>",
         "List named numeric text values",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listBuildStatistics(number(args, "build-id"), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.listBuildStatistics(number(args, "build-id"), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(

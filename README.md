@@ -904,3 +904,12 @@ accept `--fields`. The native response retains its envelope. Include `errorCount
 to retain `batch.partial` detection; absent detection fields imply no claim about
 partial failure. Empty or malformed responses retain default handling, and omitted
 options preserve the default request body, permissions and output.
+
+Queue mutations `approval approve`, `delete-page`, `reorder`, and `position set`
+accept `--fields`; native responses retain their envelopes. `delete-page` retains
+its acknowledgement for an empty success; the other three retain JSON decoding errors.
+`jobs run --move-to-top <boolean>` and `queue approval approve --approve-all <boolean>`
+require literal `true` or `false`. Omission preserves the existing query, including
+`approveAll=false`; `jobs run` keeps its fixed response projection and wait workflow.
+The wait and latest-build resolution workflows keep their required response fields;
+projection options apply to their direct request leaves.

@@ -186,30 +186,38 @@ for (const [argv, option, query] of [
   [["jobs", "run", "Demo_Build"], "--move-to-top", "moveToTop"],
   [["queue", "approval", "approve", "42"], "--approve-all", "approveAll"],
 ] as const) {
-  for (const value of ["true", "false"]) test(`US-008-A2 ${option} ${value}`, async t => {
-    const rt = await runtime(t, ["Update"]);
-    const requests = trackRequests(t, 1, request => {
-      assert.equal(new URL(request.url).searchParams.get(query), value);
-      return HttpResponse.json({ id: 42, buildTypeId: "Demo_Build", state: "queued" });
+  for (const value of ["true", "false"])
+    test(`US-008-A2 ${option} ${value}`, async (t) => {
+      const rt = await runtime(t, ["Update"]);
+      const requests = trackRequests(t, 1, (request) => {
+        assert.equal(new URL(request.url).searchParams.get(query), value);
+        return HttpResponse.json({ id: 42, buildTypeId: "Demo_Build", state: "queued" });
+      });
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      await rt.createCli().execute([...argv, option, value]);
     });
-    server.use(http.all("*", ({ request }) => requests.handle(request)));
-    await rt.createCli().execute([...argv, option, value]);
-  });
-  for (const value of ["", "TRUE", "1", "yes"]) test(`US-008-A2 invalid ${option} ${value}`, async t => {
-    const rt = await runtime(t, ["Update"]);
-    const requests = trackRequests(t, 0, () => HttpResponse.json({}));
-    server.use(http.all("*", ({ request }) => requests.handle(request)));
-    for (const surface of surfaces) await failure(rt, rt.createCli(), [...argv, option, value], surface, "usage");
-  });
+  for (const value of ["", "TRUE", "1", "yes"])
+    test(`US-008-A2 invalid ${option} ${value}`, async (t) => {
+      const rt = await runtime(t, ["Update"]);
+      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      for (const surface of surfaces)
+        await failure(rt, rt.createCli(), [...argv, option, value], surface, "usage");
+    });
 }
-test("US-008-A3 move-to-top retains wait", async t => {
+test("US-008-A3 move-to-top retains wait", async (t) => {
   const rt = await runtime(t, ["Update", "ReadOnly"]);
-  const requests = trackRequests(t, 2, request => {
+  const requests = trackRequests(t, 2, (request) => {
     if (request.method === "POST") {
       assert.equal(new URL(request.url).searchParams.get("moveToTop"), "true");
       return HttpResponse.json({ id: 42, buildTypeId: "Demo_Build", state: "queued" });
     }
-    return HttpResponse.json({ id: 42, buildTypeId: "Demo_Build", state: "finished", status: "SUCCESS" });
+    return HttpResponse.json({
+      id: 42,
+      buildTypeId: "Demo_Build",
+      state: "finished",
+      status: "SUCCESS",
+    });
   });
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   await rt.createCli().execute(["jobs", "run", "Demo_Build", "--move-to-top", "true", "--wait"]);
