@@ -7,7 +7,7 @@ import {
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { clientLeaf, option, text, repeatOption, jsonOption, integerValue, locatorOption } from "./command-support.js";
+import { clientLeaf, option, text, repeatOption, jsonOption, integerValue, locatorOption, booleanOption } from "./command-support.js";
 export function createSystemCommands(
   clientFor: (c: CommandContext) => Promise<TeamCityClient>,
   pageOptions: readonly OptionDefinition[],
@@ -176,8 +176,25 @@ export function createSystemCommands(
         "start <name>",
         "Schedule a configuration and database backup",
         "Admin",
-        (c, { args }) => c.startBackup(args.name),
-        [confirm],
+        (c, { args, options }) => c.startBackup(args.name, {
+          addTimestamp: optional(options, "addTimestamp"),
+          includeConfigs: optional(options, "includeConfigs"),
+          includeDatabase: optional(options, "includeDatabase"),
+          includeBuildLogs: optional(options, "includeBuildLogs"),
+          includePersonalChanges: optional(options, "includePersonalChanges"),
+          includeRunningBuilds: optional(options, "includeRunningBuilds"),
+          includeSupplimentaryData: optional(options, "includeSupplementaryData"),
+        }),
+        [
+          confirm,
+          booleanOption("--add-timestamp <boolean>", "Add a timestamp to the backup name"),
+          booleanOption("--include-configs <boolean>", "Include server configuration"),
+          booleanOption("--include-database <boolean>", "Include the database"),
+          booleanOption("--include-build-logs <boolean>", "Include build logs"),
+          booleanOption("--include-personal-changes <boolean>", "Include personal changes"),
+          booleanOption("--include-running-builds <boolean>", "Include running builds"),
+          booleanOption("--include-supplementary-data <boolean>", "Include supplementary data"),
+        ],
       ),
     ]),
     command("cleanup", "Configure scheduled cleanup", [

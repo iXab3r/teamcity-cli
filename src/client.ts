@@ -3346,20 +3346,28 @@ export class TeamCityClient {
       completionVerified: false,
     };
   }
-  public async startBackup(name: string) {
+  public async startBackup(name: string, controls: {
+    addTimestamp?: string | undefined;
+    includeConfigs?: string | undefined;
+    includeDatabase?: string | undefined;
+    includeBuildLogs?: string | undefined;
+    includePersonalChanges?: string | undefined;
+    includeRunningBuilds?: string | undefined;
+    includeSupplimentaryData?: string | undefined;
+  } = {}) {
     triage.inputText(name, "Backup filename");
     const fileName = await this.#request(
       "POST",
       "/app/rest/server/backup",
       {
         fileName: name,
-        addTimestamp: "true",
-        includeConfigs: "true",
-        includeDatabase: "true",
-        includeBuildLogs: "false",
-        includePersonalChanges: "false",
-        includeRunningBuilds: "false",
-        includeSupplimentaryData: "false",
+        addTimestamp: controls.addTimestamp === undefined ? "true" : booleanText(controls.addTimestamp),
+        includeConfigs: controls.includeConfigs === undefined ? "true" : booleanText(controls.includeConfigs),
+        includeDatabase: controls.includeDatabase === undefined ? "true" : booleanText(controls.includeDatabase),
+        includeBuildLogs: controls.includeBuildLogs === undefined ? "false" : booleanText(controls.includeBuildLogs),
+        includePersonalChanges: controls.includePersonalChanges === undefined ? "false" : booleanText(controls.includePersonalChanges),
+        includeRunningBuilds: controls.includeRunningBuilds === undefined ? "false" : booleanText(controls.includeRunningBuilds),
+        includeSupplimentaryData: controls.includeSupplimentaryData === undefined ? "false" : booleanText(controls.includeSupplimentaryData),
       },
       undefined,
       "text/plain",
