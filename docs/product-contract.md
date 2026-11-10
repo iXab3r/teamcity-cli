@@ -1,6 +1,6 @@
 # Preserved product contract
 
-[README](../README.md) is the full shipped command guide. This extraction preserves
+The [command reference](reference.md) is the full shipped command guide; [README](../README.md) is the short overview. This extraction preserves
 the 0.7 paging contract and Core output guarantees under
 [the pinned Core 0.7.1 contract](DESIGN.md).
 Historical extraction provenance remains in [migration](migration.md).

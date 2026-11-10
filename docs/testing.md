@@ -270,7 +270,7 @@ Check native execute fields and human/JSON/RPC normal and verbose output retain 
 
 ## Product workflow
 
-The actual [product tests and local proof](../README.md#tests-and-local-integration-proof) and
+The actual [product tests and local proof](reference.md#tests-and-local-integration-proof) and
 [fixed profile-backed proof runner](../integration-tests/profile-proof.ts) own the service inventory.
 Default npm test is offline. npm run test:package exercises installed artifacts with synthetic data;
 public dependency downloads do not make it live-service proof. Running the fixed local real-profile

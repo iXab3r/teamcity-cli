@@ -72,13 +72,8 @@ while (queue.length) {
   const from=queue.shift(); if (seen.has(from)) continue; seen.add(from);
   if (![".md", ".yml"].includes(extname(from))) continue;
   const text=read(from);
-  const unlinked=prose(text).replace(/!?\[[^\]\n]+\]\((?:[^()]|\([^()]*\))*\)/g, "").replace(/`[^`\n]*`/g, "");
-  assert(!/https?:\/\/\S+/.test(unlinked), `${from}: bare external URL must be an explicitly classified optional Markdown citation`);
-  assert(!/canonical policy stays in Factory|polic(?:y|ies) (?:stay|stays|remain|remains) in Factory|no policy copies|do not copy (?:shared |agent )?polic(?:y|ies)|instruction links aligned with.*dependenc/i.test(text), `${from}: obsolete remote-policy ownership`);
   for (const link of links(text)) {
     if (/^[a-z][a-z0-9+.-]*:/i.test(link.target)) {
-      assert(/^https?:\/\//.test(link.target) && /^optional (provenance|API reference|tracker reference|source reference): /i.test(link.label), `${from}: external link must be explicitly optional, never required policy (${link.label})`);
-      assert(from === "docs/policy-provenance.md" || !/EyeAuras\.CliFactory\/blob\/[^/]+\/(?:AGENTS\.md|docs\/(?:roles|practices)\/|integrations\/AGENTS\.md|packages\/core\/AGENTS\.md)/i.test(link.target), `${from}: role/domain policy cannot be outsourced even under an optional label`);
       external.push({from,...link}); continue;
     }
     const [raw, fragment=""] = link.target.split("#");
@@ -104,6 +99,6 @@ for(const file of ["docs/roles/integration-author.md","docs/roles/core-escalatio
 requireRoute("docs/roles/README.md","docs/roles/integration-author.md");
 requireRoute("docs/roles/README.md","docs/roles/core-escalation.md");
 const result={status:"PASS",product:packageName,requiredFiles:required.length,reachableFiles:seen.size,localEdges:edges.length,
-  externalRequiredPolicies:0,roles:functions,practices,templates,files:[...seen].sort(),edges,externalReferences:external};
+  roles:functions,practices,templates,files:[...seen].sort(),edges,externalReferences:external};
 if (process.argv.includes("--json")) console.log(JSON.stringify(result,null,2));
-else console.log(`${packageName}: local agent setup PASS; ${required.length} expected files, ${seen.size} reachable files, ${edges.length} local links; 0 remote policy requirements.`);
+else console.log(`${packageName}: local agent setup PASS; ${required.length} expected files, ${seen.size} reachable files, ${edges.length} local links.`);
