@@ -889,6 +889,13 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Server status, license summary/list/show/add, metrics, plugins and node reads accept
+whole-response `--fields`. Explicit projections return native JSON with the generic
+view; omission preserves default shaping and permission categories. License keys
+remain addressed through local aliases. Plugins also accept unchanged `--locator`;
+omission sends none. Node list role/state filters and responsibility setters retain
+their existing behavior.
+
 Roles accept whole-response `--fields` on `list/show/create` and
 `included add/remove` and `permissions add/remove`. Default shaping, Admin gates,
 write bodies and JSON-decoding errors for empty successful mutations are preserved.

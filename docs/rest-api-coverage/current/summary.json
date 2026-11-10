@@ -1,22 +1,22 @@
 {
-  "baselineHead": "943ec70e29593c3b45bca7bb038afd4d121a62ef",
+  "baselineHead": "9e80826954e5dec25304a36627c9dcd095e96de1",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 426,
-  "partial": 23,
+  "covered": 438,
+  "partial": 11,
   "missing": 0,
   "reached": 449,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 214,
-      "partial": 21,
+      "covered": 225,
+      "partial": 10,
       "missing": 0
     },
     "Update": {
       "total": 214,
-      "covered": 212,
-      "partial": 2,
+      "covered": 213,
+      "partial": 1,
       "missing": 0
     }
   },
@@ -113,8 +113,8 @@
     },
     "Node": {
       "total": 6,
-      "covered": 1,
-      "partial": 5,
+      "covered": 6,
+      "partial": 0,
       "missing": 0
     },
     "Problem": {
@@ -149,8 +149,8 @@
     },
     "Server": {
       "total": 18,
-      "covered": 6,
-      "partial": 12,
+      "covered": 13,
+      "partial": 5,
       "missing": 0
     },
     "Server Authentication Settings": {
@@ -205,17 +205,17 @@
   "unsupportedByParameter": {
     "addTimestamp": 1,
     "basePath": 3,
-    "fields": 21,
+    "fields": 9,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
     "includePersonalChanges": 1,
     "includeRunningBuilds": 1,
     "includeSupplimentaryData": 1,
-    "locator": 2,
+    "locator": 1,
     "name": 1
   },
-  "partialOnlyBecauseOfFields": 17,
+  "partialOnlyBecauseOfFields": 6,
   "verificationEvidenceGaps": [],
   "nonLeafTransportOperations": [],
   "gateDiffersFromMethod": [
