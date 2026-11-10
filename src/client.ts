@@ -2281,15 +2281,15 @@ export class TeamCityClient {
       raw => {
         const value = raw as { permissionAssignment?: unknown[] };
         return (value.permissionAssignment ?? []).map((item) => {
-            const raw = triage.object(item);
-            return {
-              ...triage.safeScalars(raw, ["isGlobalScope"]),
-              ...(raw.permission === undefined
-                ? {}
-                : { permission: triage.safeScalars(raw.permission, ["id"]) }),
-              ...(raw.project === undefined ? {} : { project: triage.safeScalars(raw.project, ["id"]) }),
-            };
-          });
+          const raw = triage.object(item);
+          return {
+            ...triage.safeScalars(raw, ["isGlobalScope"]),
+            ...(raw.permission === undefined
+              ? {}
+              : { permission: triage.safeScalars(raw.permission, ["id"]) }),
+            ...(raw.project === undefined ? {} : { project: triage.safeScalars(raw.project, ["id"]) }),
+          };
+        });
       }, fields,
     );
   }

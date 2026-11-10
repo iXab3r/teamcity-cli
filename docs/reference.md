@@ -889,6 +889,10 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Roles accept whole-response `--fields` on `list/show/create` and
+`included add/remove` and `permissions add/remove`. Default shaping, Admin gates,
+write bodies and JSON-decoding errors for empty successful mutations are preserved.
+
 Groups accept whole-response `--fields` on `list/show/create`, `parents list/replace`,
 and `properties list`. These unpaged lists retain their existing shaped arrays when
 fields are omitted; explicit fields return the native response and generic view.
