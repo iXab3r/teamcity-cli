@@ -11,7 +11,7 @@ It contains 268 paths and 449 operations:
 Its SHA-256 is
 `f312f0054f5daf58747a46da2a8e19782a7a810be234ddf380c2e0f28168b728`.
 
-The frozen product 0.7.1 baseline (commit `599b1b2`) had
+The frozen product 0.7.1 baseline (product commit `20ba82a`, audit committed as `599b1b2`) had
 180 covered, 268 partial and 1 missing operation; 448 of 449 were reachable.
 It had 456 service commands. The candidate has 457, adding `users show <id>`:
 235 ReadOnly, 171 Update, 37 Admin and 14 Credentials.
