@@ -3787,14 +3787,17 @@ export class TeamCityClient {
     controls: files.FileControls<F> = {},
   ) {
     const suffix = path === undefined ? "" : "/" + files.remotePath(path);
-    if (kind !== "builds")
-      return files.safeFiles(
-      await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
-          ...files.controlledFileQuery(kind, controls),
-          locator: files.fileLocator(count),
-        fields: `count,file(${files.fileFields})`,
-      }),
-    );
+    if (kind !== "builds") {
+      const raw = await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
+        ...files.controlledFileQuery(kind, controls),
+        locator: files.fileLocator(count),
+        fields: `count,file(${controls.fields ?? files.fileFields})`,
+      });
+      if (controls.fields === undefined) return files.safeFiles(raw);
+      const entries = triage.object(raw).file ?? [];
+      if (!Array.isArray(entries)) throw new Error("Invalid file collection.");
+      return { count: entries.length, items: entries.map(item => this.#projectedValue(item, controls.fields, files.safeFile)) };
+    }
     files.fileLocator(count); // Validate before adding the one-item lookahead.
     const requested = Math.min(count + 1, Number.MAX_SAFE_INTEGER);
     const raw = triage.object(

@@ -36,14 +36,14 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
         .map((k) => [k, o[k] as string]),
     );
   const nativeOptions = (kind: FileTree, action: string): OptionDefinition[] =>
-    kind !== "builds"
+    kind !== "builds" && kind !== "jobs"
       ? []
       : [
           booleanOption("--resolve-parameters <boolean>", "Resolve parameters in artifact paths"),
-          booleanOption(
+          ...(kind === "builds" ? [booleanOption(
             "--log-build-usage <boolean>",
             "Set whether artifact access records build usage",
-          ),
+          )] : []),
           ...(["list", "children", "metadata"].includes(action) ? [fieldsOption] : []),
           ...(["list", "children", "archive"].includes(action)
             ? [option("--base-path <path>", "Set the server artifact base path")]

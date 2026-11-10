@@ -7,7 +7,7 @@ import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing"
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
-export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; fileCollection?: boolean; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
+export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
 export function projectionAcceptance(story: string, cases: ProjectionCase[], acceptance = {native: 1, paging: 2, mutation: 3, parity: 4, denied: 5, error: 6, blank: 7}) {
 const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.fileCollection ? `count,file(${s})` : c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.fileCollection ? {file: [v]} : c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.fileCollection ? {count: 1, items: [v]} : c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
@@ -82,7 +82,7 @@ for (const scenario of buildProjectionCases) {
       }
       await assertHttpRequest(request.clone(), {
         method: scenario.method, url: origin + scenario.path,
-        query: { ...scenario.nativeQuery, ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.field ? {field: projection} : {fields: scenario.fields(projection)}) },
+        query: { ...scenario.fixedQuery, ...scenario.nativeQuery, ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.field ? {field: projection} : {fields: scenario.fields(projection)}) },
         headers: { accept: "application/json", authorization: `Bearer ${token}` },
         body: { text: scenario.body },
       });
@@ -221,4 +221,53 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
   });
 }
 
+}
+
+export function fileControlsAcceptance(story: string) {
+  const server = setupServer();
+  test.before(() => server.listen({ onUnhandledRequest: "error" }));
+  test.afterEach(() => server.resetHandlers());
+  test.after(() => server.close());
+  for (const action of ["list", "children", "metadata", "download", "archive"]) {
+    const argv = ["jobs", "files", action, "Demo", ...(action === "list" ? [] : ["src"])];
+    const saving = ["download", "archive"].includes(action);
+    const controls = ["--resolve-parameters", "true", ...(["list", "children", "archive"].includes(action) ? ["--base-path", " /src + "] : []), ...(action === "archive" ? ["--archive-name", "source +.zip"] : [])];
+    const bytes = action === "archive" ? new Uint8Array([80,75,5,6,...Array(18).fill(0)]) : new TextEncoder().encode("fixture");
+    const response = () => saving ? new HttpResponse(bytes, {headers: {"content-type": action === "archive" ? "application/zip" : "application/octet-stream"}}) : HttpResponse.json(action === "metadata" ? {name: "src", size: 7} : {file: [{name: "src", size: 7}]});
+    test(`${story}-A1 ${action}: query controls unchanged on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, {profiles: [{name: "default", url: "https://teamcity.test", permissions: ["ReadOnly"]}], tokens: {default: "synthetic-file-token"}});
+      const requests = trackRequests(t, 4, request => {
+        const query = new URL(request.url).searchParams;
+        assert.equal(query.get("resolveParameters"), "true");
+        assert.equal(query.get("basePath"), controls.includes("--base-path") ? " /src + " : null);
+        assert.equal(query.get("name"), action === "archive" ? "source +.zip" : null);
+        assert.equal(query.get("logBuildUsage"), null);
+        return response();
+      });
+      server.use(http.all("*", ({request}) => requests.handle(request)));
+      const cli = rt.createCli();
+      for (const surface of ["human", "json", "execute", "rpc"]) {
+        const args = [...argv, ...controls, ...(saving ? ["--output", join(rt.root, surface)] : [])];
+        if (surface === "execute") await cli.execute(args);
+        else if (surface === "rpc") assert.ok(!(await rt.rpc(cli, [args]) as {error?: unknown}[])[0]!.error);
+        else assert.equal((await rt.run(cli, [...args, ...(surface === "json" ? ["--json"] : [])])).exitCode, 0);
+      }
+    });
+    for (const value of ["", " ", "TRUE", "1"]) test(`${story}-A6 ${action}: invalid boolean ${JSON.stringify(value)} is local`, async t => {
+      const rt = await createTestRuntime(t);
+      const requests = trackRequests(t, 0, response);
+      server.use(http.all("*", ({request}) => requests.handle(request)));
+      await assert.rejects(rt.createCli().execute([...argv, "--resolve-parameters", value]), {code: "usage"});
+    });
+    if (saving) test(`${story}-A3 ${action}: preserves destination and byte bounds`, async t => {
+      const {writeFile} = await import("node:fs/promises");
+      const rt = await createTestRuntime(t, {profiles: [{name: "default", url: "https://teamcity.test", permissions: ["ReadOnly"]}], tokens: {default: "synthetic-file-token"}});
+      server.use(http.all("*", response));
+      const target = join(rt.root, "existing"); await writeFile(target, "existing fixture");
+      await assert.rejects(rt.createCli().execute([...argv, ...controls, "--output", target]), /already exists/);
+      assert.equal(await readFile(target, "utf8"), "existing fixture");
+      await assert.rejects(rt.createCli().execute([...argv, ...controls, "--output", join(rt.root, "bounded"), "--max-bytes", "1"]));
+      await assert.rejects(readFile(join(rt.root, "bounded")));
+    });
+  }
 }
