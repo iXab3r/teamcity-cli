@@ -9,7 +9,7 @@ This repository owns its agent policies. Required reading is entirely local and 
 The owner explicitly authorizes duplicated/adapted instruction text; this does not authorize copying
 or forking framework runtime implementations. Core remains the exact existing npm dependency 0.7.1.
 Instruction updates are manual, intentional and reviewed independently of dependency upgrades;
-there is no cross-repository auto-sync. Factory links are optional provenance, never required policy.
+there is no cross-repository auto-sync. Links to Factory are allowed.
 
 Read [universal laws](docs/universal-laws.md), [runtime contract](docs/DESIGN.md),
 [authoring](docs/integrations.md), [testing](docs/testing.md), the [role index](docs/roles/README.md)
