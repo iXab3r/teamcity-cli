@@ -214,6 +214,8 @@ instead of reporting an older successful default-branch build.
 ```text
 teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 teamcity-cli builds show --job Demo_Tests --branch main --latest
+teamcity-cli builds list --job Demo_Tests --fields "number,agent(name)" --limit 10 --json
+teamcity-cli builds show 101 --fields "number,statusText,triggered(type)" --json
 teamcity-cli jobs run Demo_Tests --branch main --param env.MODE=test --wait --timeout 10m
 teamcity-cli builds wait 101
 teamcity-cli builds diagnose 101
@@ -228,7 +230,16 @@ teamcity-cli builds diagnose 101
   request.
 - `--latest` reads once and returns the first finished, non-personal build in TeamCity's order
   (newest start first), whatever its result, including failed and canceled builds. Without
-  `--branch` it searches all branches; in human mode stderr names the scope.
+  `--branch` it searches all branches; without `--fields`, human stderr names the scope.
+- `builds list` and both `builds show` selectors accept `--fields <projection>`. TeamCity receives
+  the projection unchanged and returns native JSON; human output uses the generic view.
+  Masking covers the literal credential and its percent-encoded (either hex case) and JSON-escaped
+  forms up to three nested decoding rounds, in keys and string values on success and partial-error results.
+  Literal matches are replaced in place; a decoded match redacts the whole original string.
+  Other transformations (for example base64, hexadecimal dumps, hashes, or a credential split across fields)
+  are not detected. For lists, the projection selects each item: the CLI wraps
+  it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections fail
+  locally. Omitting `--fields` preserves the default projection, shaping and views.
 - Without `--state`, `builds list` includes queued, running and finished builds across all branches.
   It sends `defaultFilter:false` without a state dimension. JetBrains'
   [optional API reference: BuildPromotionFinder source](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildPromotionFinder.java#L936)
@@ -306,6 +317,19 @@ immediately. A stopped wait keeps its last known state, as above. Any other inte
 exits 130. An interrupted read reports `interrupted`, and an interrupted download keeps its
 message about the saved data. An interrupted write keeps its unknown outcome:
 `run.unknownOutcome` for a queue request, `request.unknownOutcome` for others.
+
+
+The build evidence reads also accept whole-response `--fields`: `builds canceled-info`,
+`builds pin show`, `builds statistics list`, `builds related-issues`, `builds artifact-changes`,
+`builds output-parameters list`, `builds resulting-properties list`,
+`builds problem-occurrences list`, `builds test-occurrences`, and `builds vcs-labels list`.
+These unpaged reads return the native response object when a projection is supplied;
+parameter values can therefore be selected explicitly. Omission keeps existing outputs.
+
+`queue list` accepts item `--fields` and keeps its paging envelope and job/project filters.
+`queue show`, `queue position show`, `queue approval show`, and `queue compatible-agents`
+accept whole-response `--fields`. Explicit projections use native JSON and the generic view;
+omission preserves existing requests and output.
 
 ## Triggers, features, dependencies and templates
 
@@ -862,3 +886,47 @@ the common package and how to start the next in-repo or external integration.
 
 `npm ci`, `npm test`, and `npm run test:package` build and test this repository independently.
 See [release and Core adoption gates](release.md) and [migration provenance](migration.md).
+
+## Native projections and controls
+
+Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
+Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
+keeps the public-name defaults. Explicit fields return native JSON and the generic view.
+Build tag add retains its local acknowledgement for empty or non-JSON successful bodies.
+
+Build artifacts support `--resolve-parameters true|false` and `--log-build-usage true|false`.
+List/children/archive also accept `--base-path`; archive accepts `--archive-name` for the server
+archive name, independently of `--output` and `--max-bytes`. List/children accept item fields
+(e.g. `--fields 'name,size'`) and retain `{count,items,hasMore}`; metadata accepts whole-response
+fields. Explicit projections use native JSON and the generic view. Omitted controls preserve defaults.
+
+Build actions (`builds cancel`, `set-status`, `log append`, `problem-occurrences add`,
+`vcs-labels add`, `pin set`, `start-agentless`) accept `--fields <projection>` and
+return native JSON with the generic view. Omission preserves requests and output.
+Empty successful bodies retain each command's default behavior: log append returns its
+acknowledgement; these other actions fail JSON decoding. Projections are never extended.
+For partial-failure detection include `errors(item)` for set-status or
+`vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
+native error result. Detection reads the native response before credential masking; the returned
+result is masked afterwards. Absent detection fields return the native body with exit 0.
+
+Batch `show`, `cancel`, `delete`, `comment set/clear`, `tags add/remove`, and `pin`
+accept `--fields`. The native response retains its envelope. Include `errorCount`
+to retain `batch.partial` detection; absent detection fields imply no claim about
+partial failure. Empty or malformed responses retain default handling, and omitted
+options preserve the default request body, permissions and output.
+
+Queue mutations `approval approve`, `delete-page`, `reorder`, and `position set`
+accept `--fields`; native responses retain their envelopes. `delete-page` retains
+its acknowledgement for an empty success; the other three retain JSON decoding errors.
+`jobs run --move-to-top <boolean>` and `queue approval approve --approve-all <boolean>`
+require literal `true` or `false`. Omission preserves the existing query, including
+`approveAll=false`; `jobs run` keeps its fixed response projection and wait workflow.
+The wait and latest-build resolution workflows keep their required response fields;
+projection options apply to their direct request leaves.
+
+All new controls follow parity with the default path: validation, permissions,
+confirmations, empty or malformed bodies, errors, exit status and unknown mutation
+outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
+acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
+fields and passes through. Lost mutation responses are never retried automatically.

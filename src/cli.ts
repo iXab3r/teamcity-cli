@@ -23,9 +23,10 @@ import { adminCategories } from "./admin-models.js";
 import { createInfrastructureCommands } from "./infrastructure-commands.js";
 import { createSystemCommands } from "./system-commands.js";
 import { createFileCommands } from "./file-commands.js";
-import { clientLeaf, integerValue } from "./command-support.js";
+import { clientLeaf, integerValue, optionalText } from "./command-support.js";
 import { projectTree, jobTable, agentTable, buildRecord, buildTable, problemTable, testTable, withView } from "./presentation.js";
 import { createBuildFlowCommands } from "./build-flow.js";
+import { fieldsOption } from "./projection.js";
 import type {
   TeamCityBuildState,
   TeamCityBuildStatus,
@@ -268,6 +269,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...(branch === undefined ? {} : { branch }),
               ...(state === undefined ? {} : { state }),
               ...(status === undefined ? {} : { status }),
+              ...optionalText(options, "fields"),
               ...pageValues(options),
             });
           },
@@ -283,6 +285,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               flags: "--status <status>",
               description: "Select SUCCESS, FAILURE or UNKNOWN",
             },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -331,10 +334,11 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           (c, { args, options }) => {
             const comment = stringOption(options, "comment");
             return c.cancelBuild(integerValue(args.id), {
+              ...optionalText(options, "fields"),
               ...(comment === undefined ? {} : { comment }),
             });
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, fieldsOption],
         )),
       ], "Evidence"), {
         examples: [
@@ -360,12 +364,14 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...(job === undefined ? {} : { job }),
               ...(project === undefined ? {} : { project }),
               ...pageValues(options),
+              ...optionalText(options, "fields"),
             });
           },
           [
             { flags: "--job <id>", description: "Limit queued builds to one job" },
             { flags: "--project <id>", description: "Limit queued builds to one project" },
             ...pageOptions,
+            fieldsOption,
           ],
         )),
         withView(buildRecord, leaf(

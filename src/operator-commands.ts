@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
   command,
@@ -12,6 +13,7 @@ import type { createBulkConfigurationCommands } from "./bulk-configuration-comma
 import type { createTriageCommands } from "./triage-commands.js";
 import { booleanText, allowedField } from "./advanced-authoring-models.js";
 import { requiredText } from "./locator.js";
+import { locatorOption } from "./command-support.js";
 
 function number(args: Record<string, unknown>, key: string): number {
   return Number(requiredText(text(args, key), key));
@@ -198,16 +200,22 @@ export function createOperatorCommands(
   function tags(owner: "builds" | "queue") {
     const tagOption = repeatOption("--tag <tag>", "Select public tags; repeat for more", true);
     return command("tags", "Inspect or change public tags", [
-      withView(stringList, leaf("list <build-id>", "List public tags", Permission.ReadOnly, (c, { args }) =>
-        c.listTags(owner, number(args, "build-id")),
+      withView(stringList, leaf("list <build-id>", "List public tags", Permission.ReadOnly, (c, { args, options }) =>
+        c.listTags(owner, number(args, "build-id"),
+              fieldsFromOptions(options),
+              options.locator as string | undefined,
+            ),
+          [fieldsOption, locatorOption],
       )),
       leaf(
         "add <build-id>",
         "Add tags without removing others",
         Permission.Update,
         (c, { args, options }) =>
-          c.addTags(owner, number(args, "build-id"), (options.tag ?? []) as string[]),
-        [tagOption],
+          c.addTags(owner, number(args, "build-id"), (options.tag ?? []) as string[],
+            fieldsFromOptions(options),
+          ),
+        [tagOption, ...(owner === "builds" ? [fieldsOption] : [])],
       ),
       ...(owner === "builds"
         ? [
@@ -216,8 +224,11 @@ export function createOperatorCommands(
               "Replace public tags",
               Permission.Update,
               (c, { args, options }) =>
-                c.replaceBuildTags(number(args, "build-id"), (options.tag ?? []) as string[]),
-              [{ ...tagOption, required: false }],
+                c.replaceBuildTags(number(args, "build-id"), (options.tag ?? []) as string[],
+                  fieldsFromOptions(options),
+                  options.locator as string | undefined,
+                ),
+              [{ ...tagOption, required: false }, fieldsOption, locatorOption],
             ),
           ]
         : []),
@@ -226,29 +237,32 @@ export function createOperatorCommands(
   const queue = [
     ...bulk.queue,
     tags("queue"),
-    leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args }) =>
-      c.getQueuedBuild(number(args, "build-id")),
+    leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args, options }) =>
+      c.getQueuedBuild(number(args, "build-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "compatible-agents <build-id>",
       "List compatible agent identities",
       Permission.ReadOnly,
-      (c, { args }) => c.listQueueCompatibleAgents(number(args, "build-id")),
+      (c, { args, options }) => c.listQueueCompatibleAgents(number(args, "build-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("position", "Inspect positions or move a queued build", [
       leaf(
         "show <position>",
         "Show the build at a queue position",
         Permission.ReadOnly,
-        (c, { args }) => c.getQueuePosition(args.position),
+        (c, { args, options }) => c.getQueuePosition(args.position, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <position>",
         "Move a build to a queue position",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePosition(args.position, number(options, "build")),
-        [option("--build <build-id>", "Select a queued build", true)],
+          c.setQueuePosition(args.position, number(options, "build"), fieldsFromOptions(options)),
+        [option("--build <build-id>", "Select a queued build", true), fieldsOption],
       ),
     ]),
   ];
@@ -286,7 +300,8 @@ export function createOperatorCommands(
       "canceled-info <build-id>",
       "Read the cancellation comment",
       Permission.ReadOnly,
-      (c, { args }) => c.getBuildCanceledInfo(number(args, "build-id")),
+      (c, { args, options }) => c.getBuildCanceledInfo(number(args, "build-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("comment", "Change a build comment", [
       leaf(
@@ -306,7 +321,8 @@ export function createOperatorCommands(
         "show <build-id>",
         "Show pinned status and comment",
         Permission.ReadOnly,
-        (c, { args }) => c.getBuildPin(number(args, "build-id")),
+        (c, { args, options }) => c.getBuildPin(number(args, "build-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <build-id> <status>",
@@ -317,8 +333,9 @@ export function createOperatorCommands(
             number(args, "build-id"),
             booleanText(args.status) === "true",
             comment(options),
+            fieldsFromOptions(options),
           ),
-        [commentOption],
+        [commentOption, fieldsOption],
       ),
     ]),
     command("statistics", "Read build statistics", [
@@ -326,7 +343,8 @@ export function createOperatorCommands(
         "list <build-id>",
         "List named numeric text values",
         Permission.ReadOnly,
-        (c, { args }) => c.listBuildStatistics(number(args, "build-id")),
+        (c, { args, options }) => c.listBuildStatistics(number(args, "build-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "show <build-id> <name>",

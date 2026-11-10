@@ -215,3 +215,14 @@ test("returns empty pages and validates pagination before fetch", async () => {
   await assert.rejects(isolated.listBuildTests(101, { start: -1 }), /non-negative/);
   assert.equal(fetchCalls, 0);
 });
+
+test("explicit build projections validate locally even for direct client calls", async () => {
+  let requests = 0;
+  const cli = client(async () => { requests++; throw new Error("Unexpected request."); });
+  for (const fields of ["", " \t\n"]) {
+    await assert.rejects(cli.getBuild(42, fields), /non-empty fields projection/);
+    await assert.rejects(cli.getLatestFinishedBuild("Demo_Build", undefined, fields), /non-empty fields projection/);
+    await assert.rejects(cli.listBuilds({ fields, limit: 0 }), /non-empty fields projection/);
+  }
+  assert.equal(requests, 0);
+});

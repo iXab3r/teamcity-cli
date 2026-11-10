@@ -326,5 +326,8 @@ export const savedFileRecord = recordView<SavedFile>({
 });
 
 export function withView(view: HumanView, definition: CommandDefinition): CommandDefinition {
-  return { ...definition, view };
+  return { ...definition, view: {
+    ...view,
+    when: context => context.input?.options.fields === undefined && (view.when?.(context) ?? true),
+  } };
 }

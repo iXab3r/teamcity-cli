@@ -13,7 +13,7 @@ import {
   TeamCityUnknownOutcomeError,
   type TeamCityClient,
 } from "./client.js";
-import { pairOption, integerValue } from "./command-support.js";
+import { booleanOption, pairOption, integerValue } from "./command-support.js";
 import type { PlainProperty } from "./authoring-models.js";
 import type {
   TeamCityBuild,
@@ -24,6 +24,7 @@ import type {
 import { buildOutcome, type BuildOutcome } from "./outcome.js";
 import type { TeamCityPage } from "./paging.js";
 import { buildRecord, diagnosisRecord, followedRecord, withView } from "./presentation.js";
+import { fieldsOption } from "./projection.js";
 
 type ClientFor = (context: CommandContext) => Promise<TeamCityClient>;
 
@@ -256,15 +257,22 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
       const id = optionalString(args, "build-id");
       const job = optionalString(options, "job");
       const branch = optionalString(options, "branch");
+        const fields = optionalString(options, "fields");
       if (options.latest !== true) {
         if (job !== undefined || branch !== undefined)
           throw new Error("--job and --branch select a build only together with --latest.");
         if (id === undefined) throw new Error("Specify a build ID, or --job <id> --latest.");
-        return (await clientFor(context)).getBuild(integerValue(id));
+        return (await clientFor(context)).getBuild(integerValue(id), fields);
       }
       if (id !== undefined) throw new Error("Use either a build ID or --latest, not both.");
       if (job === undefined) throw new Error("--latest requires --job <id>.");
-      const build = await (await clientFor(context)).getLatestFinishedBuild(job, branch);
+      const client = await clientFor(context);
+      if (fields !== undefined) {
+        const build = await client.getLatestFinishedBuild(job, branch, fields);
+        if (build === undefined) throw new Error("No finished build matches this job and branch.");
+        return build;
+      }
+      const build = await client.getLatestFinishedBuild(job, branch);
       if (build === undefined) throw new Error("No finished build matches this job and branch.");
       context.progress(
         `Latest finished build on ${branch === undefined ? "all branches" : "the selected branch"}: ${build.id}`,
@@ -274,6 +282,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     {
       permission: Permission.ReadOnly,
       options: [
+          fieldsOption,
         { flags: "--job <id>", description: "Select a job for --latest" },
         {
           flags: "--branch <name>",
@@ -344,6 +353,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
           ...(branch === undefined ? {} : { branch }),
           ...(comment === undefined ? {} : { comment }),
           properties,
+          ...(typeof options.moveToTop === "string" ? { moveToTop: options.moveToTop } : {}),
           ...(options.cleanSources === true ? { cleanSources: true } : {}),
         });
       } catch (error) {
@@ -375,6 +385,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     {
       permission: Permission.Update,
       options: [
+          booleanOption("--move-to-top <boolean>", "Queue the build at the top"),
         {
           flags: "--branch <name>",
           description: "Select the build branch",
