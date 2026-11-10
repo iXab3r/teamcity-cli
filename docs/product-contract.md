@@ -7,6 +7,40 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
+and `snapshot-dependencies` accept whole-response `--fields` on
+`list/show/create/replace/replace-all`; steps and features also accept it on
+`parameters list/replace`. Explicit projections reach TeamCity unchanged and use
+native JSON and the generic human view. Omission preserves default array/object
+shaping, requests, permissions and errors. Scalar settings, other sub-resources
+and deletes retain their existing options and workflows.
+
+Job `templates list/show/attach/replace-all` and
+`vcs list/show/attach/replace/replace-all` accept whole-response `--fields`.
+Unpaged lists and replacements return native response objects with explicit
+fields; omission keeps their shaped arrays. Template `--optimize-settings`,
+`--inline-settings`, confirmations, VCS checkout rules and write bodies retain
+existing behavior. Detach, clear and checkout-rule sub-resources are unchanged.
+
+Job `files list/children` accept item `--fields` and keep `{count,items}`, their
+existing locator and default shaping, without lookahead. `metadata` projects the
+whole response. All five file leaves accept `--resolve-parameters <boolean>`;
+`list/children/archive` accept `--base-path`, and `archive` accepts `--archive-name`
+(server query `name`). Omitted controls preserve requests and output. Download
+bounds and no-overwrite rules remain unchanged; other file families keep their options.
+
+Job `parameters` and `output-parameters` accept whole-response `--fields`
+on `list`, `show`, `create`, `set`, and `replace-all`. Lists also accept native
+`--locator`. Mutations keep fixed preflight projections; explicit fields select
+the write response. Part leaves and `set-password` retain their existing workflows.
+Project parameter commands retain their existing options and requests.
+
+Jobs `list` and `branches` accept item `--fields`; `show`, `builds`,
+`investigations`, `vcs-instances`, and `create` accept whole-response fields.
+`aliases` and `tags` accept native `--field <name>` unchanged; their output
+shaping is preserved. Omitting it retains the existing query, including tags’
+`field=tag(name)`. Job creation retains its Update permission and body.
+
 Deployment `deployments list` and `deployments instances list` accept item fields;
 `deployments show`, `deployments instances show`, and `server rest-plugin` accept
 whole-response fields. REST plugin info keeps its XML request/parser by default and

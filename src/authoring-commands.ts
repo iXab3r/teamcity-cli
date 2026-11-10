@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
   Permission,
@@ -6,7 +7,7 @@ import {
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { clientLeaf, text, optionalText, option, propertyOption } from "./command-support.js";
+import { locatorOption, clientLeaf, text, optionalText, option, propertyOption } from "./command-support.js";
 import { createAdvancedAuthoringCommands } from "./advanced-authoring-commands.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
 import type {
@@ -38,6 +39,8 @@ export function createAuthoringCommands(
   const projectOption = option("--project <id>", "Select a project", true);
 
   function parameters(owner: ParameterOwner): CommandDefinition {
+    const projections = owner === "projects" ? [] : [fieldsOption];
+    const fields = (options: Record<string, unknown>) => owner === "projects" ? undefined : fieldsFromOptions(options);
     const ownerArg = owner === "projects" ? "project-id" : "job-id";
     const valueOption = option(
       "--value <value>",
@@ -62,13 +65,15 @@ export function createAuthoringCommands(
           `list <${ownerArg}>`,
           "List parameters in server order",
           Permission.ReadOnly,
-          (c, { args }) => c.listParameters(owner, text(args, ownerArg)),
+          (c, { args, options }) => c.listParameters(owner, text(args, ownerArg), fields(options), options.locator as string | undefined),
+          [...projections, ...(owner === "projects" ? [] : [{ ...locatorOption, description: "Filter native TeamCity parameters" }])],
         ),
         leaf(
           `show <${ownerArg}> <name>`,
           "Show parameter metadata and a safe value",
           Permission.ReadOnly,
-          (c, { args }) => c.getParameter(owner, text(args, ownerArg), text(args, "name")),
+          (c, { args, options }) => c.getParameter(owner, text(args, ownerArg), text(args, "name"), fields(options)),
+          projections,
         ),
         leaf(
           `create <${ownerArg}> <name>`,
@@ -80,16 +85,17 @@ export function createAuthoringCommands(
               text(args, ownerArg),
               text(args, "name"),
               text(options, "value"),
+              fields(options),
             ),
-          [valueOption],
+          [valueOption, ...projections],
         ),
         leaf(
           `set <${ownerArg}> <name>`,
           "Set a plain parameter after checking its type",
           Permission.Update,
           (c, { args, options }) =>
-            c.setParameter(owner, text(args, ownerArg), text(args, "name"), text(options, "value")),
-          [valueOption],
+            c.setParameter(owner, text(args, ownerArg), text(args, "name"), text(options, "value"), fields(options)),
+          [valueOption, ...projections],
         ),
         leaf(
           `delete <${ownerArg}> <name>`,
@@ -122,26 +128,28 @@ export function createAuthoringCommands(
       bulk.replaceAll(kind),
       advanced.entityFields(kind),
       ...(kind === "features" ? [advanced.pluginParameters(kind)] : []),
-      leaf("list <job-id>", "List in server order", Permission.ReadOnly, (c, { args }) =>
-        c.listExtensions(kind, args["job-id"]),
+      leaf("list <job-id>", "List in server order", Permission.ReadOnly, (c, { args, options }) =>
+        c.listExtensions(kind, args["job-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
-      leaf(`show <job-id> <${idArg}>`, "Show a safe summary", Permission.ReadOnly, (c, { args }) =>
-        c.getExtension(kind, text(args, "job-id"), text(args, idArg)),
+      leaf(`show <job-id> <${idArg}>`, "Show a safe summary", Permission.ReadOnly, (c, { args, options }) =>
+        c.getExtension(kind, text(args, "job-id"), text(args, idArg), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "create <job-id>",
         "Add an extension",
         Permission.Update,
-        (c, { args, options }) => c.createExtension(kind, args["job-id"], input(options)),
-        extensionOptions,
+        (c, { args, options }) => c.createExtension(kind, args["job-id"], input(options), fieldsFromOptions(options)),
+        [...extensionOptions, fieldsOption],
       ),
       leaf(
         `replace <job-id> <${idArg}>`,
         "Replace an extension",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceExtension(kind, text(args, "job-id"), text(args, idArg), input(options)),
-        extensionOptions,
+          c.replaceExtension(kind, text(args, "job-id"), text(args, idArg), input(options), fieldsFromOptions(options)),
+        [...extensionOptions, fieldsOption],
       ),
       leaf(`delete <job-id> <${idArg}>`, "Delete one extension", Permission.Update, (c, { args }) =>
         c.deleteExtension(kind, text(args, "job-id"), text(args, idArg)),
@@ -165,21 +173,23 @@ export function createAuthoringCommands(
         "list <job-id>",
         "List dependencies in server order",
         Permission.ReadOnly,
-        (c, { args }) => c.listSnapshotDependencies(args["job-id"]),
+        (c, { args, options }) => c.listSnapshotDependencies(args["job-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "show <job-id> <dependency-id>",
         "Show a dependency summary",
         Permission.ReadOnly,
-        (c, { args }) => c.getSnapshotDependency(args["job-id"], args["dependency-id"]),
+        (c, { args, options }) => c.getSnapshotDependency(args["job-id"], args["dependency-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "create <job-id>",
         "Add an upstream dependency",
         Permission.Update,
         (c, { args, options }) =>
-          c.createSnapshotDependency(args["job-id"], snapshotInput(options)),
-        snapshotOptions,
+          c.createSnapshotDependency(args["job-id"], snapshotInput(options), fieldsFromOptions(options)),
+        [...snapshotOptions, fieldsOption],
       ),
       leaf(
         "replace <job-id> <dependency-id>",
@@ -190,8 +200,9 @@ export function createAuthoringCommands(
             args["job-id"],
             args["dependency-id"],
             snapshotInput(options),
+            fieldsFromOptions(options),
           ),
-        snapshotOptions,
+        [...snapshotOptions, fieldsOption],
       ),
       leaf(
         "delete <job-id> <dependency-id>",
@@ -208,13 +219,15 @@ export function createAuthoringCommands(
       "show <job-id> <template-id>",
       "Show one attached template",
       Permission.ReadOnly,
-      (c, { args }) => c.getAttachedTemplate(args["job-id"], args["template-id"]),
+      (c, { args, options }) => c.getAttachedTemplate(args["job-id"], args["template-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "list <job-id>",
       "List attached templates in priority order",
       Permission.ReadOnly,
-      (c, { args }) => c.listTemplates(args["job-id"]),
+      (c, { args, options }) => c.listTemplates(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "attach <job-id>",
@@ -225,8 +238,10 @@ export function createAuthoringCommands(
           args["job-id"],
           text(options, "template"),
           options.optimizeSettings === true,
+          fieldsFromOptions(options),
         ),
       [
+        fieldsOption,
         option("--template <template-id>", "Select an existing template", true),
         option(
           "--optimize-settings",
@@ -256,29 +271,31 @@ export function createAuthoringCommands(
     bulk.replaceAll("steps"),
     advanced.entityFields("steps"),
     advanced.pluginParameters("steps"),
-    leaf("list <job-id>", "List steps in execution order", Permission.ReadOnly, (c, { args }) =>
-      c.listSteps(args["job-id"]),
+    leaf("list <job-id>", "List steps in execution order", Permission.ReadOnly, (c, { args, options }) =>
+      c.listSteps(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "show <job-id> <step-id>",
       "Show a safe step summary",
       Permission.ReadOnly,
-      (c, { args }) => c.getStep(args["job-id"], args["step-id"]),
+      (c, { args, options }) => c.getStep(args["job-id"], args["step-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create <job-id>",
       "Add a build step",
       Permission.Update,
-      (c, { args, options }) => c.createStep(args["job-id"], stepInput(options)),
-      stepOptions,
+      (c, { args, options }) => c.createStep(args["job-id"], stepInput(options), fieldsFromOptions(options)),
+      [...stepOptions, fieldsOption],
     ),
     leaf(
       "replace <job-id> <step-id>",
       "Replace a build step",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceStep(args["job-id"], args["step-id"], stepInput(options)),
-      stepOptions,
+        c.replaceStep(args["job-id"], args["step-id"], stepInput(options), fieldsFromOptions(options)),
+      [...stepOptions, fieldsOption],
     ),
     leaf("delete <job-id> <step-id>", "Delete one build step", Permission.Update, (c, { args }) =>
       c.deleteStep(args["job-id"], args["step-id"]),
@@ -296,13 +313,15 @@ export function createAuthoringCommands(
       "list <job-id>",
       "List attached roots",
       Permission.ReadOnly,
-      (c, { args }) => c.listVcsEntries(args["job-id"]),
+      (c, { args, options }) => c.listVcsEntries(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "show <job-id> <root-id>",
       "Show one root attachment",
       Permission.ReadOnly,
-      (c, { args }) => c.getVcsEntry(args["job-id"], args["root-id"]),
+      (c, { args, options }) => c.getVcsEntry(args["job-id"], args["root-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "attach <job-id>",
@@ -313,8 +332,10 @@ export function createAuthoringCommands(
           args["job-id"],
           text(options, "root"),
           typeof options.checkoutRules === "string" ? options.checkoutRules : "",
+          fieldsFromOptions(options),
         ),
       [
+        fieldsOption,
         option("--root <root-id>", "Select an existing VCS root", true),
         { ...checkoutOption, required: false },
       ],
@@ -328,8 +349,9 @@ export function createAuthoringCommands(
           args["job-id"],
           args["root-id"],
           text(options, "checkoutRules"),
+          fieldsFromOptions(options),
         ),
-      [checkoutOption],
+      [checkoutOption, fieldsOption],
     ),
     leaf(
       "detach <job-id> <root-id>",
@@ -433,8 +455,8 @@ export function createAuthoringCommands(
           name: text(options, "name"),
           project: text(options, "project"),
           ...optionalText(options, "description"),
-        }),
-      [nameOption, projectOption, descriptionOption],
+        }, fieldsFromOptions(options)),
+      [nameOption, projectOption, descriptionOption, fieldsOption],
     ),
     leaf(
       "set <id> <field> <value>",

@@ -220,18 +220,21 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             return c.listJobs({
               ...(project === undefined ? {} : { project }),
               ...pageValues(options),
+              fields: fieldsFromOptions(options),
             });
           },
           [
             { flags: "--project <id>", description: "Limit jobs to a TeamCity project" },
             ...pageOptions,
+            fieldsOption,
           ],
         )),
         leaf(
           "show <id>",
           "Show one job",
           Permission.ReadOnly,
-          (c, { args }) => c.getJob(args.id),
+          (c, { args, options }) => c.getJob(args.id, fieldsFromOptions(options)),
+          [fieldsOption],
         ),
         flow.run,
         ...authoring.jobs,
