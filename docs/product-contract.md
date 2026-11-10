@@ -188,3 +188,6 @@ fields and passes through. Lost mutation responses are never retried automatical
 Versioned settings projections cover affected projects, configuration (including effective
 configuration and replacement), status and load results. Scoped responses project the whole
 response; omission preserves existing shaping. Credentials workflows remain unchanged.
+
+VCS root projections preserve paged list envelopes and project whole responses for
+scoped instance/property reads and writes. Default property projections remain names-only.

@@ -1,22 +1,22 @@
 {
-  "baselineHead": "c1134d224ae90a0b14cc1578dbc06f554b23b451",
+  "baselineHead": "2d4cf8f2766b18ee68cb5aa8a266a47b771b76ea",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 384,
-  "partial": 64,
+  "covered": 390,
+  "partial": 58,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 189,
-      "partial": 45,
+      "covered": 193,
+      "partial": 41,
       "missing": 1
     },
     "Update": {
       "total": 214,
-      "covered": 195,
-      "partial": 19,
+      "covered": 197,
+      "partial": 17,
       "missing": 0
     }
   },
@@ -179,8 +179,8 @@
     },
     "VcsRoot": {
       "total": 14,
-      "covered": 8,
-      "partial": 6,
+      "covered": 14,
+      "partial": 0,
       "missing": 0
     },
     "VcsRootInstance": {
@@ -205,7 +205,7 @@
   "unsupportedByParameter": {
     "addTimestamp": 1,
     "basePath": 6,
-    "fields": 60,
+    "fields": 54,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -217,7 +217,7 @@
     "okOnNothingFound": 1,
     "requestor": 1
   },
-  "partialOnlyBecauseOfFields": 53,
+  "partialOnlyBecauseOfFields": 47,
   "verificationEvidenceGaps": [],
   "nonLeafTransportOperations": [
     "GET /app/rest/users/{p1}"

@@ -1019,3 +1019,7 @@ fields and passes through. Lost mutation responses are never retried automatical
 Project `versioned-settings affected`, `config show/effective/replace`, `status`,
 and `load` accept whole-response `--fields`. Omission preserves shaped results,
 write bodies and confirmations. Token and secure-value workflows keep fixed reads.
+
+VCS `roots list` accepts item `--fields`; `roots show/instances/create` and
+`roots properties list/replace` accept whole-response fields. Default property
+names, root shaping, selectors, paging and create bodies retain their existing behavior.
