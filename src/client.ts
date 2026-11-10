@@ -502,10 +502,10 @@ export class TeamCityClient {
     );
   }
 
-  public listBuildChanges(
+  public listBuildChanges<F extends string | undefined = undefined>(
     id: number,
-    options: TeamCityPageOptions = {},
-  ): Promise<TeamCityPage<TeamCityChange>> {
+    options: TeamCityPageOptions & { fields?: F } = {},
+  ): Promise<TeamCityPage<Projected<TeamCityChange, F>>> {
     return this.#list(
       "/app/rest/changes",
       [`build:(id:${integerId(id, "TeamCity build ID")})`],
@@ -1664,23 +1664,22 @@ export class TeamCityClient {
     return this.#projectedValue(result, fields, value => value === null ? null : safeComment(value as OperationComment));
   }
 
-  public async getChange(id: number) {
-    return safeChange(
-      await this.#requestJson<ChangeSummary>(
+  public async getChange<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
         "GET",
         `/app/rest/changes/id:${integerId(id, "Change ID")}`,
         { fields: changeSummaryFields },
-      ),
+      raw => safeChange(raw as ChangeSummary), fields,
     );
   }
 
-  public async listChangeParents(id: number) {
-    const result = await this.#requestJson<{ change?: ChangeSummary[] }>(
+  public async listChangeParents<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/parentChanges`,
       { fields: `change(${changeSummaryFields})` },
+      raw => ((raw as { change?: ChangeSummary[] }).change ?? []).map(safeChange), fields,
     );
-    return (result.change ?? []).map(safeChange);
   }
 
   public async replaceAllParameters(
@@ -2255,22 +2254,22 @@ export class TeamCityClient {
     );
   }
 
-  public async getChangeDuplicates(id: number) {
-    const value = await this.#requestJson<{ change?: ChangeSummary[] }>(
+  public async getChangeDuplicates<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/duplicates`,
       { fields: `change(${changeSummaryFields})` },
+      raw => ((raw as { change?: ChangeSummary[] }).change ?? []).map(safeChange), fields,
     );
-    return (value.change ?? []).map(safeChange);
   }
 
-  public async getChangeFirstBuilds(id: number) {
-    const value = await this.#requestJson<{ build?: unknown[] }>(
+  public async getChangeFirstBuilds<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/firstBuilds`,
       { fields: `build(${triage.evidenceBuildFields})` },
+      raw => ((raw as { build?: unknown[] }).build ?? []).map(triage.safeEvidenceBuild), fields,
     );
-    return (value.build ?? []).map(triage.safeEvidenceBuild);
   }
 
   public async getChangeIssues(id: number) {
@@ -2292,14 +2291,12 @@ export class TeamCityClient {
     });
   }
 
-  public async getChangeRootInstance(id: number) {
-    return triage.safeScalars(
-      await this.#requestJson(
+  public async getChangeRootInstance<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
         "GET",
         `/app/rest/changes/id:${integerId(id, "Change ID")}/vcsRootInstance`,
         { fields: "id,name,vcs-root-id" },
-      ),
-      ["id", "name", "vcs-root-id"],
+      raw => triage.safeScalars(raw, ["id", "name", "vcs-root-id"]), fields,
     );
   }
 
@@ -2456,13 +2453,13 @@ export class TeamCityClient {
     return { name, exists: true };
   }
 
-  public async listChangeAttributeNames(id: number) {
-    const value = await this.#requestJson<{ entry?: unknown[] }>(
+  public async listChangeAttributeNames<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/attributes`,
       { fields: "count,entry(name)" },
+      raw => ((raw as { entry?: unknown[] }).entry ?? []).map((item) => triage.safeScalars(item, ["name"]).name), fields,
     );
-    return (value.entry ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
   }
 
   public listAccountUsers(page: TeamCityPageOptions = {}) {

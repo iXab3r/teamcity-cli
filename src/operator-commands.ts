@@ -368,14 +368,16 @@ export function createOperatorCommands(
   ];
   const changes = command("changes", "Inspect VCS change metadata", [
     ...triage.changes,
-    leaf("show <change-id>", "Show a change", Permission.ReadOnly, (c, { args }) =>
-      c.getChange(number(args, "change-id")),
+    leaf("show <change-id>", "Show a change", Permission.ReadOnly, (c, { args, options }) =>
+      c.getChange(number(args, "change-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "parents <change-id>",
       "List direct parent changes in server order",
       Permission.ReadOnly,
-      (c, { args }) => c.listChangeParents(number(args, "change-id")),
+      (c, { args, options }) => c.listChangeParents(number(args, "change-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
   ]);
   return { pools, agents, queue, builds, changes };

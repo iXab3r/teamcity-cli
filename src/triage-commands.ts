@@ -276,11 +276,13 @@ export function createTriageCommands(
     ),
   ];
   const changes = [
-    leaf("duplicates <id>", "Read duplicate change metadata", Permission.ReadOnly, (c, { args }) =>
-      c.getChangeDuplicates(num(args, "id")),
+    leaf("duplicates <id>", "Read duplicate change metadata", Permission.ReadOnly, (c, { args, options }) =>
+      c.getChangeDuplicates(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
-    leaf("first-builds <id>", "Read first containing builds", Permission.ReadOnly, (c, { args }) =>
-      c.getChangeFirstBuilds(num(args, "id")),
+    leaf("first-builds <id>", "Read first containing builds", Permission.ReadOnly, (c, { args, options }) =>
+      c.getChangeFirstBuilds(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf("issues <id>", "Read issue IDs", Permission.ReadOnly, (c, { args }) =>
       c.getChangeIssues(num(args, "id")),
@@ -295,7 +297,8 @@ export function createTriageCommands(
       "root-instance <id>",
       "Read root instance identity",
       Permission.ReadOnly,
-      (c, { args }) => c.getChangeRootInstance(num(args, "id")),
+      (c, { args, options }) => c.getChangeRootInstance(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "field <id> <field>",
@@ -303,8 +306,9 @@ export function createTriageCommands(
       Permission.ReadOnly,
       (c, { args }) => c.getChangeField(num(args, "id"), args.field),
     ),
-    withView(stringList, leaf("attributes <id>", "Read attribute names only", Permission.ReadOnly, (c, { args }) =>
-      c.listChangeAttributeNames(num(args, "id")),
+    withView(stringList, leaf("attributes <id>", "Read attribute names only", Permission.ReadOnly, (c, { args, options }) =>
+      c.listChangeAttributeNames(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
     )),
   ];
   const investigations = command("investigations", "Assign job, test or problem investigations", [

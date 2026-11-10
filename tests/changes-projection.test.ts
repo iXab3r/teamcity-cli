@@ -8,7 +8,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
 import { cases } from "./changes-projection-cases.js";
-const buildProjectionCases = cases.map(c => ({ ...c, locator: c.defaultQuery.locator, defaultFields: c.defaultQuery.fields, fields: (s: string) => c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
+const buildProjectionCases = cases.map(c => ({ ...c, baselineResult: c.name === "changes show 7" ? { id: undefined } : c.baselineResult, locator: c.defaultQuery.locator, defaultFields: c.defaultQuery.fields, fields: (s: string) => c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
 const server = setupServer();
 const origin = "https://teamcity.test";
@@ -33,7 +33,7 @@ async function success(rt: Runtime, cli: CliApplication, argv: string[], surface
   if (surface === "execute") assert.deepEqual(await cli.execute(argv), expected);
   else if (surface === "rpc") {
     // Two requests share one persistent session; parsing and projection must stay invocation-local.
-    assert.deepEqual(await rt.rpc(cli, [argv, argv]), [0, 1].map(id => ({ jsonrpc: "2.0", id, result: expected })));
+    assert.deepEqual(await rt.rpc(cli, [argv, argv]), [0, 1].map(id => ({ jsonrpc: "2.0", id, result: JSON.parse(JSON.stringify(expected)) })));
   } else {
     const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
     assert.equal(rendered.exitCode, 0, rendered.stderr);

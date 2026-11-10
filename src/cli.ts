@@ -326,8 +326,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "List source changes associated with a build",
           Permission.ReadOnly,
           (c, { args, options }) =>
-            c.listBuildChanges(integerValue(args.id), pageValues(options)),
-          pageOptions,
+            c.listBuildChanges(integerValue(args.id), { ...pageValues(options), fields: fieldsFromOptions(options) }),
+          [...pageOptions, fieldsOption],
         ),
         withView(buildRecord, leaf(
           "cancel <id>",
