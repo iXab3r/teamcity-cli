@@ -1,22 +1,22 @@
 {
-  "baselineHead": "23095187f5650dfa420e60b09db1fb8f8bc3587d",
+  "baselineHead": "1a272d9f9d7ce1806e9f56ad7595542eeba21042",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 254,
-  "partial": 194,
+  "covered": 264,
+  "partial": 184,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 115,
-      "partial": 119,
+      "covered": 119,
+      "partial": 115,
       "missing": 1
     },
     "Update": {
       "total": 214,
-      "covered": 139,
-      "partial": 75,
+      "covered": 145,
+      "partial": 69,
       "missing": 0
     }
   },
@@ -101,14 +101,14 @@
     },
     "Investigation": {
       "total": 6,
-      "covered": 1,
-      "partial": 5,
+      "covered": 6,
+      "partial": 0,
       "missing": 0
     },
     "Mute": {
       "total": 6,
-      "covered": 1,
-      "partial": 5,
+      "covered": 6,
+      "partial": 0,
       "missing": 0
     },
     "Node": {
@@ -206,7 +206,7 @@
     "addTimestamp": 1,
     "basePath": 9,
     "field": 6,
-    "fields": 182,
+    "fields": 172,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -219,7 +219,7 @@
     "requestor": 1,
     "resolveParameters": 5
   },
-  "partialOnlyBecauseOfFields": 168,
+  "partialOnlyBecauseOfFields": 158,
   "verificationEvidenceGaps": [
     "GET /app/rest/projects/{p1}"
   ],

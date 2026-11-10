@@ -30,7 +30,7 @@ DELETE /app/rest/cloud/instances/{p1}	CloudInstance	Update	covered	cloud instanc
 DELETE /app/rest/deploymentDashboards/{p1}	DeploymentDashboard	Update	covered	deployments delete <id>	deleteDashboard		exercised-in-passing-suite	tests/system.test.ts
 DELETE /app/rest/deploymentDashboards/{p1}/instances/{p2}	DeploymentDashboard	Update	covered	deployments instances delete <dashboard> <id>	deleteDeploymentInstance		exercised-in-passing-suite	tests/system.test.ts
 DELETE /app/rest/investigations/{p1}	Investigation	Update	covered	investigations delete	deleteInvestigation		exercised-in-passing-suite	tests/authoring.test.ts
-DELETE /app/rest/mutes/multiple	Mute	Update	partial	mutes delete-many	deleteMutes	fields	exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
+DELETE /app/rest/mutes/multiple	Mute	Update	covered	mutes delete-many	deleteMutes		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
 DELETE /app/rest/mutes/{p1}	Mute	Update	covered	mutes delete <id>	deleteMute		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
 DELETE /app/rest/projects/{p1}	Project	Update	covered	projects delete <id>	deleteProject		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/projects/{p1}/agentPools/{p2}	Project	Update	covered	projects pools unassign <project-id> <pool-id>	unassignProjectPool		exercised-in-passing-suite	tests/authoring.test.ts
@@ -193,10 +193,10 @@ GET /app/rest/health/category	health	ReadOnly	partial	health categories list	lis
 GET /app/rest/health/category/{p1}	health	ReadOnly	partial	health categories show <id>	getHealthCategory	fields	exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/health/{p1}	health	ReadOnly	partial	health show	getHealth	fields	exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/info	Root	ReadOnly	partial	server rest-plugin	getRestPlugin	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/investigations	Investigation	ReadOnly	partial	investigations list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/investigations/{p1}	Investigation	ReadOnly	partial	investigations show	getInvestigation	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/mutes	Mute	ReadOnly	partial	mutes list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/mutes/{p1}	Mute	ReadOnly	partial	mutes delete-many;mutes show <id>	deleteMutes;getMute	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/system.test.ts;tests/triage.test.ts;tests/validation-contract.test.ts
+GET /app/rest/investigations	Investigation	ReadOnly	covered	investigations list			exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
+GET /app/rest/investigations/{p1}	Investigation	ReadOnly	covered	investigations show	getInvestigation		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
+GET /app/rest/mutes	Mute	ReadOnly	covered	mutes list			exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
+GET /app/rest/mutes/{p1}	Mute	ReadOnly	covered	mutes delete-many;mutes show <id>	deleteMutes;getMute		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts;tests/system.test.ts;tests/triage.test.ts;tests/validation-contract.test.ts
 GET /app/rest/problemOccurrences	ProblemOccurrence	ReadOnly	covered	builds diagnose <build-id>;builds problems <id>			exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts;tests/triage-projection.test.ts
 GET /app/rest/problemOccurrences/{p1}	ProblemOccurrence	ReadOnly	covered	problems occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
 GET /app/rest/problems	Problem	ReadOnly	covered	problems list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
@@ -328,10 +328,10 @@ POST /app/rest/cloud/instances/{p1}/actions/stop	CloudInstance	Update	covered	cl
 POST /app/rest/deploymentDashboards	DeploymentDashboard	Update	covered	deployments create <id>	createDashboard		exercised-in-passing-suite	tests/system.test.ts
 POST /app/rest/deploymentDashboards/{p1}/instances	DeploymentDashboard	Update	covered	deployments instances upsert <dashboard> <id>	upsertDeploymentInstance		exercised-in-passing-suite	tests/system.test.ts
 POST /app/rest/deploymentDashboards/{p1}/instances/{p2}	DeploymentDashboard	Update	covered	deployments instances append-state <dashboard> <id>	appendDeploymentState		exercised-in-passing-suite	tests/system.test.ts
-POST /app/rest/investigations	Investigation	Update	partial	investigations create	createInvestigation	fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/investigations/multiple	Investigation	Update	partial	investigations create-many	createInvestigations	fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/mutes	Mute	Update	partial	mutes create	createMute	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts;tests/validation-contract.test.ts
-POST /app/rest/mutes/multiple	Mute	Update	partial	mutes create-many	createMutes	fields	exercised-in-passing-suite	tests/authoring.test.ts
+POST /app/rest/investigations	Investigation	Update	covered	investigations create	createInvestigation		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
+POST /app/rest/investigations/multiple	Investigation	Update	covered	investigations create-many	createInvestigations		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
+POST /app/rest/mutes	Mute	Update	covered	mutes create	createMute		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts;tests/triage.test.ts;tests/validation-contract.test.ts
+POST /app/rest/mutes/multiple	Mute	Update	covered	mutes create-many	createMutes		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
 POST /app/rest/projects	Project	Update	covered	projects create <id>	createProject		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/projects/{p1}/agentPools	Project	Update	covered	projects pools assign <project-id> <pool-id>	assignProjectPool		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/projects/{p1}/buildTypes	Project	Update	partial	jobs copy <source-id> <id>;projects jobs create <project-id> <job-id>	copyJob;createProjectJob	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/copy-job.test.ts
@@ -411,7 +411,7 @@ PUT /app/rest/builds/{p1}/pinInfo	Build	Update	covered	builds pin set <build-id>
 PUT /app/rest/builds/{p1}/runningData	Build	Update	covered	builds start-agentless <id>	startAgentlessBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts
 PUT /app/rest/builds/{p1}/statusText	Build	Update	covered	builds status-text set <build-id> <value>	setBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags replace <build-id>	replaceBuildTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
-PUT /app/rest/investigations/{p1}	Investigation	Update	partial	investigations replace	createInvestigation	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
+PUT /app/rest/investigations/{p1}	Investigation	Update	covered	investigations replace	createInvestigation		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts;tests/triage.test.ts
 PUT /app/rest/projects/{p1}/agentPools	Project	Update	partial	projects pools replace-all <project-id>	replaceProjectPools	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
 PUT /app/rest/projects/{p1}/defaultTemplate	Project	Update	partial	projects templates default set <project-id>	setDefaultTemplate	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
 PUT /app/rest/projects/{p1}/order/buildTypes	Project	Update	partial	projects order jobs set <project-id>	setProjectOrder	field	exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts

@@ -889,6 +889,11 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Investigations and mutes accept item `--fields` on `investigations list` and `mutes list`,
+and whole-response fields on `investigations show/create/create-many/replace` and
+`mutes show/create/create-many/delete-many`. Bulk unmute keeps its fixed preflight reads;
+fields select only the DELETE response. Empty or non-JSON delete responses retain the acknowledgement.
+
 Agent projections are available on `agents list` (item fields) and whole-response
 `agents show`, `authorized show/set`, `enabled show/set`, `policy show/set`,
 `compatible-jobs`, `incompatible-jobs`, `pool show/set`, and `types show`.
