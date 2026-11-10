@@ -306,32 +306,70 @@ export function fileControlsAcceptance(story: string) {
   }
 }
 
-export function nativeControlsAcceptance(story: string, cases: Array<{argv: string[]; query: Record<string,string>; controls: Record<string,string>; boolean?: string; archive?: boolean; permission: string}>) {
+export function nativeControlsAcceptance(story: string, cases: Array<{argv: string[]; query: Record<string,string>; controls: Record<string,string>; boolean?: string; archive?: boolean; backup?: boolean; permission: string}>, acceptance = {native: 1, parity: 4, blank: 7}) {
   const server = setupServer();
   test.before(() => server.listen({onUnhandledRequest: "error"}));
   test.afterEach(() => server.resetHandlers());
   test.after(() => server.close());
   for (const c of cases) {
-    const response = () => c.archive ? new HttpResponse(new Uint8Array([80,75,5,6,...Array(18).fill(0)]), {headers: {"content-type":"application/zip"}}) : c.argv.includes("notify-commit") ? new HttpResponse(null, {status:202}) : HttpResponse.json({file:[{name:"src",size:7}]});
-    for (const explicit of [false,true]) test(`${story}-A${explicit ? 1 : 4} ${c.argv.join(" ")}: ${explicit ? "explicit controls" : "default parity"} on all surfaces`, async t => {
+    const response = () => c.backup ? HttpResponse.text("fixture-backup.zip") : c.archive ? new HttpResponse(new Uint8Array([80,75,5,6,...Array(18).fill(0)]), {headers: {"content-type":"application/zip"}}) : c.argv.includes("notify-commit") ? new HttpResponse(null, {status:202}) : HttpResponse.json({file:[{name:"src",size:7}]});
+    for (const explicit of [false,true]) test(`${story}-A${explicit ? c.backup ? 2 : acceptance.native : acceptance.parity} ${c.argv.join(" ")}: ${explicit ? "explicit controls" : "default parity"} on all surfaces`, async t => {
       const rt = await createTestRuntime(t, {profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
       const requests = trackRequests(t, 4, request => {
-        assert.deepEqual(Object.fromEntries(new URL(request.url).searchParams), {...c.query,...(explicit ? Object.fromEntries(Object.entries(c.controls).map(([key,value]) => [{"base-path":"basePath","archive-name":"name","ok-on-nothing-found":"okOnNothingFound"}[key] ?? key,value])) : {})});
+        assert.deepEqual(Object.fromEntries(new URL(request.url).searchParams), {...c.query,...(explicit ? Object.fromEntries(Object.entries(c.controls).map(([key,value]) => [{"base-path":"basePath","archive-name":"name","ok-on-nothing-found":"okOnNothingFound","add-timestamp":"addTimestamp","include-configs":"includeConfigs","include-database":"includeDatabase","include-build-logs":"includeBuildLogs","include-personal-changes":"includePersonalChanges","include-running-builds":"includeRunningBuilds","include-supplementary-data":"includeSupplimentaryData"}[key] ?? key,value])) : {})});
         return response();
       });
       server.use(http.all("*", ({request}) => requests.handle(request)));
       const cli = rt.createCli();
       for (const surface of ["human","json","execute","rpc"]) {
         const argv = [...c.argv,...(explicit ? Object.entries(c.controls).flatMap(([k,v])=>["--"+k,v]) : []),...(c.archive ? ["--output",join(rt.root,surface+explicit)] : [])];
-        if (surface === "execute") await cli.execute(argv);
+        if (c.backup) {
+          const expected = {fileName: "fixture-backup.zip", scheduled: true, completionVerified: false};
+          if (surface === "execute") assert.deepEqual(await cli.execute(argv), expected);
+          else if (surface === "rpc") assert.deepEqual(await rt.rpc(cli, [argv]), [{jsonrpc: "2.0", id: 0, result: expected}]);
+          else {
+            const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
+            assert.equal(rendered.exitCode, 0, rendered.stderr);
+            assert.equal(rendered.stdout, surface === "json" ? JSON.stringify(expected) + "\n" : "fileName: fixture-backup.zip\nscheduled: true\ncompletionVerified: false\n");
+            assert.equal(rendered.stderr, "");
+          }
+        } else if (surface === "execute") await cli.execute(argv);
         else if (surface === "rpc") assert.ok(!(await rt.rpc(cli,[argv]) as {error?:unknown}[])[0]!.error);
         else assert.equal((await rt.run(cli,[...argv,...(surface === "json" ? ["--json"] : [])])).exitCode,0);
       }
     });
-    for (const key of Object.keys(c.controls)) for (const value of [""," ",...(c.boolean === key ? ["TRUE","1"] : [])]) test(`${story}-A7 ${c.argv.join(" ")}: rejects ${key} ${JSON.stringify(value)} locally`, async t => {
+    for (const key of Object.keys(c.controls)) for (const value of [""," ",...(c.boolean === key ? ["TRUE","1"] : [])]) test(`${story}-A${acceptance.blank} ${c.argv.join(" ")}: rejects ${key} ${JSON.stringify(value)} locally`, async t => {
       const rt = await createTestRuntime(t,{profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
       const requests=trackRequests(t,0,response);server.use(http.all("*",({request})=>requests.handle(request)));
-      await assert.rejects(rt.createCli().execute([...c.argv,"--"+key,value]),{code:"usage"});
+      const cli = rt.createCli();
+      const argv = [...c.argv, "--" + key, value];
+      await assert.rejects(cli.execute(argv), {code: "usage"});
+      for (const json of [false, true]) {
+        const rendered = await rt.run(cli, [...argv, ...(json ? ["--json"] : [])]);
+        assert.equal(rendered.exitCode, 1);
+        if (json) assert.equal(JSON.parse(rendered.stderr).error.code, "usage");
+      }
+      const replies = await rt.rpc(cli, [argv]) as Array<{error: {data: {code: string}}}>;
+      assert.equal(replies[0]!.error.data.code, "usage");
+    });
+    if (story === "US-034") test(`${story}-A4 ${c.argv.join(" ")}: permission denial has no effects on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, {profiles: [{name: "default", url: "https://teamcity.test", permissions: []}]});
+      const requests = trackRequests(t, 0, response);
+      server.use(http.all("*", ({request}) => requests.handle(request)));
+      const cli = rt.createCli();
+      for (const method of ["get", "set", "delete"] as const) {
+        t.mock.method(rt.secretStore, method, async () => { throw new Error("Unexpected secret access"); });
+      }
+      const argv = [...c.argv, ...Object.entries(c.controls).flatMap(([key, value]) => ["--" + key, value]), ...(c.archive ? ["--output", join(rt.root, "denied.zip")] : [])];
+      await assert.rejects(cli.execute(argv), {code: "permission.denied"});
+      for (const json of [false, true]) {
+        const rendered = await rt.run(cli, [...argv, ...(json ? ["--json"] : [])]);
+        assert.equal(rendered.exitCode, 1);
+        if (json) assert.equal(JSON.parse(rendered.stderr).error.code, "permission.denied");
+      }
+      const replies = await rt.rpc(cli, [argv]) as Array<{error: {data: {code: string}}}>;
+      assert.equal(replies[0]!.error.data.code, "permission.denied");
+      if (c.archive) await assert.rejects(readFile(join(rt.root, "denied.zip")));
     });
     if (c.archive) test(`${story}-A1 archive retains no-overwrite and byte bounds`, async t => {
       const {writeFile} = await import("node:fs/promises");
