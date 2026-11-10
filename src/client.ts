@@ -206,6 +206,7 @@ export interface RunJobOptions {
 }
 
 export interface CancelBuildOptions {
+  fields?: string;
   comment?: string;
 }
 
@@ -1581,14 +1582,10 @@ export class TeamCityClient {
     );
   }
 
-  public async setBuildPin(id: number, status: boolean, comment?: string) {
-    return safeBooleanStatus(
-      await this.#requestJson<BooleanStatus>(
-        "PUT",
-        `${buildPath(id)}/pinInfo`,
-        { fields: booleanStatusFields },
-        this.#statusBody(status, comment),
-      ),
+  public async setBuildPin(id: number, status: boolean, comment?: string, fields?: string) {
+    return this.#projectedJson(
+      "PUT", `${buildPath(id)}/pinInfo`, { fields: booleanStatusFields },
+      value => safeBooleanStatus(value as BooleanStatus), fields, this.#statusBody(status, comment),
     );
   }
 
@@ -2074,8 +2071,15 @@ export class TeamCityClient {
     return { buildId: id, acceptedFinishTime };
   }
 
-  public async appendBuildLog(id: number, message: string) {
+  public async appendBuildLog(id: number, message: string, fields?: string) {
     const body = triage.inputText(message, "Log message");
+    if (fields !== undefined) {
+      const contents = await this.#request(
+        "POST", `${buildPath(id)}/log`, { fields: fieldsProjection(fields) }, body, "text/plain",
+      );
+      if (contents.trim() !== "") return this.#projectedValue(decodeJson(contents), fields, value => value);
+      return { buildId: id, appended: true };
+    }
     await this.#requestText("POST", `${buildPath(id)}/log`, body);
     return { buildId: id, appended: true };
   }
@@ -2094,16 +2098,16 @@ export class TeamCityClient {
     );
   }
 
-  public async addBuildProblem(id: number, description: string) {
+  public async addBuildProblem(id: number, description: string, fields?: string) {
     const body = triage.inputText(description, "Description");
-    return triage.safeOccurrence(
+    return this.#projectedValue(
       await this.#textJson(
         "POST",
         `${buildPath(id)}/problemOccurrences`,
-        { fields: triage.problemOccurrenceFields },
+        { fields: fields === undefined ? triage.problemOccurrenceFields : fieldsProjection(fields) },
         body,
       ),
-      "problem",
+      fields, value => triage.safeOccurrence(value, "problem"),
     );
   }
 
@@ -2117,18 +2121,18 @@ export class TeamCityClient {
     );
   }
 
-  public async startAgentlessBuild(id: number, requestor: string) {
-    return triage.safeEvidenceBuild(
+  public async startAgentlessBuild(id: number, requestor: string, fields?: string) {
+    return this.#projectedValue(
       await this.#textJson(
         "PUT",
         `${buildPath(id)}/runningData`,
-        { fields: triage.evidenceBuildFields },
+        { fields: fields === undefined ? triage.evidenceBuildFields : fieldsProjection(fields) },
         triage.inputText(requestor, "Requestor"),
-      ),
+      ), fields, triage.safeEvidenceBuild,
     );
   }
 
-  public async setBuildStatus(id: number, status: string, comment: string) {
+  public async setBuildStatus(id: number, status: string, comment: string, fields?: string) {
     const body = {
       status: plainProperty("status", status).value,
       comment: triage.inputText(comment, "Comment"),
@@ -2136,9 +2140,10 @@ export class TeamCityClient {
     const value = await this.#requestJson<{ build?: unknown; errors?: { item?: unknown[] } }>(
       "POST",
       `${buildPath(id)}/status`,
-      { fields: `build(${triage.evidenceBuildFields}),errors(item)` },
+      { fields: fields === undefined ? `build(${triage.evidenceBuildFields}),errors(item)` : fieldsProjection(fields) },
       body,
     );
+    if (fields !== undefined) return this.#projectedValue(value, fields, raw => raw) as typeof value & { errorCount: number; partialFailure: boolean };
     const errorCount = triage.array(value.errors?.item).length;
     if (value.build === undefined && errorCount === 0)
       throw new Error("Missing build status result; success is unknown.");
@@ -2156,14 +2161,14 @@ export class TeamCityClient {
     );
   }
 
-  public async addBuildVcsLabel(id: number, label: string, rootInstance: string) {
-    return this.#vcsLabels(
+  public async addBuildVcsLabel(id: number, label: string, rootInstance: string, fields?: string) {
+    return this.#projectedValue(
       await this.#textJson(
         "POST",
         `${buildPath(id)}/vcsLabels`,
-        { fields: triage.labelFields, locator: idPath(rootInstance, "Root instance ID") },
+        { fields: fields === undefined ? triage.labelFields : fieldsProjection(fields), locator: idPath(rootInstance, "Root instance ID") },
         triage.inputText(label, "Label"),
-      ),
+      ), fields, value => this.#vcsLabels(value),
     );
   }
 
@@ -3255,7 +3260,7 @@ export class TeamCityClient {
     return this.#requestJson<TeamCityBuild>(
       "POST",
       path,
-      { fields: buildFields },
+      { fields: options.fields === undefined ? buildFields : fieldsProjection(options.fields) },
       {
         ...(options.comment === undefined
           ? {}

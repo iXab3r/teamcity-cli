@@ -889,3 +889,12 @@ List/children/archive also accept `--base-path`; archive accepts `--archive-name
 archive name, independently of `--output` and `--max-bytes`. List/children accept item fields
 (e.g. `--fields 'name,size'`) and retain `{count,items,hasMore}`; metadata accepts whole-response
 fields. Explicit projections use native JSON and the generic view. Omitted controls preserve defaults.
+
+Build actions (`builds cancel`, `set-status`, `log append`, `problem-occurrences add`,
+`vcs-labels add`, `pin set`, `start-agentless`) accept `--fields <projection>` and
+return native JSON with the generic view. Omission preserves requests and output.
+Empty successful bodies retain each command's default behavior: log append returns its
+acknowledgement; these other actions fail JSON decoding. Projections are never extended.
+For partial-failure detection include `errors(item)` for set-status or
+`vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
+native error result; absent detection fields return the native body with exit 0.

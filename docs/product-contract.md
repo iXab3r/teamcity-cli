@@ -58,3 +58,12 @@ Each invocation keeps profile, endpoint, credentials and cancellation isolated. 
 reads must progress; cancellation remains cancellation. No automatic read-to-write target expansion
 is introduced. The 0.7.1 release requires published Core output-boundary handling: observed stdout
 EPIPE returns quiet exit 141, while original command and cleanup failures remain failures.
+
+Build actions (`builds cancel`, `set-status`, `log append`, `problem-occurrences add`,
+`vcs-labels add`, `pin set`, `start-agentless`) accept `--fields <projection>` and
+return native JSON with the generic view. Omission preserves requests and output.
+Empty successful bodies retain each command's default behavior: log append returns its
+acknowledgement; these other actions fail JSON decoding. Projections are never extended.
+For partial-failure detection include `errors(item)` for set-status or
+`vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
+native error result; absent detection fields return the native body with exit 0.

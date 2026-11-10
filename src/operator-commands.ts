@@ -349,8 +349,9 @@ export function createOperatorCommands(
             number(args, "build-id"),
             booleanText(args.status) === "true",
             comment(options),
+            fieldsFromOptions(options),
           ),
-        [commentOption],
+        [commentOption, fieldsOption],
       ),
     ]),
     command("statistics", "Read build statistics", [

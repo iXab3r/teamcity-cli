@@ -94,23 +94,28 @@ async function failure(
 
 for (const c of actionCases) {
   for (const projected of [false, true]) {
-    test(`US-005 ${c.name}: ${projected ? "A1 native" : "A3 baseline"} across surfaces`, async t => {
+    test(`US-005 ${c.name}: ${projected ? "A1 native" : "A3 baseline"} across surfaces`, async (t) => {
       const rt = await runtime(t, ["Update"]);
-      const requests = trackRequests(t, 5, async request => {
+      const requests = trackRequests(t, 5, async (request) => {
         const url = new URL(request.url);
         assert.equal(request.method, c.request.method);
         assert.equal(url.pathname, c.request.path);
         assert.deepEqual(Object.fromEntries(url.searchParams), {
-          ...c.request.query, ...(projected ? { fields: projection } : {}),
+          ...c.request.query,
+          ...(projected ? { fields: projection } : {}),
         });
         assert.equal(await request.text(), c.request.body);
         return HttpResponse.json(projected ? native : c.response);
       });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
       for (const surface of surfaces) {
-        const rendered = await success(rt, rt.createCli(),
-          [...c.argv, ...(projected ? ["--fields", projection] : [])], surface,
-          projected ? native : c.result);
+        const rendered = await success(
+          rt,
+          rt.createCli(),
+          [...c.argv, ...(projected ? ["--fields", projection] : [])],
+          surface,
+          projected ? native : c.result,
+        );
         if (rendered && surface === "human") {
           if (projected) assert.match(rendered.stdout, /custom:/);
           else assert.deepEqual(rendered, c.human);
@@ -118,7 +123,7 @@ for (const c of actionCases) {
       }
     });
   }
-  test(`US-005-A2 ${c.name}: empty success preserves baseline`, async t => {
+  test(`US-005-A2 ${c.name}: empty success preserves baseline`, async (t) => {
     const rt = await runtime(t, ["Update"]);
     const requests = trackRequests(t, 5, () => new HttpResponse(null, { status: 200 }));
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -128,40 +133,65 @@ for (const c of actionCases) {
       else await success(rt, rt.createCli(), argv, surface, c.empty.result);
     }
   });
-  test(`US-005-A4 ${c.name}: permission denial`, async t => {
+  test(`US-005-A4 ${c.name}: permission denial`, async (t) => {
     const rt = await runtime(t, []);
     const requests = trackRequests(t, 0, () => HttpResponse.json({}));
     server.use(http.all("*", ({ request }) => requests.handle(request)));
     for (const surface of surfaces)
-      await failure(rt, rt.createCli(), [...c.argv, "--fields", projection], surface, "permission.denied");
+      await failure(
+        rt,
+        rt.createCli(),
+        [...c.argv, "--fields", projection],
+        surface,
+        "permission.denied",
+      );
   });
-  for (const value of ["", "  "]) test(`US-005-A6 ${c.name}: invalid projection ${JSON.stringify(value)}`, async t => {
-    const rt = await runtime(t, ["Update"]);
-    const requests = trackRequests(t, 0, () => HttpResponse.json({}));
-    server.use(http.all("*", ({ request }) => requests.handle(request)));
-    for (const surface of surfaces)
-      await failure(rt, rt.createCli(), [...c.argv, "--fields", value], surface, "usage");
-  });
+  for (const value of ["", "  "])
+    test(`US-005-A6 ${c.name}: invalid projection ${JSON.stringify(value)}`, async (t) => {
+      const rt = await runtime(t, ["Update"]);
+      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      for (const surface of surfaces)
+        await failure(rt, rt.createCli(), [...c.argv, "--fields", value], surface, "usage");
+    });
 }
 for (const [name, body, code] of [
   ["status", { errors: { item: [{ message: "Fixture failure" }] } }, "build.statusPartial"],
   ["label", { vcsLabel: [{ status: "FAILED", text: "Fixture" }] }, "labels.partial"],
-] as const) test(`US-005 partial detection ${name}: native error result`, async t => {
-  const c = actionCases.find(c => c.name === name)!;
-  const rt = await runtime(t, ["Update"]);
-  server.use(http.all("*", () => HttpResponse.json(body)));
-  await assert.rejects(rt.createCli().execute([...c.argv, "--fields", projection]), e => {
-    assert.equal((e as CliError).code, code);
-    assert.deepEqual((e as CliError).result, body);
-    return true;
-  });
-});
-for (const [status, code] of [[401, "http.unauthorized"], [403, "http.forbidden"], [404, "http.notFound"], [503, "http.serverError"], [0, "request.unknownOutcome"], [200, "error"]] as const) {
-  test(`US-005-A5 safe failure ${status}`, async t => {
+] as const)
+  test(`US-005 partial detection ${name}: native error result`, async (t) => {
+    const c = actionCases.find((c) => c.name === name)!;
     const rt = await runtime(t, ["Update"]);
-    const requests = trackRequests(t, 5, () => status === 0 ? HttpResponse.error() : HttpResponse.text("synthetic-server-payload", { status }));
+    server.use(http.all("*", () => HttpResponse.json(body)));
+    await assert.rejects(rt.createCli().execute([...c.argv, "--fields", projection]), (e) => {
+      assert.equal((e as CliError).code, code);
+      assert.deepEqual((e as CliError).result, body);
+      return true;
+    });
+  });
+for (const [status, code] of [
+  [401, "http.unauthorized"],
+  [403, "http.forbidden"],
+  [404, "http.notFound"],
+  [503, "http.serverError"],
+  [0, "request.unknownOutcome"],
+  [200, "error"],
+] as const) {
+  test(`US-005-A5 safe failure ${status}`, async (t) => {
+    const rt = await runtime(t, ["Update"]);
+    const requests = trackRequests(t, 5, () =>
+      status === 0
+        ? HttpResponse.error()
+        : HttpResponse.text("synthetic-server-payload", { status }),
+    );
     server.use(http.all("*", ({ request }) => requests.handle(request)));
     for (const surface of surfaces)
-      await failure(rt, rt.createCli(), [...actionCases[0]!.argv, "--fields", projection], surface, code);
+      await failure(
+        rt,
+        rt.createCli(),
+        [...actionCases[0]!.argv, "--fields", projection],
+        surface,
+        code,
+      );
   });
 }

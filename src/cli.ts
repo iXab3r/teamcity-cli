@@ -26,7 +26,7 @@ import { createFileCommands } from "./file-commands.js";
 import { clientLeaf, integerValue, optionalText } from "./command-support.js";
 import { projectTree, jobTable, agentTable, buildRecord, buildTable, problemTable, testTable, withView } from "./presentation.js";
 import { createBuildFlowCommands } from "./build-flow.js";
-import { fieldsOption } from "./projection.js";
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import type {
   TeamCityBuildState,
   TeamCityBuildStatus,
@@ -334,10 +334,11 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           (c, { args, options }) => {
             const comment = stringOption(options, "comment");
             return c.cancelBuild(integerValue(args.id), {
+              ... (fieldsFromOptions(options) === undefined ? {} : { fields: fieldsFromOptions(options)! }),
               ...(comment === undefined ? {} : { comment }),
             });
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, fieldsOption],
         )),
       ], "Evidence"), {
         examples: [
@@ -383,7 +384,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...(comment === undefined ? {} : { comment }),
             });
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, fieldsOption],
         )),
       ], "Control")),
       command("agents", "Inspect TeamCity build agents", helpLayout([
