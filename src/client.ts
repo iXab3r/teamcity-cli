@@ -794,41 +794,25 @@ export class TeamCityClient {
     return { owner, id: id, name: name, deleted: true };
   }
 
-  public async listSteps(jobId: string) {
-    const result = await this.#requestJson<{ step?: RawStep[] }>("GET", `${jobPath(jobId)}/steps`, {
-      fields: `step(${stepFields})`,
-    });
-    return (result.step ?? []).map(safeStep);
+  public listSteps<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/steps`,
+      { fields: `step(${stepFields})` },
+      value => ((value as { step?: RawStep[] }).step ?? []).map(safeStep), fields);
   }
 
-  public async getStep(jobId: string, id: string) {
-    return safeStep(
-      await this.#requestJson<RawStep>("GET", `${jobPath(jobId)}/steps/${pathSegment(id)}`, {
-        fields: stepFields,
-      }),
-    );
+  public getStep<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/steps/${pathSegment(id)}`,
+      { fields: stepFields }, value => safeStep(value as RawStep), fields);
   }
 
-  public async createStep(jobId: string, input: StepInput) {
-    return safeStep(
-      await this.#requestJson<RawStep>(
-        "POST",
-        `${jobPath(jobId)}/steps`,
-        { fields: stepFields },
-        stepBody(input),
-      ),
-    );
+  public createStep<F extends string | undefined = undefined>(jobId: string, input: StepInput, fields?: F) {
+    return this.#projectedJson("POST", `${jobPath(jobId)}/steps`,
+      { fields: stepFields }, value => safeStep(value as RawStep), fields, stepBody(input));
   }
 
-  public async replaceStep(jobId: string, id: string, input: StepInput) {
-    return safeStep(
-      await this.#requestJson<RawStep>(
-        "PUT",
-        `${jobPath(jobId)}/steps/${pathSegment(id)}`,
-        { fields: stepFields },
-        stepBody(input),
-      ),
-    );
+  public replaceStep<F extends string | undefined = undefined>(jobId: string, id: string, input: StepInput, fields?: F) {
+    return this.#projectedJson("PUT", `${jobPath(jobId)}/steps/${pathSegment(id)}`,
+      { fields: stepFields }, value => safeStep(value as RawStep), fields, stepBody(input));
   }
 
   public async deleteStep(jobId: string, id: string) {
@@ -1037,28 +1021,19 @@ export class TeamCityClient {
     return { jobId: jobId, id: id, field, value: result };
   }
 
-  public async listPluginParameters(kind: "steps" | "features", jobId: string, id: string) {
-    const result = await this.#requestJson<{ property?: RawProperty[] }>(
-      "GET",
-      `${entityPath(kind, jobId, id)}/parameters`,
+  public listPluginParameters<F extends string | undefined = undefined>(kind: "steps" | "features", jobId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", `${entityPath(kind, jobId, id)}/parameters`,
       { fields: `property(${propertyFields})` },
-    );
-    return (result.property ?? []).map((p) => safeProperty(p, false));
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)), fields);
   }
 
-  public async replacePluginParameters(
-    kind: "steps" | "features",
-    jobId: string,
-    id: string,
-    properties: readonly PlainProperty[],
+  public replacePluginParameters<F extends string | undefined = undefined>(
+    kind: "steps" | "features", jobId: string, id: string,
+    properties: readonly PlainProperty[], fields?: F,
   ) {
-    const result = await this.#requestJson<{ property?: RawProperty[] }>(
-      "PUT",
-      `${entityPath(kind, jobId, id)}/parameters`,
+    return this.#projectedJson("PUT", `${entityPath(kind, jobId, id)}/parameters`,
       { fields: `property(${propertyFields})` },
-      propertiesBody(properties),
-    );
-    return (result.property ?? []).map((p) => safeProperty(p, false));
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)), fields, propertiesBody(properties));
   }
 
   public async getPluginParameter(
@@ -1723,7 +1698,7 @@ export class TeamCityClient {
     return { name: result.name, type: result.type, redacted: result.redacted };
   }
 
-  public async replaceAllSettings(kind: SettingsCollection, id: string, input: readonly unknown[]) {
+  public async replaceAllSettings<F extends string | undefined = undefined>(kind: SettingsCollection, id: string, input: readonly unknown[], projection?: F) {
     const items = settingsItems(kind, id, input);
     const path = `${kind === "projectFeatures" ? projectPath(id) : jobPath(id)}/${kind}`;
     if (kind === "vcs-root-entries") {
@@ -1746,15 +1721,11 @@ export class TeamCityClient {
     }[kind];
     const dependency = kind === "artifact-dependencies" || kind === "snapshot-dependencies";
     const fields = kind === "steps" ? stepFields : dependency ? snapshotFields : extensionFields;
-    const result = await this.#requestJson<Record<string, RawStep[]>>(
-      "PUT",
-      path,
+    return this.#projectedJson("PUT", path,
       { fields: `${collectionKey}(${fields})` },
-      { [collectionKey]: items },
-    );
-    return (result[collectionKey] ?? []).map((item) =>
-      kind === "steps" ? safeStep(item) : dependency ? safeSnapshot(item) : safeExtension(item),
-    );
+      value => (((value as Record<string, RawStep[]>)[collectionKey] ?? []).map((item) =>
+        kind === "steps" ? safeStep(item) : dependency ? safeSnapshot(item) : safeExtension(item))),
+      projection, { [collectionKey]: items });
   }
 
   public async replaceTemplates(jobId: string, ids: readonly string[], optimizeSettings = false) {

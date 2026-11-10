@@ -57,7 +57,8 @@ export function createAdvancedAuthoringCommands(
         `list <job-id> <${arg}>`,
         "List redacted property metadata",
         Permission.ReadOnly,
-        (c, { args }) => c.listPluginParameters(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) => c.listPluginParameters(kind, text(args, "job-id"), text(args, arg), kind === "steps" ? fieldsFromOptions(options) : undefined),
+        kind === "steps" ? [fieldsOption] : [],
       ),
       leaf(
         `show <job-id> <${arg}> <name>`,
@@ -76,8 +77,9 @@ export function createAdvancedAuthoringCommands(
             text(args, "job-id"),
             text(args, arg),
             (options.property ?? []) as PlainProperty[],
+            kind === "steps" ? fieldsFromOptions(options) : undefined,
           ),
-        [propertyOption],
+        [propertyOption, ...(kind === "steps" ? [fieldsOption] : [])],
       ),
       leaf(
         `set <job-id> <${arg}> <name> <value>`,

@@ -262,29 +262,31 @@ export function createAuthoringCommands(
     bulk.replaceAll("steps"),
     advanced.entityFields("steps"),
     advanced.pluginParameters("steps"),
-    leaf("list <job-id>", "List steps in execution order", Permission.ReadOnly, (c, { args }) =>
-      c.listSteps(args["job-id"]),
+    leaf("list <job-id>", "List steps in execution order", Permission.ReadOnly, (c, { args, options }) =>
+      c.listSteps(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "show <job-id> <step-id>",
       "Show a safe step summary",
       Permission.ReadOnly,
-      (c, { args }) => c.getStep(args["job-id"], args["step-id"]),
+      (c, { args, options }) => c.getStep(args["job-id"], args["step-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create <job-id>",
       "Add a build step",
       Permission.Update,
-      (c, { args, options }) => c.createStep(args["job-id"], stepInput(options)),
-      stepOptions,
+      (c, { args, options }) => c.createStep(args["job-id"], stepInput(options), fieldsFromOptions(options)),
+      [...stepOptions, fieldsOption],
     ),
     leaf(
       "replace <job-id> <step-id>",
       "Replace a build step",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceStep(args["job-id"], args["step-id"], stepInput(options)),
-      stepOptions,
+        c.replaceStep(args["job-id"], args["step-id"], stepInput(options), fieldsFromOptions(options)),
+      [...stepOptions, fieldsOption],
     ),
     leaf("delete <job-id> <step-id>", "Delete one build step", Permission.Update, (c, { args }) =>
       c.deleteStep(args["job-id"], args["step-id"]),

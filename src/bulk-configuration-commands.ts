@@ -96,8 +96,8 @@ export function createBulkConfigurationCommands(
       "Replace the collection",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[]),
-      [itemOption],
+        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], kind === "steps" ? fieldsFromOptions(options) : undefined),
+      [itemOption, ...(kind === "steps" ? [fieldsOption] : [])],
     );
   }
   const templates = [
