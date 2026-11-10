@@ -2295,45 +2295,31 @@ export class TeamCityClient {
     return { changeId: id, field, value };
   }
 
-  public listInvestigations(page: TeamCityPageOptions = {}) {
+  public listInvestigations<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/investigations", [], "investigation", triage.investigationFields,
       (item) => triage.safeAssignment(item, true), page);
   }
 
-  public async createInvestigation(input: unknown, replace = false) {
+  public async createInvestigation<F extends string | undefined = undefined>(input: unknown, replace = false, fields?: F) {
     const { locator, body } = triage.investigationBody(input);
-    return triage.safeAssignment(
-      await this.#requestJson(
-        replace ? "PUT" : "POST",
-        "/app/rest/investigations" + (replace ? "/" + locator : ""),
-        { fields: triage.investigationFields },
-        body,
-      ),
-      true,
-    );
+    return this.#projectedJson(replace ? "PUT" : "POST",
+      "/app/rest/investigations" + (replace ? "/" + locator : ""),
+      { fields: triage.investigationFields }, value => triage.safeAssignment(value, true), fields, body);
   }
 
-  public async createInvestigations(inputs: readonly unknown[]) {
+  public async createInvestigations<F extends string | undefined = undefined>(inputs: readonly unknown[], fields?: F) {
     const items = triage.typedItems(inputs).map(triage.investigationBody);
     textIds(items.map((item) => item.locator));
     const body = { investigation: items.map((item) => item.body) };
-    const value = await this.#requestJson<{ investigation?: unknown[] }>(
-      "POST",
-      "/app/rest/investigations/multiple",
+    return this.#projectedJson("POST", "/app/rest/investigations/multiple",
       { fields: `count,investigation(${triage.investigationFields})` },
-      body,
-    );
-    return (value.investigation ?? []).map((item) => triage.safeAssignment(item, true));
+      value => ((value as { investigation?: unknown[] }).investigation ?? []).map(item => triage.safeAssignment(item, true)), fields, body);
   }
 
-  public async getInvestigation(target: unknown) {
+  public async getInvestigation<F extends string | undefined = undefined>(target: unknown, fields?: F) {
     const { locator } = triage.investigationTarget(target);
-    return triage.safeAssignment(
-      await this.#requestJson("GET", "/app/rest/investigations/" + locator, {
-        fields: triage.investigationFields,
-      }),
-      true,
-    );
+    return this.#projectedJson("GET", "/app/rest/investigations/" + locator,
+      { fields: triage.investigationFields }, value => triage.safeAssignment(value, true), fields);
   }
 
   public async deleteInvestigation(target: unknown) {
@@ -2344,41 +2330,26 @@ export class TeamCityClient {
     return { deleted: true };
   }
 
-  public listMutes(page: TeamCityPageOptions = {}) {
+  public listMutes<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/mutes", [], "mute", triage.muteFields,
       (item) => triage.safeAssignment(item, false), page);
   }
 
-  public async createMute(input: unknown) {
-    return triage.safeAssignment(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/mutes",
-        { fields: triage.muteFields },
-        triage.muteBody(input),
-      ),
-      false,
-    );
+  public async createMute<F extends string | undefined = undefined>(input: unknown, fields?: F) {
+    return this.#projectedJson("POST", "/app/rest/mutes", { fields: triage.muteFields },
+      value => triage.safeAssignment(value, false), fields, triage.muteBody(input));
   }
 
-  public async createMutes(inputs: readonly unknown[]) {
+  public async createMutes<F extends string | undefined = undefined>(inputs: readonly unknown[], fields?: F) {
     const body = { mute: triage.typedItems(inputs).map(triage.muteBody) };
-    const value = await this.#requestJson<{ mute?: unknown[] }>(
-      "POST",
-      "/app/rest/mutes/multiple",
+    return this.#projectedJson("POST", "/app/rest/mutes/multiple",
       { fields: `count,mute(${triage.muteFields})` },
-      body,
-    );
-    return (value.mute ?? []).map((item) => triage.safeAssignment(item, false));
+      value => ((value as { mute?: unknown[] }).mute ?? []).map(item => triage.safeAssignment(item, false)), fields, body);
   }
 
-  public async getMute(id: number) {
-    return triage.safeAssignment(
-      await this.#requestJson("GET", `/app/rest/mutes/id:${integerId(id, "Mute ID")}`, {
-        fields: triage.muteFields,
-      }),
-      false,
-    );
+  public async getMute<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson("GET", `/app/rest/mutes/id:${integerId(id, "Mute ID")}`,
+      { fields: triage.muteFields }, value => triage.safeAssignment(value, false), fields);
   }
 
   public async deleteMute(id: number, comment?: string) {
@@ -3631,7 +3602,7 @@ export class TeamCityClient {
       ),
     );
   }
-  public async deleteMutes(ids: readonly string[]) {
+  public async deleteMutes<F extends string | undefined = undefined>(ids: readonly string[], fields?: F) {
     const selected = triage
       .inputIds(ids)
       .map((id) => Number(integerId(id, "Mute ID")));
@@ -3645,10 +3616,12 @@ export class TeamCityClient {
           id,
         ),
       );
-    await this.#request("DELETE", "/app/rest/mutes/multiple", {}, { mute }, "application/json", {
-      discard: true,
+    const contents = await this.#request("DELETE", "/app/rest/mutes/multiple",
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, { mute }, "application/json", {
+      discard: fields === undefined,
     });
-    return { requestedIds: selected, serverAcknowledged: true, postconditionVerified: false };
+    return this.#projectedAcknowledgement(contents, fields,
+      { requestedIds: selected, serverAcknowledged: true, postconditionVerified: false });
   }
   public async getDefaultValueSets(id: string) {
     return system.collection(

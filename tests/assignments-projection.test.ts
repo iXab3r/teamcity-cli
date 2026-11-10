@@ -76,13 +76,14 @@ for (const scenario of buildProjectionCases) {
     const cli = rt.createCli();
     const requests = trackRequests(t, scenario.preflight ? 10 : 5, async request => {
       if (scenario.preflight && request.method === "GET") {
-        await assertHttpRequest(request, {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
+        await assertHttpRequest(request.clone(), {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
         return HttpResponse.json(scenario.baselineResponse);
       }
-      await assertHttpRequest(request, {
+      await assertHttpRequest(request.clone(), {
         method: scenario.method, url: origin + scenario.path,
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), fields: scenario.fields(projection) },
-        headers: { accept: "application/json", authorization: `Bearer ${token}` },
+        headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
+        body: { text: scenario.body },
       });
       assert.equal(await request.text(), scenario.body);
       return HttpResponse.json(scenario.response(native));
@@ -104,13 +105,14 @@ for (const scenario of buildProjectionCases) {
     const cli = rt.createCli();
     const requests = trackRequests(t, scenario.preflight ? 10 : 5, async request => {
       if (scenario.preflight && request.method === "GET") {
-        await assertHttpRequest(request, {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
+        await assertHttpRequest(request.clone(), {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
         return HttpResponse.json(scenario.baselineResponse);
       }
-      await assertHttpRequest(request, {
+      await assertHttpRequest(request.clone(), {
         method: scenario.method, url: origin + scenario.path,
         query: scenario.query,
-        headers: { accept: "application/json", authorization: `Bearer ${token}` },
+        headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
+        body: { text: scenario.body },
       });
       assert.equal(await request.text(), scenario.body);
       return scenario.argv.includes("rest-plugin") ? HttpResponse.text(`<plugin name="rest"/>`, {headers: {"content-type": "application/xml"}}) : HttpResponse.json(scenario.baselineResponse);

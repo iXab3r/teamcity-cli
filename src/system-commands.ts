@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
   Permission,
@@ -297,8 +298,8 @@ export function createSystemCommands(
       "delete-many",
       "Delete selected mutes",
       U,
-      (c, { options }) => c.deleteMutes(options.id as string[]),
-      [repeatOption("--id <id>", "Select mute IDs; repeat for more", true), confirm],
+      (c, { options }) => c.deleteMutes(options.id as string[], fieldsFromOptions(options)),
+      [repeatOption("--id <id>", "Select mute IDs; repeat for more", true), confirm, fieldsOption],
     ),
   ];
   const roots = [
