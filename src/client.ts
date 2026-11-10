@@ -1334,7 +1334,7 @@ export class TeamCityClient {
     return { jobId: jobId, rootId: rootId, rules };
   }
 
-  public listPools(options: TeamCityPageOptions = {}) {
+  public listPools<F extends string | undefined = undefined>(options: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/agentPools", [], "agentPool", "id,name",
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
@@ -1350,10 +1350,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getPool(id: number) {
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>("GET", poolPath(id), { fields: "id,name" }),
-    );
+  public async getPool<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson("GET", poolPath(id), { fields: "id,name" },
+      value => safeNamed(value as AgentPoolSummary), fields);
   }
 
   public async deletePool(id: number) {
@@ -1374,30 +1373,20 @@ export class TeamCityClient {
     return { poolId: id, field, value: result };
   }
 
-  public listPoolAgents(id: number, options: TeamCityPageOptions = {}) {
+  public listPoolAgents<F extends string | undefined = undefined>(id: number, options: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list(`${poolPath(id)}/agents`, [], "agent", "id,name",
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
 
-  public async assignPoolAgent(poolId: number, id: number) {
+  public async assignPoolAgent<F extends string | undefined = undefined>(poolId: number, id: number, fields?: F) {
     integerId(id, "Agent ID");
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>(
-        "POST",
-        `${poolPath(poolId)}/agents`,
-        { fields: "id,name" },
-        { id },
-      ),
-    );
+    return this.#projectedJson("POST", `${poolPath(poolId)}/agents`, { fields: "id,name" },
+      value => safeNamed(value as AgentPoolSummary), fields, { id });
   }
 
-  public async listPoolProjects(poolId: number) {
-    const result = await this.#requestJson<{ project?: BuildTypeIdentity[] }>(
-      "GET",
-      `${poolPath(poolId)}/projects`,
-      { fields: "project(id,name)" },
-    );
-    return (result.project ?? []).map(safeIdentity);
+  public async listPoolProjects<F extends string | undefined = undefined>(poolId: number, fields?: F) {
+    return this.#projectedJson("GET", `${poolPath(poolId)}/projects`, { fields: "project(id,name)" },
+      value => ((value as { project?: BuildTypeIdentity[] }).project ?? []).map(safeIdentity), fields);
   }
 
   public async assignPoolProject(poolId: number, id: string) {

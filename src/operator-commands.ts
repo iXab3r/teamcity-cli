@@ -41,11 +41,12 @@ export function createOperatorCommands(
       "list",
       "List agent pools",
       Permission.ReadOnly,
-      (c, { options }) => c.listPools(paging(options)),
-      pageOptions,
+      (c, { options }) => c.listPools({ ...paging(options), fields: fieldsFromOptions(options) }),
+      [...pageOptions, fieldsOption],
     ),
-    leaf("show <pool-id>", "Show pool identity", Permission.ReadOnly, (c, { args }) =>
-      c.getPool(number(args, "pool-id")),
+    leaf("show <pool-id>", "Show pool identity", Permission.ReadOnly, (c, { args, options }) =>
+      c.getPool(number(args, "pool-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create",
@@ -73,14 +74,15 @@ export function createOperatorCommands(
         "list <pool-id>",
         "List assigned agents",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listPoolAgents(number(args, "pool-id"), paging(options)),
-        pageOptions,
+        (c, { args, options }) => c.listPoolAgents(number(args, "pool-id"), { ...paging(options), fields: fieldsFromOptions(options) }),
+        [...pageOptions, fieldsOption],
       ),
       leaf(
         "assign <pool-id> <agent-id>",
         "Move an agent to this pool",
         Permission.Update,
-        (c, { args }) => c.assignPoolAgent(number(args, "pool-id"), number(args, "agent-id")),
+        (c, { args, options }) => c.assignPoolAgent(number(args, "pool-id"), number(args, "agent-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
     command("projects", "Manage pool/project membership", [
@@ -89,7 +91,8 @@ export function createOperatorCommands(
         "list <pool-id>",
         "List assigned projects in server order",
         Permission.ReadOnly,
-        (c, { args }) => c.listPoolProjects(number(args, "pool-id")),
+        (c, { args, options }) => c.listPoolProjects(number(args, "pool-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "assign <pool-id> <project-id>",

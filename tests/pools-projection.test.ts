@@ -8,7 +8,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
 import { cases } from "./pools-projection-cases.js";
-const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
+const buildProjectionCases = cases.map(c => ({ ...c, baselineResult: c.argv.includes("show") || c.argv.includes("assign") ? { id: undefined } : c.baselineResult, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
 const server = setupServer();
 const origin = "https://teamcity.test";
