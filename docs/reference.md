@@ -898,6 +898,12 @@ project job creation accept whole-response `--fields`. Move and default-template
 retain their empty/non-JSON acknowledgements. Ordering show/set for jobs/projects accept
 unchanged `--field`; omitted selectors keep their existing values. `jobs copy` retains
 its fixed workflow projection.
+Project parameters accept `--fields` on list/show/create/set/replace-all; project
+features accept it on list/show/create/replace/replace-all. Both lists accept unchanged
+`--locator`, and scoped projections select the whole response. Parameter write preflight
+reads retain fixed fields; value/type/raw-type and delete/clear leaves stay unchanged.
+Default parameter and feature shaping is preserved, including feature property names
+without values.
 
 Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
 and `snapshot-dependencies` accept whole-response `--fields` on
