@@ -86,6 +86,7 @@ export const cases: ProjectionCase[] = [
       "fields": "id,name,projectId",
       "optimizeSettings": "true"
     },
+    "fixedQuery": {"optimizeSettings": "true"},
     "body": "{\"id\":\"Entity\"}",
     "baselineResponse": {
       "id": "Entity",
@@ -121,6 +122,7 @@ export const cases: ProjectionCase[] = [
       "fields": "buildType(id,name,projectId)",
       "optimizeSettings": "true"
     },
+    "fixedQuery": {"optimizeSettings": "true"},
     "body": "{\"buildType\":[{\"id\":\"Entity\"}]}",
     "baselineResponse": {
       "buildType": [
