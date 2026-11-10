@@ -7,7 +7,7 @@ import {
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { clientLeaf, text, optionalText, option, propertyOption } from "./command-support.js";
+import { locatorOption, clientLeaf, text, optionalText, option, propertyOption } from "./command-support.js";
 import { createAdvancedAuthoringCommands } from "./advanced-authoring-commands.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
 import type {
@@ -39,6 +39,8 @@ export function createAuthoringCommands(
   const projectOption = option("--project <id>", "Select a project", true);
 
   function parameters(owner: ParameterOwner): CommandDefinition {
+    const projections = owner === "projects" ? [] : [fieldsOption];
+    const fields = (options: Record<string, unknown>) => owner === "projects" ? undefined : fieldsFromOptions(options);
     const ownerArg = owner === "projects" ? "project-id" : "job-id";
     const valueOption = option(
       "--value <value>",
@@ -63,13 +65,15 @@ export function createAuthoringCommands(
           `list <${ownerArg}>`,
           "List parameters in server order",
           Permission.ReadOnly,
-          (c, { args }) => c.listParameters(owner, text(args, ownerArg)),
+          (c, { args, options }) => c.listParameters(owner, text(args, ownerArg), fields(options), options.locator as string | undefined),
+          [...projections, ...(owner === "projects" ? [] : [{ ...locatorOption, description: "Filter native TeamCity parameters" }])],
         ),
         leaf(
           `show <${ownerArg}> <name>`,
           "Show parameter metadata and a safe value",
           Permission.ReadOnly,
-          (c, { args }) => c.getParameter(owner, text(args, ownerArg), text(args, "name")),
+          (c, { args, options }) => c.getParameter(owner, text(args, ownerArg), text(args, "name"), fields(options)),
+          projections,
         ),
         leaf(
           `create <${ownerArg}> <name>`,
@@ -81,16 +85,17 @@ export function createAuthoringCommands(
               text(args, ownerArg),
               text(args, "name"),
               text(options, "value"),
+              fields(options),
             ),
-          [valueOption],
+          [valueOption, ...projections],
         ),
         leaf(
           `set <${ownerArg}> <name>`,
           "Set a plain parameter after checking its type",
           Permission.Update,
           (c, { args, options }) =>
-            c.setParameter(owner, text(args, ownerArg), text(args, "name"), text(options, "value")),
-          [valueOption],
+            c.setParameter(owner, text(args, ownerArg), text(args, "name"), text(options, "value"), fields(options)),
+          [valueOption, ...projections],
         ),
         leaf(
           `delete <${ownerArg}> <name>`,

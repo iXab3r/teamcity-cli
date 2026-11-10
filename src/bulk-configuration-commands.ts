@@ -49,8 +49,9 @@ export function createBulkConfigurationCommands(
             owner,
             args["owner-id"],
             (options.property ?? []) as PlainProperty[],
+            owner === "projects" ? undefined : fieldsFromOptions(options),
           ),
-        [propertyOption],
+        [propertyOption, ...(owner === "projects" ? [] : [fieldsOption])],
       ),
       leaf(
         "clear <owner-id>",

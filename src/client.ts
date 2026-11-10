@@ -722,31 +722,23 @@ export class TeamCityClient {
     return { id: id, deleted: true };
   }
 
-  public async listParameters(owner: ParameterOwner, id: string) {
-    const result = await this.#requestJson<{ property?: RawProperty[] }>(
-      "GET",
-      parametersPath(owner, id),
-      { fields: `property(${propertyFields})` },
-    );
-    return (result.property ?? []).map((p) => safeProperty(p));
+  public listParameters<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, fields?: F, locator?: string) {
+    return this.#projectedJson("GET", parametersPath(owner, id),
+      { fields: `property(${propertyFields})`, ...(locator === undefined ? {} : { locator }) },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)), fields);
   }
 
-  public async getParameter(owner: ParameterOwner, id: string, name: string) {
-    return safeProperty(
-      await this.#requestJson<RawProperty>(
-        "GET",
-        `${parametersPath(owner, id)}/${pathSegment(name)}`,
-        { fields: propertyFields },
-      ),
-    );
+  public getParameter<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, fields?: F) {
+    return this.#projectedJson("GET", `${parametersPath(owner, id)}/${pathSegment(name)}`,
+      { fields: propertyFields }, value => safeProperty(value as RawProperty), fields);
   }
 
-  public createParameter(owner: ParameterOwner, id: string, name: string, value: string) {
-    return this.#writeParameter("POST", owner, id, name, value);
+  public createParameter<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, value: string, fields?: F) {
+    return this.#writeParameter("POST", owner, id, name, value, fields);
   }
 
-  public setParameter(owner: ParameterOwner, id: string, name: string, value: string) {
-    return this.#writeParameter("PUT", owner, id, name, value);
+  public setParameter<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, value: string, fields?: F) {
+    return this.#writeParameter("PUT", owner, id, name, value, fields);
   }
 
   public async setPasswordParameter(jobId: string, name: string, alias: string, secrets: ScopedSecrets) {
@@ -771,12 +763,13 @@ export class TeamCityClient {
     return { jobId: jobId, name, stored: true };
   }
 
-  async #writeParameter(
+  async #writeParameter<F extends string | undefined = undefined>(
     method: "POST" | "PUT",
     owner: ParameterOwner,
     id: string,
     name: string,
     value: string,
+    fields?: F,
   ) {
     const body = plainProperty(name, value);
     const collection = parametersPath(owner, id);
@@ -792,14 +785,8 @@ export class TeamCityClient {
       if (!(method === "POST" && error instanceof HttpError && error.status === 404))
         throw error;
     }
-    return safeProperty(
-      await this.#requestJson<RawProperty>(
-        method,
-        method === "POST" ? collection : path,
-        { fields: propertyFields },
-        body,
-      ),
-    );
+    return this.#projectedJson(method, method === "POST" ? collection : path,
+      { fields: propertyFields }, value => safeProperty(value as RawProperty), fields, body);
   }
 
   public async deleteParameter(owner: ParameterOwner, id: string, name: string) {
@@ -1659,10 +1646,11 @@ export class TeamCityClient {
     );
   }
 
-  public async replaceAllParameters(
+  public async replaceAllParameters<F extends string | undefined = undefined>(
     owner: ParameterOwner,
     id: string,
     properties: readonly PlainProperty[],
+    fields?: F,
   ) {
     const body = propertiesBody(properties);
     const path = parametersPath(owner, id);
@@ -1671,13 +1659,8 @@ export class TeamCityClient {
     });
     if ((current.property ?? []).some((p) => !isPlainParameter(p)))
       throw new Error("Protected parameter metadata cannot be replaced with plain parameters.");
-    const result = await this.#requestJson<{ property?: RawProperty[] }>(
-      "PUT",
-      path,
-      { fields: `property(${propertyFields})` },
-      body,
-    );
-    return (result.property ?? []).map((p) => safeProperty(p));
+    return this.#projectedJson("PUT", path, { fields: `property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)), fields, body);
   }
 
   public async clearParameters(owner: ParameterOwner, id: string) {
