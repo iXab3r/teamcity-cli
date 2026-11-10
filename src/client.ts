@@ -990,54 +990,24 @@ export class TeamCityClient {
     return safeProperty({ name: property.name }, false);
   }
 
-  public async listProjectFeatures(projectId: string) {
-    const result = await this.#requestJson<{ projectFeature?: RawExtension[] }>(
-      "GET",
-      `${projectPath(projectId)}/projectFeatures`,
-      { fields: `projectFeature(${extensionFields})` },
-    );
-    return (result.projectFeature ?? []).map(safeExtension);
+  public async listProjectFeatures<F extends string | undefined = undefined>(projectId: string, fields?: F, locator?: string) {
+    return this.#projectedJson("GET", `${projectPath(projectId)}/projectFeatures`,
+      { fields: `projectFeature(${extensionFields})`, ...(locator === undefined ? {} : { locator: requiredText(locator, "Locator") }) }, value => ((value as { projectFeature?: RawExtension[] }).projectFeature ?? []).map(safeExtension), fields);
   }
 
-  public async getProjectFeature(projectId: string, id: string) {
-    return safeExtension(
-      await this.#requestJson<RawExtension>(
-        "GET",
-        `${projectPath(projectId)}/projectFeatures/${idPath(id, "Feature ID")}`,
-        { fields: extensionFields },
-      ),
-    );
+  public async getProjectFeature<F extends string | undefined = undefined>(projectId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", `${projectPath(projectId)}/projectFeatures/${idPath(id, "Feature ID")}`,
+      { fields: extensionFields }, value => safeExtension(value as RawExtension), fields);
   }
 
-  public async createProjectFeature(
-    projectId: string,
-    type: string,
-    properties: readonly PlainProperty[],
-  ) {
-    return safeExtension(
-      await this.#requestJson<RawExtension>(
-        "POST",
-        `${projectPath(projectId)}/projectFeatures`,
-        { fields: extensionFields },
-        { type: requiredText(type, "Feature type"), properties: propertiesBody(properties) },
-      ),
-    );
+  public async createProjectFeature<F extends string | undefined = undefined>(projectId: string, type: string, properties: readonly PlainProperty[], fields?: F) {
+    return this.#projectedJson("POST", `${projectPath(projectId)}/projectFeatures`,
+      { fields: extensionFields }, value => safeExtension(value as RawExtension), fields, { type: requiredText(type, "Feature type"), properties: propertiesBody(properties) });
   }
 
-  public async replaceProjectFeature(
-    projectId: string,
-    id: string,
-    type: string,
-    properties: readonly PlainProperty[],
-  ) {
-    return safeExtension(
-      await this.#requestJson<RawExtension>(
-        "PUT",
-        `${projectPath(projectId)}/projectFeatures/${idPath(id, "Feature ID")}`,
-        { fields: extensionFields },
-        { type: requiredText(type, "Feature type"), properties: propertiesBody(properties) },
-      ),
-    );
+  public async replaceProjectFeature<F extends string | undefined = undefined>(projectId: string, id: string, type: string, properties: readonly PlainProperty[], fields?: F) {
+    return this.#projectedJson("PUT", `${projectPath(projectId)}/projectFeatures/${idPath(id, "Feature ID")}`,
+      { fields: extensionFields }, value => safeExtension(value as RawExtension), fields, { type: requiredText(type, "Feature type"), properties: propertiesBody(properties) });
   }
 
   public async deleteProjectFeature(projectId: string, id: string) {

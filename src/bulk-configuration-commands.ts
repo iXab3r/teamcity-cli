@@ -50,9 +50,9 @@ export function createBulkConfigurationCommands(
             owner,
             args["owner-id"],
             (options.property ?? []) as PlainProperty[],
-            owner === "projects" ? undefined : fieldsFromOptions(options),
+            fieldsFromOptions(options),
           ),
-        [propertyOption, ...(owner === "projects" ? [] : [fieldsOption])],
+        [propertyOption, fieldsOption],
       ),
       leaf(
         "clear <owner-id>",
@@ -97,8 +97,8 @@ export function createBulkConfigurationCommands(
       "Replace the collection",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? fieldsFromOptions(options) : undefined),
-      [itemOption, ...(["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? [fieldsOption] : [])],
+        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["projectFeatures", "steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? fieldsFromOptions(options) : undefined),
+      [itemOption, ...(["projectFeatures", "steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? [fieldsOption] : [])],
     );
   }
   const templates = [

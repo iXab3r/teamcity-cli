@@ -39,8 +39,8 @@ export function createAuthoringCommands(
   const projectOption = option("--project <id>", "Select a project", true);
 
   function parameters(owner: ParameterOwner): CommandDefinition {
-    const projections = owner === "projects" ? [] : [fieldsOption];
-    const fields = (options: Record<string, unknown>) => owner === "projects" ? undefined : fieldsFromOptions(options);
+    const projections = [fieldsOption];
+    const fields = (options: Record<string, unknown>) => fieldsFromOptions(options);
     const ownerArg = owner === "projects" ? "project-id" : "job-id";
     const valueOption = option(
       "--value <value>",
@@ -66,7 +66,7 @@ export function createAuthoringCommands(
           "List parameters in server order",
           Permission.ReadOnly,
           (c, { args, options }) => c.listParameters(owner, text(args, ownerArg), fields(options), options.locator as string | undefined),
-          [...projections, ...(owner === "projects" ? [] : [{ ...locatorOption, description: "Filter native TeamCity parameters" }])],
+          [...projections, { ...locatorOption, description: "Filter native TeamCity parameters" }],
         ),
         leaf(
           `show <${ownerArg}> <name>`,

@@ -1,5 +1,5 @@
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
-import { fieldOption } from "./command-support.js";
+import { fieldOption, locatorOption } from "./command-support.js";
 import { stringList, withView } from "./presentation.js";
 import { command, Permission, type OptionDefinition } from "@eyeauras/cli-factory";
 import { text, optionalText, option, propertyOption, type ClientLeaf } from "./command-support.js";
@@ -179,14 +179,16 @@ export function createAdvancedAuthoringCommands(
   const featureOptions = [option("--type <type>", "Set the project feature type", true), propertyOption];
   const features = command("features", "Manage project features", [
     bulk.replaceAll("projectFeatures"),
-    leaf("list <project-id>", "List redacted features", Permission.ReadOnly, (c, { args }) =>
-      c.listProjectFeatures(args["project-id"]),
+    leaf("list <project-id>", "List redacted features", Permission.ReadOnly, (c, { args, options }) =>
+      c.listProjectFeatures(args["project-id"], fieldsFromOptions(options), options.locator as string | undefined),
+      [fieldsOption, { ...locatorOption, description: "Filter native TeamCity project features" }],
     ),
     leaf(
       "show <project-id> <feature-id>",
       "Show a redacted feature",
       Permission.ReadOnly,
-      (c, { args }) => c.getProjectFeature(args["project-id"], args["feature-id"]),
+      (c, { args, options }) => c.getProjectFeature(args["project-id"], args["feature-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create <project-id>",
@@ -197,8 +199,9 @@ export function createAdvancedAuthoringCommands(
           args["project-id"],
           text(options, "type"),
           (options.property ?? []) as PlainProperty[],
+          fieldsFromOptions(options),
         ),
-      featureOptions,
+      [...featureOptions, fieldsOption],
     ),
     leaf(
       "replace <project-id> <feature-id>",
@@ -210,8 +213,9 @@ export function createAdvancedAuthoringCommands(
           args["feature-id"],
           text(options, "type"),
           (options.property ?? []) as PlainProperty[],
+          fieldsFromOptions(options),
         ),
-      featureOptions,
+      [...featureOptions, fieldsOption],
     ),
     leaf(
       "delete <project-id> <feature-id>",
