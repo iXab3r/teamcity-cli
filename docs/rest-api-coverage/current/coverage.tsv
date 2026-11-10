@@ -140,33 +140,33 @@ GET /app/rest/builds/aggregated/{p1}/status	Build	ReadOnly	covered	builds batch 
 GET /app/rest/builds/aggregated/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds aggregate-icon <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/multiple/{p1}	Build	ReadOnly	partial	builds batch show	getBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/builds/{p1}	Build	ReadOnly	covered	builds diagnose <build-id>;builds show [build-id];builds wait <build-id>;jobs run <job-id>	getBuildSummary;getBuild		exercised-in-passing-suite	tests/build-flow.test.ts;tests/build-projection.test.ts;tests/errors.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts
-GET /app/rest/builds/{p1}/artifactDependencyChanges	Build	ReadOnly	partial	builds artifact-changes <id>	getArtifactDependencyChanges	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/builds/{p1}/artifactDependencyChanges	Build	ReadOnly	covered	builds artifact-changes <id>	getArtifactDependencyChanges		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/artifacts	Build	ReadOnly	partial	builds artifacts list <id>	listFiles	basePath;fields;resolveParameters;logBuildUsage	exercised-in-passing-suite	tests/files.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/artifacts/archived{p2}	Build	ReadOnly	partial	builds artifacts archive <id> <path>		basePath;name;resolveParameters;logBuildUsage	exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/{p1}/artifacts/files{p2}	Build	ReadOnly	partial	builds artifacts download <id> <path>		resolveParameters;logBuildUsage	exercised-in-passing-suite	tests/files.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/artifacts/metadata{p2}	Build	ReadOnly	partial	builds artifacts metadata <id> <path>	getFileMetadata	fields;resolveParameters;logBuildUsage	exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/{p1}/artifacts/{p2}	Build	ReadOnly	partial	builds artifacts children <id> <path>	listFiles	basePath;fields;resolveParameters;logBuildUsage	exercised-in-passing-suite	tests/files.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/artifactsDirectory	Build	ReadOnly	covered	builds artifacts-path <id>	getArtifactsPath		exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/builds/{p1}/canceledInfo	Build	ReadOnly	partial	builds canceled-info <build-id>	getBuildCanceledInfo	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/builds/{p1}/canceledInfo	Build	ReadOnly	covered	builds canceled-info <build-id>	getBuildCanceledInfo		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts;tests/operator.test.ts
 GET /app/rest/builds/{p1}/finishDate	Build	ReadOnly	covered	builds finish-date <build-id>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/builds/{p1}/number	Build	ReadOnly	covered	builds number show <build-id>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/builds/{p1}/output-parameters	Build	ReadOnly	partial	builds output-parameters list <id>	listBuildRuntimeParameterNames	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/presentation.test.ts
+GET /app/rest/builds/{p1}/output-parameters	Build	ReadOnly	covered	builds output-parameters list <id>	listBuildRuntimeParameterNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/output-parameters/{p2}	Build	ReadOnly	covered	builds output-parameters exists <id> <name>	checkBuildRuntimeParameter		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/builds/{p1}/pinInfo	Build	ReadOnly	partial	builds pin show <build-id>	getBuildPin	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/builds/{p1}/problemOccurrences	Build	ReadOnly	partial	builds problem-occurrences list <id>	listBuildOccurrences	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/builds/{p1}/relatedIssues	Build	ReadOnly	partial	builds related-issues <id>	getBuildRelatedIssues	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/builds/{p1}/pinInfo	Build	ReadOnly	covered	builds pin show <build-id>	getBuildPin		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts;tests/operator.test.ts
+GET /app/rest/builds/{p1}/problemOccurrences	Build	ReadOnly	covered	builds problem-occurrences list <id>	listBuildOccurrences		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
+GET /app/rest/builds/{p1}/relatedIssues	Build	ReadOnly	covered	builds related-issues <id>	getBuildRelatedIssues		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/resolved/{p2}	Build	ReadOnly	covered	builds resolve-parameter <id> <name>	resolveBuildParameter		exercised-in-passing-suite	tests/copy-job.test.ts;tests/files.test.ts
-GET /app/rest/builds/{p1}/resulting-properties	Build	ReadOnly	partial	builds resulting-properties list <id>	listBuildRuntimeParameterNames	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/builds/{p1}/resulting-properties	Build	ReadOnly	covered	builds resulting-properties list <id>	listBuildRuntimeParameterNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/resulting-properties/{p2}	Build	ReadOnly	covered	builds resulting-properties exists <id> <name>	checkBuildRuntimeParameter		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
 GET /app/rest/builds/{p1}/sources/files/{p2}	Build	ReadOnly	covered	builds source <id> <path>			exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/builds/{p1}/statistics	Build	ReadOnly	partial	builds statistics list <build-id>	listBuildStatistics	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/builds/{p1}/statistics	Build	ReadOnly	covered	builds statistics list <build-id>	listBuildStatistics		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts;tests/operator.test.ts
 GET /app/rest/builds/{p1}/statistics/{p2}	Build	ReadOnly	covered	builds statistics show <build-id> <name>	getBuildStatistic		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/builds/{p1}/status	Build	ReadOnly	covered	builds status <build-id>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/builds/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds icon <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/{p1}/statusText	Build	ReadOnly	covered	builds status-text show <build-id>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/builds/{p1}/tags	Build	ReadOnly	partial	builds tags list <build-id>	listTags	locator;fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/presentation.test.ts
-GET /app/rest/builds/{p1}/testOccurrences	Build	ReadOnly	partial	builds test-occurrences <id>	listBuildOccurrences	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/builds/{p1}/vcsLabels	Build	ReadOnly	partial	builds vcs-labels list <id>	getBuildVcsLabels	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/builds/{p1}/testOccurrences	Build	ReadOnly	covered	builds test-occurrences <id>	listBuildOccurrences		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
+GET /app/rest/builds/{p1}/vcsLabels	Build	ReadOnly	covered	builds vcs-labels list <id>	getBuildVcsLabels		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/{p2}	Build	ReadOnly	covered	builds fields show <build-id> <field>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/changes	Change	ReadOnly	partial	builds changes <id>		fields	evidence-gap	
 GET /app/rest/changes/{p1}	Change	ReadOnly	partial	changes show <change-id>	getChange	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
