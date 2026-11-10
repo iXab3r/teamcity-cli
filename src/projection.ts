@@ -26,16 +26,22 @@ export function knownCredentialMask(credential: string): (text: string) => strin
     representations.add(encodeURIComponent(credential));
     representations.add(encodeURI(credential));
   } catch { /* A malformed Unicode value can still be matched as text. */ }
-  const patterns = [...representations].filter(value => value !== "").sort((a, b) => b.length - a.length).map(value =>
-    Array.from(value.matchAll(/%[\da-f]{2}|[\s\S]/giu), ([part]) => {
-      if (/^%[\da-f]{2}$/i.test(part)) {
-        return "%" + Array.from(part.slice(1), hex => `[${hex.toUpperCase()}${hex.toLowerCase()}]`).join("");
+  const normalize = (text: string) => text.replace(/%[\da-f]{2}/gi, part => part.toUpperCase());
+  const copies = [...representations].filter(value => value !== "").sort((a, b) => b.length - a.length).map(normalize);
+  return text => {
+    for (const copy of copies) {
+      const normalized = normalize(text);
+      const parts: string[] = [];
+      let start = 0;
+      for (let match = normalized.indexOf(copy); match !== -1; match = normalized.indexOf(copy, start)) {
+        parts.push(text.slice(start, match), "[redacted]");
+        start = match + copy.length;
       }
-      return `\\u{${part.codePointAt(0)!.toString(16)}}`;
-    }).join(""));
-  if (patterns.length === 0) return text => text;
-  const pattern = new RegExp(patterns.join("|"), "gu");
-  return text => text.replace(pattern, "[redacted]");
+      parts.push(text.slice(start));
+      text = parts.join("");
+    }
+    return text;
+  };
 }
 
 /** Arbitrary TeamCity JSON requires validation before any shaped property access. */
