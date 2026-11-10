@@ -195,3 +195,19 @@ for (const [status, code] of [
       );
   });
 }
+
+test("malformed acknowledgement body preserves default behavior", async t => {
+  const c = actionCases.find(c => c.name === "log")!;
+  const rt = await runtime(t, ["Update"]);
+  server.use(http.all("*", () => HttpResponse.text("not JSON")));
+  const baseline = await rt.createCli().execute(c.argv);
+  assert.deepEqual(await rt.createCli().execute([...c.argv, "--fields", projection]), baseline);
+});
+
+test("status projection evaluates errors.item rather than unrelated native errorCount", async t => {
+  const c = actionCases.find(c => c.name === "status")!;
+  const rt = await runtime(t, ["Update"]);
+  const body = { errorCount: 9 };
+  server.use(http.all("*", () => HttpResponse.json(body)));
+  assert.deepEqual(await rt.createCli().execute([...c.argv, "--fields", projection]), body);
+});

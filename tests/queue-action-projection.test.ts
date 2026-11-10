@@ -222,3 +222,11 @@ test("US-008-A3 move-to-top retains wait", async (t) => {
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   await rt.createCli().execute(["jobs", "run", "Demo_Build", "--move-to-top", "true", "--wait"]);
 });
+
+test("malformed acknowledgement body preserves default behavior", async t => {
+  const c = actionCases.find(c => c.name === "delete")!;
+  const rt = await runtime(t, ["Update"]);
+  server.use(http.all("*", () => HttpResponse.text("not JSON")));
+  const baseline = await rt.createCli().execute(c.argv);
+  assert.deepEqual(await rt.createCli().execute([...c.argv, "--fields", projection]), baseline);
+});
