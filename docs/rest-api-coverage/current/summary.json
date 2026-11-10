@@ -1,16 +1,16 @@
 {
-  "baselineHead": "25a20382d8555a2c908569ec5c71bba925f8fcef",
+  "baselineHead": "43d5e090fa90f5e0ebc25dc30751fe8d3191ae9b",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 201,
-  "partial": 247,
+  "covered": 206,
+  "partial": 242,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 85,
-      "partial": 149,
+      "covered": 90,
+      "partial": 144,
       "missing": 1
     },
     "Update": {
@@ -53,8 +53,8 @@
     },
     "Build": {
       "total": 57,
-      "covered": 37,
-      "partial": 20,
+      "covered": 42,
+      "partial": 15,
       "missing": 0
     },
     "BuildQueue": {
@@ -205,9 +205,9 @@
   "unsupportedByParameter": {
     "addTimestamp": 1,
     "approveAll": 1,
-    "basePath": 12,
+    "basePath": 9,
     "field": 6,
-    "fields": 232,
+    "fields": 229,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -215,12 +215,11 @@
     "includeRunningBuilds": 1,
     "includeSupplimentaryData": 1,
     "locator": 6,
-    "logBuildUsage": 5,
     "moveToTop": 1,
-    "name": 4,
+    "name": 3,
     "okOnNothingFound": 1,
     "requestor": 1,
-    "resolveParameters": 10
+    "resolveParameters": 5
   },
   "partialOnlyBecauseOfFields": 214,
   "verificationEvidenceGaps": [

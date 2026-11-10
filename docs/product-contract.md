@@ -30,6 +30,19 @@ Tag reads and build tag replacement accept unchanged, nonblank `--locator <locat
 Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
 keeps the public-name defaults. Explicit fields return native JSON and the generic view.
 
+Artifact `list` and `children` accept item `--fields`, composing `count,file(<projection>)`.
+They keep `{count,items,hasMore}`, their existing locator, count+1 lookahead and hasMore rules.
+Offset lists keep `{count,items,hasMore,nextStart}`. Explicit item projections contain no extra
+fields for default views or follow-up hints; native items use the generic view. Unpaged object
+reads and scoped lists project the whole response and return that native object.
+
+Only `builds artifacts` enables native artifact controls: `--resolve-parameters <boolean>`
+and `--log-build-usage <boolean>` on all five leaves (exact `true` or `false`),
+`--base-path <path>` on list/children/archive, `--archive-name <name>` on archive, and
+whole-response `--fields` on metadata. Omission preserves each existing request and output.
+Archive name sets the server query `name`; output path, byte bounds and no-overwrite publication
+retain their existing contracts. Other file families retain their current options and behavior.
+
 ## Paging
 
 TeamCity retains `--limit 100 --start 0`: limit bounds retained rows across wire requests.

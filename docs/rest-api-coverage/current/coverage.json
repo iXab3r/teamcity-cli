@@ -6924,14 +6924,18 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds artifacts list <id>",
     "permission": "ReadOnly",
     "options": [
-     "--limit <count>"
+     "--limit <count>",
+     "--resolve-parameters <boolean>",
+     "--log-build-usage <boolean>",
+     "--fields <projection>",
+     "--base-path <path>"
     ],
     "clientMethod": "listFiles"
    }
@@ -6939,8 +6943,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -6949,31 +6953,27 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "resolveParameters",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "logBuildUsage",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "fields",
-   "resolveParameters",
-   "logBuildUsage"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/artifact-projection.test.ts",
     "tests/files.test.ts",
     "tests/presentation.test.ts"
    ],
@@ -7004,8 +7004,8 @@
   "produces": [
    "*/*"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds artifacts archive <id> <path>",
@@ -7013,6 +7013,10 @@
     "options": [
      "--output <path>",
      "--max-bytes <bytes>",
+     "--resolve-parameters <boolean>",
+     "--log-build-usage <boolean>",
+     "--base-path <path>",
+     "--archive-name <name>",
      "--limit <count>"
     ],
     "clientMethod": null
@@ -7021,8 +7025,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -7031,31 +7035,27 @@
    },
    {
     "name": "name",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "--archive-name <name>"
    },
    {
     "name": "resolveParameters",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "logBuildUsage",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "name",
-   "resolveParameters",
-   "logBuildUsage"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/artifact-projection.test.ts",
     "tests/files.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -7082,15 +7082,17 @@
   "produces": [
    "*/*"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds artifacts download <id> <path>",
     "permission": "ReadOnly",
     "options": [
      "--output <path>",
-     "--max-bytes <bytes>"
+     "--max-bytes <bytes>",
+     "--resolve-parameters <boolean>",
+     "--log-build-usage <boolean>"
     ],
     "clientMethod": null
    }
@@ -7098,24 +7100,22 @@
   "query": [
    {
     "name": "resolveParameters",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "logBuildUsage",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "resolveParameters",
-   "logBuildUsage"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/artifact-projection.test.ts",
     "tests/files.test.ts",
     "tests/presentation.test.ts"
    ],
@@ -7145,43 +7145,44 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds artifacts metadata <id> <path>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--resolve-parameters <boolean>",
+     "--log-build-usage <boolean>",
+     "--fields <projection>"
+    ],
     "clientMethod": "getFileMetadata"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "resolveParameters",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "logBuildUsage",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields",
-   "resolveParameters",
-   "logBuildUsage"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/artifact-projection.test.ts",
     "tests/files.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -7212,14 +7213,18 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds artifacts children <id> <path>",
     "permission": "ReadOnly",
     "options": [
-     "--limit <count>"
+     "--limit <count>",
+     "--resolve-parameters <boolean>",
+     "--log-build-usage <boolean>",
+     "--fields <projection>",
+     "--base-path <path>"
     ],
     "clientMethod": "listFiles"
    }
@@ -7227,41 +7232,37 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "resolveParameters",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "logBuildUsage",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "fields",
-   "resolveParameters",
-   "logBuildUsage"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/artifact-projection.test.ts",
     "tests/files.test.ts",
     "tests/presentation.test.ts"
    ],

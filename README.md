@@ -883,3 +883,9 @@ See [release and Core adoption gates](docs/release.md) and [migration provenance
 Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
 Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
 keeps the public-name defaults. Explicit fields return native JSON and the generic view.
+
+Build artifacts support `--resolve-parameters true|false` and `--log-build-usage true|false`.
+List/children/archive also accept `--base-path`; archive accepts `--archive-name` for the server
+archive name, independently of `--output` and `--max-bytes`. List/children accept item fields
+(e.g. `--fields 'name,size'`) and retain `{count,items,hasMore}`; metadata accepts whole-response
+fields. Explicit projections use native JSON and the generic view. Omitted controls preserve defaults.
