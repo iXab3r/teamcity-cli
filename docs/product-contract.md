@@ -11,6 +11,11 @@ Project reads accept `--fields` on list/show, pools list, branches, default-valu
 deployments list/show, parent, and templates list/default show. Project list and branches
 retain their paging envelopes; other scoped reads project the whole response.
 Omission preserves the project tree view and all existing requests and shaping.
+Project move, pool replacement, default template set/clear, template creation and
+project job creation accept whole-response `--fields`. Move and default-template clear
+retain their empty/non-JSON acknowledgements. Ordering show/set for jobs/projects accept
+unchanged `--field`; omitted selectors keep their existing values. `jobs copy` retains
+its fixed workflow projection.
 
 Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
 and `snapshot-dependencies` accept whole-response `--fields` on
