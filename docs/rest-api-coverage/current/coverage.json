@@ -6550,8 +6550,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds list",
@@ -6562,6 +6562,7 @@
      "--branch <name>",
      "--state <state>",
      "--status <status>",
+     "--fields <projection>",
      "--limit <count>",
      "--start <offset>"
     ],
@@ -6571,6 +6572,7 @@
     "command": "builds show [build-id]",
     "permission": "ReadOnly",
     "options": [
+     "--fields <projection>",
      "--job <id>",
      "--branch <name>",
      "--latest"
@@ -6587,12 +6589,10 @@
    {
     "name": "fields",
     "wire": "varies",
-    "callerControl": null
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
@@ -6600,6 +6600,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/build-flow.test.ts",
+    "tests/build-projection.test.ts",
     "tests/cli.test.ts",
     "tests/paging.test.ts",
     "tests/presentation.test.ts",
@@ -6771,8 +6772,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds diagnose <build-id>",
@@ -6784,6 +6785,7 @@
     "command": "builds show [build-id]",
     "permission": "ReadOnly",
     "options": [
+     "--fields <projection>",
      "--job <id>",
      "--branch <name>",
      "--latest"
@@ -6818,12 +6820,10 @@
    {
     "name": "fields",
     "wire": "varies",
-    "callerControl": null
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [
    "jobs run <job-id> [Update]"
@@ -6832,6 +6832,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/build-flow.test.ts",
+    "tests/build-projection.test.ts",
     "tests/errors.test.ts",
     "tests/option-parsers.test.ts",
     "tests/presentation.test.ts"
