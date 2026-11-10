@@ -195,3 +195,9 @@ for (const [status, code] of [
       );
   });
 }
+
+test("native null batch omits detection fields", async t => {
+  const rt = await runtime(t, ["Update"]);
+  server.use(http.all("*", () => HttpResponse.json(null)));
+  assert.equal(await rt.createCli().execute([...actionCases[1]!.argv, "--fields", projection]), null);
+});

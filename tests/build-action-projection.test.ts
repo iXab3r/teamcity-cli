@@ -211,3 +211,15 @@ test("status projection evaluates errors.item rather than unrelated native error
   server.use(http.all("*", () => HttpResponse.json(body)));
   assert.deepEqual(await rt.createCli().execute([...c.argv, "--fields", projection]), body);
 });
+
+for (const name of ["status", "label"]) test(`native null ${name} omits detection fields`, async t => {
+  const rt = await runtime(t, ["Update"]);
+  server.use(http.all("*", () => HttpResponse.json(null)));
+  const c = actionCases.find(c => c.name === name)!;
+  assert.equal(await rt.createCli().execute([...c.argv, "--fields", projection]), null);
+});
+test("cancel native projection masks known credentials", async t => {
+  const rt = await runtime(t, ["Update"]);
+  server.use(http.all("*", () => HttpResponse.json({ custom: token })));
+  assert.deepEqual(await rt.createCli().execute([...actionCases[0]!.argv, "--fields", projection]), { custom: "[redacted]" });
+});
