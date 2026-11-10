@@ -20,9 +20,9 @@ DELETE /app/rest/buildTypes/{p1}/templates	BuildType	Update	covered	jobs templat
 DELETE /app/rest/buildTypes/{p1}/templates/{p2}	BuildType	Update	covered	jobs templates detach <job-id> <template-id>	detachTemplate		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts
 DELETE /app/rest/buildTypes/{p1}/triggers/{p2}	BuildType	Update	covered	jobs triggers delete <job-id> <trigger-id>	deleteExtension		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts
 DELETE /app/rest/buildTypes/{p1}/vcs-root-entries/{p2}	BuildType	Update	covered	jobs vcs detach <job-id> <root-id>	detachVcsRoot		exercised-in-passing-suite	tests/authoring.test.ts
-DELETE /app/rest/builds/multiple/{p1}	Build	Update	partial	builds batch delete	deleteBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
-DELETE /app/rest/builds/multiple/{p1}/comment	Build	Update	partial	builds batch comment clear	clearBuildBatchComment	fields	exercised-in-passing-suite	tests/authoring.test.ts
-DELETE /app/rest/builds/multiple/{p1}/tags	Build	Update	partial	builds batch tags remove	tagBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
+DELETE /app/rest/builds/multiple/{p1}	Build	Update	covered	builds batch delete	deleteBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts;tests/triage.test.ts
+DELETE /app/rest/builds/multiple/{p1}/comment	Build	Update	covered	builds batch comment clear	clearBuildBatchComment		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
+DELETE /app/rest/builds/multiple/{p1}/tags	Build	Update	covered	builds batch tags remove	tagBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 DELETE /app/rest/builds/{p1}	Build	Update	covered	builds delete <build-id>	deleteBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 DELETE /app/rest/builds/{p1}/caches/finishProperties	Build	Update	covered	builds reset-finish-cache <id>	resetBuildFinishCache		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/builds/{p1}/comment	Build	Update	covered	builds comment clear <build-id>	clearBuildComment		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
@@ -138,7 +138,7 @@ GET /app/rest/buildTypes/{p1}/{p2}	BuildType	ReadOnly	covered	jobs fields show <
 GET /app/rest/builds	Build	ReadOnly	covered	builds list;builds show [build-id]	;getLatestFinishedBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-flow.test.ts;tests/build-projection.test.ts;tests/cli.test.ts;tests/paging.test.ts;tests/presentation.test.ts;tests/validation-contract.test.ts
 GET /app/rest/builds/aggregated/{p1}/status	Build	ReadOnly	covered	builds batch status	getBuildBatchStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/option-parsers.test.ts
 GET /app/rest/builds/aggregated/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds aggregate-icon <id>			exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/builds/multiple/{p1}	Build	ReadOnly	partial	builds batch show	getBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/builds/multiple/{p1}	Build	ReadOnly	covered	builds batch show	getBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 GET /app/rest/builds/{p1}	Build	ReadOnly	covered	builds diagnose <build-id>;builds show [build-id];builds wait <build-id>;jobs run <job-id>	getBuildSummary;getBuild		exercised-in-passing-suite	tests/build-flow.test.ts;tests/build-projection.test.ts;tests/errors.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/artifactDependencyChanges	Build	ReadOnly	covered	builds artifact-changes <id>	getArtifactDependencyChanges		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/artifacts	Build	ReadOnly	covered	builds artifacts list <id>	listFiles		exercised-in-passing-suite	tests/artifact-projection.test.ts;tests/files.test.ts;tests/presentation.test.ts
@@ -314,8 +314,8 @@ POST /app/rest/buildTypes/{p1}/steps	BuildType	Update	partial	jobs steps create 
 POST /app/rest/buildTypes/{p1}/templates	BuildType	Update	partial	jobs templates attach <job-id>	attachTemplate	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts
 POST /app/rest/buildTypes/{p1}/triggers	BuildType	Update	partial	jobs triggers create <job-id>	createExtension	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts;tests/validation-contract.test.ts
 POST /app/rest/buildTypes/{p1}/vcs-root-entries	BuildType	Update	partial	jobs vcs attach <job-id>	attachVcsRoot	fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/builds/multiple/{p1}	Build	Update	partial	builds batch cancel	cancelBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/builds/multiple/{p1}/tags	Build	Update	partial	builds batch tags add	tagBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
+POST /app/rest/builds/multiple/{p1}	Build	Update	covered	builds batch cancel	cancelBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
+POST /app/rest/builds/multiple/{p1}/tags	Build	Update	covered	builds batch tags add	tagBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 POST /app/rest/builds/{p1}	Build	Update	covered	builds cancel <id>	cancelBuild		exercised-in-passing-suite	tests/build-action-projection.test.ts;tests/cli.test.ts;tests/errors.test.ts;tests/presentation.test.ts
 POST /app/rest/builds/{p1}/log	Build	Update	covered	builds log append <id>	appendBuildLog		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/validation-contract.test.ts
 POST /app/rest/builds/{p1}/problemOccurrences	Build	Update	covered	builds problem-occurrences add <id>	addBuildProblem		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts
@@ -401,8 +401,8 @@ PUT /app/rest/buildTypes/{p1}/vcs-root-entries	BuildType	Update	partial	jobs vcs
 PUT /app/rest/buildTypes/{p1}/vcs-root-entries/{p2}	BuildType	Update	partial	jobs vcs replace <job-id> <root-id>	replaceVcsEntry	fields	exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/buildTypes/{p1}/vcs-root-entries/{p2}/checkout-rules	BuildType	Update	covered	jobs vcs checkout-rules set <job-id> <root-id>	setCheckoutRules		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/buildTypes/{p1}/{p2}	BuildType	Update	covered	jobs set <id> <field> <value>	setJobField		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/builds/multiple/{p1}/comment	Build	Update	partial	builds batch comment set	setBuildBatchComment	fields	exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/builds/multiple/{p1}/pinInfo	Build	Update	partial	builds batch pin	pinBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
+PUT /app/rest/builds/multiple/{p1}/comment	Build	Update	covered	builds batch comment set	setBuildBatchComment		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
+PUT /app/rest/builds/multiple/{p1}/pinInfo	Build	Update	covered	builds batch pin	pinBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 PUT /app/rest/builds/{p1}/comment	Build	Update	covered	builds comment set <build-id>	setBuildComment		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 PUT /app/rest/builds/{p1}/finish	Build	Update	covered	builds finish <id>	finishBuild		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/builds/{p1}/finishDate	Build	Update	covered	builds finish-at <id> <timestamp>	finishBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
