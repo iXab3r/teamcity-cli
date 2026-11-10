@@ -7,7 +7,7 @@ import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing"
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
-export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; issuedToken?: string; parityAcceptance?: number; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
+export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; inputSecrets?: Record<string, string>; issuedToken?: string; parityAcceptance?: number; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
 export function projectionAcceptance(story: string, cases: ProjectionCase[], acceptance = {native: 1, paging: 2, mutation: 3, parity: 4, denied: 5, error: 6, blank: 7}) {
 const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.fileCollection ? `count,file(${s})` : c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.fileCollection ? {file: [v]} : c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.fileCollection ? {count: 1, items: [v]} : c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
@@ -24,10 +24,14 @@ test.before(() => server.listen({ onUnhandledRequest: "error" }));
 test.afterEach(() => server.resetHandlers());
 test.after(() => server.close());
 
-async function runtime(t: test.TestContext, permissions: string[] = ["ReadOnly"]) {
-  return createTestRuntime(t, {
+async function runtime(t: test.TestContext, permissions: string[] = ["ReadOnly"], inputSecrets: Record<string, string> = {}) {
+  const rt = await createTestRuntime(t, {
     profiles: [{ name: "default", url: origin, permissions }], tokens: { default: token },
   });
+  for (const [alias, value] of Object.entries(inputSecrets)) {
+    await rt.secretStore.set("ai-cli-factory:teamcity-cli", "default:input-secret:" + alias, value);
+  }
+  return rt;
 }
 
 async function success(rt: Runtime, cli: CliApplication, argv: string[], surface: Surface, expected: unknown, issuedToken?: string) {
@@ -78,7 +82,7 @@ for (const scenario of buildProjectionCases) {
   test(`${story}-A${acceptance.native} ${scenario.name}: native projection on all four surfaces`, async t => {
     for (const includeValue of scenario.issuedToken === undefined ? [false] : [false, true]) {
       const responseValue = includeValue ? { ...native, value: "synthetic-issued-token" } : native;
-      const rt = await runtime(t, [scenario.permission]);
+      const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
       const cli = rt.createCli();
       const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
         if (scenario.preflight && request.method === "GET") {
@@ -116,7 +120,7 @@ for (const scenario of buildProjectionCases) {
   });
 
   test(`${story}-A${scenario.parityAcceptance ?? acceptance.parity} ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
-    const rt = await runtime(t, [scenario.permission]);
+    const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
     const cli = rt.createCli();
     const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
       if (scenario.preflight && request.method === "GET") {
@@ -165,7 +169,7 @@ for (const scenario of buildProjectionCases) {
 
   for (const option of Object.keys(scenario.nativeQuery ?? {})) for (const value of ["", " "]) {
     test(`${story}-A${acceptance.blank} ${scenario.name}: rejects blank ${option} ${JSON.stringify(value)} on all surfaces`, async t => {
-      const rt = await runtime(t, [scenario.permission]);
+      const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
       const cli = rt.createCli();
       const requests = trackRequests(t, 0, () => HttpResponse.json({}));
       server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -175,7 +179,7 @@ for (const scenario of buildProjectionCases) {
 
   for (const fields of ["", " \t\n "]) {
     test(`${story}-A${acceptance.blank} ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
-      const rt = await runtime(t, [scenario.permission]);
+      const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
       const cli = rt.createCli();
       const requests = trackRequests(t, 0, () => HttpResponse.json({}));
       server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -228,7 +232,7 @@ for (const scenario of buildProjectionCases.filter(c => c.collection)) {
 
 for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
   for (const kind of ["empty", "malformed", "lost"] as const) test(`${story}-A${acceptance.mutation} mutation ${c.name}: ${kind} parity on every surface`, async t => {
-    const rt = await runtime(t, [c.permission]); const cli = rt.createCli();
+    const rt = await runtime(t, [c.permission], c.inputSecrets); const cli = rt.createCli();
     let calls = 0;
     server.use(http.all("*", ({request}) => {
       if (c.preflight && request.method === "GET") return HttpResponse.json(c.baselineResponse);
