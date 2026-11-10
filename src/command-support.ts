@@ -35,6 +35,18 @@ export function booleanOption(flags: string, description: string): OptionDefinit
   };
 }
 
+/** A text control forwarded unchanged; only its presence is validated locally. */
+export function textOption(flags: string, description: string): OptionDefinition {
+  return {
+    flags,
+    description,
+    parse(value) {
+      if (!value.trim()) throw new Error(`${flags.split(" ")[0]} requires a non-empty value.`);
+      return value;
+    },
+  };
+}
+
 export const locatorOption: OptionDefinition = {
   flags: "--locator <locator>",
   description: "Filter native TeamCity tags",

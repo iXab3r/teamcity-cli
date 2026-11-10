@@ -3,7 +3,7 @@ import { command, Permission, type CommandContext,
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { booleanOption, clientLeaf, option, text, integerValue } from "./command-support.js";
+import { booleanOption, clientLeaf, option, text, textOption, integerValue } from "./command-support.js";
 import { referenceKey, type FileTree } from "./file-models.js";
 import { fileTable, savedFileRecord, withView } from "./presentation.js";
 export function createFileCommands(clientFor: (c: CommandContext) => Promise<TeamCityClient>) {
@@ -46,10 +46,10 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
           )] : []),
           ...(["list", "children", "metadata"].includes(action) ? [fieldsOption] : []),
           ...(["list", "children", "archive"].includes(action)
-            ? [option("--base-path <path>", "Set the server artifact base path")]
+            ? [textOption("--base-path <path>", "Set the server artifact base path")]
             : []),
           ...(action === "archive"
-            ? [option("--archive-name <name>", "Set the server-side archive name")]
+            ? [textOption("--archive-name <name>", "Set the server-side archive name")]
             : []),
         ];
   const tree = (name: string, kind: FileTree) =>

@@ -722,13 +722,13 @@ export class TeamCityClient {
     return { id: id, deleted: true };
   }
 
-  public listParameters<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, fields?: F, locator?: string) {
+  public async listParameters<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, fields?: F, locator?: string) {
     return this.#projectedJson("GET", parametersPath(owner, id),
       { fields: `property(${propertyFields})`, ...(locator === undefined ? {} : { locator }) },
       value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)), fields);
   }
 
-  public getParameter<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, fields?: F) {
+  public async getParameter<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, fields?: F) {
     return this.#projectedJson("GET", `${parametersPath(owner, id)}/${pathSegment(name)}`,
       { fields: propertyFields }, value => safeProperty(value as RawProperty), fields);
   }
@@ -1639,7 +1639,7 @@ export class TeamCityClient {
     return { jobId: jobId, cleared: true };
   }
 
-  public listJobBuilds<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+  public async listJobBuilds<F extends string | undefined = undefined>(jobId: string, fields?: F) {
     return this.#projectedJson("GET", `${jobPath(jobId)}/builds`,
       { fields: `build(${operationBuildFields})` },
       value => ((value as { build?: OperationBuild[] }).build ?? []).map(safeOperationBuild), fields);
@@ -3274,12 +3274,12 @@ export class TeamCityClient {
     await this.#request("DELETE", "/app/rest/avatars/" + idPath(userId, "User ID"));
     return { userId, deleted: true };
   }
-  public getJobInvestigations<F extends string | undefined = undefined>(id: string, fields?: F) {
+  public async getJobInvestigations<F extends string | undefined = undefined>(id: string, fields?: F) {
     return this.#projectedJson("GET", "/app/rest/buildTypes/" + idPath(id, "ID") + "/investigations",
       { fields: `count,investigation(${triage.investigationFields})` },
       value => system.collection(value, "investigation", (v) => triage.safeAssignment(v, true)), fields);
   }
-  public getJobVcsInstances<F extends string | undefined = undefined>(id: string, fields?: F) {
+  public async getJobVcsInstances<F extends string | undefined = undefined>(id: string, fields?: F) {
     return this.#projectedJson("GET", "/app/rest/buildTypes/" + idPath(id, "ID") + "/vcsRootInstances",
       { fields: `count,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
       value => system.collection(value, "vcs-root-instance", infrastructure.safeVcsInstance), fields);
