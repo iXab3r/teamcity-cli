@@ -1,30 +1,30 @@
 {
-  "baselineHead": "d55422925cf28a6076bf2dd6ed5dc3c88c52a37c",
+  "baselineHead": "23095187f5650dfa420e60b09db1fb8f8bc3587d",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 241,
-  "partial": 207,
+  "covered": 254,
+  "partial": 194,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 106,
-      "partial": 128,
+      "covered": 115,
+      "partial": 119,
       "missing": 1
     },
     "Update": {
       "total": 214,
-      "covered": 135,
-      "partial": 79,
+      "covered": 139,
+      "partial": 75,
       "missing": 0
     }
   },
   "byGroup": {
     "Agent": {
       "total": 15,
-      "covered": 3,
-      "partial": 12,
+      "covered": 15,
+      "partial": 0,
       "missing": 0
     },
     "AgentPool": {
@@ -35,8 +35,8 @@
     },
     "AgentType": {
       "total": 1,
-      "covered": 0,
-      "partial": 1,
+      "covered": 1,
+      "partial": 0,
       "missing": 0
     },
     "Audit": {
@@ -206,7 +206,7 @@
     "addTimestamp": 1,
     "basePath": 9,
     "field": 6,
-    "fields": 195,
+    "fields": 182,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -219,9 +219,8 @@
     "requestor": 1,
     "resolveParameters": 5
   },
-  "partialOnlyBecauseOfFields": 181,
+  "partialOnlyBecauseOfFields": 168,
   "verificationEvidenceGaps": [
-    "GET /app/rest/agents/{p1}",
     "GET /app/rest/projects/{p1}"
   ],
   "nonLeafTransportOperations": [

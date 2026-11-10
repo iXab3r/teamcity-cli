@@ -889,6 +889,12 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Agent projections are available on `agents list` (item fields) and whole-response
+`agents show`, `authorized show/set`, `enabled show/set`, `policy show/set`,
+`compatible-jobs`, `incompatible-jobs`, `pool show/set`, and `types show`.
+All four setters retain Update permission and their existing request bodies.
+
+
 Source-change projections are available on `builds changes` (item fields) and
 `changes show`, `attributes`, `duplicates`, `first-builds`, `parents`, and
 `root-instance` (whole-response fields).

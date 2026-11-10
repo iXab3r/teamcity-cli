@@ -1430,7 +1430,6 @@ export class TeamCityClient {
     }, raw => safeBooleanStatus(raw as BooleanStatus), fields);
   }
 
-
   public async setAgentStatus<F extends string | undefined = undefined>(
     id: number,
     kind: "enabled" | "authorized",
@@ -1444,13 +1443,11 @@ export class TeamCityClient {
     );
   }
 
-
   public async getAgentPolicy<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson("GET", `${agentPath(id)}/compatibilityPolicy`, {
       fields: policyFields,
     }, raw => safePolicy(raw as RawAgentPolicy), fields);
   }
-
 
   public async setAgentPolicy<F extends string | undefined = undefined>(id: number, policy: string, jobs: readonly string[], fields?: F) {
     if (!["any", "selected"].includes(requiredText(policy, "Policy").trim().toLowerCase()))
@@ -1463,14 +1460,12 @@ export class TeamCityClient {
     );
   }
 
-
   public async listAgentCompatibleJobs<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
       "GET", `${agentPath(id)}/compatibleBuildTypes`, { fields: `buildType(${identityFields})` },
       raw => ((raw as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields,
     );
   }
-
 
   public async listAgentIncompatibleJobs<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
@@ -1483,12 +1478,10 @@ export class TeamCityClient {
     );
   }
 
-
   public async getAgentPool<F extends string | undefined = undefined>(id: number, fields?: F) {
     const result = await this.#optionalJson<AgentPoolSummary>(`${agentPath(id)}/pool`, fields === undefined ? "id,name" : fieldsProjection(fields));
     return this.#projectedValue(result, fields, value => value === null ? null : safeNamed(value as AgentPoolSummary));
   }
-
 
   public async setAgentPool<F extends string | undefined = undefined>(id: number, poolId: number, fields?: F) {
     return this.#projectedJson(
@@ -1496,7 +1489,6 @@ export class TeamCityClient {
       raw => safeNamed(raw as AgentPoolSummary), fields, { id: poolNumber(poolId) },
     );
   }
-
 
   public async getAgentField(id: number, field: string) {
     plainProperty(field, "");
@@ -1659,9 +1651,9 @@ export class TeamCityClient {
 
   public async getChange<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
-        "GET",
-        `/app/rest/changes/id:${integerId(id, "Change ID")}`,
-        { fields: changeSummaryFields },
+      "GET",
+      `/app/rest/changes/id:${integerId(id, "Change ID")}`,
+      { fields: changeSummaryFields },
       raw => safeChange(raw as ChangeSummary), fields,
     );
   }
@@ -1993,7 +1985,6 @@ export class TeamCityClient {
     );
   }
 
-
   public async getBuildBatchStatus(ids: readonly number[]) {
     const status = await this.#requestText(
       "GET",
@@ -2288,9 +2279,9 @@ export class TeamCityClient {
 
   public async getChangeRootInstance<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
-        "GET",
-        `/app/rest/changes/id:${integerId(id, "Change ID")}/vcsRootInstance`,
-        { fields: "id,name,vcs-root-id" },
+      "GET",
+      `/app/rest/changes/id:${integerId(id, "Change ID")}/vcsRootInstance`,
+      { fields: "id,name,vcs-root-id" },
       raw => triage.safeScalars(raw, ["id", "name", "vcs-root-id"]), fields,
     );
   }

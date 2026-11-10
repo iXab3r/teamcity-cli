@@ -65,15 +65,15 @@ GET /app/rest/agentPools/{p1}	AgentPool	ReadOnly	partial	pools show <pool-id>	ge
 GET /app/rest/agentPools/{p1}/agents	AgentPool	ReadOnly	partial	pools agents list <pool-id>		fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agentPools/{p1}/projects	AgentPool	ReadOnly	partial	pools projects list <pool-id>	listPoolProjects	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agentPools/{p1}/{p2}	AgentPool	ReadOnly	covered	pools fields show <pool-id> <field>	getPoolField		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/agentTypes/{p1}	AgentType	ReadOnly	partial	agents types show <type-id>	getAgentType	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
-GET /app/rest/agents	Agent	ReadOnly	partial	agents list		fields	exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts
-GET /app/rest/agents/{p1}	Agent	ReadOnly	partial	agents show <id>	getAgent	fields	evidence-gap	
-GET /app/rest/agents/{p1}/authorizedInfo	Agent	ReadOnly	partial	agents authorized show <agent-id>	getAgentStatus	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agents/{p1}/compatibilityPolicy	Agent	ReadOnly	partial	agents policy show <agent-id>	getAgentPolicy	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agents/{p1}/compatibleBuildTypes	Agent	ReadOnly	partial	agents compatible-jobs <agent-id>	listAgentCompatibleJobs	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agents/{p1}/enabledInfo	Agent	ReadOnly	partial	agents enabled show <agent-id>	getAgentStatus	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agents/{p1}/incompatibleBuildTypes	Agent	ReadOnly	partial	agents incompatible-jobs <agent-id>	listAgentIncompatibleJobs	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agents/{p1}/pool	Agent	ReadOnly	partial	agents pool show <agent-id>	getAgentPool	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agentTypes/{p1}	AgentType	ReadOnly	covered	agents types show <type-id>	getAgentType		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/bulk-configuration.test.ts
+GET /app/rest/agents	Agent	ReadOnly	covered	agents list			exercised-in-passing-suite	tests/agents-projection.test.ts;tests/cli.test.ts;tests/presentation.test.ts
+GET /app/rest/agents/{p1}	Agent	ReadOnly	covered	agents show <id>	getAgent		exercised-in-passing-suite	tests/agents-projection.test.ts
+GET /app/rest/agents/{p1}/authorizedInfo	Agent	ReadOnly	covered	agents authorized show <agent-id>	getAgentStatus		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agents/{p1}/compatibilityPolicy	Agent	ReadOnly	covered	agents policy show <agent-id>	getAgentPolicy		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agents/{p1}/compatibleBuildTypes	Agent	ReadOnly	covered	agents compatible-jobs <agent-id>	listAgentCompatibleJobs		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agents/{p1}/enabledInfo	Agent	ReadOnly	covered	agents enabled show <agent-id>	getAgentStatus		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agents/{p1}/incompatibleBuildTypes	Agent	ReadOnly	covered	agents incompatible-jobs <agent-id>	listAgentIncompatibleJobs		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/agents/{p1}/pool	Agent	ReadOnly	covered	agents pool show <agent-id>	getAgentPool		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agents/{p1}/{p2}	Agent	ReadOnly	covered	agents fields show <agent-id> <field>	getAgentField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/apiVersion	Root	ReadOnly	covered	server api-version	getApiVersion		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/audit	Audit	ReadOnly	partial	audit list		fields	exercised-in-passing-suite	tests/system.test.ts
@@ -358,10 +358,10 @@ POST /app/rest/vcs-root-instances/commitHookNotification	VcsRootInstance	Update	
 POST /app/rest/vcs-roots	VcsRoot	Update	partial	vcs roots create <id>	createAnonymousGitRoot	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools projects replace-all <pool-id>	replacePoolProjects		exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
 PUT /app/rest/agentPools/{p1}/{p2}	AgentPool	Update	covered	pools fields set <pool-id> <field> <value>	setPoolField		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/agents/{p1}/authorizedInfo	Agent	Update	partial	agents authorized set <agent-id> <status>	setAgentStatus	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-PUT /app/rest/agents/{p1}/compatibilityPolicy	Agent	Update	partial	agents policy set <agent-id> <policy>	setAgentPolicy	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/validation-contract.test.ts
-PUT /app/rest/agents/{p1}/enabledInfo	Agent	Update	partial	agents enabled set <agent-id> <status>	setAgentStatus	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-PUT /app/rest/agents/{p1}/pool	Agent	Update	partial	agents pool set <agent-id> <pool-id>	setAgentPool	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+PUT /app/rest/agents/{p1}/authorizedInfo	Agent	Update	covered	agents authorized set <agent-id> <status>	setAgentStatus		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+PUT /app/rest/agents/{p1}/compatibilityPolicy	Agent	Update	covered	agents policy set <agent-id> <policy>	setAgentPolicy		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts;tests/validation-contract.test.ts
+PUT /app/rest/agents/{p1}/enabledInfo	Agent	Update	covered	agents enabled set <agent-id> <status>	setAgentStatus		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
+PUT /app/rest/agents/{p1}/pool	Agent	Update	covered	agents pool set <agent-id> <pool-id>	setAgentPool		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
 PUT /app/rest/agents/{p1}/{p2}	Agent	Update	covered	agents fields set <agent-id> <field> <value>	setAgentField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/avatars/{p1}	Avatar	Update	covered	users avatar replace <id>	replaceAvatar		exercised-in-passing-suite	tests/system.test.ts
 PUT /app/rest/buildQueue/order	BuildQueue	Update	covered	queue reorder	reorderQueue		exercised-in-passing-suite	tests/authoring.test.ts;tests/queue-action-projection.test.ts
