@@ -248,7 +248,7 @@ export function createSystemCommands(
     leaf("metrics", "Read numeric metric series", R, (c, { options }) => c.getMetrics(fieldsFromOptions(options)), [fieldsOption]),
     leaf("plugins", "Read plugin metadata", R, (c, { options }) =>
       c.getPlugins(fieldsFromOptions(options), optional(options, "locator")),
-      [fieldsOption, locatorOption],
+      [fieldsOption, { ...locatorOption, description: "Filter native TeamCity plugins" }],
     ),
     leaf(
       "field <field>",
@@ -356,7 +356,7 @@ export function createSystemCommands(
         [fieldsOption, ...healthOptions, option("--category <id>", "Select a health category", true)],
       ),
       command("categories", "Discover native health categories", [
-        leaf("list", "Read category metadata", R, (c, { options }) => c.listHealthCategories(fieldsFromOptions(options), optional(options, "locator")), [fieldsOption, locatorOption]),
+        leaf("list", "Read category metadata", R, (c, { options }) => c.listHealthCategories(fieldsFromOptions(options), optional(options, "locator")), [fieldsOption, { ...locatorOption, description: "Filter native TeamCity health categories" }]),
         leaf("show <id>", "Read one category", R, (c, { args, options }) =>
           c.getHealthCategory(args.id, fieldsFromOptions(options)),
           [fieldsOption],

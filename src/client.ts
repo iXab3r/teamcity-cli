@@ -348,7 +348,7 @@ export class TeamCityClient {
     });
   }
 
-  public async getServerStatus<F extends string | undefined = undefined>(fields?: F) {
+  public getServerStatus<F extends string | undefined = undefined>(fields?: F) {
     return this.#projectedJson("GET", "/app/rest/server", { fields: serverFields },
       value => value as TeamCityServer, fields);
   }
@@ -2396,7 +2396,11 @@ export class TeamCityClient {
   public async listCurrentUserTokens<F extends string | undefined = undefined>(fields?: F) {
     return this.#projectedJson("GET", "/app/rest/users/current/tokens",
       { fields: `count,token(${admin.tokenFields})` },
-      raw => ((raw as { token?: unknown[] }).token ?? []).map(admin.safeToken), fields);
+      raw => {
+        const value = raw as { token?: unknown[] };
+        return (value.token ?? []).map(admin.safeToken);
+      },
+      fields);
   }
 
   public async createCurrentUserToken<F extends string | undefined = undefined>(input: admin.TokenCreationOptions, secrets: ScopedSecrets, fields?: F) {
@@ -2478,7 +2482,11 @@ export class TeamCityClient {
   public async listAccountGroupsAll<F extends string | undefined = undefined>(fields?: F) {
     return this.#projectedJson("GET", "/app/rest/userGroups",
       { fields: `count,group(${admin.groupFields})` },
-      raw => ((raw as { group?: unknown[] }).group ?? []).map(admin.safeGroup), fields);
+      raw => {
+        const value = raw as { group?: unknown[] };
+        return (value.group ?? []).map(admin.safeGroup);
+      },
+      fields);
   }
 
   public async createAccountGroup<F extends string | undefined = undefined>(key: string, name: string, description?: string, fields?: F) {
@@ -3103,7 +3111,7 @@ export class TeamCityClient {
       stored: true,
     };
   }
-  public async listAudit<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
+  public listAudit<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
     return this.#list(
       "/app/rest/audit",
       [project ? nestedId("affectedProject", project, "Project ID") : undefined],
@@ -3222,7 +3230,7 @@ export class TeamCityClient {
     await this.#request("DELETE", system.instancePath(dashboard, id));
     return { dashboardId: dashboard, instanceId: id, deleted: true };
   }
-  public async listHealth<F extends string | undefined = undefined>(
+  public listHealth<F extends string | undefined = undefined>(
     options: { project?: string; global?: boolean },
     page: TeamCityPageOptions & { fields?: F },
   ) {
