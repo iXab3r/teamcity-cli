@@ -889,6 +889,10 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Groups accept whole-response `--fields` on `list/show/create`, `parents list/replace`,
+and `properties list`. These unpaged lists retain their existing shaped arrays when
+fields are omitted; explicit fields return the native response and generic view.
+
 User projections are available on `users list` (item fields) and whole-response
 `users show/create/update`, `groups list/show/replace/remove`, `permissions list`,
 `properties list`, and `tokens list/create`. `users show <id>` uses the existing

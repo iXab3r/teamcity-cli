@@ -7,6 +7,10 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Groups accept whole-response `--fields` on `list/show/create`, `parents list/replace`,
+and `properties list`. These unpaged lists retain their existing shaped arrays when
+fields are omitted; explicit fields return the native response and generic view.
+
 Users support item fields on list and whole-response fields on show/create/update,
 groups list/show/replace/remove, permissions list, properties list and tokens list/create.
 Explicit fields on account and token operations are unchanged passthrough with the

@@ -1,22 +1,22 @@
 {
-  "baselineHead": "f97ccfe87634a9bd4f7abc67c52befd9edc24f1b",
+  "baselineHead": "3f8e2891046455cae308a8981b819f0607f672cc",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 413,
-  "partial": 36,
+  "covered": 419,
+  "partial": 30,
   "missing": 0,
   "reached": 449,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 208,
-      "partial": 27,
+      "covered": 212,
+      "partial": 23,
       "missing": 0
     },
     "Update": {
       "total": 214,
-      "covered": 205,
-      "partial": 9,
+      "covered": 207,
+      "partial": 7,
       "missing": 0
     }
   },
@@ -95,8 +95,8 @@
     },
     "Group": {
       "total": 16,
-      "covered": 10,
-      "partial": 6,
+      "covered": 16,
+      "partial": 0,
       "missing": 0
     },
     "Investigation": {
@@ -205,7 +205,7 @@
   "unsupportedByParameter": {
     "addTimestamp": 1,
     "basePath": 3,
-    "fields": 34,
+    "fields": 28,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -215,7 +215,7 @@
     "locator": 2,
     "name": 1
   },
-  "partialOnlyBecauseOfFields": 30,
+  "partialOnlyBecauseOfFields": 24,
   "verificationEvidenceGaps": [],
   "nonLeafTransportOperations": [],
   "gateDiffersFromMethod": [
