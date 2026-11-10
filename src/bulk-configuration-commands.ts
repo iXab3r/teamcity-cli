@@ -9,6 +9,7 @@ import {
 import type { TeamCityClient } from "./client.js";
 import {
   clientLeaf,
+  fieldOption,
   option,
   propertyOption,
   text,
@@ -49,9 +50,9 @@ export function createBulkConfigurationCommands(
             owner,
             args["owner-id"],
             (options.property ?? []) as PlainProperty[],
-            owner === "projects" ? undefined : fieldsFromOptions(options),
+            fieldsFromOptions(options),
           ),
-        [propertyOption, ...(owner === "projects" ? [] : [fieldsOption])],
+        [propertyOption, fieldsOption],
       ),
       leaf(
         "clear <owner-id>",
@@ -96,8 +97,8 @@ export function createBulkConfigurationCommands(
       "Replace the collection",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? fieldsFromOptions(options) : undefined),
-      [itemOption, ...(["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? [fieldsOption] : [])],
+        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["projectFeatures", "steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? fieldsFromOptions(options) : undefined),
+      [itemOption, ...(["projectFeatures", "steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? [fieldsOption] : [])],
     );
   }
   const templates = [
@@ -138,8 +139,8 @@ export function createBulkConfigurationCommands(
   ];
   const projects = [
     command("pools", "Manage project pool assignments", [
-      leaf("list <project-id>", "List assigned pools", Permission.ReadOnly, (c, { args }) =>
-        c.listProjectPools(args["project-id"]),
+      leaf("list <project-id>", "List assigned pools", Permission.ReadOnly, (c, { args, options }) =>
+        c.listProjectPools(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
       ),
       leaf("assign <project-id> <pool-id>", "Assign one pool", Permission.Update, (c, { args }) =>
         c.assignProjectPool(args["project-id"], number(args, "pool-id")),
@@ -149,8 +150,8 @@ export function createBulkConfigurationCommands(
         "Replace all pool assignments",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceProjectPools(args["project-id"], strings(options, "pool").map(Number)),
-        [repeatOption("--pool <id>", "Repeat pool IDs")],
+          c.replaceProjectPools(args["project-id"], strings(options, "pool").map(Number), fieldsFromOptions(options)),
+        [fieldsOption, repeatOption("--pool <id>", "Repeat pool IDs")],
       ),
       leaf(
         "unassign <project-id> <pool-id>",
@@ -165,10 +166,11 @@ export function createBulkConfigurationCommands(
       Permission.ReadOnly,
       (c, { args, options }) =>
         c.listProjectBranches(args["project-id"], {
+          fields: fieldsFromOptions(options),
           limit: Number(options.limit),
           start: Number(options.start),
         }),
-      pageOptions,
+      [...pageOptions, fieldsOption],
     ),
     command("jobs", "Create jobs inside a project", [
       leaf(
@@ -176,8 +178,8 @@ export function createBulkConfigurationCommands(
         "Create a named empty build configuration",
         Permission.Update,
         (c, { args, options }) =>
-          c.createProjectJob(args["project-id"], args["job-id"], text(options, "name")),
-        [option("--name <name>", "Set the job name", true)],
+          c.createProjectJob(args["project-id"], args["job-id"], text(options, "name"), fieldsFromOptions(options)),
+        [fieldsOption, option("--name <name>", "Set the job name", true)],
       ),
     ]),
     command(
@@ -189,15 +191,16 @@ export function createBulkConfigurationCommands(
             "show <project-id>",
             "Read custom child order",
             Permission.ReadOnly,
-            (c, { args }) => c.getProjectOrder(args["project-id"], kind),
+            (c, { args, options }) => c.getProjectOrder(args["project-id"], kind, options.field as string | undefined),
+            [fieldOption],
           ),
           leaf(
             "set <project-id>",
             "Replace custom child order",
             Permission.Update,
             (c, { args, options }) =>
-              c.setProjectOrder(args["project-id"], kind, strings(options, "id")),
-            [repeatOption("--id <id>", "Repeat IDs in order")],
+              c.setProjectOrder(args["project-id"], kind, strings(options, "id"), options.field as string | undefined),
+            [fieldOption, repeatOption("--id <id>", "Repeat IDs in order")],
           ),
         ]),
       ),

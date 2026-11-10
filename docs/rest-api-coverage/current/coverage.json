@@ -1504,33 +1504,34 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects templates default clear <project-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "clearDefaultTemplate"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10194,8 +10195,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects list",
@@ -10203,6 +10204,7 @@
     "options": [
      "--parent <id>",
      "--include-archived",
+     "--fields <projection>",
      "--limit <count>",
      "--start <offset>"
     ],
@@ -10217,13 +10219,11 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
@@ -10231,7 +10231,8 @@
    "tests": [
     "tests/cli.test.ts",
     "tests/option-parsers.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-foundation.test.ts:116"
@@ -10259,31 +10260,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getProject"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
-   "existingOffline": "evidence-gap",
-   "tests": [],
+   "existingOffline": "exercised-in-passing-suite",
+   "tests": [
+    "tests/projects-projection.test.ts"
+   ],
    "nonLeafTransportTests": [
     "tests/client-foundation.test.ts:138",
     "tests/client-foundation.test.ts:255"
@@ -10311,32 +10314,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects pools list <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listProjectPools"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10363,15 +10367,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects branches <project-id>",
     "permission": "ReadOnly",
     "options": [
      "--limit <count>",
-     "--start <offset>"
+     "--start <offset>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -10379,24 +10384,23 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10422,33 +10426,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects templates default show <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getDefaultTemplate"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10474,31 +10479,32 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects default-value-sets <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getDefaultValueSets"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/projects-projection.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -10525,31 +10531,32 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects deployments list <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listProjectDashboards"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/projects-projection.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -10576,31 +10583,32 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects deployments show <project> <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getProjectDashboard"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/projects-projection.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -10627,32 +10635,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects order jobs show <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--field <name>"
+    ],
     "clientMethod": "getProjectOrder"
    }
   ],
   "query": [
    {
     "name": "field",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "field"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10678,32 +10687,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects order projects show <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--field <name>"
+    ],
     "clientMethod": "getProjectOrder"
    }
   ],
   "query": [
    {
     "name": "field",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "field"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10730,20 +10740,24 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects parameters list <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>",
+     "--locator <locator>"
+    ],
     "clientMethod": "listParameters"
    },
    {
     "command": "projects parameters replace-all <owner-id>",
     "permission": "Update",
     "options": [
-     "--property <key=value>"
+     "--property <key=value>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAllParameters"
    }
@@ -10751,19 +10765,16 @@
   "query": [
    {
     "name": "locator",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "fields",
     "wire": "varies",
-    "callerControl": null
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "locator",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [
    "projects parameters replace-all <owner-id> [Update]"
@@ -10771,7 +10782,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10797,14 +10809,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects parameters create <project-id> <name>",
     "permission": "Update",
     "options": [
-     "--value <value>"
+     "--value <value>",
+     "--fields <projection>"
     ],
     "clientMethod": "createParameter"
    },
@@ -10824,14 +10837,17 @@
     "command": "projects parameters set <project-id> <name>",
     "permission": "Update",
     "options": [
-     "--value <value>"
+     "--value <value>",
+     "--fields <projection>"
     ],
     "clientMethod": "setParameter"
    },
    {
     "command": "projects parameters show <project-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameter"
    },
    {
@@ -10863,12 +10879,10 @@
    {
     "name": "fields",
     "wire": "varies",
-    "callerControl": null
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [
    "projects parameters create <project-id> <name> [Update]",
@@ -10881,6 +10895,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
@@ -11030,33 +11045,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects parent <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getProjectParent"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11083,39 +11099,40 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects features list <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>",
+     "--locator <locator>"
+    ],
     "clientMethod": "listProjectFeatures"
    }
   ],
   "query": [
    {
     "name": "locator",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "locator",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11141,33 +11158,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects features show <project-id> <feature-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getProjectFeature"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11280,33 +11298,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects templates list <project-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listProjectTemplates"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11329,32 +11348,33 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects versioned-settings affected <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVersionedAffectedProjects"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/versioned-settings-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11377,32 +11397,33 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects versioned-settings config show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVersionedConfig"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/versioned-settings-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11425,33 +11446,34 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects versioned-settings config effective <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getEffectiveVersionedConfig"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/versioned-settings-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11553,33 +11575,34 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects versioned-settings status <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVersionedStatus"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/versioned-settings-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -13986,8 +14009,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances list",
@@ -13995,7 +14018,8 @@
     "options": [
      "--limit <count>",
      "--start <offset>",
-     "--root <id>"
+     "--root <id>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -14003,24 +14027,23 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14046,32 +14069,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsInstance"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14099,14 +14123,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances files list <id>",
     "permission": "ReadOnly",
     "options": [
-     "--limit <count>"
+     "--limit <count>",
+     "--fields <projection>",
+     "--base-path <path>"
     ],
     "clientMethod": "listFiles"
    }
@@ -14114,8 +14140,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -14124,20 +14150,19 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/vcs-instance-controls.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14164,8 +14189,8 @@
   "produces": [
    "*/*"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances files archive <id> <path>",
@@ -14173,6 +14198,8 @@
     "options": [
      "--output <path>",
      "--max-bytes <bytes>",
+     "--base-path <path>",
+     "--archive-name <name>",
      "--limit <count>"
     ],
     "clientMethod": null
@@ -14181,8 +14208,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -14191,20 +14218,18 @@
    },
    {
     "name": "name",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "--archive-name <name>"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "name"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/vcs-instance-controls.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14273,32 +14298,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances files metadata <id> <path>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getFileMetadata"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14326,14 +14352,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances files children <id> <path>",
     "permission": "ReadOnly",
     "options": [
-     "--limit <count>"
+     "--limit <count>",
+     "--fields <projection>",
+     "--base-path <path>"
     ],
     "clientMethod": "listFiles"
    }
@@ -14341,8 +14369,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -14351,20 +14379,19 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/vcs-instance-controls.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14390,32 +14417,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances properties <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listVcsInstancePropertyNames"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14441,32 +14469,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances state show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsRepositoryState"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14575,8 +14604,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs roots list",
@@ -14584,7 +14613,8 @@
     "options": [
      "--project <id>",
      "--limit <count>",
-     "--start <offset>"
+     "--start <offset>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -14597,19 +14627,18 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14635,32 +14664,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs roots show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsRoot"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14686,32 +14716,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs roots instances <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsRootInstances"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/m04-review-regressions.test.ts",
+    "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -14737,32 +14769,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs roots properties list <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listVcsRootPropertyNames"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17160,8 +17193,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "jobs copy <source-id> <id>",
@@ -17176,6 +17209,7 @@
     "command": "projects jobs create <project-id> <job-id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--name <name>"
     ],
     "clientMethod": "createProjectJob"
@@ -17184,20 +17218,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/copy-job.test.ts"
+    "tests/copy-job.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17226,14 +17259,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects parameters create <project-id> <name>",
     "permission": "Update",
     "options": [
-     "--value <value>"
+     "--value <value>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -17241,19 +17275,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17282,15 +17315,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects features create <project-id>",
     "permission": "Update",
     "options": [
      "--type <type>",
-     "--property <key=value>"
+     "--property <key=value>",
+     "--fields <projection>"
     ],
     "clientMethod": "createProjectFeature"
    }
@@ -17298,20 +17332,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17385,13 +17418,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects templates create <project-id> <template-id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--name <name>"
     ],
     "clientMethod": "createProjectTemplate"
@@ -17400,20 +17434,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17514,14 +17547,15 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects versioned-settings load <id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "loadVersionedSettings"
    }
@@ -17529,19 +17563,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/versioned-settings-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18172,13 +18205,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances check-changes <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--requestor <text>",
+     "--fields <projection>"
+    ],
     "clientMethod": "checkVcsInstanceChanges"
    }
   ],
@@ -18190,25 +18226,24 @@
    },
    {
     "name": "requestor",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "requestor",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/m04-review-regressions.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18234,13 +18269,15 @@
   "produces": [
    "text/plain"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances notify-commit <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--ok-on-nothing-found <boolean>"
+    ],
     "clientMethod": "notifyVcsCommit"
    }
   ],
@@ -18252,20 +18289,19 @@
    },
    {
     "name": "okOnNothingFound",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "okOnNothingFound"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/vcs-instance-controls.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18294,8 +18330,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs roots create <id>",
@@ -18304,7 +18340,8 @@
      "--name <text>",
      "--project <id>",
      "--url <url>",
-     "--branch <ref>"
+     "--branch <ref>",
+     "--fields <projection>"
     ],
     "clientMethod": "createAnonymousGitRoot"
    }
@@ -18312,20 +18349,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/validation-contract.test.ts"
+    "tests/validation-contract.test.ts",
+    "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21250,13 +21286,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects pools replace-all <project-id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--pool <id>"
     ],
     "clientMethod": "replaceProjectPools"
@@ -21265,20 +21302,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21307,13 +21343,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects templates default set <project-id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--template <template-id>"
     ],
     "clientMethod": "setDefaultTemplate"
@@ -21322,20 +21359,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21364,13 +21400,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects order jobs set <project-id>",
     "permission": "Update",
     "options": [
+     "--field <name>",
      "--id <id>"
     ],
     "clientMethod": "setProjectOrder"
@@ -21379,20 +21416,19 @@
   "query": [
    {
     "name": "field",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "field"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21421,13 +21457,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects order projects set <project-id>",
     "permission": "Update",
     "options": [
+     "--field <name>",
      "--id <id>"
     ],
     "clientMethod": "setProjectOrder"
@@ -21436,19 +21473,18 @@
   "query": [
    {
     "name": "field",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "field"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21477,14 +21513,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects parameters replace-all <owner-id>",
     "permission": "Update",
     "options": [
-     "--property <key=value>"
+     "--property <key=value>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAllParameters"
    }
@@ -21492,19 +21529,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21533,14 +21569,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects parameters set <project-id> <name>",
     "permission": "Update",
     "options": [
-     "--value <value>"
+     "--value <value>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -21548,19 +21585,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21718,13 +21754,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects move <id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--parent <id>"
     ],
     "clientMethod": "moveProject"
@@ -21733,19 +21770,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21774,14 +21810,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects features replace-all <owner-id>",
     "permission": "Update",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAllSettings"
    }
@@ -21789,20 +21826,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21831,15 +21867,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects features replace <project-id> <feature-id>",
     "permission": "Update",
     "options": [
      "--type <type>",
-     "--property <key=value>"
+     "--property <key=value>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceProjectFeature"
    }
@@ -21847,20 +21884,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/advanced-authoring.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/project-configuration-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21883,14 +21919,15 @@
   "hasBody": true,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "projects versioned-settings config replace <id>",
     "permission": "Update",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceVersionedConfig"
    }
@@ -21898,13 +21935,11 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
@@ -21912,7 +21947,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
-    "tests/validation-contract.test.ts"
+    "tests/validation-contract.test.ts",
+    "tests/versioned-settings-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -22785,14 +22821,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs instances state replace <id>",
     "permission": "Update",
     "options": [
-     "--revision <branch=revision>"
+     "--revision <branch=revision>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceVcsRepositoryState"
    }
@@ -22800,20 +22837,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -22884,14 +22920,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "vcs roots properties replace <id>",
     "permission": "Update",
     "options": [
-     "--property <key=value>"
+     "--property <key=value>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceVcsRootProperties"
    }
@@ -22899,20 +22936,19 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",

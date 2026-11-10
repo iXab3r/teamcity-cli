@@ -7,7 +7,7 @@ import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing"
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
-export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
+export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
 export function projectionAcceptance(story: string, cases: ProjectionCase[], acceptance = {native: 1, paging: 2, mutation: 3, parity: 4, denied: 5, error: 6, blank: 7}) {
 const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.fileCollection ? `count,file(${s})` : c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.fileCollection ? {file: [v]} : c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.fileCollection ? {count: 1, items: [v]} : c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
@@ -146,6 +146,16 @@ for (const scenario of buildProjectionCases) {
     assert.deepEqual(await snapshot(rt.root), before);
   });
 
+  for (const option of Object.keys(scenario.nativeQuery ?? {})) for (const value of ["", " "]) {
+    test(`${story}-A${acceptance.blank} ${scenario.name}: rejects blank ${option} ${JSON.stringify(value)} on all surfaces`, async t => {
+      const rt = await runtime(t, [scenario.permission]);
+      const cli = rt.createCli();
+      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      for (const surface of surfaces) await failure(rt, cli, [...scenario.argv, "--" + option, value], surface, "usage");
+    });
+  }
+
   for (const fields of ["", " \t\n "]) {
     test(`${story}-A${acceptance.blank} ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
       const rt = await runtime(t, [scenario.permission]);
@@ -160,22 +170,23 @@ for (const scenario of buildProjectionCases) {
   }
 }
 
+const errorCase = cases.find(c => !c.acknowledgement && !c.field) ?? cases[0]!;
 const failures = [
   { name: "401", code: "http.unauthorized", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 401 }) },
   { name: "403", code: "http.forbidden", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 403 }) },
   { name: "404", code: "http.notFound", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 404 }) },
   { name: "503", code: "http.serverError", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 503 }) },
-  { name: "transport", code: "request.failed", response: () => HttpResponse.error() },
+  { name: "transport", code: errorCase.method === "GET" ? "request.failed" : "request.unknownOutcome", response: () => HttpResponse.error() },
   { name: "decoding", code: "error", response: () => HttpResponse.text(`invalid JSON synthetic-server-payload ${token}`) },
 ];
 for (const example of failures) {
   test(`${story}-A${acceptance.error} ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
-    const rt = await runtime(t);
+    const rt = await runtime(t, [errorCase.permission]);
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, () => example.response());
     server.use(http.all("*", ({ request }) => requests.handle(request)));
     for (const surface of surfaces) {
-      const evidence = await failure(rt, cli, [...cases[0]!.argv, "--fields", projection], surface, example.code);
+      const evidence = await failure(rt, cli, [...errorCase.argv, "--fields", projection], surface, example.code);
       if (surface !== "human" && ["transport", "decoding"].includes(example.name)) assert.match(evidence, /cause/);
     }
   });
@@ -208,13 +219,13 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
     for (const surface of surfaces) {
       if (kind === "lost") {
         await failure(rt, cli, c.argv, surface, "request.unknownOutcome");
-        await failure(rt, cli, [...c.argv, "--fields", projection], surface, "request.unknownOutcome");
-      } else if (c.argv.includes("start")) {
+        await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "request.unknownOutcome");
+      } else if (c.argv.includes("start") || c.acknowledgement) {
         await success(rt, cli, c.argv, surface, c.baselineResult);
-        await success(rt, cli, [...c.argv, "--fields", projection], surface, c.baselineResult);
+        await success(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, c.baselineResult);
       } else {
         await failure(rt, cli, c.argv, surface, "error");
-        await failure(rt, cli, [...c.argv, "--fields", projection], surface, "error");
+        await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "error");
       }
     }
     assert.equal(calls, 10);
@@ -268,6 +279,46 @@ export function fileControlsAcceptance(story: string) {
       assert.equal(await readFile(target, "utf8"), "existing fixture");
       await assert.rejects(rt.createCli().execute([...argv, ...controls, "--output", join(rt.root, "bounded"), "--max-bytes", "1"]));
       await assert.rejects(readFile(join(rt.root, "bounded")));
+    });
+  }
+}
+
+export function nativeControlsAcceptance(story: string, cases: Array<{argv: string[]; query: Record<string,string>; controls: Record<string,string>; boolean?: string; archive?: boolean; permission: string}>) {
+  const server = setupServer();
+  test.before(() => server.listen({onUnhandledRequest: "error"}));
+  test.afterEach(() => server.resetHandlers());
+  test.after(() => server.close());
+  for (const c of cases) {
+    const response = () => c.archive ? new HttpResponse(new Uint8Array([80,75,5,6,...Array(18).fill(0)]), {headers: {"content-type":"application/zip"}}) : c.argv.includes("notify-commit") ? new HttpResponse(null, {status:202}) : HttpResponse.json({file:[{name:"src",size:7}]});
+    for (const explicit of [false,true]) test(`${story}-A${explicit ? 1 : 4} ${c.argv.join(" ")}: ${explicit ? "explicit controls" : "default parity"} on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, {profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
+      const requests = trackRequests(t, 4, request => {
+        assert.deepEqual(Object.fromEntries(new URL(request.url).searchParams), {...c.query,...(explicit ? Object.fromEntries(Object.entries(c.controls).map(([key,value]) => [{"base-path":"basePath","archive-name":"name","ok-on-nothing-found":"okOnNothingFound"}[key] ?? key,value])) : {})});
+        return response();
+      });
+      server.use(http.all("*", ({request}) => requests.handle(request)));
+      const cli = rt.createCli();
+      for (const surface of ["human","json","execute","rpc"]) {
+        const argv = [...c.argv,...(explicit ? Object.entries(c.controls).flatMap(([k,v])=>["--"+k,v]) : []),...(c.archive ? ["--output",join(rt.root,surface+explicit)] : [])];
+        if (surface === "execute") await cli.execute(argv);
+        else if (surface === "rpc") assert.ok(!(await rt.rpc(cli,[argv]) as {error?:unknown}[])[0]!.error);
+        else assert.equal((await rt.run(cli,[...argv,...(surface === "json" ? ["--json"] : [])])).exitCode,0);
+      }
+    });
+    for (const key of Object.keys(c.controls)) for (const value of [""," ",...(c.boolean === key ? ["TRUE","1"] : [])]) test(`${story}-A7 ${c.argv.join(" ")}: rejects ${key} ${JSON.stringify(value)} locally`, async t => {
+      const rt = await createTestRuntime(t,{profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
+      const requests=trackRequests(t,0,response);server.use(http.all("*",({request})=>requests.handle(request)));
+      await assert.rejects(rt.createCli().execute([...c.argv,"--"+key,value]),{code:"usage"});
+    });
+    if (c.archive) test(`${story}-A1 archive retains no-overwrite and byte bounds`, async t => {
+      const {writeFile} = await import("node:fs/promises");
+      const rt = await createTestRuntime(t);server.use(http.all("*",response));
+      const argv=[...c.argv,...Object.entries(c.controls).flatMap(([k,v])=>["--"+k,v])];
+      const target=join(rt.root,"existing");await writeFile(target,"fixture");
+      await assert.rejects(rt.createCli().execute([...argv,"--output",target]),/already exists/);
+      assert.equal(await readFile(target,"utf8"),"fixture");
+      await assert.rejects(rt.createCli().execute([...argv,"--output",join(rt.root,"bounded"),"--max-bytes","1"]));
+      await assert.rejects(readFile(join(rt.root,"bounded")));
     });
   }
 }

@@ -889,6 +889,22 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
+deployments list/show, parent, and templates list/default show. Project list and branches
+retain their paging envelopes; other scoped reads project the whole response.
+Omission preserves the project tree view and all existing requests and shaping.
+Project move, pool replacement, default template set/clear, template creation and
+project job creation accept whole-response `--fields`. Move and default-template clear
+retain their empty/non-JSON acknowledgements. Ordering show/set for jobs/projects accept
+unchanged `--field`; omitted selectors keep their existing values. `jobs copy` retains
+its fixed workflow projection.
+Project parameters accept `--fields` on list/show/create/set/replace-all; project
+features accept it on list/show/create/replace/replace-all. Both lists accept unchanged
+`--locator`, and scoped projections select the whole response. Parameter write preflight
+reads retain fixed fields; value/type/raw-type and delete/clear leaves stay unchanged.
+Default parameter and feature shaping is preserved, including feature property names
+without values.
+
 Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
 and `snapshot-dependencies` accept whole-response `--fields` on
 `list/show/create/replace/replace-all`; steps and features also accept it on
@@ -915,7 +931,6 @@ Job `parameters` and `output-parameters` accept whole-response `--fields`
 on `list`, `show`, `create`, `set`, and `replace-all`. Lists also accept native
 `--locator`. Mutations keep fixed preflight projections; explicit fields select
 the write response. Part leaves and `set-password` retain their existing workflows.
-Project parameter commands retain their existing options and requests.
 
 Jobs `list` and `branches` accept item `--fields`; `show`, `builds`,
 `investigations`, `vcs-instances`, and `create` accept whole-response fields.
@@ -999,3 +1014,23 @@ confirmations, empty or malformed bodies, errors, exit status and unknown mutati
 outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
 acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
 fields and passes through. Lost mutation responses are never retried automatically.
+
+Project `versioned-settings affected`, `config show/effective/replace`, `status`,
+and `load` accept whole-response `--fields`. Omission preserves shaped results,
+write bodies and confirmations. Token and secure-value workflows keep fixed reads.
+
+VCS `roots list` accepts item `--fields`; `roots show/instances/create` and
+`roots properties list/replace` accept whole-response fields. Default property
+names, root shaping, selectors, paging and create bodies retain their existing behavior.
+
+VCS `instances list` accepts item `--fields`; `show`, `properties`, `state show/replace`
+and `check-changes` accept whole-response fields. `check-changes --requestor <text>`
+and `notify-commit --ok-on-nothing-found <boolean>` preserve the omitted defaults
+`user` and `false`. Boolean values must be literal `true` or `false`.
+
+VCS instance `files list/children` accept item `--fields` and `--base-path`, keeping
+`{count,items}`, the existing locator and default fields without lookahead. `metadata`
+accepts whole-response fields; `archive` accepts `--base-path` and `--archive-name`
+(query `name`). Download bounds and no-overwrite behavior remain unchanged.
+These files expose neither `--resolve-parameters` nor `--log-build-usage`.
+Server files retain their existing options.

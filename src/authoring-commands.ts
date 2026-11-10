@@ -39,8 +39,8 @@ export function createAuthoringCommands(
   const projectOption = option("--project <id>", "Select a project", true);
 
   function parameters(owner: ParameterOwner): CommandDefinition {
-    const projections = owner === "projects" ? [] : [fieldsOption];
-    const fields = (options: Record<string, unknown>) => owner === "projects" ? undefined : fieldsFromOptions(options);
+    const projections = [fieldsOption];
+    const fields = (options: Record<string, unknown>) => fieldsFromOptions(options);
     const ownerArg = owner === "projects" ? "project-id" : "job-id";
     const valueOption = option(
       "--value <value>",
@@ -66,7 +66,7 @@ export function createAuthoringCommands(
           "List parameters in server order",
           Permission.ReadOnly,
           (c, { args, options }) => c.listParameters(owner, text(args, ownerArg), fields(options), options.locator as string | undefined),
-          [...projections, ...(owner === "projects" ? [] : [{ ...locatorOption, description: "Filter native TeamCity parameters" }])],
+          [...projections, { ...locatorOption, description: "Filter native TeamCity parameters" }],
         ),
         leaf(
           `show <${ownerArg}> <name>`,
@@ -381,16 +381,18 @@ export function createAuthoringCommands(
       (c, { options }) =>
         c.listVcsRoots({
           ...optionalText(options, "project"),
+          fields: fieldsFromOptions(options),
           limit: Number(options.limit),
           start: Number(options.start),
         }),
-      [{ ...projectOption, required: false }, ...pageOptions],
+      [{ ...projectOption, required: false }, ...pageOptions, fieldsOption],
     ),
     leaf(
       "show <id>",
       "Show a VCS root identity",
       Permission.ReadOnly,
-      (c, { args }) => c.getVcsRoot(args.id),
+      (c, { args, options }) => c.getVcsRoot(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
   ];
 
@@ -421,8 +423,8 @@ export function createAuthoringCommands(
       "move <id>",
       "Move a project to a parent",
       Permission.Update,
-      (c, { args, options }) => c.moveProject(args.id, text(options, "parent")),
-      [parentOption],
+      (c, { args, options }) => c.moveProject(args.id, text(options, "parent"), fieldsFromOptions(options)),
+      [fieldsOption, parentOption],
     ),
     leaf(
       "delete <id>",

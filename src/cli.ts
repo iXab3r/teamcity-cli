@@ -186,6 +186,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           (c, { options }) => {
             const parent = stringOption(options, "parent");
             return c.listProjects({
+              fields: fieldsFromOptions(options),
               ...(parent === undefined ? {} : { parent }),
               ...(options.includeArchived === true ? { includeArchived: true } : {}),
               ...pageValues(options),
@@ -194,6 +195,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           [
             { flags: "--parent <id>", description: "Limit projects to one parent project" },
             { flags: "--include-archived", description: "Include archived projects" },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -201,7 +203,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "show <id>",
           "Show one project",
           Permission.ReadOnly,
-          (c, { args }) => c.getProject(args.id),
+          (c, { args, options }) => c.getProject(args.id, fieldsFromOptions(options)),
+          [fieldsOption],
         ),
         ...authoring.projects,
         ...infrastructure.projects,

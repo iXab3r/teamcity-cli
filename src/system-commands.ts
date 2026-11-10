@@ -235,15 +235,15 @@ export function createSystemCommands(
     ),
   ];
   const projects = [
-    leaf("default-value-sets <id>", "List named value-set types", R, (c, { args }) =>
-      c.getDefaultValueSets(args.id),
+    leaf("default-value-sets <id>", "List named value-set types", R, (c, { args, options }) =>
+      c.getDefaultValueSets(args.id, fieldsFromOptions(options)), [fieldsOption],
     ),
     command("deployments", "Inspect project dashboards", [
-      leaf("list <id>", "List project dashboards", R, (c, { args }) =>
-        c.listProjectDashboards(args.id),
+      leaf("list <id>", "List project dashboards", R, (c, { args, options }) =>
+        c.listProjectDashboards(args.id, fieldsFromOptions(options)), [fieldsOption],
       ),
-      leaf("show <project> <id>", "Read one child dashboard", R, (c, { args }) =>
-        c.getProjectDashboard(args.project, args.id),
+      leaf("show <project> <id>", "Read one child dashboard", R, (c, { args, options }) =>
+        c.getProjectDashboard(args.project, args.id, fieldsFromOptions(options)), [fieldsOption],
       ),
     ]),
   ];
