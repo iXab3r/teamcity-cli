@@ -820,49 +820,28 @@ export class TeamCityClient {
     return { jobId: jobId, id: id, deleted: true };
   }
 
-  public async listExtensions(kind: ExtensionKind, jobId: string) {
+  public listExtensions<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, fields?: F) {
     const key = kind === "triggers" ? "trigger" : "feature";
-    const result = await this.#requestJson<{ trigger?: RawExtension[]; feature?: RawExtension[] }>(
-      "GET",
-      `${jobPath(jobId)}/${kind}`,
+    return this.#projectedJson("GET", `${jobPath(jobId)}/${kind}`,
       { fields: `${key}(${extensionFields})` },
-    );
-    return (result[key] ?? []).map(safeExtension);
+      value => ((value as { trigger?: RawExtension[]; feature?: RawExtension[] })[key] ?? []).map(safeExtension), fields);
   }
 
-  public async getExtension(kind: ExtensionKind, jobId: string, id: string) {
-    return safeExtension(
-      await this.#requestJson<RawExtension>("GET", extensionPath(kind, jobId, id), {
-        fields: extensionFields,
-      }),
-    );
+  public getExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", extensionPath(kind, jobId, id),
+      { fields: extensionFields }, value => safeExtension(value as RawExtension), fields);
   }
 
-  public async createExtension(kind: ExtensionKind, jobId: string, input: ExtensionInput) {
-    return safeExtension(
-      await this.#requestJson<RawExtension>(
-        "POST",
-        `${jobPath(jobId)}/${kind}`,
-        { fields: extensionFields },
-        extensionBody(input),
-      ),
-    );
+  public createExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, input: ExtensionInput, fields?: F) {
+    return this.#projectedJson("POST", `${jobPath(jobId)}/${kind}`,
+      { fields: extensionFields }, value => safeExtension(value as RawExtension), fields, extensionBody(input));
   }
 
-  public async replaceExtension(
-    kind: ExtensionKind,
-    jobId: string,
-    id: string,
-    input: ExtensionInput,
+  public replaceExtension<F extends string | undefined = undefined>(
+    kind: ExtensionKind, jobId: string, id: string, input: ExtensionInput, fields?: F,
   ) {
-    return safeExtension(
-      await this.#requestJson<RawExtension>(
-        "PUT",
-        extensionPath(kind, jobId, id),
-        { fields: extensionFields },
-        extensionBody(input),
-      ),
-    );
+    return this.#projectedJson("PUT", extensionPath(kind, jobId, id),
+      { fields: extensionFields }, value => safeExtension(value as RawExtension), fields, extensionBody(input));
   }
 
   public async deleteExtension(kind: ExtensionKind, jobId: string, id: string) {

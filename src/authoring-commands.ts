@@ -128,26 +128,28 @@ export function createAuthoringCommands(
       bulk.replaceAll(kind),
       advanced.entityFields(kind),
       ...(kind === "features" ? [advanced.pluginParameters(kind)] : []),
-      leaf("list <job-id>", "List in server order", Permission.ReadOnly, (c, { args }) =>
-        c.listExtensions(kind, args["job-id"]),
+      leaf("list <job-id>", "List in server order", Permission.ReadOnly, (c, { args, options }) =>
+        c.listExtensions(kind, args["job-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
-      leaf(`show <job-id> <${idArg}>`, "Show a safe summary", Permission.ReadOnly, (c, { args }) =>
-        c.getExtension(kind, text(args, "job-id"), text(args, idArg)),
+      leaf(`show <job-id> <${idArg}>`, "Show a safe summary", Permission.ReadOnly, (c, { args, options }) =>
+        c.getExtension(kind, text(args, "job-id"), text(args, idArg), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "create <job-id>",
         "Add an extension",
         Permission.Update,
-        (c, { args, options }) => c.createExtension(kind, args["job-id"], input(options)),
-        extensionOptions,
+        (c, { args, options }) => c.createExtension(kind, args["job-id"], input(options), fieldsFromOptions(options)),
+        [...extensionOptions, fieldsOption],
       ),
       leaf(
         `replace <job-id> <${idArg}>`,
         "Replace an extension",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceExtension(kind, text(args, "job-id"), text(args, idArg), input(options)),
-        extensionOptions,
+          c.replaceExtension(kind, text(args, "job-id"), text(args, idArg), input(options), fieldsFromOptions(options)),
+        [...extensionOptions, fieldsOption],
       ),
       leaf(`delete <job-id> <${idArg}>`, "Delete one extension", Permission.Update, (c, { args }) =>
         c.deleteExtension(kind, text(args, "job-id"), text(args, idArg)),
