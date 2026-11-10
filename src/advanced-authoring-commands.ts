@@ -221,8 +221,8 @@ export function createAdvancedAuthoringCommands(
     ),
   ]);
   const templates = command("templates", "Create templates and manage the project default", [
-    leaf("list <project-id>", "List own templates", Permission.ReadOnly, (c, { args }) =>
-      c.listProjectTemplates(args["project-id"]),
+    leaf("list <project-id>", "List own templates", Permission.ReadOnly, (c, { args, options }) =>
+      c.listProjectTemplates(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
     ),
     leaf(
       "create <project-id> <template-id>",
@@ -241,7 +241,8 @@ export function createAdvancedAuthoringCommands(
         "show <project-id>",
         "Show the effective default template",
         Permission.ReadOnly,
-        (c, { args }) => c.getDefaultTemplate(args["project-id"]),
+        (c, { args, options }) =>
+        c.getDefaultTemplate(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
       ),
       leaf(
         "set <project-id>",
@@ -285,7 +286,8 @@ export function createAdvancedAuthoringCommands(
         "parent <project-id>",
         "Show parent project identity",
         Permission.ReadOnly,
-        (c, { args }) => c.getProjectParent(args["project-id"]),
+        (c, { args, options }) =>
+        c.getProjectParent(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
       ),
     ],
     jobs: [

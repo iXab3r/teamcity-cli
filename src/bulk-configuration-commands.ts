@@ -138,8 +138,8 @@ export function createBulkConfigurationCommands(
   ];
   const projects = [
     command("pools", "Manage project pool assignments", [
-      leaf("list <project-id>", "List assigned pools", Permission.ReadOnly, (c, { args }) =>
-        c.listProjectPools(args["project-id"]),
+      leaf("list <project-id>", "List assigned pools", Permission.ReadOnly, (c, { args, options }) =>
+        c.listProjectPools(args["project-id"], fieldsFromOptions(options)), [fieldsOption],
       ),
       leaf("assign <project-id> <pool-id>", "Assign one pool", Permission.Update, (c, { args }) =>
         c.assignProjectPool(args["project-id"], number(args, "pool-id")),
@@ -165,10 +165,11 @@ export function createBulkConfigurationCommands(
       Permission.ReadOnly,
       (c, { args, options }) =>
         c.listProjectBranches(args["project-id"], {
+          fields: fieldsFromOptions(options),
           limit: Number(options.limit),
           start: Number(options.start),
         }),
-      pageOptions,
+      [...pageOptions, fieldsOption],
     ),
     command("jobs", "Create jobs inside a project", [
       leaf(

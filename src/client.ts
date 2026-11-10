@@ -162,7 +162,8 @@ interface RawTeamCityChange extends Omit<TeamCityChange, "committer"> {
   commiter?: { vcsUsername?: string };
 }
 
-export interface ListProjectsOptions extends TeamCityPageOptions {
+export interface ListProjectsOptions<F extends string | undefined = undefined> extends TeamCityPageOptions {
+  fields?: F;
   parent?: string;
   includeArchived?: boolean;
 }
@@ -353,7 +354,7 @@ export class TeamCityClient {
     });
   }
 
-  public listProjects(options: ListProjectsOptions = {}): Promise<TeamCityPage<TeamCityProject>> {
+  public listProjects<F extends string | undefined = undefined>(options: ListProjectsOptions<F> = {}) {
     return this.#list(
       "/app/rest/projects",
       [
@@ -369,12 +370,9 @@ export class TeamCityClient {
     );
   }
 
-  public getProject(id: string): Promise<TeamCityProject> {
-    return this.#requestJson<TeamCityProject>(
-      "GET",
-      `/app/rest/projects/${idPath(id, "TeamCity project ID")}`,
-      { fields: projectFields },
-    );
+  public getProject<F extends string | undefined = undefined>(id: string, fields?: F): Promise<Projected<TeamCityProject, F>> {
+    return this.#projectedJson("GET", `/app/rest/projects/${idPath(id, "TeamCity project ID")}`,
+      { fields: projectFields }, value => value as TeamCityProject, fields);
   }
 
   public listJobs<F extends string | undefined = undefined>(options: ListJobsOptions<F> = {}) {
@@ -1049,13 +1047,9 @@ export class TeamCityClient {
     return { ownerId: projectId, id: id, deleted: true };
   }
 
-  public async listProjectTemplates(projectId: string) {
-    const result = await this.#requestJson<{ buildType?: BuildTypeIdentity[] }>(
-      "GET",
-      `${projectPath(projectId)}/templates`,
-      { fields: `buildType(${identityFields})` },
-    );
-    return (result.buildType ?? []).map(safeIdentity);
+  public async listProjectTemplates<F extends string | undefined = undefined>(projectId: string, fields?: F) {
+    return this.#projectedJson("GET", `${projectPath(projectId)}/templates`,
+      { fields: `buildType(${identityFields})` }, value => ((value as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields);
   }
 
   public async createProjectTemplate(projectId: string, id: string, name: string) {
@@ -1069,14 +1063,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getDefaultTemplate(projectId: string) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "GET",
-        `${projectPath(projectId)}/defaultTemplate`,
-        { fields: identityFields },
-      ),
-    );
+  public async getDefaultTemplate<F extends string | undefined = undefined>(projectId: string, fields?: F) {
+    return this.#projectedJson("GET", `${projectPath(projectId)}/defaultTemplate`,
+      { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields);
   }
 
   public async setDefaultTemplate(projectId: string, id: string) {
@@ -1100,13 +1089,9 @@ export class TeamCityClient {
       { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields);
   }
 
-  public async getProjectParent(projectId: string) {
-    const result = await this.#requestJson<BuildTypeIdentity>(
-      "GET",
-      `${projectPath(projectId)}/parentProject`,
-      { fields: "id,name" },
-    );
-    return { id: result.id, ...(result.name === undefined ? {} : { name: result.name }) };
+  public async getProjectParent<F extends string | undefined = undefined>(projectId: string, fields?: F) {
+    return this.#projectedJson("GET", `${projectPath(projectId)}/parentProject`,
+      { fields: "id,name" }, value => { const result = value as BuildTypeIdentity; return { id: result.id, ...(result.name === undefined ? {} : { name: result.name }) }; }, fields);
   }
 
   public async getOwnerField(owner: "projects" | "jobs", id: string, field: string) {
@@ -1645,13 +1630,9 @@ export class TeamCityClient {
       value => ((value as { build?: OperationBuild[] }).build ?? []).map(safeOperationBuild), fields);
   }
 
-  public async listProjectPools(projectId: string) {
-    const result = await this.#requestJson<{ agentPool?: AgentPoolSummary[] }>(
-      "GET",
-      `${projectPath(projectId)}/agentPools`,
-      { fields: "agentPool(id,name)" },
-    );
-    return (result.agentPool ?? []).map(safeNamed);
+  public async listProjectPools<F extends string | undefined = undefined>(projectId: string, fields?: F) {
+    return this.#projectedJson("GET", `${projectPath(projectId)}/agentPools`,
+      { fields: "agentPool(id,name)" }, value => ((value as { agentPool?: AgentPoolSummary[] }).agentPool ?? []).map(safeNamed), fields);
   }
 
   public async assignProjectPool(projectId: string, id: number) {
@@ -1685,7 +1666,7 @@ export class TeamCityClient {
     return { projectId: projectId, poolId, unassigned: true };
   }
 
-  public listProjectBranches(projectId: string, options: TeamCityPageOptions = {}) {
+  public listProjectBranches<F extends string | undefined = undefined>(projectId: string, options: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list(`${projectPath(projectId)}/branches`, [], "branch", "name,default", (item) => {
       const branch = item as { name: string; default?: boolean };
       return {
@@ -3429,40 +3410,21 @@ export class TeamCityClient {
     return this.#projectedAcknowledgement(contents, fields,
       { requestedIds: selected, serverAcknowledged: true, postconditionVerified: false });
   }
-  public async getDefaultValueSets(id: string) {
-    return system.collection(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/projects/" + idPath(id, "ID") + "/defaultValueSets",
-        { fields: "count,valueSet(name,displayName)" },
-      ),
-      "valueSet",
-      (v) => triage.safeScalars(v, ["name", "displayName"]),
-    );
+  public async getDefaultValueSets<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/projects/" + idPath(id, "ID") + "/defaultValueSets",
+      { fields: "count,valueSet(name,displayName)" }, value => system.collection(value, "valueSet", (v) => triage.safeScalars(v, ["name", "displayName"])), fields);
   }
-  public async listProjectDashboards(id: string) {
-    return system.collection(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/projects/" + idPath(id, "ID") + "/deploymentDashboards",
-        { fields: `count,deploymentDashboard(${system.dashboardFields})` },
-      ),
-      "deploymentDashboard",
-      system.safeDashboard,
-    );
+
+  public async listProjectDashboards<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/projects/" + idPath(id, "ID") + "/deploymentDashboards",
+      { fields: `count,deploymentDashboard(${system.dashboardFields})` }, value => system.collection(value, "deploymentDashboard", system.safeDashboard), fields);
   }
-  public async getProjectDashboard(project: string, id: string) {
-    return system.safeDashboard(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/projects/" +
-          idPath(project, "Project ID") +
-          "/deploymentDashboards/" +
-          idPath(id, "ID"),
-        { fields: system.dashboardFields },
-      ),
-    );
+
+  public async getProjectDashboard<F extends string | undefined = undefined>(project: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/projects/" + idPath(project, "Project ID") + "/deploymentDashboards/" + idPath(id, "ID"),
+      { fields: system.dashboardFields }, value => system.safeDashboard(value), fields);
   }
+
   public async listRoleDefinitions() {
     return system.collection(
       await this.#requestJson("GET", "/app/rest/roles", {
