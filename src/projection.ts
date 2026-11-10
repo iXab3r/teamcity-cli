@@ -40,14 +40,22 @@ export function knownCredentialMask(credential: string): (text: string) => strin
     }
     return parts.join("");
   });
+  const unescape = (text: string) =>
+    text.replace(/\\(?:u([\da-fA-F]{4})|["\\/bfnrt])/g, (escape: string, hex: string | undefined) =>
+      hex === undefined ? escapes[escape[1]!]! : String.fromCharCode(Number.parseInt(hex, 16)));
   return text => {
-    let decoded = text;
-    for (let round = 0; round < 3; round++) {
-      const next = percentDecode(decoded).replace(/\\(?:u([\da-fA-F]{4})|["\\/bfnrt])/g, (escape: string, hex: string | undefined) =>
-        hex === undefined ? escapes[escape[1]!]! : String.fromCharCode(Number.parseInt(hex, 16)));
-      if (next === decoded) break;
-      if (next.includes(credential)) return "[redacted]";
-      decoded = next;
+    // Each step is checked on its own: a credential may itself contain an escape sequence.
+    let forms = [text];
+    for (let round = 0; round < 3 && forms.length > 0; round++) {
+      const next = new Set<string>();
+      for (const form of forms) {
+        for (const decoded of [percentDecode(form), unescape(form)]) {
+          if (decoded === form) continue;
+          if (decoded.includes(credential)) return "[redacted]";
+          next.add(decoded);
+        }
+      }
+      forms = [...next];
     }
     return text.split(credential).join("[redacted]");
   };
