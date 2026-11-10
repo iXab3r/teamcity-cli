@@ -1,3 +1,4 @@
+import { fieldsOption } from "./projection.js";
 import {
   command,
   Permission,
@@ -250,8 +251,9 @@ export function createBulkConfigurationCommands(
       ),
     ]),
     command("approval", "Inspect and approve queued builds", [
-      leaf("show <build-id>", "Show minimal approval status", Permission.ReadOnly, (c, { args }) =>
-        c.getQueueApproval(number(args, "build-id")),
+      leaf("show <build-id>", "Show minimal approval status", Permission.ReadOnly, (c, { args, options }) =>
+        c.getQueueApproval(number(args, "build-id"), options.fields as string | undefined),
+      [fieldsOption],
       ),
       leaf(
         "approve <build-id>",

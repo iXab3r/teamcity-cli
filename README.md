@@ -319,6 +319,11 @@ The build evidence reads also accept whole-response `--fields`: `builds canceled
 These unpaged reads return the native response object when a projection is supplied;
 parameter values can therefore be selected explicitly. Omission keeps existing outputs.
 
+`queue list` accepts item `--fields` and keeps its paging envelope and job/project filters.
+`queue show`, `queue position show`, `queue approval show`, and `queue compatible-agents`
+accept whole-response `--fields`. Explicit projections use native JSON and the generic view;
+omission preserves existing requests and output.
+
 ## Triggers, features, dependencies and templates
 
 These are configuration mutations gated by Update, not immediate build launches. Use the intended

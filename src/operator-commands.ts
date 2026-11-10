@@ -227,21 +227,26 @@ export function createOperatorCommands(
   const queue = [
     ...bulk.queue,
     tags("queue"),
-    leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args }) =>
-      c.getQueuedBuild(number(args, "build-id")),
+    leaf("show <build-id>", "Show one queued build", Permission.ReadOnly, (c, { args, options }) =>
+      c.getQueuedBuild(number(args, "build-id"), options.fields as string | undefined),
+    [fieldsOption],
     ),
     leaf(
       "compatible-agents <build-id>",
       "List compatible agent identities",
       Permission.ReadOnly,
-      (c, { args }) => c.listQueueCompatibleAgents(number(args, "build-id")),
+      (c, { args, options }) =>
+        c.listQueueCompatibleAgents(number(args, "build-id"), options.fields as string | undefined),
+      [fieldsOption],
     ),
     command("position", "Inspect positions or move a queued build", [
       leaf(
         "show <position>",
         "Show the build at a queue position",
         Permission.ReadOnly,
-        (c, { args }) => c.getQueuePosition(args.position),
+        (c, { args, options }) =>
+          c.getQueuePosition(args.position, options.fields as string | undefined),
+        [fieldsOption],
       ),
       leaf(
         "set <position>",

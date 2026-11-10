@@ -363,12 +363,14 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...(job === undefined ? {} : { job }),
               ...(project === undefined ? {} : { project }),
               ...pageValues(options),
+              ...optionalText(options, "fields"),
             });
           },
           [
             { flags: "--job <id>", description: "Limit queued builds to one job" },
             { flags: "--project <id>", description: "Limit queued builds to one project" },
             ...pageOptions,
+            fieldsOption,
           ],
         )),
         withView(buildRecord, leaf(

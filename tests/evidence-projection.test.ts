@@ -112,7 +112,7 @@ for (const scenario of buildProjectionCases) {
     }
   });
 
-  test(`US-002-A4 ${scenario.name}: native credential echoes are masked on every surface`, async t => {
+  test(`US-002 ${scenario.name}: native credential echoes are masked on every surface`, async t => {
     const rt = await runtime(t);
     const cli = rt.createCli();
     const echoed = { id: 42, nested: { value: `before ${token} after`, [token]: [token, null] } };
@@ -128,7 +128,7 @@ for (const scenario of buildProjectionCases) {
     }
   });
 
-  test(`US-002-A5 ${scenario.name}: denied ReadOnly has no HTTP, credential or file effects`, async t => {
+  test(`US-002-A4 ${scenario.name}: denied ReadOnly has no HTTP, credential or file effects`, async t => {
     const rt = await runtime(t, []);
     const cli = rt.createCli();
     const snapshot = async (path: string): Promise<unknown> => Promise.all((await readdir(path, { withFileTypes: true })).map(async entry => [entry.name,
@@ -149,7 +149,7 @@ for (const scenario of buildProjectionCases) {
   });
 
   for (const fields of ["", " \t\n "]) {
-    test(`US-002-A7 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
+    test(`US-002-A6 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
       const rt = await runtime(t);
       const cli = rt.createCli();
       const requests = trackRequests(t, 0, () => HttpResponse.json({}));
@@ -171,7 +171,7 @@ const failures = [
   { name: "decoding", code: "error", response: () => HttpResponse.text(`invalid JSON synthetic-server-payload ${token}`) },
 ];
 for (const example of failures) {
-  test(`US-002-A6 ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
+  test(`US-002-A5 ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
     const rt = await runtime(t);
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, () => example.response());
