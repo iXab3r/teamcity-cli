@@ -96,8 +96,8 @@ export function createBulkConfigurationCommands(
       "Replace the collection",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["steps", "features", "triggers"].includes(kind) ? fieldsFromOptions(options) : undefined),
-      [itemOption, ...(["steps", "features", "triggers"].includes(kind) ? [fieldsOption] : [])],
+        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies"].includes(kind) ? fieldsFromOptions(options) : undefined),
+      [itemOption, ...(["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies"].includes(kind) ? [fieldsOption] : [])],
     );
   }
   const templates = [

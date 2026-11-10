@@ -849,47 +849,24 @@ export class TeamCityClient {
     return { jobId: jobId, id: id, deleted: true };
   }
 
-  public async listSnapshotDependencies(jobId: string) {
-    const result = await this.#requestJson<{ "snapshot-dependency"?: RawSnapshotDependency[] }>(
-      "GET",
-      `${jobPath(jobId)}/snapshot-dependencies`,
-      { fields: `snapshot-dependency(${snapshotFields})` },
-    );
-    return (result["snapshot-dependency"] ?? []).map(safeSnapshot);
+  public async listSnapshotDependencies<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/snapshot-dependencies`,
+      { fields: `snapshot-dependency(${snapshotFields})` }, value => ((value as { "snapshot-dependency"?: RawSnapshotDependency[] })["snapshot-dependency"] ?? []).map(safeSnapshot), fields);
   }
 
-  public async getSnapshotDependency(jobId: string, id: string) {
-    return safeSnapshot(
-      await this.#requestJson<RawSnapshotDependency>("GET", snapshotPath(jobId, id), {
-        fields: snapshotFields,
-      }),
-    );
+  public async getSnapshotDependency<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", snapshotPath(jobId, id),
+      { fields: snapshotFields }, value => safeSnapshot(value as RawSnapshotDependency), fields);
   }
 
-  public async createSnapshotDependency(jobId: string, input: SnapshotDependencyInput) {
-    return safeSnapshot(
-      await this.#requestJson<RawSnapshotDependency>(
-        "POST",
-        `${jobPath(jobId)}/snapshot-dependencies`,
-        { fields: snapshotFields },
-        snapshotBody(jobId, input),
-      ),
-    );
+  public async createSnapshotDependency<F extends string | undefined = undefined>(jobId: string, input: SnapshotDependencyInput, fields?: F) {
+    return this.#projectedJson("POST", `${jobPath(jobId)}/snapshot-dependencies`,
+      { fields: snapshotFields }, value => safeSnapshot(value as RawSnapshotDependency), fields, snapshotBody(jobId, input));
   }
 
-  public async replaceSnapshotDependency(
-    jobId: string,
-    id: string,
-    input: SnapshotDependencyInput,
-  ) {
-    return safeSnapshot(
-      await this.#requestJson<RawSnapshotDependency>(
-        "PUT",
-        snapshotPath(jobId, id),
-        { fields: snapshotFields },
-        snapshotBody(jobId, input),
-      ),
-    );
+  public async replaceSnapshotDependency<F extends string | undefined = undefined>(jobId: string, id: string, input: SnapshotDependencyInput, fields?: F) {
+    return this.#projectedJson("PUT", snapshotPath(jobId, id),
+      { fields: snapshotFields }, value => safeSnapshot(value as RawSnapshotDependency), fields, snapshotBody(jobId, input));
   }
 
   public async deleteSnapshotDependency(jobId: string, id: string) {
@@ -928,44 +905,24 @@ export class TeamCityClient {
     return { jobId: jobId, templateId: templateId, detached: true, inlineSettings };
   }
 
-  public async listRules(kind: RuleKind, jobId: string) {
-    const key = kind === "agent-requirements" ? "agent-requirement" : "artifact-dependency";
-    const result = await this.#requestJson<Record<string, RawSnapshotDependency[]>>(
-      "GET",
-      `${jobPath(jobId)}/${kind}`,
-      { fields: `${key}(${ruleFields(kind)})` },
-    );
-    return (result[key] ?? []).map(safeSnapshot);
+  public async listRules<F extends string | undefined = undefined>(kind: RuleKind, jobId: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/${kind}`,
+      { fields: `${kind === "agent-requirements" ? "agent-requirement" : "artifact-dependency"}(${ruleFields(kind)})` }, value => ((value as Record<string, RawSnapshotDependency[]>)[kind === "agent-requirements" ? "agent-requirement" : "artifact-dependency"] ?? []).map(safeSnapshot), fields);
   }
 
-  public async getRule(kind: RuleKind, jobId: string, id: string) {
-    return safeSnapshot(
-      await this.#requestJson<RawSnapshotDependency>("GET", entityPath(kind, jobId, id), {
-        fields: ruleFields(kind),
-      }),
-    );
+  public async getRule<F extends string | undefined = undefined>(kind: RuleKind, jobId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", entityPath(kind, jobId, id),
+      { fields: ruleFields(kind) }, value => safeSnapshot(value as RawSnapshotDependency), fields);
   }
 
-  public async createRule(jobId: string, input: RuleInput) {
-    return safeSnapshot(
-      await this.#requestJson<RawSnapshotDependency>(
-        "POST",
-        `${jobPath(jobId)}/${input.kind}`,
-        { fields: ruleFields(input.kind) },
-        ruleBody(jobId, input),
-      ),
-    );
+  public async createRule<F extends string | undefined = undefined>(jobId: string, input: RuleInput, fields?: F) {
+    return this.#projectedJson("POST", `${jobPath(jobId)}/${input.kind}`,
+      { fields: ruleFields(input.kind) }, value => safeSnapshot(value as RawSnapshotDependency), fields, ruleBody(jobId, input));
   }
 
-  public async replaceRule(jobId: string, id: string, input: RuleInput) {
-    return safeSnapshot(
-      await this.#requestJson<RawSnapshotDependency>(
-        "PUT",
-        entityPath(input.kind, jobId, id),
-        { fields: ruleFields(input.kind) },
-        ruleBody(jobId, input),
-      ),
-    );
+  public async replaceRule<F extends string | undefined = undefined>(jobId: string, id: string, input: RuleInput, fields?: F) {
+    return this.#projectedJson("PUT", entityPath(input.kind, jobId, id),
+      { fields: ruleFields(input.kind) }, value => safeSnapshot(value as RawSnapshotDependency), fields, ruleBody(jobId, input));
   }
 
   public async deleteRule(kind: RuleKind, jobId: string, id: string) {

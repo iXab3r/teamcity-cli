@@ -142,35 +142,37 @@ export function createAdvancedAuthoringCommands(
     return command(kind, "Manage job rules", [
       bulk.replaceAll(kind),
       entityFields(kind),
-      leaf("list <job-id>", "List rules in server order", Permission.ReadOnly, (c, { args }) =>
-        c.listRules(kind, args["job-id"]),
+      leaf("list <job-id>", "List rules in server order", Permission.ReadOnly, (c, { args, options }) =>
+        c.listRules(kind, args["job-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         `show <job-id> <${arg}>`,
         "Show a safe rule summary",
         Permission.ReadOnly,
-        (c, { args }) => c.getRule(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) => c.getRule(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "create <job-id>",
         "Add a rule",
         Permission.Update,
-        (c, { args, options }) => c.createRule(args["job-id"], input(options)),
-        options,
+        (c, { args, options }) => c.createRule(args["job-id"], input(options), fieldsFromOptions(options)),
+        [...options, fieldsOption],
       ),
       leaf(
         `replace <job-id> <${arg}>`,
         "Replace all rule settings",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceRule(text(args, "job-id"), text(args, arg), input(options)),
-        options,
+          c.replaceRule(text(args, "job-id"), text(args, arg), input(options), fieldsFromOptions(options)),
+        [...options, fieldsOption],
       ),
       leaf(
         `delete <job-id> <${arg}>`,
         "Remove a job rule",
         Permission.Update,
-        (c, { args }) => c.deleteRule(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) => c.deleteRule(kind, text(args, "job-id"), text(args, arg)),
       ),
     ]);
   }

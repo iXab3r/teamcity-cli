@@ -173,21 +173,23 @@ export function createAuthoringCommands(
         "list <job-id>",
         "List dependencies in server order",
         Permission.ReadOnly,
-        (c, { args }) => c.listSnapshotDependencies(args["job-id"]),
+        (c, { args, options }) => c.listSnapshotDependencies(args["job-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "show <job-id> <dependency-id>",
         "Show a dependency summary",
         Permission.ReadOnly,
-        (c, { args }) => c.getSnapshotDependency(args["job-id"], args["dependency-id"]),
+        (c, { args, options }) => c.getSnapshotDependency(args["job-id"], args["dependency-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "create <job-id>",
         "Add an upstream dependency",
         Permission.Update,
         (c, { args, options }) =>
-          c.createSnapshotDependency(args["job-id"], snapshotInput(options)),
-        snapshotOptions,
+          c.createSnapshotDependency(args["job-id"], snapshotInput(options), fieldsFromOptions(options)),
+        [...snapshotOptions, fieldsOption],
       ),
       leaf(
         "replace <job-id> <dependency-id>",
@@ -198,8 +200,9 @@ export function createAuthoringCommands(
             args["job-id"],
             args["dependency-id"],
             snapshotInput(options),
+            fieldsFromOptions(options),
           ),
-        snapshotOptions,
+        [...snapshotOptions, fieldsOption],
       ),
       leaf(
         "delete <job-id> <dependency-id>",
