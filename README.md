@@ -30,7 +30,7 @@ Share of the 449 published REST operations each tool can call through its own co
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/coverage-matrix-dark.svg">
-  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations (100%), teamcity-cli 0.1.0 reached 17 (4%), the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands">
+  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands">
 </picture>
 
 The JetBrains CLI also has a raw `teamcity api` request command and features outside this API

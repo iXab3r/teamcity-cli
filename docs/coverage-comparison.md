@@ -5,66 +5,65 @@ How much of the published TeamCity REST API each tool can call. Measured 2026-11
 | Tool | Reachable operations | GET (235) | POST, PUT, DELETE (214) |
 |---|---:|---:|---:|
 | `teamcity-cli` 0.7.1 (this package) | 449 of 449 (100%) | 235 | 214 |
-| `teamcity-cli` 0.1.0 (baseline before the expansion) | 17 of 449 (4%) | 14 | 3 |
 | `teamcity` 1.6.3 (JetBrains TeamCity CLI), dedicated commands | 75 of 449 (17%) | 41 | 34 |
 
 ## By API area
 
 Percent of operations reachable, with the count in brackets.
 
-| API area | Operations | teamcity-cli 0.7.1 | teamcity-cli 0.1.0 | teamcity 1.6.3 |
-|---|---:|---:|---:|---:|
-| Builds | 57 | 100% (57) | 5% (3) | 18% (10) |
-| Build queue | 15 | 100% (15) | 20% (3) | 33% (5) |
-| Build configurations | 109 | 100% (109) | 2% (2) | 13% (14) |
-| Projects | 48 | 100% (48) | 4% (2) | 27% (13) |
-| Versioned settings | 16 | 100% (16) | 0% (0) | 19% (3) |
-| VCS roots and instances | 31 | 100% (31) | 0% (0) | 13% (4) |
-| Changes, tests and problems | 18 | 100% (18) | 17% (3) | 17% (3) |
-| Investigations and mutes | 12 | 100% (12) | 0% (0) | 0% (0) |
-| Agents and agent pools | 30 | 100% (30) | 7% (2) | 33% (10) |
-| Cloud profiles, images, instances | 10 | 100% (10) | 0% (0) | 90% (9) |
-| Users, groups and roles | 56 | 100% (56) | 2% (1) | 4% (2) |
-| Server, nodes, audit and health | 38 | 100% (38) | 3% (1) | 5% (2) |
-| Deployment dashboards | 9 | 100% (9) | 0% (0) | 0% (0) |
-| **All operations** | **449** | **100% (449)** | **4% (17)** | **17% (75)** |
+| API area | Operations | teamcity-cli 0.7.1 | teamcity 1.6.3 |
+|---|---:|---:|---:|
+| Builds | 57 | 100% (57) | 18% (10) |
+| Build queue | 15 | 100% (15) | 33% (5) |
+| Build configurations | 109 | 100% (109) | 13% (14) |
+| Projects | 48 | 100% (48) | 27% (13) |
+| Versioned settings | 16 | 100% (16) | 19% (3) |
+| VCS roots and instances | 31 | 100% (31) | 13% (4) |
+| Changes, tests and problems | 18 | 100% (18) | 17% (3) |
+| Investigations and mutes | 12 | 100% (12) | 0% (0) |
+| Agents and agent pools | 30 | 100% (30) | 33% (10) |
+| Cloud profiles, images, instances | 10 | 100% (10) | 90% (9) |
+| Users, groups and roles | 56 | 100% (56) | 4% (2) |
+| Server, nodes, audit and health | 38 | 100% (38) | 5% (2) |
+| Deployment dashboards | 9 | 100% (9) | 0% (0) |
+| **All operations** | **449** | **100% (449)** | **17% (75)** |
 
 ## By published resource group
 
 Reachable operation counts. A group is the tag TeamCity gives the operation in its REST description.
 
-| Resource group | Operations | teamcity-cli 0.7.1 | teamcity-cli 0.1.0 | teamcity 1.6.3 |
-|---|---:|---:|---:|---:|
-| `Agent` | 15 | 15 | 2 | 6 |
-| `AgentPool` | 14 | 14 | 0 | 4 |
-| `AgentType` | 1 | 1 | 0 | 0 |
-| `Audit` | 2 | 2 | 0 | 0 |
-| `Avatar` | 4 | 4 | 0 | 0 |
-| `Build` | 57 | 57 | 3 | 10 |
-| `BuildQueue` | 15 | 15 | 3 | 5 |
-| `BuildType` | 109 | 109 | 2 | 14 |
-| `Change` | 10 | 10 | 1 | 1 |
-| `CloudInstance` | 10 | 10 | 0 | 9 |
-| `DeploymentDashboard` | 9 | 9 | 0 | 0 |
-| `Global Server Settings` | 2 | 2 | 0 | 0 |
-| `Group` | 16 | 16 | 0 | 0 |
-| `health` | 4 | 4 | 0 | 0 |
-| `Investigation` | 6 | 6 | 0 | 0 |
-| `Mute` | 6 | 6 | 0 | 0 |
-| `Node` | 6 | 6 | 0 | 0 |
-| `Problem` | 2 | 2 | 0 | 0 |
-| `ProblemOccurrence` | 2 | 2 | 1 | 1 |
-| `Project` | 48 | 48 | 2 | 13 |
-| `Role` | 8 | 8 | 0 | 0 |
-| `Root` | 4 | 4 | 0 | 0 |
-| `Server` | 18 | 18 | 1 | 2 |
-| `Server Authentication Settings` | 2 | 2 | 0 | 0 |
-| `Test` | 2 | 2 | 0 | 0 |
-| `TestOccurrence` | 2 | 2 | 1 | 1 |
-| `User` | 28 | 28 | 1 | 2 |
-| `VcsRoot` | 14 | 14 | 0 | 4 |
-| `VcsRootInstance` | 17 | 17 | 0 | 0 |
-| `VersionedSettings` | 16 | 16 | 0 | 3 |
+| Resource group | Operations | teamcity-cli 0.7.1 | teamcity 1.6.3 |
+|---|---:|---:|---:|
+| `Agent` | 15 | 15 | 6 |
+| `AgentPool` | 14 | 14 | 4 |
+| `AgentType` | 1 | 1 | 0 |
+| `Audit` | 2 | 2 | 0 |
+| `Avatar` | 4 | 4 | 0 |
+| `Build` | 57 | 57 | 10 |
+| `BuildQueue` | 15 | 15 | 5 |
+| `BuildType` | 109 | 109 | 14 |
+| `Change` | 10 | 10 | 1 |
+| `CloudInstance` | 10 | 10 | 9 |
+| `DeploymentDashboard` | 9 | 9 | 0 |
+| `Global Server Settings` | 2 | 2 | 0 |
+| `Group` | 16 | 16 | 0 |
+| `health` | 4 | 4 | 0 |
+| `Investigation` | 6 | 6 | 0 |
+| `Mute` | 6 | 6 | 0 |
+| `Node` | 6 | 6 | 0 |
+| `Problem` | 2 | 2 | 0 |
+| `ProblemOccurrence` | 2 | 2 | 1 |
+| `Project` | 48 | 48 | 13 |
+| `Role` | 8 | 8 | 0 |
+| `Root` | 4 | 4 | 0 |
+| `Server` | 18 | 18 | 2 |
+| `Server Authentication Settings` | 2 | 2 | 0 |
+| `Test` | 2 | 2 | 0 |
+| `TestOccurrence` | 2 | 2 | 1 |
+| `User` | 28 | 28 | 2 |
+| `VcsRoot` | 14 | 14 | 4 |
+| `VcsRootInstance` | 17 | 17 | 0 |
+| `VersionedSettings` | 16 | 16 | 3 |
 
 The areas above combine these groups: changes, tests and problems are `Change`, `Test`,
 `TestOccurrence`, `Problem` and `ProblemOccurrence`; agents and agent pools are `Agent`, `AgentPool`
@@ -94,8 +93,6 @@ investigations and mutes are `Investigation` and `Mute`. Every other area is one
   `auth status`, `auth login` and `profile configure`, always for the current user; no command
   reads another user through it (`users list` and `users fields` use other operations).
   The command tree has 456 service commands: 234 `ReadOnly`, 171 `Update`, 37 `Admin`, 14 `Credentials`.
-- **teamcity-cli 0.1.0** is the frozen baseline of that 2026-08-30 audit: the 17 operations of the
-  first read-and-run slice, including the same sign-in check.
 - **teamcity 1.6.3** was measured by reading the source of the release tag `v1.6.3`
   ([optional source reference: JetBrains/teamcity-cli v1.6.3](https://github.com/JetBrains/teamcity-cli/tree/v1.6.3),
   published 2026-11-04) without building or running it. Every HTTP call in its `api` package and
