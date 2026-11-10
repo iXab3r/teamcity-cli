@@ -17,6 +17,7 @@
     "prepack": "npm run build",
     "test": "npm run build && npm run test:compiled",
     "check": "npm test",
+    "test:coverage": "node scripts/rest-api-audit/verify.mjs",
     "test:package": "node scripts/test-package.mjs",
     "test:registry": "node scripts/test-package.mjs --registry",
     "test:release": "node --test scripts/test-release.mjs"

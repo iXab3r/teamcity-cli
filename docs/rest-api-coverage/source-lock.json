@@ -1,0 +1,13 @@
+{
+  "retrievedDateUTC": "2026-11-10",
+  "swagger": {
+    "url": "https://teamcity.jetbrains.com/app/rest/swagger.json",
+    "sha256": "f312f0054f5daf58747a46da2a8e19782a7a810be234ddf380c2e0f28168b728",
+    "bytes": 617351,
+    "swaggerVersion": "2.0",
+    "infoVersion": "2026.1 (current)",
+    "pathCount": 268,
+    "operationCount": 449
+  },
+  "projectionSha256": "6394a30d537b16d4cd8a77f9051b9fd6e399e4e2e115b8e4746b220095ef950f"
+}
