@@ -72,7 +72,9 @@ const operationRows = facts.map(fact => {
   const bindings = [...commands.values()].sort((a, b) => a.command < b.command ? -1 : 1);
   const optionNames = new Set(bindings.flatMap(binding => binding.options).map(flags => flags.split(' ')[0].slice(2).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())));
   const query = fact.queryParameters.map(name => {
-    const control = explicitControls[fact.id]?.[name] ?? (optionNames.has(name) ? 'same-named option' : null);
+    // A declared option counts only when the suite shows it given while the parameter is on the wire.
+    const wired = leafCalls.some(call => !call.probe && call.leaf.given.includes(name) && call.query[name] !== undefined);
+    const control = explicitControls[fact.id]?.[name] ?? (optionNames.has(name) && wired ? 'same-named option' : null);
     // A locator is composed from typed options and arguments; no raw locator passthrough is claimed.
     const typedLocator = name === 'locator' && sent[name] !== undefined;
     return { name, wire: !sent[name] ? 'omitted' : sent[name].size > 1 ? 'varies' : 'fixed',
