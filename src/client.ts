@@ -3363,10 +3363,12 @@ export class TeamCityClient {
   }
 
   #cancel(path: string, options: CancelBuildOptions): Promise<TeamCityBuild> {
-    return this.#requestJson<TeamCityBuild>(
+    return this.#projectedJson(
       "POST",
       path,
-      { fields: options.fields === undefined ? buildFields : fieldsProjection(options.fields) },
+      { fields: buildFields },
+      value => value as TeamCityBuild,
+      options.fields,
       {
         ...(options.comment === undefined
           ? {}

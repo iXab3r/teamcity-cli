@@ -17,7 +17,7 @@ async function partial<T extends { count: number; errorCount: number }>(
   result: Promise<T>,
 ): Promise<T> {
   const value = await result;
-  if (value.errorCount > 0) {
+  if (value?.errorCount > 0) {
     throw new CliError(`${value.errorCount} of ${value.count} builds failed; see items.`, {
       code: "batch.partial",
       result: value,
@@ -33,7 +33,7 @@ async function statusPartial<T extends { errorCount: number }>(
   const value = await result;
   const errorCount = fields === undefined
     ? value.errorCount
-    : (value as { errors?: { item?: unknown[] } }).errors?.item?.length ?? 0;
+    : (value as { errors?: { item?: unknown[] } } | null)?.errors?.item?.length ?? 0;
   if (errorCount > 0) {
     throw new CliError("The status changed with errors; see errorCount.", {
       code: "build.statusPartial",
@@ -47,7 +47,7 @@ async function statusPartial<T extends { errorCount: number }>(
 async function labelsPartial<T extends { status?: unknown }>(result: Promise<T[]>): Promise<T[]> {
   const labels = await result;
   if (
-    (Array.isArray(labels) ? labels : ((labels as { vcsLabel?: T[] }).vcsLabel ?? [])).some(
+    (Array.isArray(labels) ? labels : ((labels as { vcsLabel?: T[] } | null)?.vcsLabel ?? [])).some(
       (label) => label.status === "FAILED",
     )
   ) {
