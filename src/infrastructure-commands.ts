@@ -127,12 +127,14 @@ export function createInfrastructureCommands(
           text(options, "project"),
           text(options, "url"),
           text(options, "branch"),
+          fieldsFromOptions(options),
         ),
       [
         option("--name <text>", "Set the name", true),
         option("--project <id>", "Select the owner project", true),
         option("--url <url>", "Set the Git repository URL", true),
         option("--branch <ref>", "Set the Git branch ref", true),
+        fieldsOption,
       ],
     ),
     leaf(
@@ -141,20 +143,22 @@ export function createInfrastructureCommands(
       Permission.Update,
       (c, { args }) => c.deleteVcsRoot(args.id),
     ),
-    leaf("instances <id>", "List VCS root instances", Permission.ReadOnly, (c, { args }) =>
-      c.getVcsRootInstances(args.id),
+    leaf("instances <id>", "List VCS root instances", Permission.ReadOnly, (c, { args, options }) =>
+      c.getVcsRootInstances(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("properties", "Manage VCS root properties", [
-      leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args }) =>
-        c.listVcsRootPropertyNames(args.id),
+      leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args, options }) =>
+        c.listVcsRootPropertyNames(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "replace <id>",
         "Replace all VCS root properties",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceVcsRootProperties(args.id, (options.property ?? []) as PlainProperty[]),
-        [propertyOption],
+          c.replaceVcsRootProperties(args.id, (options.property ?? []) as PlainProperty[], fieldsFromOptions(options)),
+        [propertyOption, fieldsOption],
       ),
       leaf(
         "clear <id>",

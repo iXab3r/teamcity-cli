@@ -1089,7 +1089,7 @@ export class TeamCityClient {
     return (result.tag ?? []).map((tag) => tag.name);
   }
 
-  public listVcsRoots(options: TeamCityPageOptions & { project?: string } = {}) {
+  public listVcsRoots<F extends string | undefined = undefined>(options: TeamCityPageOptions & { project?: string; fields?: F } = {}) {
     return this.#list(
       "/app/rest/vcs-roots",
       [options.project === undefined ? undefined : nestedId("project", options.project, "Project ID")],
@@ -1100,12 +1100,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getVcsRoot(id: string) {
-    return safeRoot(
-      await this.#requestJson<VcsRoot>("GET", `/app/rest/vcs-roots/${idPath(id, "VCS root ID")}`, {
-        fields: rootFields,
-      }),
-    );
+  public async getVcsRoot<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", `/app/rest/vcs-roots/${idPath(id, "VCS root ID")}`,
+      { fields: rootFields }, value => safeRoot(value as VcsRoot), fields);
   }
 
   public async listVcsEntries<F extends string | undefined = undefined>(jobId: string, fields?: F) {
@@ -2621,22 +2618,17 @@ export class TeamCityClient {
     };
   }
 
-  public async createAnonymousGitRoot(
+  public async createAnonymousGitRoot<F extends string | undefined = undefined>(
     id: string,
     name: string,
     project: string,
     url: string,
     branch: string,
+    fields?: F,
   ) {
     const body = infrastructure.anonymousGitRoot(id, name, project, url, branch);
-    return infrastructure.safeInfrastructureRoot(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/vcs-roots",
-        { fields: infrastructure.vcsRootFields },
-        body,
-      ),
-    );
+    return this.#projectedJson("POST", "/app/rest/vcs-roots",
+      { fields: infrastructure.vcsRootFields }, infrastructure.safeInfrastructureRoot, fields, body);
   }
 
   public async deleteVcsRoot(id: string) {
@@ -2644,33 +2636,21 @@ export class TeamCityClient {
     return { rootId: id, deleted: true };
   }
 
-  public async getVcsRootInstances(id: string) {
-    const value = await this.#requestJson<Record<string, unknown>>(
-      "GET",
-      infrastructure.vcsRootPath(id) + "/instances",
+  public async getVcsRootInstances<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.vcsRootPath(id) + "/instances",
       { fields: `count,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
-    );
-    return triage.array(value["vcs-root-instance"]).map(infrastructure.safeVcsInstance);
+      value => triage.array(triage.object(value)["vcs-root-instance"]).map(infrastructure.safeVcsInstance), fields);
   }
 
-  public async listVcsRootPropertyNames(id: string) {
-    return infrastructure.propertyNames(
-      await this.#requestJson("GET", infrastructure.vcsRootPath(id) + "/properties", {
-        fields: "count,property(name)",
-      }),
-    );
+  public async listVcsRootPropertyNames<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.vcsRootPath(id) + "/properties",
+      { fields: "count,property(name)" }, infrastructure.propertyNames, fields);
   }
 
-  public async replaceVcsRootProperties(id: string, properties: readonly PlainProperty[]) {
+  public async replaceVcsRootProperties<F extends string | undefined = undefined>(id: string, properties: readonly PlainProperty[], fields?: F) {
     const body = { property: infrastructure.namedValues(properties) };
-    return infrastructure.propertyNames(
-      await this.#requestJson(
-        "PUT",
-        infrastructure.vcsRootPath(id) + "/properties",
-        { fields: "count,property(name)" },
-        body,
-      ),
-    );
+    return this.#projectedJson("PUT", infrastructure.vcsRootPath(id) + "/properties",
+      { fields: "count,property(name)" }, infrastructure.propertyNames, fields, body);
   }
 
   public async clearVcsRootProperties(id: string) {

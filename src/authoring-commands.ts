@@ -381,16 +381,18 @@ export function createAuthoringCommands(
       (c, { options }) =>
         c.listVcsRoots({
           ...optionalText(options, "project"),
+          fields: fieldsFromOptions(options),
           limit: Number(options.limit),
           start: Number(options.start),
         }),
-      [{ ...projectOption, required: false }, ...pageOptions],
+      [{ ...projectOption, required: false }, ...pageOptions, fieldsOption],
     ),
     leaf(
       "show <id>",
       "Show a VCS root identity",
       Permission.ReadOnly,
-      (c, { args }) => c.getVcsRoot(args.id),
+      (c, { args, options }) => c.getVcsRoot(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
   ];
 
