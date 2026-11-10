@@ -130,7 +130,7 @@ for (const c of actionCases) {
     for (const surface of surfaces) {
       const argv = [...c.argv, "--fields", projection];
       if (c.empty.code) await failure(rt, rt.createCli(), argv, surface, c.empty.code);
-      else await success(rt, rt.createCli(), argv, surface, c.empty.result);
+      else await success(rt, rt.createCli(), argv, surface, (c.empty as { result?: unknown }).result);
     }
   });
   test(`US-006-A4 ${c.name}: permission denial`, async (t) => {
