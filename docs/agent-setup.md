@@ -10,7 +10,7 @@ records the MIT source snapshot; external links are optional history/API referen
 
 - **Service integration author** owns product source, DTOs, auth, command trees, tests and proof.
   Follow the explicit domain/authoring/testing links in the router, [product contract](product-contract.md)
-  and [command guide](../README.md).
+  and [command reference](reference.md).
 - **Repository tooling/docs owner** owns product build/scripts/docs/agent setup under the local router
   and relevant shared practice. Factory workspace/build examples are not local commands.
 - **Factory-core maintainer** is external escalation for shared mechanisms; the router links its guide.
@@ -54,14 +54,20 @@ scope in its owning issue, then satisfy the linked local planning/approval gates
 honestly; do not invent a generator, compatibility promise or retroactive bootstrap quota.
 Publishing an inventory/story backlog, live proof, CI changes and releases each need task authority.
 
+## README and coverage pictures
+
+The README overview, `docs/coverage-comparison.md` and the pictures in `docs/images/` follow the
+[product-readme skill](https://github.com/iXab3r/EyeAuras.CliFactory/tree/main/.claude/skills/product-readme) in Factory.
+[Updating](coverage-comparison.md#updating) says when and how to refresh them.
+
 ## Keep discovery complete
 
 Run the [offline completeness check](../scripts/check-agent-setup.mjs) with
 `node scripts/check-agent-setup.mjs` from any working directory. The local-only check verifies
 an expected set, not just existing links: five function roles, five practices, five adapters,
 three issue-template files, local domain/runtime/test/authoring contracts and product routes.
-It rejects missing or extra entries, unreachable required policies, broken local file/heading links,
-mandatory external policy links, unclassified bare external URLs and obsolete remote-policy instructions. Code-fence examples and
+It rejects missing or extra entries, unreachable required policies and broken local file/heading links.
+External links, including links to Factory, are not restricted. Code-fence examples and
 provenance paths are not claimed to be additional local source files.
 
 When changing this setup, intentionally review the router, local policy/adapter/template inventories,
