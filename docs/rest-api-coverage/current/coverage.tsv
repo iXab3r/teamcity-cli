@@ -275,15 +275,15 @@ GET /app/rest/users/{p1}/roles	User	ReadOnly	covered	users roles list <id>	listA
 GET /app/rest/users/{p1}/roles/{p2}/{p3}	User	ReadOnly	covered	users roles show <id> <role-id>	getAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/users/{p1}/tokens	User	ReadOnly	partial	users tokens list	listCurrentUserTokens	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
 GET /app/rest/users/{p1}/{p2}	User	ReadOnly	covered	users fields get <id> <field>	getAccountUserField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
-GET /app/rest/vcs-root-instances	VcsRootInstance	ReadOnly	partial	vcs instances list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/vcs-root-instances/{p1}	VcsRootInstance	ReadOnly	partial	vcs instances show <id>	getVcsInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/vcs-root-instances/{p1}/files/latest	VcsRootInstance	ReadOnly	partial	vcs instances files list <id>	listFiles	basePath;fields	exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/vcs-root-instances/{p1}/files/latest/archived{p2}	VcsRootInstance	ReadOnly	partial	vcs instances files archive <id> <path>		basePath;name	exercised-in-passing-suite	tests/files.test.ts
+GET /app/rest/vcs-root-instances	VcsRootInstance	ReadOnly	covered	vcs instances list			exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
+GET /app/rest/vcs-root-instances/{p1}	VcsRootInstance	ReadOnly	covered	vcs instances show <id>	getVcsInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
+GET /app/rest/vcs-root-instances/{p1}/files/latest	VcsRootInstance	ReadOnly	covered	vcs instances files list <id>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/vcs-instance-controls.test.ts;tests/vcs-instances-projection.test.ts
+GET /app/rest/vcs-root-instances/{p1}/files/latest/archived{p2}	VcsRootInstance	ReadOnly	covered	vcs instances files archive <id> <path>			exercised-in-passing-suite	tests/files.test.ts;tests/vcs-instance-controls.test.ts
 GET /app/rest/vcs-root-instances/{p1}/files/latest/files{p2}	VcsRootInstance	ReadOnly	covered	vcs instances files download <id> <path>			exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/vcs-root-instances/{p1}/files/latest/metadata{p2}	VcsRootInstance	ReadOnly	partial	vcs instances files metadata <id> <path>	getFileMetadata	fields	exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/vcs-root-instances/{p1}/files/latest/{p2}	VcsRootInstance	ReadOnly	partial	vcs instances files children <id> <path>	listFiles	basePath;fields	exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/vcs-root-instances/{p1}/properties	VcsRootInstance	ReadOnly	partial	vcs instances properties <id>	listVcsInstancePropertyNames	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/vcs-root-instances/{p1}/repositoryState	VcsRootInstance	ReadOnly	partial	vcs instances state show <id>	getVcsRepositoryState	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/vcs-root-instances/{p1}/files/latest/metadata{p2}	VcsRootInstance	ReadOnly	covered	vcs instances files metadata <id> <path>	getFileMetadata		exercised-in-passing-suite	tests/files.test.ts;tests/vcs-instances-projection.test.ts
+GET /app/rest/vcs-root-instances/{p1}/files/latest/{p2}	VcsRootInstance	ReadOnly	covered	vcs instances files children <id> <path>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/vcs-instance-controls.test.ts;tests/vcs-instances-projection.test.ts
+GET /app/rest/vcs-root-instances/{p1}/properties	VcsRootInstance	ReadOnly	covered	vcs instances properties <id>	listVcsInstancePropertyNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
+GET /app/rest/vcs-root-instances/{p1}/repositoryState	VcsRootInstance	ReadOnly	covered	vcs instances state show <id>	getVcsRepositoryState		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}/repositoryState/creationDate	VcsRootInstance	ReadOnly	covered	vcs instances state created <id>	getVcsRepositoryStateCreated		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/vcs-root-instances/{p1}/{p2}	VcsRootInstance	ReadOnly	covered	vcs instances fields get <id> <field>	getVcsInstanceField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/vcs-roots	VcsRoot	ReadOnly	covered	vcs roots list			exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-roots-projection.test.ts
@@ -353,8 +353,8 @@ POST /app/rest/users	User	Update	partial	users create <username>	createAccountUs
 POST /app/rest/users/{p1}/logout	User	Update	covered	users sessions logout <id>	terminateAccountSessions		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/users/{p1}/roles	User	Update	covered	users roles add <id> <role-id>	addAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/users/{p1}/tokens	User	Update	partial	users tokens create <name>	createCurrentUserToken	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/validation-contract.test.ts
-POST /app/rest/vcs-root-instances/checkingForChangesQueue	VcsRootInstance	Update	partial	vcs instances check-changes <id>	checkVcsInstanceChanges	requestor;fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/vcs-root-instances/commitHookNotification	VcsRootInstance	Update	partial	vcs instances notify-commit <id>	notifyVcsCommit	okOnNothingFound	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
+POST /app/rest/vcs-root-instances/checkingForChangesQueue	VcsRootInstance	Update	covered	vcs instances check-changes <id>	checkVcsInstanceChanges		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
+POST /app/rest/vcs-root-instances/commitHookNotification	VcsRootInstance	Update	covered	vcs instances notify-commit <id>	notifyVcsCommit		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/vcs-instance-controls.test.ts
 POST /app/rest/vcs-roots	VcsRoot	Update	covered	vcs roots create <id>	createAnonymousGitRoot		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts;tests/vcs-roots-projection.test.ts
 PUT /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools projects replace-all <pool-id>	replacePoolProjects		exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
 PUT /app/rest/agentPools/{p1}/{p2}	AgentPool	Update	covered	pools fields set <pool-id> <field> <value>	setPoolField		exercised-in-passing-suite	tests/authoring.test.ts
@@ -443,7 +443,7 @@ PUT /app/rest/users/{p1}/properties/{p2}	User	Update	covered	users properties se
 PUT /app/rest/users/{p1}/roles	User	Update	covered	users roles replace <id>	replaceAccountRoles		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
 PUT /app/rest/users/{p1}/roles/{p2}/{p3}	User	Update	covered	users roles grant <id> <role-id>	grantAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/users/{p1}/{p2}	User	Update	covered	users fields set <id> <field> <value>	setAccountUserField		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/vcs-root-instances/{p1}/repositoryState	VcsRootInstance	Update	partial	vcs instances state replace <id>	replaceVcsRepositoryState	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
+PUT /app/rest/vcs-root-instances/{p1}/repositoryState	VcsRootInstance	Update	covered	vcs instances state replace <id>	replaceVcsRepositoryState		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/vcs-instances-projection.test.ts
 PUT /app/rest/vcs-root-instances/{p1}/{p2}	VcsRootInstance	Update	covered	vcs instances fields set <id> <field> <value>	setVcsInstanceField		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/vcs-roots/{p1}/properties	VcsRoot	Update	covered	vcs roots properties replace <id>	replaceVcsRootProperties		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/vcs-roots-projection.test.ts
 PUT /app/rest/vcs-roots/{p1}/properties/{p2}	VcsRoot	Update	covered	vcs roots properties set <id> <name> <value>	setVcsRootProperty		exercised-in-passing-suite	tests/authoring.test.ts

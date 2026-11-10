@@ -1,22 +1,22 @@
 {
-  "baselineHead": "2d4cf8f2766b18ee68cb5aa8a266a47b771b76ea",
+  "baselineHead": "2806e949c6ad620571f1bf8203f8e5f31471bf43",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 390,
-  "partial": 58,
+  "covered": 401,
+  "partial": 47,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 193,
-      "partial": 41,
+      "covered": 201,
+      "partial": 33,
       "missing": 1
     },
     "Update": {
       "total": 214,
-      "covered": 197,
-      "partial": 17,
+      "covered": 200,
+      "partial": 14,
       "missing": 0
     }
   },
@@ -185,8 +185,8 @@
     },
     "VcsRootInstance": {
       "total": 17,
-      "covered": 6,
-      "partial": 11,
+      "covered": 17,
+      "partial": 0,
       "missing": 0
     },
     "VersionedSettings": {
@@ -204,8 +204,8 @@
   },
   "unsupportedByParameter": {
     "addTimestamp": 1,
-    "basePath": 6,
-    "fields": 54,
+    "basePath": 3,
+    "fields": 45,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -213,11 +213,9 @@
     "includeRunningBuilds": 1,
     "includeSupplimentaryData": 1,
     "locator": 2,
-    "name": 2,
-    "okOnNothingFound": 1,
-    "requestor": 1
+    "name": 1
   },
-  "partialOnlyBecauseOfFields": 47,
+  "partialOnlyBecauseOfFields": 41,
   "verificationEvidenceGaps": [],
   "nonLeafTransportOperations": [
     "GET /app/rest/users/{p1}"

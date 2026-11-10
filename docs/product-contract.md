@@ -191,3 +191,9 @@ response; omission preserves existing shaping. Credentials workflows remain unch
 
 VCS root projections preserve paged list envelopes and project whole responses for
 scoped instance/property reads and writes. Default property projections remain names-only.
+
+VCS instance projections cover list items, identity, properties, repository state and
+change-check responses. File list/children projections preserve their existing count/items
+envelope and locator; metadata projects the whole response. Base-path and archive-name
+controls affect only their declared file operations. Change-check requestor and commit-hook
+ok-on-nothing-found controls preserve existing omitted values and acknowledgement behavior.

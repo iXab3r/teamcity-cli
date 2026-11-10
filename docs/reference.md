@@ -1023,3 +1023,15 @@ write bodies and confirmations. Token and secure-value workflows keep fixed read
 VCS `roots list` accepts item `--fields`; `roots show/instances/create` and
 `roots properties list/replace` accept whole-response fields. Default property
 names, root shaping, selectors, paging and create bodies retain their existing behavior.
+
+VCS `instances list` accepts item `--fields`; `show`, `properties`, `state show/replace`
+and `check-changes` accept whole-response fields. `check-changes --requestor <text>`
+and `notify-commit --ok-on-nothing-found <boolean>` preserve the omitted defaults
+`user` and `false`. Boolean values must be literal `true` or `false`.
+
+VCS instance `files list/children` accept item `--fields` and `--base-path`, keeping
+`{count,items}`, the existing locator and default fields without lookahead. `metadata`
+accepts whole-response fields; `archive` accepts `--base-path` and `--archive-name`
+(query `name`). Download bounds and no-overwrite behavior remain unchanged.
+These files expose neither `--resolve-parameters` nor `--log-build-usage`.
+Server files retain their existing options.
