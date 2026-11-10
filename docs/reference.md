@@ -889,6 +889,12 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Job `features` and `triggers` accept whole-response `--fields` on
+`list/show/create/replace/replace-all`; features also accepts it on
+`parameters list/replace`. Default array and object shaping, write bodies,
+permissions and error handling remain unchanged. Other kinds and scalar
+sub-resource operations retain their existing options.
+
 Job `steps list/show/create/replace/replace-all` and `steps parameters list/replace`
 accept whole-response `--fields`. Unpaged lists keep their default array shaping
 when omitted. Scalar settings, parameter sub-resource leaves and deletes retain
