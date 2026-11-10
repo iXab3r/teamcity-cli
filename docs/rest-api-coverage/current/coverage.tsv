@@ -201,14 +201,14 @@ GET /app/rest/problemOccurrences	ProblemOccurrence	ReadOnly	covered	builds diagn
 GET /app/rest/problemOccurrences/{p1}	ProblemOccurrence	ReadOnly	covered	problems occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
 GET /app/rest/problems	Problem	ReadOnly	covered	problems list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
 GET /app/rest/problems/{p1}	Problem	ReadOnly	covered	problems show <id>	getTriageEntity		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
-GET /app/rest/projects	Project	ReadOnly	partial	projects list		fields	exercised-in-passing-suite	tests/cli.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts
-GET /app/rest/projects/{p1}	Project	ReadOnly	partial	projects show <id>	getProject	fields	evidence-gap	
-GET /app/rest/projects/{p1}/agentPools	Project	ReadOnly	partial	projects pools list <project-id>	listProjectPools	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/projects/{p1}/branches	Project	ReadOnly	partial	projects branches <project-id>		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/projects/{p1}/defaultTemplate	Project	ReadOnly	partial	projects templates default show <project-id>	getDefaultTemplate	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
-GET /app/rest/projects/{p1}/defaultValueSets	Project	ReadOnly	partial	projects default-value-sets <id>	getDefaultValueSets	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/projects/{p1}/deploymentDashboards	Project	ReadOnly	partial	projects deployments list <id>	listProjectDashboards	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/projects/{p1}/deploymentDashboards/{p2}	Project	ReadOnly	partial	projects deployments show <project> <id>	getProjectDashboard	fields	exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/projects	Project	ReadOnly	covered	projects list			exercised-in-passing-suite	tests/cli.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts;tests/projects-projection.test.ts
+GET /app/rest/projects/{p1}	Project	ReadOnly	covered	projects show <id>	getProject		exercised-in-passing-suite	tests/projects-projection.test.ts
+GET /app/rest/projects/{p1}/agentPools	Project	ReadOnly	covered	projects pools list <project-id>	listProjectPools		exercised-in-passing-suite	tests/authoring.test.ts;tests/projects-projection.test.ts
+GET /app/rest/projects/{p1}/branches	Project	ReadOnly	covered	projects branches <project-id>			exercised-in-passing-suite	tests/authoring.test.ts;tests/projects-projection.test.ts
+GET /app/rest/projects/{p1}/defaultTemplate	Project	ReadOnly	covered	projects templates default show <project-id>	getDefaultTemplate		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/projects-projection.test.ts
+GET /app/rest/projects/{p1}/defaultValueSets	Project	ReadOnly	covered	projects default-value-sets <id>	getDefaultValueSets		exercised-in-passing-suite	tests/projects-projection.test.ts;tests/system.test.ts
+GET /app/rest/projects/{p1}/deploymentDashboards	Project	ReadOnly	covered	projects deployments list <id>	listProjectDashboards		exercised-in-passing-suite	tests/projects-projection.test.ts;tests/system.test.ts
+GET /app/rest/projects/{p1}/deploymentDashboards/{p2}	Project	ReadOnly	covered	projects deployments show <project> <id>	getProjectDashboard		exercised-in-passing-suite	tests/projects-projection.test.ts;tests/system.test.ts
 GET /app/rest/projects/{p1}/order/buildTypes	Project	ReadOnly	partial	projects order jobs show <project-id>	getProjectOrder	field	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/projects/{p1}/order/projects	Project	ReadOnly	partial	projects order projects show <project-id>	getProjectOrder	field	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/projects/{p1}/parameters	Project	ReadOnly	partial	projects parameters list <project-id>;projects parameters replace-all <owner-id>	listParameters;replaceAllParameters	locator;fields	exercised-in-passing-suite	tests/authoring.test.ts
@@ -216,12 +216,12 @@ GET /app/rest/projects/{p1}/parameters/{p2}	Project	ReadOnly	partial	projects pa
 GET /app/rest/projects/{p1}/parameters/{p2}/type	Project	ReadOnly	covered	projects parameters type show <owner-id> <name>			exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/projects/{p1}/parameters/{p2}/type/rawValue	Project	ReadOnly	covered	projects parameters raw-type show <owner-id> <name>			exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/projects/{p1}/parameters/{p2}/value	Project	ReadOnly	covered	projects parameters value show <owner-id> <name>			exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/projects/{p1}/parentProject	Project	ReadOnly	partial	projects parent <project-id>	getProjectParent	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
+GET /app/rest/projects/{p1}/parentProject	Project	ReadOnly	covered	projects parent <project-id>	getProjectParent		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/projects-projection.test.ts
 GET /app/rest/projects/{p1}/projectFeatures	Project	ReadOnly	partial	projects features list <project-id>	listProjectFeatures	locator;fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
 GET /app/rest/projects/{p1}/projectFeatures/{p2}	Project	ReadOnly	partial	projects features show <project-id> <feature-id>	getProjectFeature	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
 GET /app/rest/projects/{p1}/secure/values/{p2}	Project	ReadOnly	covered	projects secure resolve <id>	resolveSecureReference		exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/projects/{p1}/settingsFile	Project	ReadOnly	covered	projects settings-path <id>	getSettingsPath		exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/projects/{p1}/templates	Project	ReadOnly	partial	projects templates list <project-id>	listProjectTemplates	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
+GET /app/rest/projects/{p1}/templates	Project	ReadOnly	covered	projects templates list <project-id>	listProjectTemplates		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/projects-projection.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/affectedProjects	VersionedSettings	ReadOnly	partial	projects versioned-settings affected <id>	getVersionedAffectedProjects	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/config	VersionedSettings	ReadOnly	partial	projects versioned-settings config show <id>	getVersionedConfig	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/config/effective	VersionedSettings	ReadOnly	partial	projects versioned-settings config effective <id>	getEffectiveVersionedConfig	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts

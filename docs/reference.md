@@ -889,6 +889,11 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
+deployments list/show, parent, and templates list/default show. Project list and branches
+retain their paging envelopes; other scoped reads project the whole response.
+Omission preserves the project tree view and all existing requests and shaping.
+
 Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
 and `snapshot-dependencies` accept whole-response `--fields` on
 `list/show/create/replace/replace-all`; steps and features also accept it on
