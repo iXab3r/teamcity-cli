@@ -4,7 +4,7 @@ DELETE /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools project
 DELETE /app/rest/agentPools/{p1}/projects/{p2}	AgentPool	Update	covered	pools projects unassign <pool-id> <project-id>	unassignPoolProject		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 DELETE /app/rest/agents/{p1}	Agent	Update	covered	agents delete <agent-id>	deleteAgent		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 DELETE /app/rest/avatars/{p1}	Avatar	Update	covered	users avatar delete <id>	deleteAvatar		exercised-in-passing-suite	tests/system.test.ts
-DELETE /app/rest/buildQueue	BuildQueue	Update	partial	queue delete-page	deleteQueuePage	fields	exercised-in-passing-suite	tests/authoring.test.ts
+DELETE /app/rest/buildQueue	BuildQueue	Update	covered	queue delete-page	deleteQueuePage		exercised-in-passing-suite	tests/authoring.test.ts;tests/queue-action-projection.test.ts
 DELETE /app/rest/buildQueue/{p1}	BuildQueue	Update	covered	queue delete <build-id>	deleteQueuedBuild		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/buildTypes/{p1}	BuildType	Update	covered	jobs delete <id>	deleteJob		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/buildTypes/{p1}/agent-requirements/{p2}	BuildType	Update	covered	jobs agent-requirements delete <job-id> <requirement-id>	deleteRule		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
@@ -139,7 +139,7 @@ GET /app/rest/builds	Build	ReadOnly	covered	builds list;builds show [build-id]	;
 GET /app/rest/builds/aggregated/{p1}/status	Build	ReadOnly	covered	builds batch status	getBuildBatchStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/option-parsers.test.ts
 GET /app/rest/builds/aggregated/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds aggregate-icon <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/multiple/{p1}	Build	ReadOnly	covered	builds batch show	getBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
-GET /app/rest/builds/{p1}	Build	ReadOnly	covered	builds diagnose <build-id>;builds show [build-id];builds wait <build-id>;jobs run <job-id>	getBuildSummary;getBuild		exercised-in-passing-suite	tests/build-flow.test.ts;tests/build-projection.test.ts;tests/errors.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts
+GET /app/rest/builds/{p1}	Build	ReadOnly	covered	builds diagnose <build-id>;builds show [build-id];builds wait <build-id>;jobs run <job-id>	getBuildSummary;getBuild		exercised-in-passing-suite	tests/build-flow.test.ts;tests/build-projection.test.ts;tests/errors.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts;tests/queue-action-projection.test.ts
 GET /app/rest/builds/{p1}/artifactDependencyChanges	Build	ReadOnly	covered	builds artifact-changes <id>	getArtifactDependencyChanges		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/artifacts	Build	ReadOnly	covered	builds artifacts list <id>	listFiles		exercised-in-passing-suite	tests/artifact-projection.test.ts;tests/files.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/artifacts/archived{p2}	Build	ReadOnly	covered	builds artifacts archive <id> <path>			exercised-in-passing-suite	tests/artifact-projection.test.ts;tests/files.test.ts
@@ -298,9 +298,9 @@ POST /app/rest/agentPools	AgentPool	Update	covered	pools create	createPool		exer
 POST /app/rest/agentPools/{p1}/agents	AgentPool	Update	partial	pools agents assign <pool-id> <agent-id>	assignPoolAgent	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 POST /app/rest/agentPools/{p1}/authorizationTokens	AgentPool	Update	covered	pools tokens create <id>	createPoolTokens		exercised-in-passing-suite	tests/system.test.ts
 POST /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools projects assign <pool-id> <project-id>	assignPoolProject		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-POST /app/rest/buildQueue	BuildQueue	Update	partial	jobs run <job-id>	runJob	moveToTop	exercised-in-passing-suite	tests/authoring.test.ts;tests/build-flow.test.ts;tests/cli.test.ts;tests/errors.test.ts
+POST /app/rest/buildQueue	BuildQueue	Update	covered	jobs run <job-id>	runJob		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-flow.test.ts;tests/cli.test.ts;tests/errors.test.ts;tests/queue-action-projection.test.ts
 POST /app/rest/buildQueue/{p1}	BuildQueue	Update	covered	queue cancel <id>	cancelQueuedBuild		exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts
-POST /app/rest/buildQueue/{p1}/approve	BuildQueue	Update	partial	queue approval approve <build-id>	approveQueuedBuild	fields;approveAll	exercised-in-passing-suite	tests/authoring.test.ts
+POST /app/rest/buildQueue/{p1}/approve	BuildQueue	Update	covered	queue approval approve <build-id>	approveQueuedBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/queue-action-projection.test.ts
 POST /app/rest/buildQueue/{p1}/tags	BuildQueue	Update	covered	queue tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 POST /app/rest/buildTypes	BuildType	Update	partial	jobs create <id>	createJob	fields	exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/buildTypes/{p1}/agent-requirements	BuildType	Update	partial	jobs agent-requirements create <job-id>	createRule	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
@@ -364,8 +364,8 @@ PUT /app/rest/agents/{p1}/enabledInfo	Agent	Update	partial	agents enabled set <a
 PUT /app/rest/agents/{p1}/pool	Agent	Update	partial	agents pool set <agent-id> <pool-id>	setAgentPool	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 PUT /app/rest/agents/{p1}/{p2}	Agent	Update	covered	agents fields set <agent-id> <field> <value>	setAgentField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/avatars/{p1}	Avatar	Update	covered	users avatar replace <id>	replaceAvatar		exercised-in-passing-suite	tests/system.test.ts
-PUT /app/rest/buildQueue/order	BuildQueue	Update	partial	queue reorder	reorderQueue	fields	exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/buildQueue/order/{p1}	BuildQueue	Update	partial	queue position set <position>	setQueuePosition	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/validation-contract.test.ts
+PUT /app/rest/buildQueue/order	BuildQueue	Update	covered	queue reorder	reorderQueue		exercised-in-passing-suite	tests/authoring.test.ts;tests/queue-action-projection.test.ts
+PUT /app/rest/buildQueue/order/{p1}	BuildQueue	Update	covered	queue position set <position>	setQueuePosition		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/queue-action-projection.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/buildQueue/pausedState	BuildQueue	Update	covered	queue paused set <status>	setQueuePaused		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/buildTypes/{p1}/agent-requirements	BuildType	Update	partial	jobs agent-requirements replace-all <owner-id>	replaceAllSettings	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
 PUT /app/rest/buildTypes/{p1}/agent-requirements/{p2}	BuildType	Update	partial	jobs agent-requirements replace <job-id> <requirement-id>	replaceRule	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts

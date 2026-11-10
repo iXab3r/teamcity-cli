@@ -212,8 +212,8 @@
   "hasBody": false,
   "consumes": [],
   "produces": [],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue delete-page",
@@ -222,7 +222,8 @@
      "--job <job-id>",
      "--limit <count>",
      "--start <offset>",
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteQueuePage"
    }
@@ -230,24 +231,23 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6810,6 +6810,7 @@
     "command": "jobs run <job-id>",
     "permission": "Update",
     "options": [
+     "--move-to-top <boolean>",
      "--branch <name>",
      "--comment <text>",
      "--clean-sources",
@@ -6840,7 +6841,8 @@
     "tests/build-projection.test.ts",
     "tests/errors.test.ts",
     "tests/option-parsers.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-builds.test.ts:86"
@@ -15073,13 +15075,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "jobs run <job-id>",
     "permission": "Update",
     "options": [
+     "--move-to-top <boolean>",
      "--branch <name>",
      "--comment <text>",
      "--clean-sources",
@@ -15094,13 +15097,11 @@
   "query": [
    {
     "name": "moveToTop",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "moveToTop"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [
    "fields"
   ],
@@ -15111,7 +15112,8 @@
     "tests/authoring.test.ts",
     "tests/build-flow.test.ts",
     "tests/cli.test.ts",
-    "tests/errors.test.ts"
+    "tests/errors.test.ts",
+    "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:134",
@@ -15148,8 +15150,7 @@
     "command": "queue cancel <id>",
     "permission": "Update",
     "options": [
-     "--comment <text>",
-     "--fields <projection>"
+     "--comment <text>"
     ],
     "clientMethod": "cancelQueuedBuild"
    }
@@ -15193,38 +15194,39 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue approval approve <build-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>",
+     "--approve-all <boolean>"
+    ],
     "clientMethod": "approveQueuedBuild"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "approveAll",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields",
-   "approveAll"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18678,14 +18680,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue reorder",
     "permission": "Update",
     "options": [
-     "--build <id>"
+     "--build <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "reorderQueue"
    }
@@ -18693,19 +18696,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18734,14 +18736,15 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue position set <position>",
     "permission": "Update",
     "options": [
-     "--build <build-id>"
+     "--build <build-id>",
+     "--fields <projection>"
     ],
     "clientMethod": "setQueuePosition"
    }
@@ -18749,13 +18752,11 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
@@ -18763,6 +18764,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/operator.test.ts",
+    "tests/queue-action-projection.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
