@@ -229,7 +229,8 @@ teamcity-cli builds diagnose 101
   (newest start first), whatever its result, including failed and canceled builds. Without
   `--branch` it searches all branches; without `--fields`, human stderr names the scope.
 - `builds list` and both `builds show` selectors accept `--fields <projection>`. TeamCity receives
-  the projection unchanged and returns native JSON with known bearer credential values masked;
+  the projection unchanged and returns native JSON with known bearer credential copies masked
+  in keys and string values, including percent-encoded (either hex case) and JSON-string-escaped copies;
   human output uses the generic view. For lists, the projection selects each item: the CLI wraps
   it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections fail
   locally. Omitting `--fields` preserves the default projection, shaping and views.

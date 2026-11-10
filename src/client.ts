@@ -1,5 +1,5 @@
 import { teamCityUrl } from "./server-url.js";
-import { fieldsProjection } from "./projection.js";
+import { fieldsProjection, knownCredentialMask } from "./projection.js";
 import * as triage from "./triage-models.js";
 import * as admin from "./admin-models.js";
 import * as infrastructure from "./infrastructure-models.js";
@@ -3395,8 +3395,7 @@ export class TeamCityClient {
   #projectedValue<T>(value: unknown, fields: string | undefined, project: (value: unknown) => T): T {
     if (fields === undefined) return project(value);
     if (!this.#token) return value as T;
-    const credential = this.#token;
-    const mask = (text: string) => text.replaceAll(credential, "[redacted]");
+    const mask = knownCredentialMask(this.#token);
     const redact = (item: unknown): unknown => {
       if (typeof item === "string") return mask(item);
       if (Array.isArray(item)) return item.map(redact);

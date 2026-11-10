@@ -54,9 +54,8 @@ for (const scenario of cases) for (const surface of ["human", "json", "execute",
       const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
       assert.equal(rendered.exitCode, scenario.code ? 1 : 0);
       if (surface === "json") {
-        const result = JSON.parse(scenario.code ? rendered.stderr : rendered.stdout);
-        if (scenario.code) assert.equal(result.error.code, scenario.code);
-        assert.deepEqual(scenario.code ? result.error.result : result, expected);
+        if (scenario.code) assert.equal(JSON.parse(rendered.stderr).error.code, scenario.code);
+        assert.deepEqual(JSON.parse(rendered.stdout), expected);
       }
       for (const variant of variants) assert.ok(!(rendered.stdout + rendered.stderr).includes(variant));
       if (!scenario.code) assert.match(rendered.stdout, /\[redacted\]/);

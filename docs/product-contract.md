@@ -8,8 +8,10 @@ Historical extraction provenance remains in [migration](migration.md).
 ## Field projections
 
 `builds list` and both `builds show` selectors accept `--fields <projection>` as native TeamCity
-item fields. An explicit projection returns native objects with known bearer credential values
-masked and uses the generic human view. Lists retain their paging envelope and compose
+item fields. An explicit projection returns native objects with known bearer credential copies
+(literal, percent-encoded in either hex case, and JSON-string-escaped) masked in keys and string
+values on success and partial-error results, using the generic human view. Lists retain their
+paging envelope and compose
 `nextHref,build(<projection>)`; the latest selector keeps its single `build(<projection>)` lookup.
 Blank projections fail locally. Omission preserves the default request, shaping and views.
 `builds wait`, `builds diagnose` and `jobs run` retain their fixed projections.
