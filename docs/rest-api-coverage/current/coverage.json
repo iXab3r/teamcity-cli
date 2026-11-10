@@ -236,7 +236,7 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -247,6 +247,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/projected-acknowledgement.test.ts",
     "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -905,6 +906,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/batch-projection.test.ts",
+    "tests/projected-partial.test.ts",
+    "tests/projected-redaction.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -6842,6 +6845,7 @@
     "tests/errors.test.ts",
     "tests/option-parsers.test.ts",
     "tests/presentation.test.ts",
+    "tests/projected-redaction.test.ts",
     "tests/queue-action-projection.test.ts"
    ],
    "nonLeafTransportTests": [
@@ -16189,7 +16193,7 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -16201,6 +16205,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/build-action-projection.test.ts",
+    "tests/projected-acknowledgement.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -16313,6 +16318,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/build-action-projection.test.ts",
+    "tests/projected-partial.test.ts",
+    "tests/projected-redaction.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -16370,6 +16377,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/operator.test.ts",
+    "tests/projected-acknowledgement.test.ts",
     "tests/tag-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -16433,6 +16441,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/build-action-projection.test.ts",
+    "tests/projected-partial.test.ts",
+    "tests/projected-redaction.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],

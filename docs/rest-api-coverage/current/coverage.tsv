@@ -4,7 +4,7 @@ DELETE /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools project
 DELETE /app/rest/agentPools/{p1}/projects/{p2}	AgentPool	Update	covered	pools projects unassign <pool-id> <project-id>	unassignPoolProject		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 DELETE /app/rest/agents/{p1}	Agent	Update	covered	agents delete <agent-id>	deleteAgent		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 DELETE /app/rest/avatars/{p1}	Avatar	Update	covered	users avatar delete <id>	deleteAvatar		exercised-in-passing-suite	tests/system.test.ts
-DELETE /app/rest/buildQueue	BuildQueue	Update	covered	queue delete-page	deleteQueuePage		exercised-in-passing-suite	tests/authoring.test.ts;tests/queue-action-projection.test.ts
+DELETE /app/rest/buildQueue	BuildQueue	Update	covered	queue delete-page	deleteQueuePage		exercised-in-passing-suite	tests/authoring.test.ts;tests/projected-acknowledgement.test.ts;tests/queue-action-projection.test.ts
 DELETE /app/rest/buildQueue/{p1}	BuildQueue	Update	covered	queue delete <build-id>	deleteQueuedBuild		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/buildTypes/{p1}	BuildType	Update	covered	jobs delete <id>	deleteJob		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/buildTypes/{p1}/agent-requirements/{p2}	BuildType	Update	covered	jobs agent-requirements delete <job-id> <requirement-id>	deleteRule		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
@@ -20,7 +20,7 @@ DELETE /app/rest/buildTypes/{p1}/templates	BuildType	Update	covered	jobs templat
 DELETE /app/rest/buildTypes/{p1}/templates/{p2}	BuildType	Update	covered	jobs templates detach <job-id> <template-id>	detachTemplate		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts
 DELETE /app/rest/buildTypes/{p1}/triggers/{p2}	BuildType	Update	covered	jobs triggers delete <job-id> <trigger-id>	deleteExtension		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts
 DELETE /app/rest/buildTypes/{p1}/vcs-root-entries/{p2}	BuildType	Update	covered	jobs vcs detach <job-id> <root-id>	detachVcsRoot		exercised-in-passing-suite	tests/authoring.test.ts
-DELETE /app/rest/builds/multiple/{p1}	Build	Update	covered	builds batch delete	deleteBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts;tests/triage.test.ts
+DELETE /app/rest/builds/multiple/{p1}	Build	Update	covered	builds batch delete	deleteBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts;tests/projected-partial.test.ts;tests/projected-redaction.test.ts;tests/triage.test.ts
 DELETE /app/rest/builds/multiple/{p1}/comment	Build	Update	covered	builds batch comment clear	clearBuildBatchComment		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 DELETE /app/rest/builds/multiple/{p1}/tags	Build	Update	covered	builds batch tags remove	tagBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 DELETE /app/rest/builds/{p1}	Build	Update	covered	builds delete <build-id>	deleteBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
@@ -139,7 +139,7 @@ GET /app/rest/builds	Build	ReadOnly	covered	builds list;builds show [build-id]	;
 GET /app/rest/builds/aggregated/{p1}/status	Build	ReadOnly	covered	builds batch status	getBuildBatchStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/option-parsers.test.ts
 GET /app/rest/builds/aggregated/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds aggregate-icon <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/multiple/{p1}	Build	ReadOnly	covered	builds batch show	getBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
-GET /app/rest/builds/{p1}	Build	ReadOnly	covered	builds diagnose <build-id>;builds show [build-id];builds wait <build-id>;jobs run <job-id>	getBuildSummary;getBuild		exercised-in-passing-suite	tests/build-flow.test.ts;tests/build-projection.test.ts;tests/errors.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts;tests/queue-action-projection.test.ts
+GET /app/rest/builds/{p1}	Build	ReadOnly	covered	builds diagnose <build-id>;builds show [build-id];builds wait <build-id>;jobs run <job-id>	getBuildSummary;getBuild		exercised-in-passing-suite	tests/build-flow.test.ts;tests/build-projection.test.ts;tests/errors.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts;tests/projected-redaction.test.ts;tests/queue-action-projection.test.ts
 GET /app/rest/builds/{p1}/artifactDependencyChanges	Build	ReadOnly	covered	builds artifact-changes <id>	getArtifactDependencyChanges		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/artifacts	Build	ReadOnly	covered	builds artifacts list <id>	listFiles		exercised-in-passing-suite	tests/artifact-projection.test.ts;tests/files.test.ts;tests/presentation.test.ts
 GET /app/rest/builds/{p1}/artifacts/archived{p2}	Build	ReadOnly	covered	builds artifacts archive <id> <path>			exercised-in-passing-suite	tests/artifact-projection.test.ts;tests/files.test.ts
@@ -317,11 +317,11 @@ POST /app/rest/buildTypes/{p1}/vcs-root-entries	BuildType	Update	partial	jobs vc
 POST /app/rest/builds/multiple/{p1}	Build	Update	covered	builds batch cancel	cancelBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 POST /app/rest/builds/multiple/{p1}/tags	Build	Update	covered	builds batch tags add	tagBuildBatch		exercised-in-passing-suite	tests/authoring.test.ts;tests/batch-projection.test.ts
 POST /app/rest/builds/{p1}	Build	Update	covered	builds cancel <id>	cancelBuild		exercised-in-passing-suite	tests/build-action-projection.test.ts;tests/cli.test.ts;tests/errors.test.ts;tests/presentation.test.ts
-POST /app/rest/builds/{p1}/log	Build	Update	covered	builds log append <id>	appendBuildLog		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/validation-contract.test.ts
+POST /app/rest/builds/{p1}/log	Build	Update	covered	builds log append <id>	appendBuildLog		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/projected-acknowledgement.test.ts;tests/validation-contract.test.ts
 POST /app/rest/builds/{p1}/problemOccurrences	Build	Update	covered	builds problem-occurrences add <id>	addBuildProblem		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts
-POST /app/rest/builds/{p1}/status	Build	Update	covered	builds set-status <id> <status>	setBuildStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/triage.test.ts
-POST /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
-POST /app/rest/builds/{p1}/vcsLabels	Build	Update	covered	builds vcs-labels add <id>	addBuildVcsLabel		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/triage.test.ts
+POST /app/rest/builds/{p1}/status	Build	Update	covered	builds set-status <id> <status>	setBuildStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/projected-partial.test.ts;tests/projected-redaction.test.ts;tests/triage.test.ts
+POST /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/projected-acknowledgement.test.ts;tests/tag-projection.test.ts
+POST /app/rest/builds/{p1}/vcsLabels	Build	Update	covered	builds vcs-labels add <id>	addBuildVcsLabel		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/projected-partial.test.ts;tests/projected-redaction.test.ts;tests/triage.test.ts
 POST /app/rest/cloud/instances	CloudInstance	Update	partial	cloud instances start	startCloudInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/forceStop	CloudInstance	Update	covered	cloud instances force-stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/stop	CloudInstance	Update	covered	cloud instances stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
