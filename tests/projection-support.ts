@@ -7,7 +7,7 @@ import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing"
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
-export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
+export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; issuedToken?: boolean; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
 export function projectionAcceptance(story: string, cases: ProjectionCase[], acceptance = {native: 1, paging: 2, mutation: 3, parity: 4, denied: 5, error: 6, blank: 7}) {
 const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.fileCollection ? `count,file(${s})` : c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.fileCollection ? {file: [v]} : c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.fileCollection ? {count: 1, items: [v]} : c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
@@ -31,10 +31,13 @@ async function runtime(t: test.TestContext, permissions: string[] = ["ReadOnly"]
 }
 
 async function success(rt: Runtime, cli: CliApplication, argv: string[], surface: Surface, expected: unknown) {
+  if (argv.includes("--alias") && argv.includes("create") && argv.includes("tokens")) {
+    await rt.secretStore.delete("ai-cli-factory:teamcity-cli", "default:issued-token:automation");
+  }
   if (surface === "execute") assert.deepEqual(await cli.execute(argv), expected);
   else if (surface === "rpc") {
     // Two requests share one persistent session; parsing and projection must stay invocation-local.
-    assert.deepEqual(await rt.rpc(cli, [argv, argv]), [0, 1].map(id => ({ jsonrpc: "2.0", id, result: JSON.parse(JSON.stringify(expected)) })));
+    assert.deepEqual(await rt.rpc(cli, argv.includes("--alias") ? [argv] : [argv, argv]), (argv.includes("--alias") ? [0] : [0, 1]).map(id => ({ jsonrpc: "2.0", id, result: JSON.parse(JSON.stringify(expected)) })));
   } else {
     const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
     assert.equal(rendered.exitCode, 0, rendered.stderr);
@@ -75,7 +78,7 @@ for (const scenario of buildProjectionCases) {
   test(`${story}-A${acceptance.native} ${scenario.name}: native projection on all four surfaces`, async t => {
     const rt = await runtime(t, [scenario.permission]);
     const cli = rt.createCli();
-    const requests = trackRequests(t, scenario.preflight ? 10 : 5, async request => {
+    const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
       if (scenario.preflight && request.method === "GET") {
         await assertHttpRequest(request.clone(), {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
         return HttpResponse.json(scenario.baselineResponse);
@@ -104,7 +107,7 @@ for (const scenario of buildProjectionCases) {
   test(`${story}-A${acceptance.parity} ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
     const rt = await runtime(t, [scenario.permission]);
     const cli = rt.createCli();
-    const requests = trackRequests(t, scenario.preflight ? 10 : 5, async request => {
+    const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
       if (scenario.preflight && request.method === "GET") {
         await assertHttpRequest(request.clone(), {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
         return HttpResponse.json(scenario.baselineResponse);
