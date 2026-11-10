@@ -129,7 +129,8 @@ export function createBulkConfigurationCommands(
       "builds <job-id>",
       "List native scoped builds in server order",
       Permission.ReadOnly,
-      (c, { args }) => c.listJobBuilds(args["job-id"]),
+      (c, { args, options }) => c.listJobBuilds(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
   ];
   const projects = [

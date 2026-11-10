@@ -1,3 +1,5 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
+import { fieldOption } from "./command-support.js";
 import { stringList, withView } from "./presentation.js";
 import { command, Permission, type OptionDefinition } from "@eyeauras/cli-factory";
 import { text, optionalText, option, propertyOption, type ClientLeaf } from "./command-support.js";
@@ -286,8 +288,9 @@ export function createAdvancedAuthoringCommands(
       rules("agent-requirements"),
       rules("artifact-dependencies"),
       fields("jobs"),
-      leaf("aliases <job-id>", "List historical external IDs", Permission.ReadOnly, (c, { args }) =>
-        c.listJobAliases(args["job-id"]),
+      leaf("aliases <job-id>", "List historical external IDs", Permission.ReadOnly, (c, { args, options }) =>
+        c.listJobAliases(args["job-id"], options.field as string | undefined),
+        [fieldOption],
       ),
       leaf(
         "branches <job-id>",
@@ -297,14 +300,16 @@ export function createAdvancedAuthoringCommands(
           c.listJobBranches(args["job-id"], {
             limit: Number(options.limit),
             start: Number(options.start),
+            fields: fieldsFromOptions(options),
           }),
-        pageOptions,
+        [...pageOptions, fieldsOption],
       ),
       withView(stringList, leaf(
         "tags <job-id>",
         "List tags used by this job's builds",
         Permission.ReadOnly,
-        (c, { args }) => c.listJobTags(args["job-id"]),
+        (c, { args, options }) => c.listJobTags(args["job-id"], options.field as string | undefined),
+        [fieldOption],
       )),
     ],
   };

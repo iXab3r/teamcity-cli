@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
   Permission,
@@ -433,8 +434,8 @@ export function createAuthoringCommands(
           name: text(options, "name"),
           project: text(options, "project"),
           ...optionalText(options, "description"),
-        }),
-      [nameOption, projectOption, descriptionOption],
+        }, fieldsFromOptions(options)),
+      [nameOption, projectOption, descriptionOption, fieldsOption],
     ),
     leaf(
       "set <id> <field> <value>",

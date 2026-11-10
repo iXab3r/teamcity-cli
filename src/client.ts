@@ -167,7 +167,8 @@ export interface ListProjectsOptions extends TeamCityPageOptions {
   includeArchived?: boolean;
 }
 
-export interface ListJobsOptions extends TeamCityPageOptions {
+export interface ListJobsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   project?: string;
 }
 
@@ -376,7 +377,7 @@ export class TeamCityClient {
     );
   }
 
-  public listJobs(options: ListJobsOptions = {}): Promise<TeamCityPage<TeamCityJob>> {
+  public listJobs<F extends string | undefined = undefined>(options: ListJobsOptions<F> = {}) {
     return this.#list(
       "/app/rest/buildTypes",
       [
@@ -390,11 +391,12 @@ export class TeamCityClient {
     );
   }
 
-  public getJob(id: string): Promise<TeamCityJob> {
-    return this.#requestJson<TeamCityJob>(
+  public getJob<F extends string | undefined = undefined>(id: string, fields?: F): Promise<Projected<TeamCityJob, F>> {
+    return this.#projectedJson(
       "GET",
       `/app/rest/buildTypes/${idPath(id, "TeamCity job ID")}`,
       { fields: jobFields },
+      value => value as TeamCityJob, fields,
     );
   }
 
@@ -657,11 +659,12 @@ export class TeamCityClient {
     );
   }
 
-  public createJob(id: string, options: CreateJobOptions): Promise<TeamCityJob> {
-    return this.#requestJson(
+  public createJob<F extends string | undefined = undefined>(id: string, options: CreateJobOptions, fields?: F): Promise<Projected<TeamCityJob, F>> {
+    return this.#projectedJson(
       "POST",
       "/app/rest/buildTypes",
       { fields: jobFields },
+      value => value as TeamCityJob, fields,
       {
         id: requiredText(id, "Job ID"),
         name: requiredText(options.name, "Job name"),
@@ -1232,12 +1235,12 @@ export class TeamCityClient {
     return { id: id, field, value };
   }
 
-  public async listJobAliases(jobId: string) {
-    const result = await this.#requestJson<{ item?: string[] }>("GET", `${jobPath(jobId)}/aliases`);
+  public async listJobAliases(jobId: string, field?: string) {
+    const result = await this.#requestJson<{ item?: string[] }>("GET", `${jobPath(jobId)}/aliases`, field === undefined ? {} : { field });
     return result.item ?? [];
   }
 
-  public listJobBranches(jobId: string, options: TeamCityPageOptions = {}) {
+  public listJobBranches<F extends string | undefined = undefined>(jobId: string, options: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list(`${jobPath(jobId)}/branches`, [], "branch", "name,default,active", (item) => {
       const { name, default: isDefault, active } =
         item as { name: string; default?: boolean; active?: boolean };
@@ -1249,11 +1252,11 @@ export class TeamCityClient {
     }, options);
   }
 
-  public async listJobTags(jobId: string) {
+  public async listJobTags(jobId: string, field?: string) {
     const result = await this.#requestJson<{ tag?: { name: string }[] }>(
       "GET",
       `${jobPath(jobId)}/buildTags`,
-      { field: "tag(name)" },
+      { field: field ?? "tag(name)" },
     );
     return (result.tag ?? []).map((tag) => tag.name);
   }
@@ -1789,13 +1792,10 @@ export class TeamCityClient {
     return { jobId: jobId, cleared: true };
   }
 
-  public async listJobBuilds(jobId: string) {
-    const result = await this.#requestJson<{ build?: OperationBuild[] }>(
-      "GET",
-      `${jobPath(jobId)}/builds`,
+  public listJobBuilds<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/builds`,
       { fields: `build(${operationBuildFields})` },
-    );
-    return (result.build ?? []).map(safeOperationBuild);
+      value => ((value as { build?: OperationBuild[] }).build ?? []).map(safeOperationBuild), fields);
   }
 
   public async listProjectPools(projectId: string) {
@@ -3427,27 +3427,15 @@ export class TeamCityClient {
     await this.#request("DELETE", "/app/rest/avatars/" + idPath(userId, "User ID"));
     return { userId, deleted: true };
   }
-  public async getJobInvestigations(id: string) {
-    return system.collection(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/buildTypes/" + idPath(id, "ID") + "/investigations",
-        { fields: `count,investigation(${triage.investigationFields})` },
-      ),
-      "investigation",
-      (v) => triage.safeAssignment(v, true),
-    );
+  public getJobInvestigations<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/buildTypes/" + idPath(id, "ID") + "/investigations",
+      { fields: `count,investigation(${triage.investigationFields})` },
+      value => system.collection(value, "investigation", (v) => triage.safeAssignment(v, true)), fields);
   }
-  public async getJobVcsInstances(id: string) {
-    return system.collection(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/buildTypes/" + idPath(id, "ID") + "/vcsRootInstances",
-        { fields: `count,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
-      ),
-      "vcs-root-instance",
-      infrastructure.safeVcsInstance,
-    );
+  public getJobVcsInstances<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/buildTypes/" + idPath(id, "ID") + "/vcsRootInstances",
+      { fields: `count,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
+      value => system.collection(value, "vcs-root-instance", infrastructure.safeVcsInstance), fields);
   }
   public listDashboards<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
     return this.#list(

@@ -248,11 +248,11 @@ export function createSystemCommands(
     ]),
   ];
   const jobs = [
-    leaf("investigations <id>", "Read scoped investigations", R, (c, { args }) =>
-      c.getJobInvestigations(args.id),
+    leaf("investigations <id>", "Read scoped investigations", R, (c, { args, options }) =>
+      c.getJobInvestigations(args.id, fieldsFromOptions(options)), [fieldsOption],
     ),
-    leaf("vcs-instances <id>", "Read attached VCS instances", R, (c, { args }) =>
-      c.getJobVcsInstances(args.id),
+    leaf("vcs-instances <id>", "Read attached VCS instances", R, (c, { args, options }) =>
+      c.getJobVcsInstances(args.id, fieldsFromOptions(options)), [fieldsOption],
     ),
   ];
   const users = [

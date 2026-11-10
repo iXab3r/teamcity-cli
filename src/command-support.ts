@@ -106,3 +106,12 @@ export function clientLeaf(
     } };
   };
 }
+
+export const fieldOption: OptionDefinition = {
+  flags: "--field <name>",
+  description: "Select a native TeamCity field",
+  parse(value) {
+    if (!value.trim()) throw new Error("Expected a non-empty field.");
+    return value;
+  },
+};
