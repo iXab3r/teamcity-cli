@@ -7,6 +7,11 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Health and audit lists accept item `--fields` and preserve their paging envelopes
+and scope filters. Health show, health category list/show, and audit show accept
+whole-response fields. Category list also accepts unchanged `--locator`, omitted
+by default. Explicit fields return native JSON; omitted options retain all defaults.
+
 Server status, license summary/list/show/add, metrics, plugins and node reads accept
 whole-response `--fields`. Explicit projections return native JSON with the generic
 view; omission preserves default shaping and permission categories. License keys

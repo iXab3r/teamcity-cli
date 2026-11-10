@@ -1,16 +1,16 @@
 {
-  "baselineHead": "9e80826954e5dec25304a36627c9dcd095e96de1",
+  "baselineHead": "2845b05b0dfaccb3c1d3db7f154e41bac3636dbf",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 438,
-  "partial": 11,
+  "covered": 444,
+  "partial": 5,
   "missing": 0,
   "reached": 449,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 225,
-      "partial": 10,
+      "covered": 231,
+      "partial": 4,
       "missing": 0
     },
     "Update": {
@@ -41,8 +41,8 @@
     },
     "Audit": {
       "total": 2,
-      "covered": 0,
-      "partial": 2,
+      "covered": 2,
+      "partial": 0,
       "missing": 0
     },
     "Avatar": {
@@ -197,25 +197,24 @@
     },
     "health": {
       "total": 4,
-      "covered": 0,
-      "partial": 4,
+      "covered": 4,
+      "partial": 0,
       "missing": 0
     }
   },
   "unsupportedByParameter": {
     "addTimestamp": 1,
     "basePath": 3,
-    "fields": 9,
+    "fields": 3,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
     "includePersonalChanges": 1,
     "includeRunningBuilds": 1,
     "includeSupplimentaryData": 1,
-    "locator": 1,
     "name": 1
   },
-  "partialOnlyBecauseOfFields": 6,
+  "partialOnlyBecauseOfFields": 1,
   "verificationEvidenceGaps": [],
   "nonLeafTransportOperations": [],
   "gateDiffersFromMethod": [

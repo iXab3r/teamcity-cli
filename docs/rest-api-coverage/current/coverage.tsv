@@ -76,8 +76,8 @@ GET /app/rest/agents/{p1}/incompatibleBuildTypes	Agent	ReadOnly	covered	agents i
 GET /app/rest/agents/{p1}/pool	Agent	ReadOnly	covered	agents pool show <agent-id>	getAgentPool		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agents/{p1}/{p2}	Agent	ReadOnly	covered	agents fields show <agent-id> <field>	getAgentField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/apiVersion	Root	ReadOnly	covered	server api-version	getApiVersion		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/audit	Audit	ReadOnly	partial	audit list		fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/audit/{p1}	Audit	ReadOnly	partial	audit show <id>	getAudit	fields	exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/audit	Audit	ReadOnly	covered	audit list			exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
+GET /app/rest/audit/{p1}	Audit	ReadOnly	covered	audit show <id>	getAudit		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
 GET /app/rest/avatars/{p1}/{p2}/avatar.png	Avatar	ReadOnly	covered	users avatar download <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/avatars/{p1}/{p2}/avatar.{p3}.png	Avatar	ReadOnly	covered	users avatar download-hash <id> <hash>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/buildQueue	BuildQueue	ReadOnly	covered	queue list			exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts;tests/queue-projection.test.ts
@@ -188,10 +188,10 @@ GET /app/rest/deploymentDashboards	DeploymentDashboard	ReadOnly	covered	deployme
 GET /app/rest/deploymentDashboards/{p1}	DeploymentDashboard	ReadOnly	covered	deployments show <id>	getDashboard		exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
 GET /app/rest/deploymentDashboards/{p1}/instances	DeploymentDashboard	ReadOnly	covered	deployments instances list <dashboard>			exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
 GET /app/rest/deploymentDashboards/{p1}/instances/{p2}	DeploymentDashboard	ReadOnly	covered	deployments instances show <dashboard> <id>	getDeploymentInstance		exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
-GET /app/rest/health	health	ReadOnly	partial	health list		fields	exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
-GET /app/rest/health/category	health	ReadOnly	partial	health categories list	listHealthCategories	locator;fields	exercised-in-passing-suite	tests/option-parsers.test.ts;tests/system.test.ts
-GET /app/rest/health/category/{p1}	health	ReadOnly	partial	health categories show <id>	getHealthCategory	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/health/{p1}	health	ReadOnly	partial	health show	getHealth	fields	exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/health	health	ReadOnly	covered	health list			exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
+GET /app/rest/health/category	health	ReadOnly	covered	health categories list	listHealthCategories		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/option-parsers.test.ts;tests/system.test.ts
+GET /app/rest/health/category/{p1}	health	ReadOnly	covered	health categories show <id>	getHealthCategory		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
+GET /app/rest/health/{p1}	health	ReadOnly	covered	health show	getHealth		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
 GET /app/rest/info	Root	ReadOnly	covered	server rest-plugin	getRestPlugin		exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
 GET /app/rest/investigations	Investigation	ReadOnly	covered	investigations list			exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
 GET /app/rest/investigations/{p1}	Investigation	ReadOnly	covered	investigations show	getInvestigation		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
