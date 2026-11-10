@@ -1595,12 +1595,16 @@ export class TeamCityClient {
   public async listTags(owner: "builds" | "queue", id: number, fields?: string, locator?: string) {
     return this.#projectedJson("GET", `${buildPath(id, owner)}/tags`,
       { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
-      value => ((value as {tag?: {name:string}[]}).tag ?? []).map(tag => tag.name), fields);
+      value => ((value as { tag?: { name: string }[] }).tag ?? []).map(tag => tag.name), fields);
   }
 
   public async addTags(owner: "builds" | "queue", id: number, tags: readonly string[], fields?: string) {
     const body = publicTags(tags);
-    if (fields !== undefined) return this.#projectedJson("POST", `${buildPath(id, owner)}/tags`, {}, value => value, fields, body);
+    if (fields !== undefined) {
+      return this.#projectedJson(
+        "POST", `${buildPath(id, owner)}/tags`, {}, value => value, fields, body,
+      );
+    }
     await this.#request("POST", `${buildPath(id, owner)}/tags`, {}, body);
     return { buildId: id, tags: body.tag.map((tag) => tag.name), added: true };
   }
@@ -1608,7 +1612,7 @@ export class TeamCityClient {
   public async replaceBuildTags(id: number, tags: readonly string[], fields?: string, locator?: string) {
     return this.#projectedJson("PUT", `${buildPath(id)}/tags`,
       { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
-      value => ((value as {tag?: {name:string}[]}).tag ?? []).map(tag => tag.name), fields, publicTags(tags, true));
+      value => ((value as { tag?: { name: string }[] }).tag ?? []).map(tag => tag.name), fields, publicTags(tags, true));
   }
 
   public async listBuildStatistics(id: number, fields?: string) {
@@ -3807,7 +3811,7 @@ export class TeamCityClient {
   public async getFileMetadata(kind: files.FileTree, id: string, path: string, controls: files.FileControls = {}) {
     return this.#projectedJson("GET",
       files.treePath(kind, id) + "/metadata/" + files.remotePath(path),
-      {...files.controlledFileQuery(kind, controls), fields:files.fileFields},
+      { ...files.controlledFileQuery(kind, controls), fields: files.fileFields },
       files.safeFile, controls.fields);
   }
   /** Save verified bytes without overwriting; cwd is the captured invocation directory. */

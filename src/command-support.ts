@@ -24,6 +24,26 @@ export function optionalText(values: Record<string, unknown>, key: string): Reco
 export function option(flags: string, description: string, required = false): OptionDefinition {
   return { flags, description, required };
 }
+export function booleanOption(flags: string, description: string): OptionDefinition {
+  return {
+    flags,
+    description,
+    parse(value) {
+      if (value !== "true" && value !== "false") throw new Error("Expected true or false.");
+      return value;
+    },
+  };
+}
+
+export const locatorOption: OptionDefinition = {
+  flags: "--locator <locator>",
+  description: "Filter native TeamCity tags",
+  parse(value) {
+    if (!value.trim()) throw new Error("Expected a non-empty locator.");
+    return requiredText(value, "locator");
+  },
+};
+
 export function repeatOption(
   flags: string,
   description: string,

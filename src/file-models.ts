@@ -78,11 +78,17 @@ export interface FileControls {
   resolveParameters?: string;
   logBuildUsage?: string;
 }
-export function controlledFileQuery(kind: FileTree, controls: FileControls = {}): Record<string,string> {
-  return { ...fileQuery(kind),
-    ...(controls.basePath === undefined ? {} : {basePath:controls.basePath}),
-    ...(controls.archiveName === undefined ? {} : {name:controls.archiveName}),
-    ...(controls.resolveParameters === undefined ? {} : {resolveParameters:controls.resolveParameters}),
-    ...(controls.logBuildUsage === undefined ? {} : {logBuildUsage:controls.logBuildUsage}),
+export function controlledFileQuery(
+  kind: FileTree,
+  controls: FileControls = {},
+): Record<string, string> {
+  return {
+    ...fileQuery(kind),
+    ...(controls.basePath === undefined ? {} : { basePath: controls.basePath }),
+    ...(controls.archiveName === undefined ? {} : { name: controls.archiveName }),
+    ...(controls.resolveParameters === undefined
+      ? {}
+      : { resolveParameters: controls.resolveParameters }),
+    ...(controls.logBuildUsage === undefined ? {} : { logBuildUsage: controls.logBuildUsage }),
   };
 }
