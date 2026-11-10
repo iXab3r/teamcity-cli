@@ -111,7 +111,8 @@ export function createSystemCommands(
     ],
   );
   const roles = command("roles", "Manage server role definitions", [
-    leaf("list", "Read role definitions", R, (c) => c.listRoleDefinitions()),
+    leaf("list", "Read role definitions", R, (c, { options }) =>
+      c.listRoleDefinitions(fieldsFromOptions(options)), [fieldsOption]),
     leaf(
       "create",
       "Create a role definition",
@@ -121,15 +122,18 @@ export function createSystemCommands(
           text(options, "name"),
           (options.permission ?? []) as string[],
           (options.include ?? []) as string[],
+          fieldsFromOptions(options),
         ),
       [
+        fieldsOption,
         option("--name <text>", "Set the role name", true),
         repeatOption("--permission <id>", "Repeat permission IDs"),
         repeatOption("--include <id>", "Repeat included role IDs"),
       ],
     ),
-    leaf("show <id>", "Read role definition", R, (c, { args }) =>
-      c.getRoleDefinition(args.id),
+    leaf("show <id>", "Read role definition", R, (c, { args, options }) =>
+      c.getRoleDefinition(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "delete <id>",
@@ -143,8 +147,9 @@ export function createSystemCommands(
         kind,
         "Edit selected role relation",
         (["add", "remove"] as const).map((action) =>
-          leaf(`${action} <id> <child>`, `${action === "add" ? "Add" : "Remove"} one ${kind} entry`, "Admin", (c, { args }) =>
-            c.editRoleDefinition(text(args, "id"), kind, text(args, "child"), action === "remove"),
+          leaf(`${action} <id> <child>`, `${action === "add" ? "Add" : "Remove"} one ${kind} entry`, "Admin", (c, { args, options }) =>
+            c.editRoleDefinition(text(args, "id"), kind, text(args, "child"), action === "remove", fieldsFromOptions(options)),
+            [fieldsOption],
           ),
         ),
       ),

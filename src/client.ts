@@ -3312,55 +3312,43 @@ export class TeamCityClient {
       { fields: system.dashboardFields }, value => system.safeDashboard(value), fields);
   }
 
-  public async listRoleDefinitions() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/roles", {
-        fields: `count,role(${system.roleFields})`,
-      }),
-      "role",
-      system.safeRole,
-    );
+  public async listRoleDefinitions<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/roles",
+      { fields: `count,role(${system.roleFields})` },
+      value => system.collection(value, "role", system.safeRole), fields);
   }
-  public async createRoleDefinition(
+  public async createRoleDefinition<F extends string | undefined = undefined>(
     name: string,
     permissions: readonly string[],
     included: readonly string[],
+    fields?: F,
   ) {
-    return system.safeRole(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/roles",
-        { fields: system.roleFields },
-        {
-          name: triage.inputText(name, "Name"),
-          permissions: { permission: system.idsOrEmpty(permissions).map((id) => ({ id })) },
-          included: { role: system.idsOrEmpty(included).map((id) => ({ id })) },
-        },
-      ),
-    );
+    return this.#projectedJson("POST", "/app/rest/roles",
+      { fields: system.roleFields }, system.safeRole, fields,
+      {
+        name: triage.inputText(name, "Name"),
+        permissions: { permission: system.idsOrEmpty(permissions).map((id) => ({ id })) },
+        included: { role: system.idsOrEmpty(included).map((id) => ({ id })) },
+      });
   }
-  public async getRoleDefinition(id: string) {
-    return system.safeRole(
-      await this.#requestJson("GET", system.rolePath(id), { fields: system.roleFields }),
-    );
+  public async getRoleDefinition<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", system.rolePath(id),
+      { fields: system.roleFields }, system.safeRole, fields);
   }
   public async deleteRoleDefinition(id: string) {
     await this.#request("DELETE", system.rolePath(id));
     return { id, deleted: true };
   }
-  public async editRoleDefinition(
+  public async editRoleDefinition<F extends string | undefined = undefined>(
     id: string,
     kind: "included" | "permissions",
     child: string,
     remove: boolean,
+    fields?: F,
   ) {
-    return system.safeRole(
-      await this.#requestJson(
-        remove ? "DELETE" : "PUT",
-        system.rolePath(id) + "/" + kind + "/" + pathSegment(triage.inputText(child, "Child ID")),
-        { fields: system.roleFields },
-      ),
-    );
+    return this.#projectedJson(remove ? "DELETE" : "PUT",
+      system.rolePath(id) + "/" + kind + "/" + pathSegment(triage.inputText(child, "Child ID")),
+      { fields: system.roleFields }, system.safeRole, fields);
   }
   public async getAuthenticationSettings() {
     return system.safeAuth(await this.#requestJson("GET", "/app/rest/server/authSettings"));
