@@ -96,8 +96,8 @@ export function createBulkConfigurationCommands(
       "Replace the collection",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies"].includes(kind) ? fieldsFromOptions(options) : undefined),
-      [itemOption, ...(["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies"].includes(kind) ? [fieldsOption] : [])],
+        c.replaceAllSettings(kind, args["owner-id"], (options.item ?? []) as unknown[], ["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? fieldsFromOptions(options) : undefined),
+      [itemOption, ...(["steps", "features", "triggers", "agent-requirements", "artifact-dependencies", "snapshot-dependencies", "vcs-root-entries"].includes(kind) ? [fieldsOption] : [])],
     );
   }
   const templates = [
@@ -110,8 +110,10 @@ export function createBulkConfigurationCommands(
           args["job-id"],
           strings(options, "template"),
           options.optimizeSettings === true,
+          fieldsFromOptions(options),
         ),
       [
+        fieldsOption,
         repeatOption("--template <id>", "Repeat template IDs in priority order"),
         option("--optimize-settings", "Remove redundant local settings"),
       ],

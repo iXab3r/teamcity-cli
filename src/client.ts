@@ -874,24 +874,14 @@ export class TeamCityClient {
     return { jobId: jobId, id: id, deleted: true };
   }
 
-  public async listTemplates(jobId: string) {
-    const result = await this.#requestJson<{ buildType?: BuildTypeIdentity[] }>(
-      "GET",
-      `${jobPath(jobId)}/templates`,
-      { fields: `buildType(${identityFields})` },
-    );
-    return (result.buildType ?? []).map(safeIdentity);
+  public async listTemplates<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/templates`,
+      { fields: `buildType(${identityFields})` }, value => ((value as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields);
   }
 
-  public async attachTemplate(jobId: string, templateId: string, optimizeSettings = false) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "POST",
-        `${jobPath(jobId)}/templates`,
-        { fields: identityFields, optimizeSettings: String(optimizeSettings) },
-        { id: requiredText(templateId, "Template ID") },
-      ),
-    );
+  public async attachTemplate<F extends string | undefined = undefined>(jobId: string, templateId: string, optimizeSettings = false, fields?: F) {
+    return this.#projectedJson("POST", `${jobPath(jobId)}/templates`,
+      { fields: identityFields, optimizeSettings: String(optimizeSettings) }, value => safeIdentity(value as BuildTypeIdentity), fields, { id: requiredText(templateId, "Template ID") });
   }
 
   public async detachTemplate(jobId: string, templateId: string, inlineSettings = false) {
@@ -1105,14 +1095,9 @@ export class TeamCityClient {
     return { projectId: projectId, cleared: true };
   }
 
-  public async getAttachedTemplate(jobId: string, id: string) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "GET",
-        `${jobPath(jobId)}/templates/${idPath(id, "Template ID")}`,
-        { fields: identityFields },
-      ),
-    );
+  public async getAttachedTemplate<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/templates/${idPath(id, "Template ID")}`,
+      { fields: identityFields }, value => safeIdentity(value as BuildTypeIdentity), fields);
   }
 
   public async getProjectParent(projectId: string) {
@@ -1178,43 +1163,24 @@ export class TeamCityClient {
     );
   }
 
-  public async listVcsEntries(jobId: string) {
-    const result = await this.#requestJson<{ "vcs-root-entry"?: RawVcsEntry[] }>(
-      "GET",
-      `${jobPath(jobId)}/vcs-root-entries`,
-      { fields: `vcs-root-entry(${entryFields})` },
-    );
-    return (result["vcs-root-entry"] ?? []).map(safeEntry);
+  public async listVcsEntries<F extends string | undefined = undefined>(jobId: string, fields?: F) {
+    return this.#projectedJson("GET", `${jobPath(jobId)}/vcs-root-entries`,
+      { fields: `vcs-root-entry(${entryFields})` }, value => ((value as { "vcs-root-entry"?: RawVcsEntry[] })["vcs-root-entry"] ?? []).map(safeEntry), fields);
   }
 
-  public async getVcsEntry(jobId: string, rootId: string) {
-    return safeEntry(
-      await this.#requestJson<RawVcsEntry>("GET", entryPath(jobId, rootId), {
-        fields: entryFields,
-      }),
-    );
+  public async getVcsEntry<F extends string | undefined = undefined>(jobId: string, rootId: string, fields?: F) {
+    return this.#projectedJson("GET", entryPath(jobId, rootId),
+      { fields: entryFields }, value => safeEntry(value as RawVcsEntry), fields);
   }
 
-  public async attachVcsRoot(jobId: string, rootId: string, rules = "") {
-    return safeEntry(
-      await this.#requestJson<RawVcsEntry>(
-        "POST",
-        `${jobPath(jobId)}/vcs-root-entries`,
-        { fields: entryFields },
-        { "vcs-root": { id: requiredText(rootId, "VCS root ID") }, "checkout-rules": rules },
-      ),
-    );
+  public async attachVcsRoot<F extends string | undefined = undefined>(jobId: string, rootId: string, rules = "", fields?: F) {
+    return this.#projectedJson("POST", `${jobPath(jobId)}/vcs-root-entries`,
+      { fields: entryFields }, value => safeEntry(value as RawVcsEntry), fields, { "vcs-root": { id: requiredText(rootId, "VCS root ID") }, "checkout-rules": rules });
   }
 
-  public async replaceVcsEntry(jobId: string, rootId: string, rules: string) {
-    return safeEntry(
-      await this.#requestJson<RawVcsEntry>(
-        "PUT",
-        entryPath(jobId, rootId),
-        { fields: entryFields },
-        { "vcs-root": { id: rootId }, "checkout-rules": rules },
-      ),
-    );
+  public async replaceVcsEntry<F extends string | undefined = undefined>(jobId: string, rootId: string, rules: string, fields?: F) {
+    return this.#projectedJson("PUT", entryPath(jobId, rootId),
+      { fields: entryFields }, value => safeEntry(value as RawVcsEntry), fields, { "vcs-root": { id: rootId }, "checkout-rules": rules });
   }
 
   public async detachVcsRoot(jobId: string, rootId: string) {
@@ -1638,13 +1604,10 @@ export class TeamCityClient {
     const items = settingsItems(kind, id, input);
     const path = `${kind === "projectFeatures" ? projectPath(id) : jobPath(id)}/${kind}`;
     if (kind === "vcs-root-entries") {
-      const result = await this.#requestJson<{ "vcs-root-entry"?: RawVcsEntry[] }>(
-        "PUT",
-        path,
+      return this.#projectedJson("PUT", path,
         { fields: `vcs-root-entry(${entryFields})` },
-        { "vcs-root-entry": items },
-      );
-      return (result["vcs-root-entry"] ?? []).map(safeEntry);
+        value => ((value as { "vcs-root-entry"?: RawVcsEntry[] })["vcs-root-entry"] ?? []).map(safeEntry),
+        projection, { "vcs-root-entry": items });
     }
     const collectionKey = {
       steps: "step",
@@ -1664,15 +1627,9 @@ export class TeamCityClient {
       projection, { [collectionKey]: items });
   }
 
-  public async replaceTemplates(jobId: string, ids: readonly string[], optimizeSettings = false) {
-    const body = { buildType: textIds(ids).map((id) => ({ id })) };
-    const result = await this.#requestJson<{ buildType?: BuildTypeIdentity[] }>(
-      "PUT",
-      `${jobPath(jobId)}/templates`,
-      { fields: `buildType(${identityFields})`, optimizeSettings: String(optimizeSettings) },
-      body,
-    );
-    return (result.buildType ?? []).map(safeIdentity);
+  public async replaceTemplates<F extends string | undefined = undefined>(jobId: string, ids: readonly string[], optimizeSettings = false, fields?: F) {
+    return this.#projectedJson("PUT", `${jobPath(jobId)}/templates`,
+      { fields: `buildType(${identityFields})`, optimizeSettings: String(optimizeSettings) }, value => ((value as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields, { buildType: textIds(ids).map((id) => ({ id })) });
   }
 
   public async clearTemplates(jobId: string, inlineSettings = false) {

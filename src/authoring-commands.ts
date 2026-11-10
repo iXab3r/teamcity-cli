@@ -219,13 +219,15 @@ export function createAuthoringCommands(
       "show <job-id> <template-id>",
       "Show one attached template",
       Permission.ReadOnly,
-      (c, { args }) => c.getAttachedTemplate(args["job-id"], args["template-id"]),
+      (c, { args, options }) => c.getAttachedTemplate(args["job-id"], args["template-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "list <job-id>",
       "List attached templates in priority order",
       Permission.ReadOnly,
-      (c, { args }) => c.listTemplates(args["job-id"]),
+      (c, { args, options }) => c.listTemplates(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "attach <job-id>",
@@ -236,8 +238,10 @@ export function createAuthoringCommands(
           args["job-id"],
           text(options, "template"),
           options.optimizeSettings === true,
+          fieldsFromOptions(options),
         ),
       [
+        fieldsOption,
         option("--template <template-id>", "Select an existing template", true),
         option(
           "--optimize-settings",
@@ -309,13 +313,15 @@ export function createAuthoringCommands(
       "list <job-id>",
       "List attached roots",
       Permission.ReadOnly,
-      (c, { args }) => c.listVcsEntries(args["job-id"]),
+      (c, { args, options }) => c.listVcsEntries(args["job-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "show <job-id> <root-id>",
       "Show one root attachment",
       Permission.ReadOnly,
-      (c, { args }) => c.getVcsEntry(args["job-id"], args["root-id"]),
+      (c, { args, options }) => c.getVcsEntry(args["job-id"], args["root-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "attach <job-id>",
@@ -326,8 +332,10 @@ export function createAuthoringCommands(
           args["job-id"],
           text(options, "root"),
           typeof options.checkoutRules === "string" ? options.checkoutRules : "",
+          fieldsFromOptions(options),
         ),
       [
+        fieldsOption,
         option("--root <root-id>", "Select an existing VCS root", true),
         { ...checkoutOption, required: false },
       ],
@@ -341,8 +349,9 @@ export function createAuthoringCommands(
           args["job-id"],
           args["root-id"],
           text(options, "checkoutRules"),
+          fieldsFromOptions(options),
         ),
-      [checkoutOption],
+      [checkoutOption, fieldsOption],
     ),
     leaf(
       "detach <job-id> <root-id>",
