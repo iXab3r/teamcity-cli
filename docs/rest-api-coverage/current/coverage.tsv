@@ -316,12 +316,12 @@ POST /app/rest/buildTypes/{p1}/triggers	BuildType	Update	partial	jobs triggers c
 POST /app/rest/buildTypes/{p1}/vcs-root-entries	BuildType	Update	partial	jobs vcs attach <job-id>	attachVcsRoot	fields	exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/builds/multiple/{p1}	Build	Update	partial	builds batch cancel	cancelBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/builds/multiple/{p1}/tags	Build	Update	partial	builds batch tags add	tagBuildBatch	fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/builds/{p1}	Build	Update	partial	builds cancel <id>	cancelBuild	fields	exercised-in-passing-suite	tests/cli.test.ts;tests/errors.test.ts;tests/presentation.test.ts
-POST /app/rest/builds/{p1}/log	Build	Update	partial	builds log append <id>	appendBuildLog	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
-POST /app/rest/builds/{p1}/problemOccurrences	Build	Update	partial	builds problem-occurrences add <id>	addBuildProblem	fields	exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/builds/{p1}/status	Build	Update	partial	builds set-status <id> <status>	setBuildStatus	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
+POST /app/rest/builds/{p1}	Build	Update	covered	builds cancel <id>	cancelBuild		exercised-in-passing-suite	tests/build-action-projection.test.ts;tests/cli.test.ts;tests/errors.test.ts;tests/presentation.test.ts
+POST /app/rest/builds/{p1}/log	Build	Update	covered	builds log append <id>	appendBuildLog		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/validation-contract.test.ts
+POST /app/rest/builds/{p1}/problemOccurrences	Build	Update	covered	builds problem-occurrences add <id>	addBuildProblem		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts
+POST /app/rest/builds/{p1}/status	Build	Update	covered	builds set-status <id> <status>	setBuildStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/triage.test.ts
 POST /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
-POST /app/rest/builds/{p1}/vcsLabels	Build	Update	partial	builds vcs-labels add <id>	addBuildVcsLabel	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
+POST /app/rest/builds/{p1}/vcsLabels	Build	Update	covered	builds vcs-labels add <id>	addBuildVcsLabel		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/triage.test.ts
 POST /app/rest/cloud/instances	CloudInstance	Update	partial	cloud instances start	startCloudInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/forceStop	CloudInstance	Update	covered	cloud instances force-stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/stop	CloudInstance	Update	covered	cloud instances stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
@@ -407,8 +407,8 @@ PUT /app/rest/builds/{p1}/comment	Build	Update	covered	builds comment set <build
 PUT /app/rest/builds/{p1}/finish	Build	Update	covered	builds finish <id>	finishBuild		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/builds/{p1}/finishDate	Build	Update	covered	builds finish-at <id> <timestamp>	finishBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/builds/{p1}/number	Build	Update	covered	builds number set <build-id> <value>	setBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/builds/{p1}/pinInfo	Build	Update	partial	builds pin set <build-id> <status>	setBuildPin	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-PUT /app/rest/builds/{p1}/runningData	Build	Update	partial	builds start-agentless <id>	startAgentlessBuild	fields	exercised-in-passing-suite	tests/authoring.test.ts
+PUT /app/rest/builds/{p1}/pinInfo	Build	Update	covered	builds pin set <build-id> <status>	setBuildPin		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/operator.test.ts
+PUT /app/rest/builds/{p1}/runningData	Build	Update	covered	builds start-agentless <id>	startAgentlessBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts
 PUT /app/rest/builds/{p1}/statusText	Build	Update	covered	builds status-text set <build-id> <value>	setBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags replace <build-id>	replaceBuildTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
 PUT /app/rest/investigations/{p1}	Investigation	Update	partial	investigations replace	createInvestigation	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts

@@ -1,9 +1,9 @@
 {
-  "baselineHead": "43d5e090fa90f5e0ebc25dc30751fe8d3191ae9b",
+  "baselineHead": "4aca0cee48d7b5c189575c02ae65acca4e416fa8",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 206,
-  "partial": 242,
+  "covered": 213,
+  "partial": 235,
   "missing": 1,
   "reached": 448,
   "byPermission": {
@@ -15,8 +15,8 @@
     },
     "Update": {
       "total": 214,
-      "covered": 116,
-      "partial": 98,
+      "covered": 123,
+      "partial": 91,
       "missing": 0
     }
   },
@@ -53,8 +53,8 @@
     },
     "Build": {
       "total": 57,
-      "covered": 42,
-      "partial": 15,
+      "covered": 49,
+      "partial": 8,
       "missing": 0
     },
     "BuildQueue": {
@@ -207,7 +207,7 @@
     "approveAll": 1,
     "basePath": 9,
     "field": 6,
-    "fields": 229,
+    "fields": 222,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -221,7 +221,7 @@
     "requestor": 1,
     "resolveParameters": 5
   },
-  "partialOnlyBecauseOfFields": 214,
+  "partialOnlyBecauseOfFields": 207,
   "verificationEvidenceGaps": [
     "GET /app/rest/agents/{p1}",
     "GET /app/rest/changes",
