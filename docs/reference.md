@@ -889,6 +889,11 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Job `steps list/show/create/replace/replace-all` and `steps parameters list/replace`
+accept whole-response `--fields`. Unpaged lists keep their default array shaping
+when omitted. Scalar settings, parameter sub-resource leaves and deletes retain
+their existing options and workflows.
+
 Job `files list/children` accept item `--fields` and keep `{count,items}`, their
 existing locator and default shaping, without lookahead. `metadata` projects the
 whole response. All five file leaves accept `--resolve-parameters <boolean>`;
