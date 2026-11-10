@@ -257,7 +257,7 @@ GET /app/rest/testOccurrences	TestOccurrence	ReadOnly	covered	builds diagnose <b
 GET /app/rest/testOccurrences/{p1}	TestOccurrence	ReadOnly	covered	tests occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
 GET /app/rest/tests	Test	ReadOnly	covered	tests list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
 GET /app/rest/tests/{p1}	Test	ReadOnly	covered	tests show <id>	getTriageEntity		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
-GET /app/rest/userGroups	Group	ReadOnly	covered	groups list	listAccountGroupsAll		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
+GET /app/rest/userGroups	Group	ReadOnly	covered	groups list	listAccountGroupsAll		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts;tests/m05-review-regressions.test.ts
 GET /app/rest/userGroups/{p1}	Group	ReadOnly	covered	groups show <key>	getAccountGroup		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
 GET /app/rest/userGroups/{p1}/parent-groups	Group	ReadOnly	covered	groups parents list <id>	listAccountGroups		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
 GET /app/rest/userGroups/{p1}/properties	Group	ReadOnly	covered	groups properties list <id>	listAccountPropertyNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
@@ -273,7 +273,7 @@ GET /app/rest/users/{p1}/properties	User	ReadOnly	covered	users properties list 
 GET /app/rest/users/{p1}/properties/{p2}	User	ReadOnly	covered	users properties exists <id> <name>	checkAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/users/{p1}/roles	User	ReadOnly	covered	users roles list <id>	listAccountRoles		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
 GET /app/rest/users/{p1}/roles/{p2}/{p3}	User	ReadOnly	covered	users roles show <id> <role-id>	getAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users/{p1}/tokens	User	ReadOnly	covered	users tokens list	listCurrentUserTokens		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/users-projection.test.ts
+GET /app/rest/users/{p1}/tokens	User	ReadOnly	covered	users tokens list	listCurrentUserTokens		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/m05-review-regressions.test.ts;tests/users-projection.test.ts
 GET /app/rest/users/{p1}/{p2}	User	ReadOnly	covered	users fields get <id> <field>	getAccountUserField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 GET /app/rest/vcs-root-instances	VcsRootInstance	ReadOnly	covered	vcs instances list			exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}	VcsRootInstance	ReadOnly	covered	vcs instances show <id>	getVcsInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts

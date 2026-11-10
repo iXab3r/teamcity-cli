@@ -13185,7 +13185,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/groups-projection.test.ts"
+    "tests/groups-projection.test.ts",
+    "tests/m05-review-regressions.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -13981,6 +13982,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/m05-review-regressions.test.ts",
     "tests/users-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
