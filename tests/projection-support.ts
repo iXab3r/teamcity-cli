@@ -7,7 +7,7 @@ import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing"
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
-export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
+export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
 export function projectionAcceptance(story: string, cases: ProjectionCase[], acceptance = {native: 1, paging: 2, mutation: 3, parity: 4, denied: 5, error: 6, blank: 7}) {
 const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.fileCollection ? `count,file(${s})` : c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.fileCollection ? {file: [v]} : c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.fileCollection ? {count: 1, items: [v]} : c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
@@ -165,12 +165,12 @@ const failures = [
   { name: "403", code: "http.forbidden", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 403 }) },
   { name: "404", code: "http.notFound", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 404 }) },
   { name: "503", code: "http.serverError", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 503 }) },
-  { name: "transport", code: "request.failed", response: () => HttpResponse.error() },
+  { name: "transport", code: cases[0]!.method === "GET" ? "request.failed" : "request.unknownOutcome", response: () => HttpResponse.error() },
   { name: "decoding", code: "error", response: () => HttpResponse.text(`invalid JSON synthetic-server-payload ${token}`) },
 ];
 for (const example of failures) {
   test(`${story}-A${acceptance.error} ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
-    const rt = await runtime(t);
+    const rt = await runtime(t, [cases[0]!.permission]);
     const cli = rt.createCli();
     const requests = trackRequests(t, 5, () => example.response());
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -208,13 +208,13 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
     for (const surface of surfaces) {
       if (kind === "lost") {
         await failure(rt, cli, c.argv, surface, "request.unknownOutcome");
-        await failure(rt, cli, [...c.argv, "--fields", projection], surface, "request.unknownOutcome");
-      } else if (c.argv.includes("start")) {
+        await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "request.unknownOutcome");
+      } else if (c.argv.includes("start") || c.acknowledgement) {
         await success(rt, cli, c.argv, surface, c.baselineResult);
-        await success(rt, cli, [...c.argv, "--fields", projection], surface, c.baselineResult);
+        await success(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, c.baselineResult);
       } else {
         await failure(rt, cli, c.argv, surface, "error");
-        await failure(rt, cli, [...c.argv, "--fields", projection], surface, "error");
+        await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "error");
       }
     }
     assert.equal(calls, 10);
