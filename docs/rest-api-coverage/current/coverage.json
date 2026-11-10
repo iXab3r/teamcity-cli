@@ -14742,6 +14742,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/m04-review-regressions.test.ts",
     "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18241,6 +18242,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/m04-review-regressions.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],

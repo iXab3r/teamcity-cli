@@ -2639,7 +2639,9 @@ export class TeamCityClient {
   public async getVcsRootInstances<F extends string | undefined = undefined>(id: string, fields?: F) {
     return this.#projectedJson("GET", infrastructure.vcsRootPath(id) + "/instances",
       { fields: `count,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
-      value => triage.array(triage.object(value)["vcs-root-instance"]).map(infrastructure.safeVcsInstance), fields);
+      value => triage.array((value as Record<string, unknown>)["vcs-root-instance"])
+        .map(infrastructure.safeVcsInstance),
+      fields);
   }
 
   public async listVcsRootPropertyNames<F extends string | undefined = undefined>(id: string, fields?: F) {
@@ -2722,7 +2724,9 @@ export class TeamCityClient {
     return this.#projectedJson("POST", "/app/rest/vcs-root-instances/checkingForChangesQueue",
       { locator: idPath(id, "Instance ID"), requestor: requestor === undefined ? "user" : requiredText(requestor, "Requestor"),
         fields: `count,nextHref,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
-      value => triage.array(triage.object(value)["vcs-root-instance"]).map(infrastructure.safeVcsInstance), fields);
+      value => triage.array((value as Record<string, unknown>)["vcs-root-instance"])
+        .map(infrastructure.safeVcsInstance),
+      fields);
   }
 
   public async notifyVcsCommit(id: string, okOnNothingFound?: string) {
