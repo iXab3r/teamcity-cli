@@ -14,6 +14,13 @@ masked and uses the generic human view. Lists retain their paging envelope and c
 Blank projections fail locally. Omission preserves the default request, shaping and views.
 `builds wait`, `builds diagnose` and `jobs run` retain their fixed projections.
 
+The build evidence reads also accept whole-response `--fields`: `builds canceled-info`,
+`builds pin show`, `builds statistics list`, `builds related-issues`, `builds artifact-changes`,
+`builds output-parameters list`, `builds resulting-properties list`,
+`builds problem-occurrences list`, `builds test-occurrences`, and `builds vcs-labels list`.
+These unpaged reads return the native response object when a projection is supplied;
+parameter values can therefore be selected explicitly. Omission keeps existing outputs.
+
 ## Paging
 
 TeamCity retains `--limit 100 --start 0`: limit bounds retained rows across wire requests.

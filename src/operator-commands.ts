@@ -1,3 +1,4 @@
+import { fieldsOption } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
   command,
@@ -286,7 +287,8 @@ export function createOperatorCommands(
       "canceled-info <build-id>",
       "Read the cancellation comment",
       Permission.ReadOnly,
-      (c, { args }) => c.getBuildCanceledInfo(number(args, "build-id")),
+      (c, { args, options }) => c.getBuildCanceledInfo(number(args, "build-id"), options.fields as string | undefined),
+      [fieldsOption],
     ),
     command("comment", "Change a build comment", [
       leaf(
@@ -306,7 +308,8 @@ export function createOperatorCommands(
         "show <build-id>",
         "Show pinned status and comment",
         Permission.ReadOnly,
-        (c, { args }) => c.getBuildPin(number(args, "build-id")),
+        (c, { args, options }) => c.getBuildPin(number(args, "build-id"), options.fields as string | undefined),
+        [fieldsOption],
       ),
       leaf(
         "set <build-id> <status>",
@@ -326,7 +329,8 @@ export function createOperatorCommands(
         "list <build-id>",
         "List named numeric text values",
         Permission.ReadOnly,
-        (c, { args }) => c.listBuildStatistics(number(args, "build-id")),
+        (c, { args, options }) => c.listBuildStatistics(number(args, "build-id"), options.fields as string | undefined),
+        [fieldsOption],
       ),
       leaf(
         "show <build-id> <name>",

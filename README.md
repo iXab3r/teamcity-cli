@@ -311,6 +311,14 @@ exits 130. An interrupted read reports `interrupted`, and an interrupted downloa
 message about the saved data. An interrupted write keeps its unknown outcome:
 `run.unknownOutcome` for a queue request, `request.unknownOutcome` for others.
 
+
+The build evidence reads also accept whole-response `--fields`: `builds canceled-info`,
+`builds pin show`, `builds statistics list`, `builds related-issues`, `builds artifact-changes`,
+`builds output-parameters list`, `builds resulting-properties list`,
+`builds problem-occurrences list`, `builds test-occurrences`, and `builds vcs-labels list`.
+These unpaged reads return the native response object when a projection is supplied;
+parameter values can therefore be selected explicitly. Omission keeps existing outputs.
+
 ## Triggers, features, dependencies and templates
 
 These are configuration mutations gated by Update, not immediate build launches. Use the intended

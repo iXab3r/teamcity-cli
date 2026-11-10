@@ -53,9 +53,9 @@ export const evidenceProjectionCases = [
     ],
     "path": "/app/rest/builds/id:42/pinInfo",
     "defaultFields": "status,comment(text,timestamp)",
-    "baselineResponse": {},
-    "baselineResult": {},
-    "human": "status: \n",
+    "baselineResponse": { "status": true },
+    "baselineResult": { "status": true },
+    "human": "status: true\n",
     "stderr": ""
   },
   {

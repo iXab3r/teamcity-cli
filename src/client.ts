@@ -1579,7 +1579,8 @@ export class TeamCityClient {
     return { buildId: id, field, value: result };
   }
 
-  public async getBuildPin(id: number) {
+  public async getBuildPin(id: number, fields?: string) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/pinInfo`, {}, value => value as never, fields);
     return safeBooleanStatus(
       await this.#requestJson<BooleanStatus>("GET", `${buildPath(id)}/pinInfo`, {
         fields: booleanStatusFields,
@@ -1623,7 +1624,8 @@ export class TeamCityClient {
     return (result.tag ?? []).map((tag) => tag.name);
   }
 
-  public async listBuildStatistics(id: number) {
+  public async listBuildStatistics(id: number, fields?: string) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/statistics`, {}, value => value as never, fields);
     const result = await this.#requestJson<{ property?: { name: string; value: string }[] }>(
       "GET",
       `${buildPath(id)}/statistics`,
@@ -1640,7 +1642,8 @@ export class TeamCityClient {
     return statistic(name, value);
   }
 
-  public async getBuildCanceledInfo(id: number) {
+  public async getBuildCanceledInfo(id: number, fields?: string) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/canceledInfo`, {}, value => value as never, fields);
     const result = await this.#optionalJson<OperationComment>(
       `${buildPath(id)}/canceledInfo`,
       "text,timestamp",
@@ -2046,7 +2049,8 @@ export class TeamCityClient {
     return triage.safeMultiple(decodeJson(contents));
   }
 
-  public async getArtifactDependencyChanges(id: number) {
+  public async getArtifactDependencyChanges(id: number, fields?: string) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/artifactDependencyChanges`, {}, value => value as never, fields);
     const value = await this.#requestJson<{ buildChange?: unknown[] }>(
       "GET",
       `${buildPath(id)}/artifactDependencyChanges`,
@@ -2088,7 +2092,8 @@ export class TeamCityClient {
     return { buildId: id, appended: true };
   }
 
-  public async listBuildOccurrences(id: number, kind: "test" | "problem") {
+  public async listBuildOccurrences(id: number, kind: "test" | "problem", projection?: string) {
+    if (projection !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/${kind}Occurrences`, {}, value => value as never, projection);
     const key = kind + "Occurrence";
     const fields = kind === "test" ? triage.testOccurrenceFields : triage.problemOccurrenceFields;
     const value = await this.#requestJson<Record<string, unknown>>(
@@ -2112,7 +2117,8 @@ export class TeamCityClient {
     );
   }
 
-  public async getBuildRelatedIssues(id: number) {
+  public async getBuildRelatedIssues(id: number, fields?: string) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/relatedIssues`, {}, value => value as never, fields);
     const value = await this.#requestJson<{ issueUsage?: unknown[] }>(
       "GET",
       `${buildPath(id)}/relatedIssues`,
@@ -2156,7 +2162,8 @@ export class TeamCityClient {
     };
   }
 
-  public async getBuildVcsLabels(id: number) {
+  public async getBuildVcsLabels(id: number, fields?: string) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/vcsLabels`, {}, value => value as never, fields);
     return this.#vcsLabels(
       await this.#requestJson("GET", `${buildPath(id)}/vcsLabels`, { fields: triage.labelFields }),
     );
@@ -2363,7 +2370,9 @@ export class TeamCityClient {
   public async listBuildRuntimeParameterNames(
     id: number,
     kind: "output-parameters" | "resulting-properties",
+    fields?: string,
   ) {
+    if (fields !== undefined) return this.#projectedJson("GET", `${buildPath(id)}/${kind}`, {}, value => value as never, fields);
     const value = await this.#requestJson<{ property?: unknown[] }>(
       "GET",
       `${buildPath(id)}/${kind}`,
