@@ -1015,3 +1015,7 @@ confirmations, empty or malformed bodies, errors, exit status and unknown mutati
 outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
 acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
 fields and passes through. Lost mutation responses are never retried automatically.
+
+Project `versioned-settings affected`, `config show/effective/replace`, `status`,
+and `load` accept whole-response `--fields`. Omission preserves shaped results,
+write bodies and confirmations. Token and secure-value workflows keep fixed reads.

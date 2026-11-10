@@ -184,3 +184,7 @@ confirmations, empty or malformed bodies, errors, exit status and unknown mutati
 outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
 acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
 fields and passes through. Lost mutation responses are never retried automatically.
+
+Versioned settings projections cover affected projects, configuration (including effective
+configuration and replacement), status and load results. Scoped responses project the whole
+response; omission preserves existing shaping. Credentials workflows remain unchanged.
