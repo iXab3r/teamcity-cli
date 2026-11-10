@@ -7,6 +7,11 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Cloud `images/instances/profiles list` accept item fields; their `show` commands
+and `cloud instances start` accept whole-response fields. Image/instance selectors use
+`--cloud-profile`, `--image`, and (for instance reads) `--instance`. Start retains its
+acknowledgement for empty or non-JSON successful responses.
+
 Pool projections are available on `pools list` and `pools agents list` (item fields),
 and `pools show`, `pools projects list`, and `pools agents assign` (whole response).
 

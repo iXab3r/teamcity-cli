@@ -178,12 +178,12 @@ GET /app/rest/changes/{p1}/parentChanges	Change	ReadOnly	covered	changes parents
 GET /app/rest/changes/{p1}/parentRevisions	Change	ReadOnly	covered	changes parent-revisions <id>	getChangeParentRevisions		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/changes/{p1}/vcsRootInstance	Change	ReadOnly	covered	changes root-instance <id>	getChangeRootInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts
 GET /app/rest/changes/{p1}/{p2}	Change	ReadOnly	covered	changes field <id> <field>	getChangeField		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/cloud/images	CloudInstance	ReadOnly	partial	cloud images list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/cloud/images/{p1}	CloudInstance	ReadOnly	partial	cloud images show	getCloudImage	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
-GET /app/rest/cloud/instances	CloudInstance	ReadOnly	partial	cloud instances list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/cloud/instances/{p1}	CloudInstance	ReadOnly	partial	cloud instances show	getCloudInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/cloud/profiles	CloudInstance	ReadOnly	partial	cloud profiles list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/cloud/profiles/{p1}	CloudInstance	ReadOnly	partial	cloud profiles show <id>	getCloudProfile	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/cloud/images	CloudInstance	ReadOnly	covered	cloud images list			exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
+GET /app/rest/cloud/images/{p1}	CloudInstance	ReadOnly	covered	cloud images show	getCloudImage		exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts;tests/infrastructure.test.ts
+GET /app/rest/cloud/instances	CloudInstance	ReadOnly	covered	cloud instances list			exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
+GET /app/rest/cloud/instances/{p1}	CloudInstance	ReadOnly	covered	cloud instances show	getCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
+GET /app/rest/cloud/profiles	CloudInstance	ReadOnly	covered	cloud profiles list			exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
+GET /app/rest/cloud/profiles/{p1}	CloudInstance	ReadOnly	covered	cloud profiles show <id>	getCloudProfile		exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
 GET /app/rest/deploymentDashboards	DeploymentDashboard	ReadOnly	partial	deployments list		fields	exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/deploymentDashboards/{p1}	DeploymentDashboard	ReadOnly	partial	deployments show <id>	getDashboard	fields	exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/deploymentDashboards/{p1}/instances	DeploymentDashboard	ReadOnly	partial	deployments instances list <dashboard>		fields	exercised-in-passing-suite	tests/system.test.ts
@@ -322,7 +322,7 @@ POST /app/rest/builds/{p1}/problemOccurrences	Build	Update	covered	builds proble
 POST /app/rest/builds/{p1}/status	Build	Update	covered	builds set-status <id> <status>	setBuildStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/projected-partial.test.ts;tests/projected-redaction.test.ts;tests/triage.test.ts
 POST /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/projected-acknowledgement.test.ts;tests/tag-projection.test.ts
 POST /app/rest/builds/{p1}/vcsLabels	Build	Update	covered	builds vcs-labels add <id>	addBuildVcsLabel		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-action-projection.test.ts;tests/projected-partial.test.ts;tests/projected-redaction.test.ts;tests/triage.test.ts
-POST /app/rest/cloud/instances	CloudInstance	Update	partial	cloud instances start	startCloudInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
+POST /app/rest/cloud/instances	CloudInstance	Update	covered	cloud instances start	startCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts;tests/infrastructure.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/forceStop	CloudInstance	Update	covered	cloud instances force-stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/stop	CloudInstance	Update	covered	cloud instances stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/deploymentDashboards	DeploymentDashboard	Update	covered	deployments create <id>	createDashboard		exercised-in-passing-suite	tests/system.test.ts
