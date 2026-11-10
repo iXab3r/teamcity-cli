@@ -27,7 +27,7 @@ export function knownCredentialMask(credential: string): (text: string) => strin
     representations.add(encodeURI(credential));
   } catch { /* A malformed Unicode value can still be matched as text. */ }
   const patterns = [...representations].filter(value => value !== "").sort((a, b) => b.length - a.length).map(value =>
-    Array.from(value.matchAll(/%[\da-f]{2}|[\s\S]/gi), ([part]) => {
+    Array.from(value.matchAll(/%[\da-f]{2}|[\s\S]/giu), ([part]) => {
       if (/^%[\da-f]{2}$/i.test(part)) {
         return "%" + Array.from(part.slice(1), hex => `[${hex.toUpperCase()}${hex.toLowerCase()}]`).join("");
       }
