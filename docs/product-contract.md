@@ -7,6 +7,12 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Job `parameters` and `output-parameters` accept whole-response `--fields`
+on `list`, `show`, `create`, `set`, and `replace-all`. Lists also accept native
+`--locator`. Mutations keep fixed preflight projections; explicit fields select
+the write response. Part leaves and `set-password` retain their existing workflows.
+Project parameter commands retain their existing options and requests.
+
 Jobs `list` and `branches` accept item `--fields`; `show`, `builds`,
 `investigations`, `vcs-instances`, and `create` accept whole-response fields.
 `aliases` and `tags` accept native `--field <name>` unchanged; their output
