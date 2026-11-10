@@ -15,6 +15,13 @@ native JSON and the generic human view. Omission preserves default array/object
 shaping, requests, permissions and errors. Scalar settings, other sub-resources
 and deletes retain their existing options and workflows.
 
+Job `templates list/show/attach/replace-all` and
+`vcs list/show/attach/replace/replace-all` accept whole-response `--fields`.
+Unpaged lists and replacements return native response objects with explicit
+fields; omission keeps their shaped arrays. Template `--optimize-settings`,
+`--inline-settings`, confirmations, VCS checkout rules and write bodies retain
+existing behavior. Detach, clear and checkout-rule sub-resources are unchanged.
+
 Job `files list/children` accept item `--fields` and keep `{count,items}`, their
 existing locator and default shaping, without lookahead. `metadata` projects the
 whole response. All five file leaves accept `--resolve-parameters <boolean>`;
