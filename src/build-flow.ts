@@ -257,7 +257,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
       const id = optionalString(args, "build-id");
       const job = optionalString(options, "job");
       const branch = optionalString(options, "branch");
-        const fields = optionalString(options, "fields");
+      const fields = optionalString(options, "fields");
       if (options.latest !== true) {
         if (job !== undefined || branch !== undefined)
           throw new Error("--job and --branch select a build only together with --latest.");
@@ -282,7 +282,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     {
       permission: Permission.ReadOnly,
       options: [
-          fieldsOption,
+        fieldsOption,
         { flags: "--job <id>", description: "Select a job for --latest" },
         {
           flags: "--branch <name>",
@@ -385,7 +385,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     {
       permission: Permission.Update,
       options: [
-          booleanOption("--move-to-top <boolean>", "Queue the build at the top"),
+        booleanOption("--move-to-top <boolean>", "Queue the build at the top"),
         {
           flags: "--branch <name>",
           description: "Select the build branch",

@@ -118,7 +118,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
       "builds diagnose 101",
       "builds artifacts download 101 dist/app.zip --output app.zip",
     ],
-    version: "0.7.1",
+    version: "0.8.0",
     applicationId: "teamcity-cli",
     permissions: { categories: adminCategories },
     profile: {
@@ -325,7 +325,10 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "List problem occurrences for a build",
           Permission.ReadOnly,
           (c, { args, options }) =>
-            c.listBuildProblems(integerValue(args.id), { ...pageValues(options), fields: fieldsFromOptions(options) }),
+            c.listBuildProblems(
+              integerValue(args.id),
+              { ...pageValues(options), fields: fieldsFromOptions(options) },
+            ),
           [...pageOptions, fieldsOption],
         )),
         leaf(
@@ -333,7 +336,10 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "List source changes associated with a build",
           Permission.ReadOnly,
           (c, { args, options }) =>
-            c.listBuildChanges(integerValue(args.id), { ...pageValues(options), fields: fieldsFromOptions(options) }),
+            c.listBuildChanges(
+              integerValue(args.id),
+              { ...pageValues(options), fields: fieldsFromOptions(options) },
+            ),
           [...pageOptions, fieldsOption],
         ),
         withView(buildRecord, leaf(

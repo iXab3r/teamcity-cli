@@ -79,7 +79,7 @@ else if (tool === 'npm' && args[0] === 'stage' && args[1] === 'download') {
   else fs.copyFileSync(path.join(path.dirname(manifestPath), m.file), 'downloaded.tgz');
 }
 else if (tool === 'npm' && ['ci','test'].includes(args[0])) {}
-else if (tool === 'npm' && args[0] === 'run' && args[1] === 'test:package') {}
+else if (tool === 'npm' && args[0] === 'run' && ['test:package', 'test:coverage'].includes(args[1])) {}
 else if (tool === 'npm' && args[0] === 'view') console.log(JSON.stringify(args[1].endsWith('@0.1.0') ? {version: m.version, 'dist.integrity': m.integrity} : m.version));
 else if (tool === 'npm' && args[0] === 'run' && args[1] === 'test:registry') assert.deepEqual(args, ['run', 'test:registry', '--', m.version]);
 else if (tool === 'curl') {
@@ -110,6 +110,10 @@ else if (tool === 'curl') {
     manifest.commit = env.RELEASE_REVISION;
     await writeFile(env.STUB_MANIFEST,JSON.stringify(manifest));
     run("dotnet", [...driver,"--target","Verify","--exclusive"]);
+    // Verify runs the suite once, through the offline coverage freshness gate.
+    const verifyCalls = (await readFile(log, "utf8")).trim().split("\n").map(JSON.parse)
+      .filter(call => call.tool === "npm").map(call => call.args.join(" "));
+    assert.deepEqual(verifyCalls.filter(call => /^(test|run test:)/.test(call)), ["run test:coverage", "run test:package"]);
     await rm(log);
     // WHAT: Regression: Stage --dry-run skipped cleanliness checks but still created a stage.
     // HOW: Run that exact Cake entrypoint and require rejection before npm is invoked.

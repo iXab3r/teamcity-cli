@@ -889,185 +889,71 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
-Server file list/children accept item `--fields` and `--base-path`, preserving
-`{count,items}`, the existing locator and default fields without lookahead. Metadata
-accepts whole-response fields; archive accepts `--base-path` and `--archive-name`
-(query `name`). Server files expose neither resolve-parameters nor log-build-usage.
-Backup start retains Admin and required confirmation; its seven explicit boolean
-switches control timestamp, configs, database, build logs, personal changes, running
-builds and supplementary data. Each accepts only `true` or `false`; omitted switches
-retain their existing values, including the wire spelling `includeSupplimentaryData`.
+Use `--fields <projection>` to select native TeamCity JSON with the generic human view.
+Explicit values pass through unchanged; omission keeps default projections, shaping and views.
+Paged lists keep their envelope, locator and paging and project each item; single reads and
+unpaged scoped lists project the whole response. The normative [projection contract](product-contract.md#field-projections)
+covers masking, parity, fixed workflows, partial failures and per-command empty-body handling.
 
-Health and audit lists accept item `--fields` and preserve their paging envelopes
-and scope filters. Health show, health category list/show, and audit show accept
-whole-response fields. Category list also accepts unchanged `--locator`, omitted
-by default. Explicit fields return native JSON; omitted options retain all defaults.
+These families accept `--fields` (slash-separated leaves share the preceding command path):
 
-Server status, license summary/list/show/add, metrics, plugins and node reads accept
-whole-response `--fields`. Explicit projections return native JSON with the generic
-view; omission preserves default shaping and permission categories. License keys
-remain addressed through local aliases. Plugins also accept unchanged `--locator`;
-omission sends none. Node list role/state filters and responsibility setters retain
-their existing behavior.
+| Family | Commands |
+|---|---|
+| `builds` | `builds list/show/tests/problems/changes/cancel/set-status/start-agentless/artifact-changes/related-issues/test-occurrences/canceled-info`; `builds artifacts list/children/metadata`; `builds batch show/cancel/delete/pin`; `builds batch comment set/clear`; `builds batch tags add/remove`; `builds tags list/add/replace`; `builds pin show/set`; `builds log append`; `builds problem-occurrences list/add`; `builds vcs-labels list/add`; `builds output-parameters list`; `builds resulting-properties list`; `builds statistics list` |
+| `jobs` | `jobs list/show/builds/branches/create/investigations/vcs-instances`; `jobs agent-requirements replace-all/list/show/create/replace`; `jobs artifact-dependencies replace-all/list/show/create/replace`; `jobs output-parameters replace-all/list/show/create/set`; `jobs parameters replace-all/list/show/create/set`; `jobs steps replace-all/list/show/create/replace`; `jobs steps parameters list/replace`; `jobs vcs replace-all/list/show/attach/replace`; `jobs triggers replace-all/list/show/create/replace`; `jobs features replace-all/list/show/create/replace`; `jobs features parameters list/replace`; `jobs snapshot-dependencies replace-all/list/show/create/replace`; `jobs templates replace-all/show/list/attach`; `jobs files list/children/metadata` |
+| `projects` | `projects list/show/branches/parent/move/default-value-sets`; `projects pools list/replace-all`; `projects jobs create`; `projects features replace-all/list/show/create/replace`; `projects templates list/create`; `projects templates default show/set/clear`; `projects parameters replace-all/list/show/create/set`; `projects versioned-settings affected/load/status`; `projects versioned-settings config show/effective/replace`; `projects deployments list/show` |
+| `queue` | `queue list/show/delete-page/reorder/compatible-agents`; `queue approval show/approve`; `queue tags list`; `queue position show/set` |
+| `agents` | `agents list/show/compatible-jobs/incompatible-jobs`; `agents types show`; `agents enabled show/set`; `agents authorized show/set`; `agents policy show/set`; `agents pool show/set` |
+| `changes` | `changes duplicates/first-builds/root-instance/attributes/show/parents` |
+| `investigations` | `investigations list/create/create-many/show/replace` |
+| `mutes` | `mutes delete-many/list/create/create-many/show` |
+| `tests` | `tests list/show/occurrence` |
+| `problems` | `problems list/show/occurrence` |
+| `server` | `server nodes list/show`; `server nodes responsibilities disabled/effective/enabled`; `server rest-plugin/metrics/plugins/status`; `server licenses summary/list/add/show`; `server files list/children/metadata` |
+| `vcs` | `vcs roots list/show/create/instances`; `vcs roots properties list/replace`; `vcs instances files list/children/metadata`; `vcs instances list/check-changes/show/properties`; `vcs instances state show/replace` |
+| `pools` | `pools list/show`; `pools agents list/assign`; `pools projects list` |
+| `users` | `users list/show/create/update`; `users groups list/replace/show/remove`; `users permissions list`; `users properties list`; `users tokens list/create` |
+| `groups` | `groups list/create/show`; `groups parents list/replace`; `groups properties list` |
+| `cloud` | `cloud profiles list/show`; `cloud images list/show`; `cloud instances list/show/start` |
+| `deployments` | `deployments list/show`; `deployments instances list/show` |
+| `roles` | `roles list/create/show`; `roles included add/remove`; `roles permissions add/remove` |
+| `audit` | `audit list/show` |
+| `health` | `health list/show`; `health categories list/show` |
 
-Roles accept whole-response `--fields` on `list/show/create` and
-`included add/remove` and `permissions add/remove`. Default shaping, Admin gates,
-write bodies and JSON-decoding errors for empty successful mutations are preserved.
+Other native controls retain their omitted defaults. Text values must be nonblank; booleans
+accept only literal `true` or `false`.
 
-Groups accept whole-response `--fields` on `list/show/create`, `parents list/replace`,
-and `properties list`. These unpaged lists retain their existing shaped arrays when
-fields are omitted; explicit fields return the native response and generic view.
+| Option | Commands | Wire query parameter |
+|---|---|---|
+| `--field` | `jobs aliases/tags`; `projects order jobs show/set`; `projects order projects show/set` | `field` |
+| `--locator` | `builds tags list/replace`; `jobs output-parameters list`; `jobs parameters list`; `projects features list`; `projects parameters list`; `queue tags list`; `server plugins`; `health categories list` | `locator` |
+| `--base-path` | `builds artifacts list/children/archive`; `jobs files list/children/archive`; `server files list/children/archive`; `vcs instances files list/children/archive` | `basePath` |
+| `--archive-name` | `builds artifacts archive`; `jobs files archive`; `server files archive`; `vcs instances files archive` | `name` |
+| `--resolve-parameters` | `builds artifacts list/children/metadata/download/archive`; `jobs files list/children/metadata/download/archive` | `resolveParameters` |
+| `--log-build-usage` | `builds artifacts list/children/metadata/download/archive` | `logBuildUsage` |
+| `--move-to-top` | `jobs run` | `moveToTop` |
+| `--approve-all` | `queue approval approve` | `approveAll` |
+| `--requestor` | `vcs instances check-changes` | `requestor` |
+| `--ok-on-nothing-found` | `vcs instances notify-commit` | `okOnNothingFound` |
+| `--add-timestamp` | `server backup start` | `addTimestamp` |
+| `--include-configs` | `server backup start` | `includeConfigs` |
+| `--include-database` | `server backup start` | `includeDatabase` |
+| `--include-build-logs` | `server backup start` | `includeBuildLogs` |
+| `--include-personal-changes` | `server backup start` | `includePersonalChanges` |
+| `--include-running-builds` | `server backup start` | `includeRunningBuilds` |
+| `--include-supplementary-data` | `server backup start` | `includeSupplimentaryData` |
 
-User projections are available on `users list` (item fields) and whole-response
-`users show/create/update`, `groups list/show/replace/remove`, `permissions list`,
-`properties list`, and `tokens list/create`. `users show <id>` uses the existing
-user ID selector and requests `id,username,name` by default, returning that safe
-record; missing users return `http.notFound`. Token creation keeps Credentials
-permission and stores an issued value under the requested alias when present;
-if explicit fields omit the value, no issued-token record is stored.
+`jobs tags` defaults to `field=tag(name)`; health category list and server plugins omit
+`locator` by default. Queue approval defaults to `approveAll=false`; VCS change-check
+requestor defaults to `user` and commit notification to `okOnNothingFound=false`.
+`builds start-agentless --requestor` is an existing option sent as the request body, not as a query parameter.
+Server and VCS-instance files expose neither resolve-parameters nor log-build-usage;
+job files expose resolve-parameters on all five leaves, and build artifacts expose both.
+Backup start retains Admin and required confirmation; its seven switches preserve omitted values.
 
-Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
-deployments list/show, parent, and templates list/default show. Project list and branches
-retain their paging envelopes; other scoped reads project the whole response.
-Omission preserves the project tree view and all existing requests and shaping.
-Project move, pool replacement, default template set/clear, template creation and
-project job creation accept whole-response `--fields`. Move and default-template clear
-retain their empty/non-JSON acknowledgements. Ordering show/set for jobs/projects accept
-unchanged `--field`; omitted selectors keep their existing values. `jobs copy` retains
-its fixed workflow projection.
-Project parameters accept `--fields` on list/show/create/set/replace-all; project
-features accept it on list/show/create/replace/replace-all. Both lists accept unchanged
-`--locator`, and scoped projections select the whole response. Parameter write preflight
-reads retain fixed fields; value/type/raw-type and delete/clear leaves stay unchanged.
-Default parameter and feature shaping is preserved, including feature property names
-without values.
-
-Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
-and `snapshot-dependencies` accept whole-response `--fields` on
-`list/show/create/replace/replace-all`; steps and features also accept it on
-`parameters list/replace`. Explicit projections reach TeamCity unchanged and use
-native JSON and the generic human view. Omission preserves default array/object
-shaping, requests, permissions and errors. Scalar settings, other sub-resources
-and deletes retain their existing options and workflows.
-
-Job `templates list/show/attach/replace-all` and
-`vcs list/show/attach/replace/replace-all` accept whole-response `--fields`.
-Unpaged lists and replacements return native response objects with explicit
-fields; omission keeps their shaped arrays. Template `--optimize-settings`,
-`--inline-settings`, confirmations, VCS checkout rules and write bodies retain
-existing behavior. Detach, clear and checkout-rule sub-resources are unchanged.
-
-Job `files list/children` accept item `--fields` and keep `{count,items}`, their
-existing locator and default shaping, without lookahead. `metadata` projects the
-whole response. All five file leaves accept `--resolve-parameters <boolean>`;
-`list/children/archive` accept `--base-path`, and `archive` accepts `--archive-name`
-(server query `name`). Omitted controls preserve requests and output. Download
-bounds and no-overwrite rules remain unchanged; other file families keep their options.
-
-Job `parameters` and `output-parameters` accept whole-response `--fields`
-on `list`, `show`, `create`, `set`, and `replace-all`. Lists also accept native
-`--locator`. Mutations keep fixed preflight projections; explicit fields select
-the write response. Part leaves and `set-password` retain their existing workflows.
-
-Jobs `list` and `branches` accept item `--fields`; `show`, `builds`,
-`investigations`, `vcs-instances`, and `create` accept whole-response fields.
-`aliases` and `tags` accept native `--field <name>` unchanged; their output
-shaping is preserved. Omitting it retains the existing query, including tags’
-`field=tag(name)`. Job creation retains its Update permission and body.
-
-Deployment `deployments list` and `deployments instances list` accept item fields;
-`deployments show`, `deployments instances show`, and `server rest-plugin` accept
-whole-response fields. REST plugin info keeps its XML request/parser by default and
-requests native JSON for explicit fields.
-
-Cloud `images/instances/profiles list` accept item fields; their `show` commands
-and `cloud instances start` accept whole-response fields. Image/instance selectors use
-`--cloud-profile`, `--image`, and (for instance reads) `--instance`. Start retains its
-acknowledgement for empty or non-JSON successful responses.
-
-Pool projections are available on `pools list` and `pools agents list` (item fields),
-and `pools show`, `pools projects list`, and `pools agents assign` (whole response).
-
-Investigations and mutes accept item `--fields` on `investigations list` and `mutes list`,
-and whole-response fields on `investigations show/create/create-many/replace` and
-`mutes show/create/create-many/delete-many`. Bulk unmute keeps its fixed preflight reads;
-fields select only the DELETE response. Empty or non-JSON delete responses retain the acknowledgement.
-
-Agent projections are available on `agents list` (item fields) and whole-response
-`agents show`, `authorized show/set`, `enabled show/set`, `policy show/set`,
-`compatible-jobs`, `incompatible-jobs`, `pool show/set`, and `types show`.
-All four setters retain Update permission and their existing request bodies.
-
-
-Source-change projections are available on `builds changes` (item fields) and
-`changes show`, `attributes`, `duplicates`, `first-builds`, `parents`, and
-`root-instance` (whole-response fields).
-
-
-Tests and problems support item `--fields` on `tests list`, `problems list`,
-`builds tests`, and `builds problems`; `tests show/occurrence` and
-`problems show/occurrence` support whole-response fields. Occurrence reads require
-`--build <id>`. `builds diagnose` retains its fixed projections.
-
-
-Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
-Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
-keeps the public-name defaults. Explicit fields return native JSON and the generic view.
-Build tag add retains its local acknowledgement for empty or non-JSON successful bodies.
-
-Build artifacts support `--resolve-parameters true|false` and `--log-build-usage true|false`.
-List/children/archive also accept `--base-path`; archive accepts `--archive-name` for the server
-archive name, independently of `--output` and `--max-bytes`. List/children accept item fields
-(e.g. `--fields 'name,size'`) and retain `{count,items,hasMore}`; metadata accepts whole-response
-fields. Explicit projections use native JSON and the generic view. Omitted controls preserve defaults.
-
-Build actions (`builds cancel`, `set-status`, `log append`, `problem-occurrences add`,
-`vcs-labels add`, `pin set`, `start-agentless`) accept `--fields <projection>` and
-return native JSON with the generic view. Omission preserves requests and output.
-Empty successful bodies retain each command's default behavior: log append returns its
-acknowledgement; these other actions fail JSON decoding. Projections are never extended.
-For partial-failure detection include `errors(item)` for set-status or
-`vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
-native error result. Detection reads the native response before credential masking; the returned
-result is masked afterwards. Absent detection fields return the native body with exit 0.
-
-Batch `show`, `cancel`, `delete`, `comment set/clear`, `tags add/remove`, and `pin`
-accept `--fields`. The native response retains its envelope. Include `errorCount`
-to retain `batch.partial` detection; absent detection fields imply no claim about
-partial failure. Empty or malformed responses retain default handling, and omitted
-options preserve the default request body, permissions and output.
-
-Queue mutations `approval approve`, `delete-page`, `reorder`, and `position set`
-accept `--fields`; native responses retain their envelopes. `delete-page` retains
-its acknowledgement for an empty success; the other three retain JSON decoding errors.
-`jobs run --move-to-top <boolean>` and `queue approval approve --approve-all <boolean>`
-require literal `true` or `false`. Omission preserves the existing query, including
-`approveAll=false`; `jobs run` keeps its fixed response projection and wait workflow.
-The wait and latest-build resolution workflows keep their required response fields;
-projection options apply to their direct request leaves.
-
-All new controls follow parity with the default path: validation, permissions,
-confirmations, empty or malformed bodies, errors, exit status and unknown mutation
-outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
-acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
-fields and passes through. Lost mutation responses are never retried automatically.
-
-Project `versioned-settings affected`, `config show/effective/replace`, `status`,
-and `load` accept whole-response `--fields`. Omission preserves shaped results,
-write bodies and confirmations. Token and secure-value workflows keep fixed reads.
-
-VCS `roots list` accepts item `--fields`; `roots show/instances/create` and
-`roots properties list/replace` accept whole-response fields. Default property
-names, root shaping, selectors, paging and create bodies retain their existing behavior.
-
-VCS `instances list` accepts item `--fields`; `show`, `properties`, `state show/replace`
-and `check-changes` accept whole-response fields. `check-changes --requestor <text>`
-and `notify-commit --ok-on-nothing-found <boolean>` preserve the omitted defaults
-`user` and `false`. Boolean values must be literal `true` or `false`.
-
-VCS instance `files list/children` accept item `--fields` and `--base-path`, keeping
-`{count,items}`, the existing locator and default fields without lookahead. `metadata`
-accepts whole-response fields; `archive` accepts `--base-path` and `--archive-name`
-(query `name`). Download bounds and no-overwrite behavior remain unchanged.
-These files expose neither `--resolve-parameters` nor `--log-build-usage`.
-Server files retain their existing options.
+`jobs run`, `builds wait`, `builds diagnose`, `jobs copy`, parameter value/type/raw-type,
+`jobs parameters set-password` and scalar-setting leaves deliberately have no `--fields`.
+Occurrence reads still require `--build`; cloud selectors retain `--cloud-profile`, `--image`
+and, for instance reads, `--instance`. Agent setters and job creation retain Update permission.
+For mutation projections, keep `errorCount` (batch), `errors(item)` (set-status) or
+`vcsLabel(status)` (VCS labels) to retain partial-failure detection.
