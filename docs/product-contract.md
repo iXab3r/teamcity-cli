@@ -7,6 +7,13 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Job `files list/children` accept item `--fields` and keep `{count,items}`, their
+existing locator and default shaping, without lookahead. `metadata` projects the
+whole response. All five file leaves accept `--resolve-parameters <boolean>`;
+`list/children/archive` accept `--base-path`, and `archive` accepts `--archive-name`
+(server query `name`). Omitted controls preserve requests and output. Download
+bounds and no-overwrite rules remain unchanged; other file families keep their options.
+
 Job `parameters` and `output-parameters` accept whole-response `--fields`
 on `list`, `show`, `create`, `set`, and `replace-all`. Lists also accept native
 `--locator`. Mutations keep fixed preflight projections; explicit fields select

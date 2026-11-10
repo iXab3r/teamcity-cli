@@ -1,16 +1,16 @@
 {
-  "baselineHead": "2d2835c3d1727c997635a276db89eb22a5113768",
+  "baselineHead": "e23827366e74e262771be08a47a1c2ece0f3cabf",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 300,
-  "partial": 148,
+  "covered": 305,
+  "partial": 143,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 146,
-      "partial": 88,
+      "covered": 151,
+      "partial": 83,
       "missing": 1
     },
     "Update": {
@@ -65,8 +65,8 @@
     },
     "BuildType": {
       "total": 109,
-      "covered": 61,
-      "partial": 48,
+      "covered": 66,
+      "partial": 43,
       "missing": 0
     },
     "Change": {
@@ -204,9 +204,9 @@
   },
   "unsupportedByParameter": {
     "addTimestamp": 1,
-    "basePath": 9,
+    "basePath": 6,
     "field": 4,
-    "fields": 138,
+    "fields": 135,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -214,10 +214,9 @@
     "includeRunningBuilds": 1,
     "includeSupplimentaryData": 1,
     "locator": 4,
-    "name": 3,
+    "name": 2,
     "okOnNothingFound": 1,
-    "requestor": 1,
-    "resolveParameters": 5
+    "requestor": 1
   },
   "partialOnlyBecauseOfFields": 126,
   "verificationEvidenceGaps": [
