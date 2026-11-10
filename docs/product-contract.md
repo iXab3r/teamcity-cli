@@ -7,6 +7,43 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Server file list/children accept item `--fields` and `--base-path`, preserving
+`{count,items}`, the existing locator and default fields without lookahead. Metadata
+accepts whole-response fields; archive accepts `--base-path` and `--archive-name`
+(query `name`). Server files expose neither resolve-parameters nor log-build-usage.
+Backup start retains Admin and required confirmation; its seven explicit boolean
+switches control timestamp, configs, database, build logs, personal changes, running
+builds and supplementary data. Each accepts only `true` or `false`; omitted switches
+retain their existing values, including the wire spelling `includeSupplimentaryData`.
+
+Health and audit lists accept item `--fields` and preserve their paging envelopes
+and scope filters. Health show, health category list/show, and audit show accept
+whole-response fields. Category list also accepts unchanged `--locator`, omitted
+by default. Explicit fields return native JSON; omitted options retain all defaults.
+
+Server status, license summary/list/show/add, metrics, plugins and node reads accept
+whole-response `--fields`. Explicit projections return native JSON with the generic
+view; omission preserves default shaping and permission categories. License keys
+remain addressed through local aliases. Plugins also accept unchanged `--locator`;
+omission sends none. Node list role/state filters and responsibility setters retain
+their existing behavior.
+
+Roles accept whole-response `--fields` on `list/show/create` and
+`included add/remove` and `permissions add/remove`. Default shaping, Admin gates,
+write bodies and JSON-decoding errors for empty successful mutations are preserved.
+
+Groups accept whole-response `--fields` on `list/show/create`, `parents list/replace`,
+and `properties list`. These unpaged lists retain their existing shaped arrays when
+fields are omitted; explicit fields return the native response and generic view.
+
+Users support item fields on list and whole-response fields on show/create/update,
+groups list/show/replace/remove, permissions list, properties list and tokens list/create.
+Explicit fields on account and token operations are unchanged passthrough with the
+existing permission categories. Token creation stores a returned value under the
+requested alias; a projection omitting it stores nothing. Omission preserves safe
+identity/token shaping, existing bodies and acknowledgements. `users show <id>`
+returns the same `id,username,name` shape as a default list item.
+
 Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
 deployments list/show, parent, and templates list/default show. Project list and branches
 retain their paging envelopes; other scoped reads project the whole response.

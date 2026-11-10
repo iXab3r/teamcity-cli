@@ -35,23 +35,21 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
         .filter((k) => o[k] !== undefined)
         .map((k) => [k, o[k] as string]),
     );
-  const nativeOptions = (kind: FileTree, action: string): OptionDefinition[] =>
-    kind !== "builds" && kind !== "jobs" && kind !== "instances"
+  const nativeOptions = (kind: FileTree, action: string): OptionDefinition[] => [
+    ...(kind === "instances" || kind === "server"
       ? []
-      : [
-          ...(kind === "instances" ? [] : [booleanOption("--resolve-parameters <boolean>", "Resolve parameters in artifact paths")]),
-          ...(kind === "builds" ? [booleanOption(
-            "--log-build-usage <boolean>",
-            "Set whether artifact access records build usage",
-          )] : []),
-          ...(["list", "children", "metadata"].includes(action) ? [fieldsOption] : []),
-          ...(["list", "children", "archive"].includes(action)
-            ? [textOption("--base-path <path>", "Set the server artifact base path")]
-            : []),
-          ...(action === "archive"
-            ? [textOption("--archive-name <name>", "Set the server-side archive name")]
-            : []),
-        ];
+      : [booleanOption("--resolve-parameters <boolean>", "Resolve parameters in artifact paths")]),
+    ...(kind === "builds"
+      ? [booleanOption("--log-build-usage <boolean>", "Set whether artifact access records build usage")]
+      : []),
+    ...(["list", "children", "metadata"].includes(action) ? [fieldsOption] : []),
+    ...(["list", "children", "archive"].includes(action)
+      ? [textOption("--base-path <path>", "Set the server artifact base path")]
+      : []),
+    ...(action === "archive"
+      ? [textOption("--archive-name <name>", "Set the server-side archive name")]
+      : []),
+  ];
   const tree = (name: string, kind: FileTree) =>
     command(name, "Browse and save files", [
       withView(fileTable, leaf(

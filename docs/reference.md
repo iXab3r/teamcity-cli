@@ -511,7 +511,7 @@ User/group/node writes require **Admin**, token issuance/revocation/local owned-
 requires **Credentials**. Both categories default off; granting Update does not enable either.
 They are local safety gates, not remote authorization. No live administrative proof runs in CI.
 
-`users` exposes bounded list, identity-only create/update/delete, direct groups, roles,
+`users` exposes bounded list, `show <id>`, identity-only create/update/delete, direct groups, roles,
 resolved permissions, property names/existence, safe identity fields and remote session commands.
 `groups` exposes identities, direct parents, roles and properties. User update preserves omitted
 collections; role/group replacement is explicit and can be non-atomic. No items clears direct
@@ -888,6 +888,43 @@ the common package and how to start the next in-repo or external integration.
 See [release and Core adoption gates](release.md) and [migration provenance](migration.md).
 
 ## Native projections and controls
+
+Server file list/children accept item `--fields` and `--base-path`, preserving
+`{count,items}`, the existing locator and default fields without lookahead. Metadata
+accepts whole-response fields; archive accepts `--base-path` and `--archive-name`
+(query `name`). Server files expose neither resolve-parameters nor log-build-usage.
+Backup start retains Admin and required confirmation; its seven explicit boolean
+switches control timestamp, configs, database, build logs, personal changes, running
+builds and supplementary data. Each accepts only `true` or `false`; omitted switches
+retain their existing values, including the wire spelling `includeSupplimentaryData`.
+
+Health and audit lists accept item `--fields` and preserve their paging envelopes
+and scope filters. Health show, health category list/show, and audit show accept
+whole-response fields. Category list also accepts unchanged `--locator`, omitted
+by default. Explicit fields return native JSON; omitted options retain all defaults.
+
+Server status, license summary/list/show/add, metrics, plugins and node reads accept
+whole-response `--fields`. Explicit projections return native JSON with the generic
+view; omission preserves default shaping and permission categories. License keys
+remain addressed through local aliases. Plugins also accept unchanged `--locator`;
+omission sends none. Node list role/state filters and responsibility setters retain
+their existing behavior.
+
+Roles accept whole-response `--fields` on `list/show/create` and
+`included add/remove` and `permissions add/remove`. Default shaping, Admin gates,
+write bodies and JSON-decoding errors for empty successful mutations are preserved.
+
+Groups accept whole-response `--fields` on `list/show/create`, `parents list/replace`,
+and `properties list`. These unpaged lists retain their existing shaped arrays when
+fields are omitted; explicit fields return the native response and generic view.
+
+User projections are available on `users list` (item fields) and whole-response
+`users show/create/update`, `groups list/show/replace/remove`, `permissions list`,
+`properties list`, and `tokens list/create`. `users show <id>` uses the existing
+user ID selector and requests `id,username,name` by default, returning that safe
+record; missing users return `http.notFound`. Token creation keeps Credentials
+permission and stores an issued value under the requested alias when present;
+if explicit fields omit the value, no issued-token record is stored.
 
 Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
 deployments list/show, parent, and templates list/default show. Project list and branches

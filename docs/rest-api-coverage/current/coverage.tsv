@@ -41,15 +41,15 @@ DELETE /app/rest/projects/{p1}/projectFeatures/{p2}	Project	Update	covered	proje
 DELETE /app/rest/projects/{p1}/versionedSettings/config/parameters/{p2}	VersionedSettings	Update	covered	projects versioned-settings config fields reset <id> <field>	resetVersionedConfigField		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 DELETE /app/rest/projects/{p1}/versionedSettings/tokens	VersionedSettings	Update	covered	projects versioned-settings tokens delete <id>	deleteVersionedTokens		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 DELETE /app/rest/roles/id:{p1}	Role	Update	covered	roles delete <id>	deleteRoleDefinition		exercised-in-passing-suite	tests/system.test.ts
-DELETE /app/rest/roles/id:{p1}/included/{p2}	Role	Update	partial	roles included remove <id> <child>	editRoleDefinition	fields	exercised-in-passing-suite	tests/system.test.ts
-DELETE /app/rest/roles/id:{p1}/permissions/{p2}	Role	Update	partial	roles permissions remove <id> <child>	editRoleDefinition	fields	exercised-in-passing-suite	tests/system.test.ts
+DELETE /app/rest/roles/id:{p1}/included/{p2}	Role	Update	covered	roles included remove <id> <child>	editRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
+DELETE /app/rest/roles/id:{p1}/permissions/{p2}	Role	Update	covered	roles permissions remove <id> <child>	editRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
 DELETE /app/rest/server/licensingData/licenseKeys/{p1}	Server	Update	covered	server licenses delete <alias>	deleteLicense		exercised-in-passing-suite	tests/system.test.ts
 DELETE /app/rest/userGroups/{p1}	Group	Update	covered	groups delete <key>	deleteAccountGroup		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/userGroups/{p1}/properties/{p2}	Group	Update	covered	groups properties delete <id> <name>	deleteAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/userGroups/{p1}/roles/{p2}/{p3}	Group	Update	covered	groups roles revoke <id> <role-id>	revokeAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/users/{p1}	User	Update	covered	users delete <id>	deleteAccountUser		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/users/{p1}/debug/rememberMe	User	Update	covered	users sessions forget-remembered <id>	forgetRememberedSessions		exercised-in-passing-suite	tests/authoring.test.ts
-DELETE /app/rest/users/{p1}/groups/{p2}	User	Update	partial	users groups remove <id> <key>	removeAccountUserGroup	fields	exercised-in-passing-suite	tests/authoring.test.ts
+DELETE /app/rest/users/{p1}/groups/{p2}	User	Update	covered	users groups remove <id> <key>	removeAccountUserGroup		exercised-in-passing-suite	tests/authoring.test.ts;tests/users-projection.test.ts
 DELETE /app/rest/users/{p1}/properties/{p2}	User	Update	covered	users properties delete <id> <name>	deleteAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/users/{p1}/roles/{p2}/{p3}	User	Update	covered	users roles revoke <id> <role-id>	revokeAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/users/{p1}/tokens/{p2}	User	Update	covered	users tokens delete <name>	deleteCurrentUserToken		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
@@ -76,8 +76,8 @@ GET /app/rest/agents/{p1}/incompatibleBuildTypes	Agent	ReadOnly	covered	agents i
 GET /app/rest/agents/{p1}/pool	Agent	ReadOnly	covered	agents pool show <agent-id>	getAgentPool		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agents/{p1}/{p2}	Agent	ReadOnly	covered	agents fields show <agent-id> <field>	getAgentField		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/apiVersion	Root	ReadOnly	covered	server api-version	getApiVersion		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/audit	Audit	ReadOnly	partial	audit list		fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/audit/{p1}	Audit	ReadOnly	partial	audit show <id>	getAudit	fields	exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/audit	Audit	ReadOnly	covered	audit list			exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
+GET /app/rest/audit/{p1}	Audit	ReadOnly	covered	audit show <id>	getAudit		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
 GET /app/rest/avatars/{p1}/{p2}/avatar.png	Avatar	ReadOnly	covered	users avatar download <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/avatars/{p1}/{p2}/avatar.{p3}.png	Avatar	ReadOnly	covered	users avatar download-hash <id> <hash>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/buildQueue	BuildQueue	ReadOnly	covered	queue list			exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts;tests/queue-projection.test.ts
@@ -188,10 +188,10 @@ GET /app/rest/deploymentDashboards	DeploymentDashboard	ReadOnly	covered	deployme
 GET /app/rest/deploymentDashboards/{p1}	DeploymentDashboard	ReadOnly	covered	deployments show <id>	getDashboard		exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
 GET /app/rest/deploymentDashboards/{p1}/instances	DeploymentDashboard	ReadOnly	covered	deployments instances list <dashboard>			exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
 GET /app/rest/deploymentDashboards/{p1}/instances/{p2}	DeploymentDashboard	ReadOnly	covered	deployments instances show <dashboard> <id>	getDeploymentInstance		exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
-GET /app/rest/health	health	ReadOnly	partial	health list		fields	exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
-GET /app/rest/health/category	health	ReadOnly	partial	health categories list	listHealthCategories	locator;fields	exercised-in-passing-suite	tests/option-parsers.test.ts;tests/system.test.ts
-GET /app/rest/health/category/{p1}	health	ReadOnly	partial	health categories show <id>	getHealthCategory	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/health/{p1}	health	ReadOnly	partial	health show	getHealth	fields	exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/health	health	ReadOnly	covered	health list			exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
+GET /app/rest/health/category	health	ReadOnly	covered	health categories list	listHealthCategories		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/option-parsers.test.ts;tests/system.test.ts
+GET /app/rest/health/category/{p1}	health	ReadOnly	covered	health categories show <id>	getHealthCategory		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
+GET /app/rest/health/{p1}	health	ReadOnly	covered	health show	getHealth		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
 GET /app/rest/info	Root	ReadOnly	covered	server rest-plugin	getRestPlugin		exercised-in-passing-suite	tests/deployments-projection.test.ts;tests/system.test.ts
 GET /app/rest/investigations	Investigation	ReadOnly	covered	investigations list			exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
 GET /app/rest/investigations/{p1}	Investigation	ReadOnly	covered	investigations show	getInvestigation		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/authoring.test.ts
@@ -230,50 +230,50 @@ GET /app/rest/projects/{p1}/versionedSettings/contextParameters	VersionedSetting
 GET /app/rest/projects/{p1}/versionedSettings/status	VersionedSettings	ReadOnly	covered	projects versioned-settings status <id>	getVersionedStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/versioned-settings-projection.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/tokens	VersionedSettings	ReadOnly	covered	projects versioned-settings tokens list <id>	listVersionedTokenNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 GET /app/rest/projects/{p1}/{p2}	Project	ReadOnly	covered	projects fields show <project-id> <field>	getOwnerField		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/roles	Role	ReadOnly	partial	roles list	listRoleDefinitions	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/roles/id:{p1}	Role	ReadOnly	partial	roles show <id>	getRoleDefinition	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server	Server	ReadOnly	partial	server status	getServerStatus	fields	exercised-in-passing-suite	tests/cli.test.ts
+GET /app/rest/roles	Role	ReadOnly	covered	roles list	listRoleDefinitions		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
+GET /app/rest/roles/id:{p1}	Role	ReadOnly	covered	roles show <id>	getRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
+GET /app/rest/server	Server	ReadOnly	covered	server status	getServerStatus		exercised-in-passing-suite	tests/cli.test.ts;tests/server-projection.test.ts
 GET /app/rest/server/authSettings	Server Authentication Settings	ReadOnly	covered	server authentication show	getAuthenticationSettings		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/backup	Server	ReadOnly	covered	server backup status	getBackupStatus		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/cleanup	Server	ReadOnly	covered	server cleanup show	getCleanup		exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/files/{p1}	Server	ReadOnly	partial	server files list <id>	listFiles	basePath;fields	exercised-in-passing-suite	tests/files.test.ts;tests/validation-contract.test.ts
-GET /app/rest/server/files/{p1}/archived{p2}	Server	ReadOnly	partial	server files archive <id> <path>		basePath;name	exercised-in-passing-suite	tests/files.test.ts
+GET /app/rest/server/files/{p1}	Server	ReadOnly	covered	server files list <id>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts;tests/server-files-projection.test.ts;tests/validation-contract.test.ts
+GET /app/rest/server/files/{p1}/archived{p2}	Server	ReadOnly	covered	server files archive <id> <path>			exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts
 GET /app/rest/server/files/{p1}/files{p2}	Server	ReadOnly	covered	server files download <id> <path>			exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/server/files/{p1}/metadata{p2}	Server	ReadOnly	partial	server files metadata <id> <path>	getFileMetadata	fields	exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/server/files/{p1}/{p2}	Server	ReadOnly	partial	server files children <id> <path>	listFiles	basePath;fields	exercised-in-passing-suite	tests/files.test.ts
+GET /app/rest/server/files/{p1}/metadata{p2}	Server	ReadOnly	covered	server files metadata <id> <path>	getFileMetadata		exercised-in-passing-suite	tests/files.test.ts;tests/server-files-projection.test.ts
+GET /app/rest/server/files/{p1}/{p2}	Server	ReadOnly	covered	server files children <id> <path>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts;tests/server-files-projection.test.ts
 GET /app/rest/server/globalSettings	Global Server Settings	ReadOnly	covered	server settings show	getGlobalSettings		exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/licensingData	Server	ReadOnly	partial	server licenses summary	getLicenseSummary	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/licensingData/licenseKeys	Server	ReadOnly	partial	server licenses list	listLicenses	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/licensingData/licenseKeys/{p1}	Server	ReadOnly	partial	server licenses show <alias>	getLicense	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/metrics	Server	ReadOnly	partial	server metrics	getMetrics	fields	exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/nodes	Node	ReadOnly	partial	server nodes list	listServerNodes	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
-GET /app/rest/server/nodes/{p1}	Node	ReadOnly	partial	server nodes show <id>	getServerNode	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
-GET /app/rest/server/nodes/{p1}/disabledResponsibilities	Node	ReadOnly	partial	server nodes responsibilities disabled <id>	getNodeResponsibilities	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/server/nodes/{p1}/effectiveResponsibilities	Node	ReadOnly	partial	server nodes responsibilities effective <id>	getNodeResponsibilities	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/server/nodes/{p1}/enabledResponsibilities	Node	ReadOnly	partial	server nodes responsibilities enabled <id>	getNodeResponsibilities	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/server/plugins	Server	ReadOnly	partial	server plugins	getPlugins	fields;locator	exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/server/licensingData	Server	ReadOnly	covered	server licenses summary	getLicenseSummary		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
+GET /app/rest/server/licensingData/licenseKeys	Server	ReadOnly	covered	server licenses list	listLicenses		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
+GET /app/rest/server/licensingData/licenseKeys/{p1}	Server	ReadOnly	covered	server licenses show <alias>	getLicense		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
+GET /app/rest/server/metrics	Server	ReadOnly	covered	server metrics	getMetrics		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
+GET /app/rest/server/nodes	Node	ReadOnly	covered	server nodes list	listServerNodes		exercised-in-passing-suite	tests/authoring.test.ts;tests/server-projection.test.ts;tests/validation-contract.test.ts
+GET /app/rest/server/nodes/{p1}	Node	ReadOnly	covered	server nodes show <id>	getServerNode		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/server-projection.test.ts
+GET /app/rest/server/nodes/{p1}/disabledResponsibilities	Node	ReadOnly	covered	server nodes responsibilities disabled <id>	getNodeResponsibilities		exercised-in-passing-suite	tests/authoring.test.ts;tests/server-projection.test.ts
+GET /app/rest/server/nodes/{p1}/effectiveResponsibilities	Node	ReadOnly	covered	server nodes responsibilities effective <id>	getNodeResponsibilities		exercised-in-passing-suite	tests/authoring.test.ts;tests/server-projection.test.ts
+GET /app/rest/server/nodes/{p1}/enabledResponsibilities	Node	ReadOnly	covered	server nodes responsibilities enabled <id>	getNodeResponsibilities		exercised-in-passing-suite	tests/authoring.test.ts;tests/server-projection.test.ts
+GET /app/rest/server/plugins	Server	ReadOnly	covered	server plugins	getPlugins		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
 GET /app/rest/server/{p1}	Server	ReadOnly	covered	server field <field>	getServerField		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/testOccurrences	TestOccurrence	ReadOnly	covered	builds diagnose <build-id>;builds tests <id>			exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts;tests/triage-projection.test.ts
 GET /app/rest/testOccurrences/{p1}	TestOccurrence	ReadOnly	covered	tests occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
 GET /app/rest/tests	Test	ReadOnly	covered	tests list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
 GET /app/rest/tests/{p1}	Test	ReadOnly	covered	tests show <id>	getTriageEntity		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
-GET /app/rest/userGroups	Group	ReadOnly	partial	groups list	listAccountGroupsAll	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/userGroups/{p1}	Group	ReadOnly	partial	groups show <key>	getAccountGroup	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/userGroups/{p1}/parent-groups	Group	ReadOnly	partial	groups parents list <id>	listAccountGroups	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/userGroups/{p1}/properties	Group	ReadOnly	partial	groups properties list <id>	listAccountPropertyNames	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/userGroups	Group	ReadOnly	covered	groups list	listAccountGroupsAll		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts;tests/m05-review-regressions.test.ts
+GET /app/rest/userGroups/{p1}	Group	ReadOnly	covered	groups show <key>	getAccountGroup		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
+GET /app/rest/userGroups/{p1}/parent-groups	Group	ReadOnly	covered	groups parents list <id>	listAccountGroups		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
+GET /app/rest/userGroups/{p1}/properties	Group	ReadOnly	covered	groups properties list <id>	listAccountPropertyNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
 GET /app/rest/userGroups/{p1}/properties/{p2}	Group	ReadOnly	covered	groups properties exists <id> <name>	checkAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/userGroups/{p1}/roles	Group	ReadOnly	covered	groups roles list <id>	listAccountRoles		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/userGroups/{p1}/roles/{p2}/{p3}	Group	ReadOnly	covered	groups roles show <id> <role-id>	getAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users	User	ReadOnly	partial	users list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users/{p1}	User	ReadOnly	missing				no-shipped-leaf	
-GET /app/rest/users/{p1}/groups	User	ReadOnly	partial	users groups list <id>	listAccountGroups	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users/{p1}/groups/{p2}	User	ReadOnly	partial	users groups show <id> <key>	getAccountUserGroup	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users/{p1}/permissions	User	ReadOnly	partial	users permissions list <id>	listAccountPermissions	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users/{p1}/properties	User	ReadOnly	partial	users properties list <id>	listAccountPropertyNames	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/presentation.test.ts
+GET /app/rest/users	User	ReadOnly	covered	users list			exercised-in-passing-suite	tests/authoring.test.ts;tests/users-projection.test.ts
+GET /app/rest/users/{p1}	User	ReadOnly	covered	users show <id>	getAccountUser		exercised-in-passing-suite	tests/users-projection.test.ts
+GET /app/rest/users/{p1}/groups	User	ReadOnly	covered	users groups list <id>	listAccountGroups		exercised-in-passing-suite	tests/authoring.test.ts;tests/users-projection.test.ts
+GET /app/rest/users/{p1}/groups/{p2}	User	ReadOnly	covered	users groups show <id> <key>	getAccountUserGroup		exercised-in-passing-suite	tests/authoring.test.ts;tests/users-projection.test.ts
+GET /app/rest/users/{p1}/permissions	User	ReadOnly	covered	users permissions list <id>	listAccountPermissions		exercised-in-passing-suite	tests/authoring.test.ts;tests/users-projection.test.ts
+GET /app/rest/users/{p1}/properties	User	ReadOnly	covered	users properties list <id>	listAccountPropertyNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/presentation.test.ts;tests/users-projection.test.ts
 GET /app/rest/users/{p1}/properties/{p2}	User	ReadOnly	covered	users properties exists <id> <name>	checkAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/users/{p1}/roles	User	ReadOnly	covered	users roles list <id>	listAccountRoles		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
 GET /app/rest/users/{p1}/roles/{p2}/{p3}	User	ReadOnly	covered	users roles show <id> <role-id>	getAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/users/{p1}/tokens	User	ReadOnly	partial	users tokens list	listCurrentUserTokens	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
+GET /app/rest/users/{p1}/tokens	User	ReadOnly	covered	users tokens list	listCurrentUserTokens		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/m05-review-regressions.test.ts;tests/users-projection.test.ts
 GET /app/rest/users/{p1}/{p2}	User	ReadOnly	covered	users fields get <id> <field>	getAccountUserField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 GET /app/rest/vcs-root-instances	VcsRootInstance	ReadOnly	covered	vcs instances list			exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}	VcsRootInstance	ReadOnly	covered	vcs instances show <id>	getVcsInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
@@ -343,16 +343,16 @@ POST /app/rest/projects/{p1}/versionedSettings/checkForChanges	VersionedSettings
 POST /app/rest/projects/{p1}/versionedSettings/commitCurrentSettings	VersionedSettings	Update	covered	projects versioned-settings commit <id>	commitVersionedSettings		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/projects/{p1}/versionedSettings/loadSettings	VersionedSettings	Update	covered	projects versioned-settings load <id>	loadVersionedSettings		exercised-in-passing-suite	tests/authoring.test.ts;tests/versioned-settings-projection.test.ts
 POST /app/rest/projects/{p1}/versionedSettings/tokens	VersionedSettings	Update	covered	projects versioned-settings tokens set <id>	setVersionedTokens		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
-POST /app/rest/roles	Role	Update	partial	roles create	createRoleDefinition	fields	exercised-in-passing-suite	tests/system.test.ts
-POST /app/rest/server/backup	Server	Update	partial	server backup start <name>	startBackup	addTimestamp;includeConfigs;includeDatabase;includeBuildLogs;includePersonalChanges;includeRunningBuilds;includeSupplimentaryData	exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
-POST /app/rest/server/licensingData/licenseKeys	Server	Update	partial	server licenses add	addLicense	fields	exercised-in-passing-suite	tests/system.test.ts
-POST /app/rest/userGroups	Group	Update	partial	groups create <key>	createAccountGroup	fields	exercised-in-passing-suite	tests/authoring.test.ts
+POST /app/rest/roles	Role	Update	covered	roles create	createRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
+POST /app/rest/server/backup	Server	Update	covered	server backup start <name>	startBackup		exercised-in-passing-suite	tests/server-controls.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
+POST /app/rest/server/licensingData/licenseKeys	Server	Update	covered	server licenses add	addLicense		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
+POST /app/rest/userGroups	Group	Update	covered	groups create <key>	createAccountGroup		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
 POST /app/rest/userGroups/{p1}/roles	Group	Update	covered	groups roles add <id> <role-id>	addAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/userGroups/{p1}/roles/{p2}/{p3}	Group	Update	covered	groups roles grant <id> <role-id>	grantAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/users	User	Update	partial	users create <username>	createAccountUser	fields	exercised-in-passing-suite	tests/authoring.test.ts
+POST /app/rest/users	User	Update	covered	users create <username>	createAccountUser		exercised-in-passing-suite	tests/authoring.test.ts;tests/users-projection.test.ts
 POST /app/rest/users/{p1}/logout	User	Update	covered	users sessions logout <id>	terminateAccountSessions		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/users/{p1}/roles	User	Update	covered	users roles add <id> <role-id>	addAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
-POST /app/rest/users/{p1}/tokens	User	Update	partial	users tokens create <name>	createCurrentUserToken	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/validation-contract.test.ts
+POST /app/rest/users/{p1}/tokens	User	Update	covered	users tokens create <name>	createCurrentUserToken		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/users-projection.test.ts;tests/validation-contract.test.ts
 POST /app/rest/vcs-root-instances/checkingForChangesQueue	VcsRootInstance	Update	covered	vcs instances check-changes <id>	checkVcsInstanceChanges		exercised-in-passing-suite	tests/authoring.test.ts;tests/m04-review-regressions.test.ts;tests/vcs-instances-projection.test.ts
 POST /app/rest/vcs-root-instances/commitHookNotification	VcsRootInstance	Update	covered	vcs instances notify-commit <id>	notifyVcsCommit		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/vcs-instance-controls.test.ts
 POST /app/rest/vcs-roots	VcsRoot	Update	covered	vcs roots create <id>	createAnonymousGitRoot		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts;tests/vcs-roots-projection.test.ts
@@ -428,17 +428,17 @@ PUT /app/rest/projects/{p1}/versionedSettings/config	VersionedSettings	Update	co
 PUT /app/rest/projects/{p1}/versionedSettings/config/parameters/{p2}	VersionedSettings	Update	covered	projects versioned-settings config fields set <id> <field> <value>	setVersionedConfigField		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 PUT /app/rest/projects/{p1}/versionedSettings/contextParameters	VersionedSettings	Update	covered	projects versioned-settings context replace <id>	replaceVersionedContext		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 PUT /app/rest/projects/{p1}/{p2}	Project	Update	covered	projects set <id> <field> <value>	setProjectField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
-PUT /app/rest/roles/id:{p1}/included/{p2}	Role	Update	partial	roles included add <id> <child>	editRoleDefinition	fields	exercised-in-passing-suite	tests/system.test.ts
-PUT /app/rest/roles/id:{p1}/permissions/{p2}	Role	Update	partial	roles permissions add <id> <child>	editRoleDefinition	fields	exercised-in-passing-suite	tests/system.test.ts
+PUT /app/rest/roles/id:{p1}/included/{p2}	Role	Update	covered	roles included add <id> <child>	editRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
+PUT /app/rest/roles/id:{p1}/permissions/{p2}	Role	Update	covered	roles permissions add <id> <child>	editRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
 PUT /app/rest/server/authSettings	Server Authentication Settings	Update	covered	server authentication replace	replaceAuthenticationSettings		exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/server/cleanup	Server	Update	covered	server cleanup configure	configureCleanup		exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/server/globalSettings	Global Server Settings	Update	covered	server settings set	setGlobalSettings		exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/server/nodes/{p1}/enabledResponsibilities/{p2}	Node	Update	covered	server nodes responsibilities set <id> <name> <enabled>	setNodeResponsibility		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/userGroups/{p1}/parent-groups	Group	Update	partial	groups parents replace <id>	replaceAccountGroups	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/validation-contract.test.ts
+PUT /app/rest/userGroups/{p1}/parent-groups	Group	Update	covered	groups parents replace <id>	replaceAccountGroups		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/groups-projection.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/userGroups/{p1}/properties/{p2}	Group	Update	covered	groups properties set <id> <name> <value>	setAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/userGroups/{p1}/roles	Group	Update	covered	groups roles replace <id>	replaceAccountRoles		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/users/{p1}	User	Update	partial	users update <id>	updateAccountUser	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
-PUT /app/rest/users/{p1}/groups	User	Update	partial	users groups replace <id>	replaceAccountGroups	fields	exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
+PUT /app/rest/users/{p1}	User	Update	covered	users update <id>	updateAccountUser		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/users-projection.test.ts
+PUT /app/rest/users/{p1}/groups	User	Update	covered	users groups replace <id>	replaceAccountGroups		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/users-projection.test.ts
 PUT /app/rest/users/{p1}/properties/{p2}	User	Update	covered	users properties set <id> <name> <value>	setAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/users/{p1}/roles	User	Update	covered	users roles replace <id>	replaceAccountRoles		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
 PUT /app/rest/users/{p1}/roles/{p2}/{p3}	User	Update	covered	users roles grant <id> <role-id>	grantAccountRole		exercised-in-passing-suite	tests/authoring.test.ts

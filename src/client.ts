@@ -348,10 +348,9 @@ export class TeamCityClient {
     });
   }
 
-  public getServerStatus(): Promise<TeamCityServer> {
-    return this.#requestJson<TeamCityServer>("GET", "/app/rest/server", {
-      fields: serverFields,
-    });
+  public getServerStatus<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server", { fields: serverFields },
+      value => value as TeamCityServer, fields);
   }
 
   public listProjects<F extends string | undefined = undefined>(options: ListProjectsOptions<F> = {}) {
@@ -2183,22 +2182,26 @@ export class TeamCityClient {
     );
   }
 
-  public listAccountUsers(page: TeamCityPageOptions = {}) {
+  public listAccountUsers<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/users", [], "user", admin.accountUserFields,
       admin.safeAccountUser, page);
   }
 
-  public async createAccountUser(username: string, name?: string) {
+  public async getAccountUser<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", admin.accountPath("users", id),
+      { fields: admin.accountUserFields }, admin.safeAccountUser, fields);
+  }
+
+  public async createAccountUser<F extends string | undefined = undefined>(username: string, name?: string, fields?: F) {
     const body = {
       username: triage.inputText(username, "Username"),
       ...(name === undefined ? {} : { name: triage.inputText(name, "Name") }),
     };
-    return admin.safeAccountUser(
-      await this.#requestJson("POST", "/app/rest/users", { fields: admin.accountUserFields }, body),
-    );
+    return this.#projectedJson("POST", "/app/rest/users", { fields: admin.accountUserFields },
+      admin.safeAccountUser, fields, body);
   }
 
-  public async updateAccountUser(id: string, input: { username?: string; name?: string }) {
+  public async updateAccountUser<F extends string | undefined = undefined>(id: string, input: { username?: string; name?: string }, fields?: F) {
     triage.inputRecord(input, ["username", "name"]);
     const body = {
       ...(input.username === undefined
@@ -2207,14 +2210,8 @@ export class TeamCityClient {
       ...(input.name === undefined ? {} : { name: triage.inputText(input.name, "Name") }),
     };
     if (!Object.keys(body).length) throw new Error("At least one identity field is required.");
-    return admin.safeAccountUser(
-      await this.#requestJson(
-        "PUT",
-        admin.accountPath("users", id),
-        { fields: admin.accountUserFields },
-        body,
-      ),
-    );
+    return this.#projectedJson("PUT", admin.accountPath("users", id),
+      { fields: admin.accountUserFields }, admin.safeAccountUser, fields, body);
   }
 
   public async deleteAccountUser(id: string) {
@@ -2232,70 +2229,80 @@ export class TeamCityClient {
     return { userId: id, sessionsTerminated: true };
   }
 
-  public async listAccountGroups(kind: admin.AccountKind, id: string) {
+  public async listAccountGroups<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, fields?: F) {
     const suffix = kind === "users" ? "/groups" : "/parent-groups";
-    const value = await this.#requestJson<{ group?: unknown[] }>(
+    return this.#projectedJson(
       "GET",
       admin.accountPath(kind, id) + suffix,
       { fields: `count,group(${admin.groupFields})` },
+      raw => {
+        const value = raw as { group?: unknown[] };
+        return (value.group ?? []).map(admin.safeGroup);
+      }, fields,
     );
-    return (value.group ?? []).map(admin.safeGroup);
   }
 
-  public async replaceAccountGroups(kind: admin.AccountKind, id: string, keys: readonly string[]) {
+  public async replaceAccountGroups<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, keys: readonly string[], fields?: F) {
     const body = admin.groupKeys(keys);
-    const value = await this.#requestJson<{ group?: unknown[] }>(
+    return this.#projectedJson(
       "PUT",
       admin.accountPath(kind, id) + (kind === "users" ? "/groups" : "/parent-groups"),
       { fields: `count,group(${admin.groupFields})` },
+      raw => {
+        const value = raw as { group?: unknown[] };
+        return (value.group ?? []).map(admin.safeGroup);
+      }, fields,
       body,
     );
-    return (value.group ?? []).map(admin.safeGroup);
   }
 
-  public async getAccountUserGroup(id: string, key: string) {
+  public async getAccountUserGroup<F extends string | undefined = undefined>(id: string, key: string, fields?: F) {
     const suffix = "/" + admin.groupLocator(key);
-    return admin.safeGroup(
-      await this.#requestJson("GET", admin.accountPath("users", id) + "/groups" + suffix, {
-        fields: admin.groupFields,
-      }),
-    );
+    return this.#projectedJson("GET", admin.accountPath("users", id) + "/groups" + suffix,
+      { fields: admin.groupFields }, admin.safeGroup, fields);
   }
 
-  public async removeAccountUserGroup(id: string, key: string) {
+  public async removeAccountUserGroup<F extends string | undefined = undefined>(id: string, key: string, fields?: F) {
     const suffix = "/" + admin.groupLocator(key);
-    await this.#request("DELETE", admin.accountPath("users", id) + "/groups" + suffix);
-    return { userId: id, group: key, removed: true };
+    const contents = await this.#request("DELETE", admin.accountPath("users", id) + "/groups" + suffix,
+      fields === undefined ? {} : { fields: fieldsProjection(fields) });
+    return this.#projectedAcknowledgement(contents, fields, { userId: id, group: key, removed: true });
   }
 
-  public async listAccountPermissions(id: string, project?: string) {
-    const value = await this.#requestJson<{ permissionAssignment?: unknown[] }>(
+  public async listAccountPermissions<F extends string | undefined = undefined>(id: string, project?: string, fields?: F) {
+    return this.#projectedJson(
       "GET",
       admin.accountPath("users", id) + "/permissions",
       {
         ...(project === undefined ? {} : { locator: nestedId("project", project, "Project ID") }),
         fields: "count,permissionAssignment(permission(id),project(id),isGlobalScope)",
       },
+      raw => {
+        const value = raw as { permissionAssignment?: unknown[] };
+        return (value.permissionAssignment ?? []).map((item) => {
+          const raw = triage.object(item);
+          return {
+            ...triage.safeScalars(raw, ["isGlobalScope"]),
+            ...(raw.permission === undefined
+              ? {}
+              : { permission: triage.safeScalars(raw.permission, ["id"]) }),
+            ...(raw.project === undefined ? {} : { project: triage.safeScalars(raw.project, ["id"]) }),
+          };
+        });
+      }, fields,
     );
-    return (value.permissionAssignment ?? []).map((item) => {
-      const raw = triage.object(item);
-      return {
-        ...triage.safeScalars(raw, ["isGlobalScope"]),
-        ...(raw.permission === undefined
-          ? {}
-          : { permission: triage.safeScalars(raw.permission, ["id"]) }),
-        ...(raw.project === undefined ? {} : { project: triage.safeScalars(raw.project, ["id"]) }),
-      };
-    });
   }
 
-  public async listAccountPropertyNames(kind: admin.AccountKind, id: string) {
-    const value = await this.#requestJson<{ property?: unknown[] }>(
+  public async listAccountPropertyNames<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, fields?: F) {
+    return this.#projectedJson(
       "GET",
       admin.accountPath(kind, id) + "/properties",
       { fields: "count,property(name)" },
+      raw => {
+        const value = raw as { property?: unknown[] };
+        return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
+      }, fields,
     );
-    return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
   }
 
   public async checkAccountProperty(kind: admin.AccountKind, id: string, name: string) {
@@ -2386,29 +2393,28 @@ export class TeamCityClient {
     return { ...role, revoked: true };
   }
 
-  public async listCurrentUserTokens() {
-    const value = await this.#requestJson<{ token?: unknown[] }>(
-      "GET",
-      "/app/rest/users/current/tokens",
+  public async listCurrentUserTokens<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/users/current/tokens",
       { fields: `count,token(${admin.tokenFields})` },
-    );
-    return (value.token ?? []).map(admin.safeToken);
+      raw => {
+        const value = raw as { token?: unknown[] };
+        return (value.token ?? []).map(admin.safeToken);
+      },
+      fields);
   }
 
-  public async createCurrentUserToken(input: admin.TokenCreationOptions, secrets: ScopedSecrets) {
+  public async createCurrentUserToken<F extends string | undefined = undefined>(input: admin.TokenCreationOptions, secrets: ScopedSecrets, fields?: F) {
     const body = admin.tokenBody(input);
     const key = admin.issuedTokenKey(input.alias);
     if ((await admin.readIssuedToken(secrets, input.alias)) !== undefined)
       throw new Error("Issued-token alias already exists; no HTTP was attempted.");
-    const raw = triage.object(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/users/current/tokens",
-        { fields: admin.tokenFields + ",value" },
-        body,
-      ),
-    );
-    if (raw.name !== body.name || typeof raw.value !== "string" || !raw.value.trim())
+    const value = await this.#requestJson<unknown>("POST", "/app/rest/users/current/tokens",
+      { fields: fields === undefined ? admin.tokenFields + ",value" : fieldsProjection(fields) }, body);
+    const raw = fields === undefined ? triage.object(value)
+      : value !== null && typeof value === "object" ? value as Record<string, unknown> : {};
+    if (fields !== undefined && (typeof raw.value !== "string" || !raw.value.trim()))
+      return this.#projectedValue(value, fields, () => ({ ...admin.safeToken(raw), alias: input.alias, stored: false }));
+    if ((fields === undefined && raw.name !== body.name) || typeof raw.value !== "string" || !raw.value.trim())
       throw new Error(
         "Token may have been created, but its one-time result was invalid; inspect/revoke the named remote token.",
       );
@@ -2421,7 +2427,7 @@ export class TeamCityClient {
         { cause: diagnosticCause(cause, [raw.value]) },
       );
     }
-    return { ...metadata, alias: input.alias, stored: true };
+    return this.#projectedValue(value, fields, () => ({ ...metadata, alias: input.alias, stored: true }));
   }
 
   public async deleteCurrentUserToken(name: string, secrets: ScopedSecrets, alias?: string) {
@@ -2473,14 +2479,17 @@ export class TeamCityClient {
     return { userId: id, field, cleared: true };
   }
 
-  public async listAccountGroupsAll() {
-    const value = await this.#requestJson<{ group?: unknown[] }>("GET", "/app/rest/userGroups", {
-      fields: `count,group(${admin.groupFields})`,
-    });
-    return (value.group ?? []).map(admin.safeGroup);
+  public async listAccountGroupsAll<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/userGroups",
+      { fields: `count,group(${admin.groupFields})` },
+      raw => {
+        const value = raw as { group?: unknown[] };
+        return (value.group ?? []).map(admin.safeGroup);
+      },
+      fields);
   }
 
-  public async createAccountGroup(key: string, name: string, description?: string) {
+  public async createAccountGroup<F extends string | undefined = undefined>(key: string, name: string, description?: string, fields?: F) {
     const body = {
       key: triage.inputText(key, "Group key"),
       name: triage.inputText(name, "Name"),
@@ -2488,17 +2497,13 @@ export class TeamCityClient {
         ? {}
         : { description: triage.inputText(description, "Description") }),
     };
-    return admin.safeGroup(
-      await this.#requestJson("POST", "/app/rest/userGroups", { fields: admin.groupFields }, body),
-    );
+    return this.#projectedJson("POST", "/app/rest/userGroups",
+      { fields: admin.groupFields }, admin.safeGroup, fields, body);
   }
 
-  public async getAccountGroup(key: string) {
-    return admin.safeGroup(
-      await this.#requestJson("GET", admin.accountPath("groups", key), {
-        fields: admin.groupFields,
-      }),
-    );
+  public async getAccountGroup<F extends string | undefined = undefined>(key: string, fields?: F) {
+    return this.#projectedJson("GET", admin.accountPath("groups", key),
+      { fields: admin.groupFields }, admin.safeGroup, fields);
   }
 
   public async deleteAccountGroup(key: string) {
@@ -2506,7 +2511,7 @@ export class TeamCityClient {
     return { group: key, deleted: true };
   }
 
-  public async listServerNodes(role?: string, state?: string) {
+  public async listServerNodes<F extends string | undefined = undefined>(role?: string, state?: string, fields?: F) {
     const locator = joinLocator(
       role === undefined
         ? undefined
@@ -2515,29 +2520,21 @@ export class TeamCityClient {
         ? undefined
         : "state:" + locatorValue(state, "Node state"),
     );
-    const value = await this.#requestJson<{ node?: unknown[] }>("GET", "/app/rest/server/nodes", {
+    return this.#projectedJson("GET", "/app/rest/server/nodes", {
       ...(locator ? { locator } : {}),
       fields: `count,node(${admin.nodeFields})`,
-    });
-    return (value.node ?? []).map(admin.safeNode);
+    }, value => ((value as { node?: unknown[] }).node ?? []).map(admin.safeNode), fields);
   }
 
-  public async getServerNode(id: string) {
-    return admin.safeNode(
-      await this.#requestJson("GET", "/app/rest/server/nodes/" + idPath(id, "Node ID"), {
-        fields: admin.nodeFields,
-      }),
-    );
+  public async getServerNode<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/nodes/" + idPath(id, "Node ID"),
+      { fields: admin.nodeFields }, admin.safeNode, fields);
   }
 
-  public async getNodeResponsibilities(id: string, kind: "enabled" | "disabled" | "effective") {
-    return admin.responsibilities(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/server/nodes/" + idPath(id, "Node ID") + "/" + kind + "Responsibilities",
-        { fields: admin.responsibilityFields },
-      ),
-    );
+  public async getNodeResponsibilities<F extends string | undefined = undefined>(id: string, kind: "enabled" | "disabled" | "effective", fields?: F) {
+    return this.#projectedJson("GET",
+      "/app/rest/server/nodes/" + idPath(id, "Node ID") + "/" + kind + "Responsibilities",
+      { fields: admin.responsibilityFields }, admin.responsibilities, fields);
   }
 
   public async setNodeResponsibility(id: string, name: string, enabled: string) {
@@ -3114,7 +3111,7 @@ export class TeamCityClient {
       stored: true,
     };
   }
-  public listAudit(page: TeamCityPageOptions, project?: string) {
+  public listAudit<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
     return this.#list(
       "/app/rest/audit",
       [project ? nestedId("affectedProject", project, "Project ID") : undefined],
@@ -3124,13 +3121,11 @@ export class TeamCityClient {
       page,
     );
   }
-  public async getAudit(id: string) {
-    return system.safeAudit(
-      await this.#requestJson("GET", "/app/rest/audit/" + idPath(id, "Audit ID"), {
-        fields: system.auditFields,
-      }),
-    );
+  public async getAudit<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/audit/" + idPath(id, "Audit ID"),
+      { fields: system.auditFields }, system.safeAudit, fields);
   }
+
   public async replaceAvatar(id: string, path: string) {
     const userId = system.userId(id),
       body = await system.avatarInput(path);
@@ -3235,36 +3230,28 @@ export class TeamCityClient {
     await this.#request("DELETE", system.instancePath(dashboard, id));
     return { dashboardId: dashboard, instanceId: id, deleted: true };
   }
-  public listHealth(
+  public listHealth<F extends string | undefined = undefined>(
     options: { project?: string; global?: boolean },
-    page: TeamCityPageOptions,
+    page: TeamCityPageOptions & { fields?: F },
   ) {
     return this.#list("/app/rest/health", [system.healthLocator(options)], "healthItem",
       system.healthFields, system.safeHealth, page);
   }
-  public async getHealth(options: { project?: string; global?: boolean; category?: string }) {
-    return system.safeHealth(
-      await this.#requestJson("GET", "/app/rest/health/" + system.healthLocator(options), {
-        fields: system.healthFields,
-      }),
-    );
+  public async getHealth<F extends string | undefined = undefined>(options: { project?: string; global?: boolean; category?: string }, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/health/" + system.healthLocator(options),
+      { fields: system.healthFields }, system.safeHealth, fields);
   }
-  public async listHealthCategories() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/health/category", {
-        fields: "count,healthCategory(id,name)",
-      }),
-      "healthCategory",
-      system.safeCategory,
-    );
+
+  public async listHealthCategories<F extends string | undefined = undefined>(fields?: F, locator?: string) {
+    return this.#projectedJson("GET", "/app/rest/health/category",
+      { fields: "count,healthCategory(id,name)", ...(locator === undefined ? {} : { locator }) }, value => system.collection(value, "healthCategory", system.safeCategory), fields);
   }
-  public async getHealthCategory(id: string) {
-    return system.safeCategory(
-      await this.#requestJson("GET", "/app/rest/health/category/" + idPath(id, "ID"), {
-        fields: "id,name",
-      }),
-    );
+
+  public async getHealthCategory<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/health/category/" + idPath(id, "ID"),
+      { fields: "id,name" }, system.safeCategory, fields);
   }
+
   public async getRestPlugin<F extends string | undefined = undefined>(fields?: F): Promise<Projected<ReturnType<typeof system.pluginXml>, F>> {
     if (fields !== undefined) return this.#projectedJson("GET", "/app/rest/info", {},
       system.safePlugin, fields);
@@ -3314,55 +3301,43 @@ export class TeamCityClient {
       { fields: system.dashboardFields }, value => system.safeDashboard(value), fields);
   }
 
-  public async listRoleDefinitions() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/roles", {
-        fields: `count,role(${system.roleFields})`,
-      }),
-      "role",
-      system.safeRole,
-    );
+  public async listRoleDefinitions<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/roles",
+      { fields: `count,role(${system.roleFields})` },
+      value => system.collection(value, "role", system.safeRole), fields);
   }
-  public async createRoleDefinition(
+  public async createRoleDefinition<F extends string | undefined = undefined>(
     name: string,
     permissions: readonly string[],
     included: readonly string[],
+    fields?: F,
   ) {
-    return system.safeRole(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/roles",
-        { fields: system.roleFields },
-        {
-          name: triage.inputText(name, "Name"),
-          permissions: { permission: system.idsOrEmpty(permissions).map((id) => ({ id })) },
-          included: { role: system.idsOrEmpty(included).map((id) => ({ id })) },
-        },
-      ),
-    );
+    return this.#projectedJson("POST", "/app/rest/roles",
+      { fields: system.roleFields }, system.safeRole, fields,
+      {
+        name: triage.inputText(name, "Name"),
+        permissions: { permission: system.idsOrEmpty(permissions).map((id) => ({ id })) },
+        included: { role: system.idsOrEmpty(included).map((id) => ({ id })) },
+      });
   }
-  public async getRoleDefinition(id: string) {
-    return system.safeRole(
-      await this.#requestJson("GET", system.rolePath(id), { fields: system.roleFields }),
-    );
+  public async getRoleDefinition<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", system.rolePath(id),
+      { fields: system.roleFields }, system.safeRole, fields);
   }
   public async deleteRoleDefinition(id: string) {
     await this.#request("DELETE", system.rolePath(id));
     return { id, deleted: true };
   }
-  public async editRoleDefinition(
+  public async editRoleDefinition<F extends string | undefined = undefined>(
     id: string,
     kind: "included" | "permissions",
     child: string,
     remove: boolean,
+    fields?: F,
   ) {
-    return system.safeRole(
-      await this.#requestJson(
-        remove ? "DELETE" : "PUT",
-        system.rolePath(id) + "/" + kind + "/" + pathSegment(triage.inputText(child, "Child ID")),
-        { fields: system.roleFields },
-      ),
-    );
+    return this.#projectedJson(remove ? "DELETE" : "PUT",
+      system.rolePath(id) + "/" + kind + "/" + pathSegment(triage.inputText(child, "Child ID")),
+      { fields: system.roleFields }, system.safeRole, fields);
   }
   public async getAuthenticationSettings() {
     return system.safeAuth(await this.#requestJson("GET", "/app/rest/server/authSettings"));
@@ -3379,20 +3354,28 @@ export class TeamCityClient {
       completionVerified: false,
     };
   }
-  public async startBackup(name: string) {
+  public async startBackup(name: string, controls: {
+    addTimestamp?: string | undefined;
+    includeConfigs?: string | undefined;
+    includeDatabase?: string | undefined;
+    includeBuildLogs?: string | undefined;
+    includePersonalChanges?: string | undefined;
+    includeRunningBuilds?: string | undefined;
+    includeSupplimentaryData?: string | undefined;
+  } = {}) {
     triage.inputText(name, "Backup filename");
     const fileName = await this.#request(
       "POST",
       "/app/rest/server/backup",
       {
         fileName: name,
-        addTimestamp: "true",
-        includeConfigs: "true",
-        includeDatabase: "true",
-        includeBuildLogs: "false",
-        includePersonalChanges: "false",
-        includeRunningBuilds: "false",
-        includeSupplimentaryData: "false",
+        addTimestamp: controls.addTimestamp === undefined ? "true" : booleanText(controls.addTimestamp),
+        includeConfigs: controls.includeConfigs === undefined ? "true" : booleanText(controls.includeConfigs),
+        includeDatabase: controls.includeDatabase === undefined ? "true" : booleanText(controls.includeDatabase),
+        includeBuildLogs: controls.includeBuildLogs === undefined ? "false" : booleanText(controls.includeBuildLogs),
+        includePersonalChanges: controls.includePersonalChanges === undefined ? "false" : booleanText(controls.includePersonalChanges),
+        includeRunningBuilds: controls.includeRunningBuilds === undefined ? "false" : booleanText(controls.includeRunningBuilds),
+        includeSupplimentaryData: controls.includeSupplimentaryData === undefined ? "false" : booleanText(controls.includeSupplimentaryData),
       },
       undefined,
       "text/plain",
@@ -3420,46 +3403,33 @@ export class TeamCityClient {
       ),
     );
   }
-  public async getLicenseSummary() {
-    return triage.safeScalars(
-      await this.#requestJson("GET", "/app/rest/server/licensingData", {
-        fields: system.licenseSummaryFields,
-      }),
-      system.licenseSummaryFields.split(","),
-    );
+  public async getLicenseSummary<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/licensingData",
+      { fields: system.licenseSummaryFields },
+      value => triage.safeScalars(value, system.licenseSummaryFields.split(",")), fields);
   }
-  public async listLicenses() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/server/licensingData/licenseKeys", {
-        fields: `count,licenseKey(${system.licenseFields})`,
-      }),
-      "licenseKey",
-      system.safeLicense,
-    );
+
+  public async listLicenses<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/licensingData/licenseKeys",
+      { fields: `count,licenseKey(${system.licenseFields})` },
+      value => system.collection(value, "licenseKey", system.safeLicense), fields);
   }
-  public async addLicense(alias: string, secrets: ScopedSecrets) {
+
+  public async addLicense<F extends string | undefined = undefined>(alias: string, secrets: ScopedSecrets, fields?: F) {
     const value = await requireInputSecret(secrets, alias);
-    return system.collection(
-      await this.#textJson(
-        "POST",
-        "/app/rest/server/licensingData/licenseKeys",
-        { fields: `count,licenseKey(${system.licenseFields})` },
-        value,
-      ),
-      "licenseKey",
-      system.safeLicense,
-    );
+    const response = await this.#textJson("POST", "/app/rest/server/licensingData/licenseKeys",
+      { fields: fields ?? `count,licenseKey(${system.licenseFields})` }, value);
+    return this.#projectedValue(response, fields,
+      raw => system.collection(raw, "licenseKey", system.safeLicense));
   }
-  public async getLicense(alias: string, secrets: ScopedSecrets) {
+
+  public async getLicense<F extends string | undefined = undefined>(alias: string, secrets: ScopedSecrets, fields?: F) {
     const value = await requireInputSecret(secrets, alias);
-    return system.safeLicense(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
-        { fields: system.licenseFields },
-      ),
-    );
+    return this.#projectedJson("GET",
+      "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
+      { fields: system.licenseFields }, system.safeLicense, fields);
   }
+
   public async deleteLicense(alias: string, secrets: ScopedSecrets) {
     const value = await requireInputSecret(secrets, alias);
     await this.#request(
@@ -3468,24 +3438,18 @@ export class TeamCityClient {
     );
     return { alias, deleted: true };
   }
-  public async getMetrics() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/server/metrics", {
-        fields: "count,metric(name,prometheusName,metricValues(metricValue(name,value)))",
-      }),
-      "metric",
-      system.safeMetric,
-    );
+  public async getMetrics<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/metrics",
+      { fields: "count,metric(name,prometheusName,metricValues(metricValue(name,value)))" },
+      value => system.collection(value, "metric", system.safeMetric), fields);
   }
-  public async getPlugins() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/server/plugins", {
-        fields: `count,plugin(${system.pluginFields})`,
-      }),
-      "plugin",
-      system.safePlugin,
-    );
+
+  public async getPlugins<F extends string | undefined = undefined>(fields?: F, locator?: string) {
+    return this.#projectedJson("GET", "/app/rest/server/plugins",
+      { fields: `count,plugin(${system.pluginFields})`, ...(locator === undefined ? {} : { locator }) },
+      value => system.collection(value, "plugin", system.safePlugin), fields);
   }
+
   public async getServerField(field: string) {
     plainProperty(field, "");
     return {

@@ -1,22 +1,22 @@
 {
-  "baselineHead": "08167d1dbe4e40d0dd0f3d5896306b327e38dbed",
+  "baselineHead": "52f0c0eebcd5c5ee13e49de6b100bb8d6c097968",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 401,
-  "partial": 47,
-  "missing": 1,
-  "reached": 448,
+  "covered": 449,
+  "partial": 0,
+  "missing": 0,
+  "reached": 449,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 201,
-      "partial": 33,
-      "missing": 1
+      "covered": 235,
+      "partial": 0,
+      "missing": 0
     },
     "Update": {
       "total": 214,
-      "covered": 200,
-      "partial": 14,
+      "covered": 214,
+      "partial": 0,
       "missing": 0
     }
   },
@@ -41,8 +41,8 @@
     },
     "Audit": {
       "total": 2,
-      "covered": 0,
-      "partial": 2,
+      "covered": 2,
+      "partial": 0,
       "missing": 0
     },
     "Avatar": {
@@ -95,8 +95,8 @@
     },
     "Group": {
       "total": 16,
-      "covered": 10,
-      "partial": 6,
+      "covered": 16,
+      "partial": 0,
       "missing": 0
     },
     "Investigation": {
@@ -113,8 +113,8 @@
     },
     "Node": {
       "total": 6,
-      "covered": 1,
-      "partial": 5,
+      "covered": 6,
+      "partial": 0,
       "missing": 0
     },
     "Problem": {
@@ -137,8 +137,8 @@
     },
     "Role": {
       "total": 8,
-      "covered": 1,
-      "partial": 7,
+      "covered": 8,
+      "partial": 0,
       "missing": 0
     },
     "Root": {
@@ -149,8 +149,8 @@
     },
     "Server": {
       "total": 18,
-      "covered": 6,
-      "partial": 12,
+      "covered": 18,
+      "partial": 0,
       "missing": 0
     },
     "Server Authentication Settings": {
@@ -173,9 +173,9 @@
     },
     "User": {
       "total": 28,
-      "covered": 16,
-      "partial": 11,
-      "missing": 1
+      "covered": 28,
+      "partial": 0,
+      "missing": 0
     },
     "VcsRoot": {
       "total": 14,
@@ -197,29 +197,15 @@
     },
     "health": {
       "total": 4,
-      "covered": 0,
-      "partial": 4,
+      "covered": 4,
+      "partial": 0,
       "missing": 0
     }
   },
-  "unsupportedByParameter": {
-    "addTimestamp": 1,
-    "basePath": 3,
-    "fields": 45,
-    "includeBuildLogs": 1,
-    "includeConfigs": 1,
-    "includeDatabase": 1,
-    "includePersonalChanges": 1,
-    "includeRunningBuilds": 1,
-    "includeSupplimentaryData": 1,
-    "locator": 2,
-    "name": 1
-  },
-  "partialOnlyBecauseOfFields": 41,
+  "unsupportedByParameter": {},
+  "partialOnlyBecauseOfFields": 0,
   "verificationEvidenceGaps": [],
-  "nonLeafTransportOperations": [
-    "GET /app/rest/users/{p1}"
-  ],
+  "nonLeafTransportOperations": [],
   "gateDiffersFromMethod": [
     "GET /app/rest/buildTypes/{p1}/output-parameters",
     "GET /app/rest/buildTypes/{p1}/output-parameters/{p2}",
@@ -232,14 +218,14 @@
     "GET /app/rest/projects/{p1}/parameters/{p2}",
     "GET /app/rest/projects/{p1}/secure/values/{p2}"
   ],
-  "leaves": 456,
+  "leaves": 457,
   "leafPermissions": {
     "Admin": 37,
     "Credentials": 14,
-    "ReadOnly": 234,
+    "ReadOnly": 235,
     "Update": 171
   },
-  "leavesReachingTransport": 452,
+  "leavesReachingTransport": 453,
   "localLeavesWithoutRequest": [
     "projects secure forget-reference <alias>",
     "users tokens forget",
