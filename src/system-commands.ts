@@ -7,7 +7,7 @@ import {
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { clientLeaf, option, text, repeatOption, jsonOption, integerValue } from "./command-support.js";
+import { clientLeaf, option, text, repeatOption, jsonOption, integerValue, locatorOption } from "./command-support.js";
 export function createSystemCommands(
   clientFor: (c: CommandContext) => Promise<TeamCityClient>,
   pageOptions: readonly OptionDefinition[],
@@ -201,24 +201,24 @@ export function createSystemCommands(
       ),
     ]),
     command("licenses", "Inspect and manage licenses", [
-      leaf("summary", "Read licensed capacities", R, (c) => c.getLicenseSummary()),
-      leaf("list", "Read license metadata", R, (c) => c.listLicenses()),
+      leaf("summary", "Read licensed capacities", R, (c, { options }) => c.getLicenseSummary(fieldsFromOptions(options)), [fieldsOption]),
+      leaf("list", "Read license metadata", R, (c, { options }) => c.listLicenses(fieldsFromOptions(options)), [fieldsOption]),
       command(
         "add",
         "Add key from alias",
         async ({ options }, context) =>
-          (await clientFor(context)).addLicense(text(options, "secret"), context.secrets),
+          (await clientFor(context)).addLicense(text(options, "secret"), context.secrets, fieldsFromOptions(options)),
         {
           permission: "Admin",
-          options: [option("--secret <alias>", "Select an input-secret alias", true)],
+          options: [fieldsOption, option("--secret <alias>", "Select an input-secret alias", true)],
         },
       ),
       command(
         "show <alias>",
         "Inspect alias-referenced license",
-        async ({ args }, context) =>
-          (await clientFor(context)).getLicense(args.alias, context.secrets),
-        { permission: R },
+        async ({ args, options }, context) =>
+          (await clientFor(context)).getLicense(args.alias, context.secrets, fieldsFromOptions(options)),
+        { permission: R, options: [fieldsOption] },
       ),
       command(
         "delete <alias>",
@@ -228,9 +228,10 @@ export function createSystemCommands(
         { permission: "Admin", options: [confirm] },
       ),
     ]),
-    leaf("metrics", "Read numeric metric series", R, (c) => c.getMetrics()),
-    leaf("plugins", "Read plugin metadata", R, (c) =>
-      c.getPlugins(),
+    leaf("metrics", "Read numeric metric series", R, (c, { options }) => c.getMetrics(fieldsFromOptions(options)), [fieldsOption]),
+    leaf("plugins", "Read plugin metadata", R, (c, { options }) =>
+      c.getPlugins(fieldsFromOptions(options), optional(options, "locator")),
+      [fieldsOption, locatorOption],
     ),
     leaf(
       "field <field>",

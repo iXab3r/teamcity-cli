@@ -335,19 +335,22 @@ export function createAdminCommands(
         "List nodes by role and state",
         Permission.ReadOnly,
         (c, { options }) =>
-          c.listServerNodes(optional(options, "role"), optional(options, "state")),
+          c.listServerNodes(optional(options, "role"), optional(options, "state"), fieldsFromOptions(options)),
         [
+          fieldsOption,
           option("--role <role>", "Select main_node or secondary_node"),
           option("--state <state>", "Select online, offline, stopping or starting"),
         ],
       ),
-      leaf("show <id>", "Read node identity/state", Permission.ReadOnly, (c, { args }) =>
-        c.getServerNode(args.id),
+      leaf("show <id>", "Read node identity/state", Permission.ReadOnly, (c, { args, options }) =>
+        c.getServerNode(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       command("responsibilities", "Inspect node responsibility", [
         ...(["disabled", "effective", "enabled"] as const).map((kind) =>
-          leaf(kind + " <id>", "Read responsibility metadata", Permission.ReadOnly, (c, { args }) =>
-            c.getNodeResponsibilities(text(args, "id"), kind),
+          leaf(kind + " <id>", "Read responsibility metadata", Permission.ReadOnly, (c, { args, options }) =>
+            c.getNodeResponsibilities(text(args, "id"), kind, fieldsFromOptions(options)),
+            [fieldsOption],
           ),
         ),
         leaf(

@@ -175,7 +175,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "status",
           "Show server version, role and clock",
           Permission.ReadOnly,
-          (c) => c.getServerStatus(),
+          (c, { options }) => c.getServerStatus(fieldsFromOptions(options)),
+          [fieldsOption],
         ),
       ]),
       command("projects", "Work with TeamCity projects", helpLayout([["Everyday", ["list", "show"]]], [

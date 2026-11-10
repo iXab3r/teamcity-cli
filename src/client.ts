@@ -348,10 +348,9 @@ export class TeamCityClient {
     });
   }
 
-  public getServerStatus(): Promise<TeamCityServer> {
-    return this.#requestJson<TeamCityServer>("GET", "/app/rest/server", {
-      fields: serverFields,
-    });
+  public async getServerStatus<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server", { fields: serverFields },
+      value => value as TeamCityServer, fields);
   }
 
   public listProjects<F extends string | undefined = undefined>(options: ListProjectsOptions<F> = {}) {
@@ -2504,7 +2503,7 @@ export class TeamCityClient {
     return { group: key, deleted: true };
   }
 
-  public async listServerNodes(role?: string, state?: string) {
+  public async listServerNodes<F extends string | undefined = undefined>(role?: string, state?: string, fields?: F) {
     const locator = joinLocator(
       role === undefined
         ? undefined
@@ -2513,29 +2512,21 @@ export class TeamCityClient {
         ? undefined
         : "state:" + locatorValue(state, "Node state"),
     );
-    const value = await this.#requestJson<{ node?: unknown[] }>("GET", "/app/rest/server/nodes", {
+    return this.#projectedJson("GET", "/app/rest/server/nodes", {
       ...(locator ? { locator } : {}),
       fields: `count,node(${admin.nodeFields})`,
-    });
-    return (value.node ?? []).map(admin.safeNode);
+    }, value => ((value as { node?: unknown[] }).node ?? []).map(admin.safeNode), fields);
   }
 
-  public async getServerNode(id: string) {
-    return admin.safeNode(
-      await this.#requestJson("GET", "/app/rest/server/nodes/" + idPath(id, "Node ID"), {
-        fields: admin.nodeFields,
-      }),
-    );
+  public async getServerNode<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/nodes/" + idPath(id, "Node ID"),
+      { fields: admin.nodeFields }, admin.safeNode, fields);
   }
 
-  public async getNodeResponsibilities(id: string, kind: "enabled" | "disabled" | "effective") {
-    return admin.responsibilities(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/server/nodes/" + idPath(id, "Node ID") + "/" + kind + "Responsibilities",
-        { fields: admin.responsibilityFields },
-      ),
-    );
+  public async getNodeResponsibilities<F extends string | undefined = undefined>(id: string, kind: "enabled" | "disabled" | "effective", fields?: F) {
+    return this.#projectedJson("GET",
+      "/app/rest/server/nodes/" + idPath(id, "Node ID") + "/" + kind + "Responsibilities",
+      { fields: admin.responsibilityFields }, admin.responsibilities, fields);
   }
 
   public async setNodeResponsibility(id: string, name: string, enabled: string) {
@@ -3406,46 +3397,33 @@ export class TeamCityClient {
       ),
     );
   }
-  public async getLicenseSummary() {
-    return triage.safeScalars(
-      await this.#requestJson("GET", "/app/rest/server/licensingData", {
-        fields: system.licenseSummaryFields,
-      }),
-      system.licenseSummaryFields.split(","),
-    );
+  public async getLicenseSummary<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/licensingData",
+      { fields: system.licenseSummaryFields },
+      value => triage.safeScalars(value, system.licenseSummaryFields.split(",")), fields);
   }
-  public async listLicenses() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/server/licensingData/licenseKeys", {
-        fields: `count,licenseKey(${system.licenseFields})`,
-      }),
-      "licenseKey",
-      system.safeLicense,
-    );
+
+  public async listLicenses<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/licensingData/licenseKeys",
+      { fields: `count,licenseKey(${system.licenseFields})` },
+      value => system.collection(value, "licenseKey", system.safeLicense), fields);
   }
-  public async addLicense(alias: string, secrets: ScopedSecrets) {
+
+  public async addLicense<F extends string | undefined = undefined>(alias: string, secrets: ScopedSecrets, fields?: F) {
     const value = await requireInputSecret(secrets, alias);
-    return system.collection(
-      await this.#textJson(
-        "POST",
-        "/app/rest/server/licensingData/licenseKeys",
-        { fields: `count,licenseKey(${system.licenseFields})` },
-        value,
-      ),
-      "licenseKey",
-      system.safeLicense,
-    );
+    const response = await this.#textJson("POST", "/app/rest/server/licensingData/licenseKeys",
+      { fields: fields ?? `count,licenseKey(${system.licenseFields})` }, value);
+    return this.#projectedValue(response, fields,
+      raw => system.collection(raw, "licenseKey", system.safeLicense));
   }
-  public async getLicense(alias: string, secrets: ScopedSecrets) {
+
+  public async getLicense<F extends string | undefined = undefined>(alias: string, secrets: ScopedSecrets, fields?: F) {
     const value = await requireInputSecret(secrets, alias);
-    return system.safeLicense(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
-        { fields: system.licenseFields },
-      ),
-    );
+    return this.#projectedJson("GET",
+      "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
+      { fields: system.licenseFields }, system.safeLicense, fields);
   }
+
   public async deleteLicense(alias: string, secrets: ScopedSecrets) {
     const value = await requireInputSecret(secrets, alias);
     await this.#request(
@@ -3454,24 +3432,18 @@ export class TeamCityClient {
     );
     return { alias, deleted: true };
   }
-  public async getMetrics() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/server/metrics", {
-        fields: "count,metric(name,prometheusName,metricValues(metricValue(name,value)))",
-      }),
-      "metric",
-      system.safeMetric,
-    );
+  public async getMetrics<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/server/metrics",
+      { fields: "count,metric(name,prometheusName,metricValues(metricValue(name,value)))" },
+      value => system.collection(value, "metric", system.safeMetric), fields);
   }
-  public async getPlugins() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/server/plugins", {
-        fields: `count,plugin(${system.pluginFields})`,
-      }),
-      "plugin",
-      system.safePlugin,
-    );
+
+  public async getPlugins<F extends string | undefined = undefined>(fields?: F, locator?: string) {
+    return this.#projectedJson("GET", "/app/rest/server/plugins",
+      { fields: `count,plugin(${system.pluginFields})`, ...(locator === undefined ? {} : { locator }) },
+      value => system.collection(value, "plugin", system.safePlugin), fields);
   }
+
   public async getServerField(field: string) {
     plainProperty(field, "");
     return {
