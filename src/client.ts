@@ -3103,7 +3103,7 @@ export class TeamCityClient {
       stored: true,
     };
   }
-  public listAudit(page: TeamCityPageOptions, project?: string) {
+  public async listAudit<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
     return this.#list(
       "/app/rest/audit",
       [project ? nestedId("affectedProject", project, "Project ID") : undefined],
@@ -3113,13 +3113,11 @@ export class TeamCityClient {
       page,
     );
   }
-  public async getAudit(id: string) {
-    return system.safeAudit(
-      await this.#requestJson("GET", "/app/rest/audit/" + idPath(id, "Audit ID"), {
-        fields: system.auditFields,
-      }),
-    );
+  public async getAudit<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/audit/" + idPath(id, "Audit ID"),
+      { fields: system.auditFields }, system.safeAudit, fields);
   }
+
   public async replaceAvatar(id: string, path: string) {
     const userId = system.userId(id),
       body = await system.avatarInput(path);
@@ -3224,36 +3222,28 @@ export class TeamCityClient {
     await this.#request("DELETE", system.instancePath(dashboard, id));
     return { dashboardId: dashboard, instanceId: id, deleted: true };
   }
-  public listHealth(
+  public async listHealth<F extends string | undefined = undefined>(
     options: { project?: string; global?: boolean },
-    page: TeamCityPageOptions,
+    page: TeamCityPageOptions & { fields?: F },
   ) {
     return this.#list("/app/rest/health", [system.healthLocator(options)], "healthItem",
       system.healthFields, system.safeHealth, page);
   }
-  public async getHealth(options: { project?: string; global?: boolean; category?: string }) {
-    return system.safeHealth(
-      await this.#requestJson("GET", "/app/rest/health/" + system.healthLocator(options), {
-        fields: system.healthFields,
-      }),
-    );
+  public async getHealth<F extends string | undefined = undefined>(options: { project?: string; global?: boolean; category?: string }, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/health/" + system.healthLocator(options),
+      { fields: system.healthFields }, system.safeHealth, fields);
   }
-  public async listHealthCategories() {
-    return system.collection(
-      await this.#requestJson("GET", "/app/rest/health/category", {
-        fields: "count,healthCategory(id,name)",
-      }),
-      "healthCategory",
-      system.safeCategory,
-    );
+
+  public async listHealthCategories<F extends string | undefined = undefined>(fields?: F, locator?: string) {
+    return this.#projectedJson("GET", "/app/rest/health/category",
+      { fields: "count,healthCategory(id,name)", ...(locator === undefined ? {} : { locator }) }, value => system.collection(value, "healthCategory", system.safeCategory), fields);
   }
-  public async getHealthCategory(id: string) {
-    return system.safeCategory(
-      await this.#requestJson("GET", "/app/rest/health/category/" + idPath(id, "ID"), {
-        fields: "id,name",
-      }),
-    );
+
+  public async getHealthCategory<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/health/category/" + idPath(id, "ID"),
+      { fields: "id,name" }, system.safeCategory, fields);
   }
+
   public async getRestPlugin<F extends string | undefined = undefined>(fields?: F): Promise<Projected<ReturnType<typeof system.pluginXml>, F>> {
     if (fields !== undefined) return this.#projectedJson("GET", "/app/rest/info", {},
       system.safePlugin, fields);

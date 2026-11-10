@@ -317,31 +317,32 @@ export function createSystemCommands(
         "list",
         "List results",
         R,
-        (c, { options }) => c.listAudit(page(options), optional(options, "project")),
-        [...pageOptions, project],
+        (c, { options }) => c.listAudit({ ...page(options), fields: fieldsFromOptions(options) }, optional(options, "project")),
+        [...pageOptions, project, fieldsOption],
       ),
-      leaf("show <id>", "Read one audit event", R, (c, { args }) => c.getAudit(args.id)),
+      leaf("show <id>", "Read one audit event", R, (c, { args, options }) => c.getAudit(args.id, fieldsFromOptions(options)), [fieldsOption]),
     ]),
     command("health", "Inspect server health items", [
       leaf(
         "list",
         "Read health items within a scope",
         R,
-        (c, { options }) => c.listHealth(healthScope(options), page(options)),
-        [...healthOptions, ...pageOptions],
+        (c, { options }) => c.listHealth(healthScope(options), { ...page(options), fields: fieldsFromOptions(options) }),
+        [...healthOptions, ...pageOptions, fieldsOption],
       ),
       leaf(
         "show",
         "Read a scoped health category match",
         R,
         (c, { options }) =>
-          c.getHealth({ ...healthScope(options), category: text(options, "category") }),
-        [...healthOptions, option("--category <id>", "Select a health category", true)],
+          c.getHealth({ ...healthScope(options), category: text(options, "category") }, fieldsFromOptions(options)),
+        [fieldsOption, ...healthOptions, option("--category <id>", "Select a health category", true)],
       ),
       command("categories", "Discover native health categories", [
-        leaf("list", "Read category metadata", R, (c) => c.listHealthCategories()),
-        leaf("show <id>", "Read one category", R, (c, { args }) =>
-          c.getHealthCategory(args.id),
+        leaf("list", "Read category metadata", R, (c, { options }) => c.listHealthCategories(fieldsFromOptions(options), optional(options, "locator")), [fieldsOption, locatorOption]),
+        leaf("show <id>", "Read one category", R, (c, { args, options }) =>
+          c.getHealthCategory(args.id, fieldsFromOptions(options)),
+          [fieldsOption],
         ),
       ]),
     ]),
