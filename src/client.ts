@@ -3783,34 +3783,32 @@ export class TeamCityClient {
     id: string,
     path: string | undefined,
     count: number,
+    controls: files.FileControls = {},
   ) {
     const suffix = path === undefined ? "" : "/" + files.remotePath(path);
     if (kind !== "builds") return files.safeFiles(
       await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
-        ...files.fileQuery(kind), locator: files.fileLocator(count),
+        ...files.controlledFileQuery(kind, controls), locator: files.fileLocator(count),
         fields: `count,file(${files.fileFields})`,
       }),
     );
     files.fileLocator(count); // Validate before adding the one-item lookahead.
     const requested = Math.min(count + 1, Number.MAX_SAFE_INTEGER);
     const raw = triage.object(await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
-      ...files.fileQuery(kind), locator: files.fileLocator(requested, true),
-      fields: `count,file(${files.artifactFileFields})`,
+      ...files.controlledFileQuery(kind, controls), locator: files.fileLocator(requested, true),
+      fields: `count,file(${controls.fields ?? files.artifactFileFields})`,
     }));
     const entries = (raw.file === undefined ? [] : raw.file) as unknown[];
     if (!Array.isArray(entries)) throw new Error("Invalid file collection.");
-    const items = entries.slice(0, count).map(files.safeArtifactFile);
+    const items = entries.slice(0, count).map(item => this.#projectedValue(item, controls.fields, files.safeArtifactFile));
     return { count: items.length, items,
       hasMore: entries.length > count ? true : entries.length < requested ? false : null };
   }
-  public async getFileMetadata(kind: files.FileTree, id: string, path: string) {
-    return files.safeFile(
-      await this.#requestJson(
-        "GET",
-        files.treePath(kind, id) + "/metadata/" + files.remotePath(path),
-        { ...files.fileQuery(kind), fields: files.fileFields },
-      ),
-    );
+  public async getFileMetadata(kind: files.FileTree, id: string, path: string, controls: files.FileControls = {}) {
+    return this.#projectedJson("GET",
+      files.treePath(kind, id) + "/metadata/" + files.remotePath(path),
+      {...files.controlledFileQuery(kind, controls), fields:files.fileFields},
+      files.safeFile, controls.fields);
   }
   /** Save verified bytes without overwriting; cwd is the captured invocation directory. */
   public async downloadFile(
@@ -3821,11 +3819,12 @@ export class TeamCityClient {
     count: number,
     cwd: string,
     options: DownloadOptions,
+    controls: files.FileControls = {},
   ) {
     const requestPath =
       files.treePath(kind, id) + (archive ? "/archived/" : "/files/") + files.remotePath(path);
     const query = {
-      ...files.fileQuery(kind),
+      ...files.controlledFileQuery(kind, controls),
       ...(archive ? { locator: files.fileLocator(count) } : {}),
     };
     return this.#download(requestPath, query, cwd, { ...options, name: path.split("/").at(-1)! + (archive ? ".zip" : "") }, archive ? "zip" : "bytes");

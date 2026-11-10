@@ -1,4 +1,5 @@
-import { command, Permission, type CommandContext } from "@eyeauras/cli-factory";
+import { fieldsOption } from "./projection.js";
+import { command, Permission, type CommandContext, type OptionDefinition } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
 import { clientLeaf, option, text, integerValue } from "./command-support.js";
 import { referenceKey, type FileTree } from "./file-models.js";
@@ -26,6 +27,21 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
     ...(typeof o.output === "string" ? { output: o.output } : {}),
     ...(o.maxBytes === undefined ? {} : { maxBytes: Number(o.maxBytes) }),
   });
+  const controls = (o: Record<string,unknown>) => Object.fromEntries(
+    ["fields","basePath","archiveName","resolveParameters","logBuildUsage"].filter(k => o[k] !== undefined).map(k => [k,o[k] as string]));
+  const booleanOption = (flags: string, description: string): OptionDefinition => ({
+    flags, description, parse: value => {
+      if(value !== "true" && value !== "false") throw new Error("Expected true or false.");
+      return value;
+    },
+  });
+  const nativeOptions = (kind: FileTree, action: string): OptionDefinition[] => kind !== "builds" ? [] : [
+    booleanOption("--resolve-parameters <boolean>", "Resolve parameters in artifact paths"),
+    booleanOption("--log-build-usage <boolean>", "Set whether artifact access records build usage"),
+    ...(["list","children","metadata"].includes(action) ? [fieldsOption] : []),
+    ...(["list","children","archive"].includes(action) ? [option("--base-path <path>", "Set the server artifact base path")] : []),
+    ...(action === "archive" ? [option("--archive-name <name>", "Set the server-side archive name")] : []),
+  ];
   const tree = (name: string, kind: FileTree) =>
     command(name, "Browse and save files", [
       withView(fileTable, leaf(
@@ -33,19 +49,20 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
         "List root files",
         R,
         (c, { args, options }) =>
-          c.listFiles(kind, args.id, undefined, Number(options.limit)),
-        [count],
+          c.listFiles(kind, args.id, undefined, Number(options.limit), controls(options)),
+        [count, ...nativeOptions(kind, "list")],
       )),
       withView(fileTable, leaf(
         "children <id> <path>",
         "List directory children",
         R,
         (c, { args, options }) =>
-          c.listFiles(kind, args.id, args.path, Number(options.limit)),
-        [count],
+          c.listFiles(kind, args.id, args.path, Number(options.limit), controls(options)),
+        [count, ...nativeOptions(kind, "children")],
       )),
-      leaf("metadata <id> <path>", "Read file metadata", R, (c, { args }) =>
-        c.getFileMetadata(kind, args.id, args.path),
+      leaf("metadata <id> <path>", "Read file metadata", R, (c, { args, options }) =>
+        c.getFileMetadata(kind, args.id, args.path, controls(options)),
+        nativeOptions(kind, "metadata"),
       ),
       ...(["download", "archive"] as const).map((action) =>
         command(
@@ -62,10 +79,11 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
               Number(options.limit ?? 100),
               context.cwd,
               destination(options),
+              controls(options),
             ),
           {
             permission: R,
-            options: [...output, ...(action === "archive" ? [count] : [])],
+            options: [...output, ...nativeOptions(kind, action), ...(action === "archive" ? [count] : [])],
             view: savedFileRecord,
           },
         ),

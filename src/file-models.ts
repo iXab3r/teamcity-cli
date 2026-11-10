@@ -70,3 +70,19 @@ export function sensitiveSegment(value: string) {
     throw new Error("Invalid secure reference; value omitted.");
   return encodeURIComponent(value);
 }
+
+export interface FileControls {
+  fields?: string;
+  basePath?: string;
+  archiveName?: string;
+  resolveParameters?: string;
+  logBuildUsage?: string;
+}
+export function controlledFileQuery(kind: FileTree, controls: FileControls = {}): Record<string,string> {
+  return { ...fileQuery(kind),
+    ...(controls.basePath === undefined ? {} : {basePath:controls.basePath}),
+    ...(controls.archiveName === undefined ? {} : {name:controls.archiveName}),
+    ...(controls.resolveParameters === undefined ? {} : {resolveParameters:controls.resolveParameters}),
+    ...(controls.logBuildUsage === undefined ? {} : {logBuildUsage:controls.logBuildUsage}),
+  };
+}

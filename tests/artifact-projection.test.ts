@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import type { CliApplication, CliError } from "@eyeauras/cli-factory";
@@ -209,3 +209,35 @@ for(const action of ["list","children","metadata","download","archive"]) {
   await rt.createCli().execute([...argv,...extra,...(["download","archive"].includes(action)?["--output",join(rt.root,"result"+value)]:[])]);
  });
 }
+
+for(const action of ["download","archive"]) {
+ const prefix=["builds","artifacts",action,"42","logs"];
+ const bytes=action==="archive" ? new Uint8Array([80,75,5,6,...Array(18).fill(0)]) : new TextEncoder().encode("fixture");
+ const response=()=>new HttpResponse(bytes,{headers:{"content-type":action==="archive"?"application/zip":"application/octet-stream"}});
+ test(`US-004-A5 ${action} denied controls have zero effects on all surfaces`,async t=>{
+  const rt=await runtime(t,[]);
+  const requests=trackRequests(t,0,response);
+  server.use(http.all("*",({request})=>requests.handle(request)));
+  for(const surface of surfaces) await failure(rt,rt.createCli(),[...prefix,"--resolve-parameters","true","--output",join(rt.root,"denied")],surface,"permission.denied");
+ });
+ test(`US-004-A3 ${action} controls preserve publication and byte bounds`,async t=>{
+  const rt=await runtime(t);
+  const target=join(rt.root,"existing");
+  await writeFile(target,"existing fixture");
+  server.use(http.all("*",()=>response()));
+  const argv=[...prefix,"--resolve-parameters","true","--log-build-usage","false","--output",target];
+  await assert.rejects(rt.createCli().execute(argv),/already exists/);
+  assert.equal(await readFile(target,"utf8"),"existing fixture");
+  await assert.rejects(rt.createCli().execute([...argv.slice(0,-1),join(rt.root,"bounded"),"--max-bytes","1"]));
+  await assert.rejects(readFile(join(rt.root,"bounded")));
+ });
+}
+test("US-004 list item projections preserve count+1 lookahead without adding view fields",async t=>{
+ const rt=await runtime(t);
+ const requests=trackRequests(t,5,async request=>{
+  await assertHttpRequest(request,{method:"GET",url:origin+"/app/rest/builds/id:42/artifacts",query:{resolveParameters:"false",logBuildUsage:"false",locator:"count:3,recursive:false,hidden:false,browseArchives:true",fields:"count,file(custom)"}});
+  return HttpResponse.json({file:[{custom:1},{custom:2},{custom:3}]});
+ });
+ server.use(http.all("*",({request})=>requests.handle(request)));
+ for(const surface of surfaces) await success(rt,rt.createCli(),["builds","artifacts","list","42","--limit","2","--fields","custom"],surface,{count:2,items:[{custom:1},{custom:2}],hasMore:true});
+});
