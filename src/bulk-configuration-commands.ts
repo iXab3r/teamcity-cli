@@ -23,7 +23,11 @@ const confirm = option("--confirm", "Confirm clearing this collection", true);
 const strings = (values: Record<string, unknown>, key: string) => (values[key] ?? []) as string[];
 const number = (values: Record<string, unknown>, key: string) => Number(text(values, key));
 const itemOption: OptionDefinition = {
-  ...jsonOption("--item <json>", "Repeat a configuration item", true),
+  ...jsonOption(
+    "--item <json>",
+    "Repeat a configuration item",
+    true,
+  ),
   required: false,
 };
 
@@ -64,14 +68,21 @@ export function createBulkConfigurationCommands(
               "show <owner-id> <name>",
               "Read parameter metadata",
               Permission.ReadOnly,
-              (c, { args }) => c.getParameterPart(owner, args["owner-id"], args.name, part),
+              (c, { args }) =>
+                c.getParameterPart(owner, args["owner-id"], args.name, part),
             ),
             leaf(
               "set <owner-id> <name> <value>",
               "Set a parameter value or type",
               Permission.Update,
               (c, { args }) =>
-                c.setParameterPart(owner, args["owner-id"], args.name, part, args.value),
+                c.setParameterPart(
+                  owner,
+                  args["owner-id"],
+                  args.name,
+                  part,
+                  args.value,
+                ),
             ),
           ],
         ),
@@ -108,7 +119,8 @@ export function createBulkConfigurationCommands(
       "clear <job-id>",
       "Detach all templates",
       Permission.Update,
-      (c, { args, options }) => c.clearTemplates(args["job-id"], options.inlineSettings === true),
+      (c, { args, options }) =>
+        c.clearTemplates(args["job-id"], options.inlineSettings === true),
       [confirm, option("--inline-settings", "Copy inherited settings locally before detaching")],
     ),
   ];
@@ -169,8 +181,11 @@ export function createBulkConfigurationCommands(
       "Inspect or replace custom project ordering",
       (["jobs", "projects"] as const).map((kind) =>
         command(kind, "Manage child ordering", [
-          leaf("show <project-id>", "Read custom child order", Permission.ReadOnly, (c, { args }) =>
-            c.getProjectOrder(args["project-id"], kind),
+          leaf(
+            "show <project-id>",
+            "Read custom child order",
+            Permission.ReadOnly,
+            (c, { args }) => c.getProjectOrder(args["project-id"], kind),
           ),
           leaf(
             "set <project-id>",
@@ -207,12 +222,10 @@ export function createBulkConfigurationCommands(
       "Delete one page of queued builds",
       Permission.Update,
       (c, { options }) =>
-        c.deleteQueuePage(
-          text(options, "job"),
-          {
-            limit: Number(options.limit),
-            start: Number(options.start),
-          },
+        c.deleteQueuePage(text(options, "job"), {
+          limit: Number(options.limit),
+          start: Number(options.start),
+        },
           fieldsFromOptions(options),
         ),
       [option("--job <job-id>", "Select one job", true), ...pageOptions, confirm, fieldsOption],
@@ -221,8 +234,7 @@ export function createBulkConfigurationCommands(
       "reorder",
       "Reorder selected queued builds",
       Permission.Update,
-      (c, { options }) =>
-        c.reorderQueue(strings(options, "build").map(Number), fieldsFromOptions(options)),
+      (c, { options }) => c.reorderQueue(strings(options, "build").map(Number), fieldsFromOptions(options)),
       [repeatOption("--build <id>", "Repeat build IDs in order", true), fieldsOption],
     ),
     leaf(
@@ -242,21 +254,15 @@ export function createBulkConfigurationCommands(
       ),
     ]),
     command("approval", "Inspect and approve queued builds", [
-      leaf(
-        "show <build-id>",
-        "Show minimal approval status",
-        Permission.ReadOnly,
-        (c, { args, options }) =>
-          c.getQueueApproval(number(args, "build-id"), fieldsFromOptions(options)),
+      leaf("show <build-id>", "Show minimal approval status", Permission.ReadOnly, (c, { args, options }) =>
+        c.getQueueApproval(number(args, "build-id"), fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
         "approve <build-id>",
         "Approve one queued build",
         Permission.Update,
-        (c, { args, options }) =>
-          c.approveQueuedBuild(
-            number(args, "build-id"),
+        (c, { args, options }) => c.approveQueuedBuild(number(args, "build-id"),
             fieldsFromOptions(options),
             options.approveAll as string | undefined,
           ),
@@ -268,8 +274,11 @@ export function createBulkConfigurationCommands(
     ]),
   ];
   const agentTypes = command("types", "Inspect agent type identity", [
-    leaf("show <type-id>", "Show agent type identity", Permission.ReadOnly, (c, { args }) =>
-      c.getAgentType(number(args, "type-id")),
+    leaf(
+      "show <type-id>",
+      "Show agent type identity",
+      Permission.ReadOnly,
+      (c, { args }) => c.getAgentType(number(args, "type-id")),
     ),
   ]);
   return { parameters, replaceAll, templates, jobs, projects, poolProjects, queue, agentTypes };

@@ -9,7 +9,10 @@ import {
   type CommandContext,
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
-import { TeamCityUnknownOutcomeError, type TeamCityClient } from "./client.js";
+import {
+  TeamCityUnknownOutcomeError,
+  type TeamCityClient,
+} from "./client.js";
 import { booleanOption, pairOption, integerValue } from "./command-support.js";
 import type { PlainProperty } from "./authoring-models.js";
 import type {
@@ -72,8 +75,7 @@ const waitOptions: readonly OptionDefinition[] = [
     flags: "--timeout <duration>",
     description: "Set the wait timeout (default 10m)",
     parse: durationParser({
-      min: 1_000,
-      max: 24 * 3_600_000,
+      min: 1_000, max: 24 * 3_600_000,
       errorMessage: "Timeout must be a duration from 1s to 24h, such as 10m.",
     }),
   },
@@ -81,8 +83,7 @@ const waitOptions: readonly OptionDefinition[] = [
     flags: "--interval <duration>",
     description: "Set status read interval (default 5s)",
     parse: durationParser({
-      min: 1_000,
-      max: 10 * 60_000,
+      min: 1_000, max: 10 * 60_000,
       errorMessage: "Interval must be a duration from 1s to 10m, such as 5s.",
     }),
   },
@@ -156,33 +157,25 @@ async function observe(
   const stopped = (error: unknown): never => {
     if (context.signal.aborted) {
       throw new CliError(`Stopped waiting for build ${id}; it continues on the server.`, {
-        code: "wait.interrupted",
-        exitCode: 130,
-        next: resume,
+        code: "wait.interrupted", exitCode: 130, next: resume,
         ...(last === undefined ? {} : { result: shape(last, "interrupted") }),
       });
     }
     if (deadline.aborted) {
-      throw new CliError(`Build ${id} did not finish in time; it continues on the server.`, {
-        code: "wait.timeout",
-        exitCode: 124,
-        next: resume,
-        ...(last === undefined ? {} : { result: shape(last, "timedOut") }),
-      });
+      throw new CliError(
+        `Build ${id} did not finish in time; it continues on the server.`,
+        { code: "wait.timeout", exitCode: 124, next: resume,
+          ...(last === undefined ? {} : { result: shape(last, "timedOut") }) },
+      );
     }
     if (last === undefined) throw error;
     if (error instanceof HttpError && error.status === 404) {
       throw new CliError(`Build ${id} is no longer available on the server.`, {
-        code: "build.missing",
-        result: shape(last, "missing"),
-        cause: error,
+        code: "build.missing", result: shape(last, "missing"), cause: error,
       });
     }
     throw new CliError(`Reading build ${id} failed; it may still be running.`, {
-      code: "wait.failed",
-      next: resume,
-      result: shape(last),
-      cause: error,
+      code: "wait.failed", next: resume, result: shape(last), cause: error,
     });
   };
   for (;;) {
@@ -222,10 +215,7 @@ async function section<T, R>(
   try {
     const page = await read();
     // Only a confirmed end is complete: more items, or an unknown rest, is truncated.
-    return {
-      status: page.hasMore === false ? "complete" : "truncated",
-      items: page.items.map(project),
-    };
+    return { status: page.hasMore === false ? "complete" : "truncated", items: page.items.map(project) };
   } catch (error) {
     // A stop is reported as such, never with a section's partial page as the result.
     if (context.signal.aborted) throw new Error("The diagnosis was stopped.", { cause: error });
@@ -260,186 +250,152 @@ function failedTest(value: TeamCityFailedTest): DiagnosisTest {
 }
 
 export function createBuildFlowCommands(clientFor: ClientFor) {
-  const show = withView(
-    buildRecord,
-    command(
-      "show [build-id]",
-      "Show a build by ID or latest selector",
-      async ({ args, options }, context) => {
-        const id = optionalString(args, "build-id");
-        const job = optionalString(options, "job");
-        const branch = optionalString(options, "branch");
+  const show = withView(buildRecord, command(
+    "show [build-id]",
+    "Show a build by ID or latest selector",
+    async ({ args, options }, context) => {
+      const id = optionalString(args, "build-id");
+      const job = optionalString(options, "job");
+      const branch = optionalString(options, "branch");
         const fields = optionalString(options, "fields");
-        if (options.latest !== true) {
-          if (job !== undefined || branch !== undefined)
-            throw new Error("--job and --branch select a build only together with --latest.");
-          if (id === undefined) throw new Error("Specify a build ID, or --job <id> --latest.");
-          return (await clientFor(context)).getBuild(integerValue(id), fields);
-        }
-        if (id !== undefined) throw new Error("Use either a build ID or --latest, not both.");
-        if (job === undefined) throw new Error("--latest requires --job <id>.");
-        const build = await (await clientFor(context)).getLatestFinishedBuild(job, branch, fields);
-        if (build === undefined) throw new Error("No finished build matches this job and branch.");
+      if (options.latest !== true) {
+        if (job !== undefined || branch !== undefined)
+          throw new Error("--job and --branch select a build only together with --latest.");
+        if (id === undefined) throw new Error("Specify a build ID, or --job <id> --latest.");
+        return (await clientFor(context)).getBuild(integerValue(id), fields);
+      }
+      if (id !== undefined) throw new Error("Use either a build ID or --latest, not both.");
+      if (job === undefined) throw new Error("--latest requires --job <id>.");
+      const build = await (await clientFor(context)).getLatestFinishedBuild(job, branch, fields);
+      if (build === undefined) throw new Error("No finished build matches this job and branch.");
         if (fields === undefined)
-          context.progress(
-            `Latest finished build on ${branch === undefined ? "all branches" : "the selected branch"}: ${build.id}`,
-          );
-        return build;
-      },
-      {
-        permission: Permission.ReadOnly,
-        options: [
+      context.progress(
+        `Latest finished build on ${branch === undefined ? "all branches" : "the selected branch"}: ${build.id}`,
+      );
+      return build;
+    },
+    {
+      permission: Permission.ReadOnly,
+      options: [
           fieldsOption,
-          { flags: "--job <id>", description: "Select a job for --latest" },
+        { flags: "--job <id>", description: "Select a job for --latest" },
+        {
+          flags: "--branch <name>",
+          description: "Select a branch for --latest",
+        },
+        {
+          flags: "--latest",
+          description: "Select the newest finished build of --job",
+        },
+      ],
+    },
+  ));
+
+  const wait = withView(followedRecord, command(
+    "wait <build-id>",
+    "Wait for a build to finish",
+    async ({ args, options }, context) => {
+      const id = integerValue(args["build-id"]);
+      return follow(await commandClient(clientFor, context), context, id, pause(options),
+        (build, outcome) => ({ build, ...(outcome === undefined ? {} : { outcome }) }));
+    },
+    { permission: Permission.ReadOnly, options: waitOptions },
+  ));
+
+  const diagnose = withView(diagnosisRecord, command(
+    "diagnose <build-id>",
+    "Summarize build problems and failed tests",
+    async ({ args }, context) => {
+      const id = integerValue(args["build-id"]);
+      const client = await clientFor(context);
+      const build = await client.getBuildSummary(id);
+      const [problems, failedTests] = await Promise.all([
+        section(context, () => client.listBuildProblems(id, { limit: problemLimit }), problem),
+        section(context, () => client.listFailedTests(id, testLimit), failedTest),
+      ]);
+      const outcome = buildOutcome(build);
+      const diagnosis: Diagnosis = {
+        build,
+        ...(outcome === undefined ? {} : { outcome }),
+        problems,
+        failedTests,
+        partial: problems.status === "unavailable" || failedTests.status === "unavailable",
+      };
+      if (diagnosis.partial) {
+        throw new CliError("Some diagnostics could not be read; the summary is partial.", {
+          code: "diagnose.partial", result: diagnosis,
+        });
+      }
+      return diagnosis;
+    },
+    { permission: Permission.ReadOnly },
+  ));
+
+  const run = withView(followedRecord, command(
+    "run <job-id>",
+    "Queue a build",
+    async ({ args, options }, context) => {
+      const job = args["job-id"];
+      const properties = (options.param ?? []) as PlainProperty[];
+      if (options.wait !== true && (options.timeout !== undefined || options.interval !== undefined))
+        throw new Error("--timeout and --interval apply only with --wait.");
+      const branch = optionalString(options, "branch");
+      const comment = optionalString(options, "comment");
+      const session = await commandClient(clientFor, context);
+      let queued: TeamCityBuild;
+      try {
+        queued = await session.client.runJob(job, {
+          ...(branch === undefined ? {} : { branch }),
+          ...(comment === undefined ? {} : { comment }),
+          properties,
+          ...(typeof options.moveToTop === "string" ? { moveToTop: options.moveToTop } : {}),
+          ...(options.cleanSources === true ? { cleanSources: true } : {}),
+        });
+      } catch (error) {
+        if (!(error instanceof TeamCityUnknownOutcomeError)) throw error;
+        // Never queue again automatically: the first request may already have been accepted.
+        // An accepted build can leave the queue within seconds, so the check covers every state.
+        // The job-wide check stays even with a branch, which a person's view may have to omit.
+        const check = ["builds", "list", "--job", job];
+        throw new CliError(
+          "The queue request's outcome is unknown.",
           {
-            flags: "--branch <name>",
-            description: "Select a branch for --latest",
-          },
-          {
-            flags: "--latest",
-            description: "Select the newest finished build of --job",
-          },
-        ],
-      },
-    ),
-  );
-
-  const wait = withView(
-    followedRecord,
-    command(
-      "wait <build-id>",
-      "Wait for a build to finish",
-      async ({ args, options }, context) => {
-        const id = integerValue(args["build-id"]);
-        return follow(
-          await commandClient(clientFor, context),
-          context,
-          id,
-          pause(options),
-          (build, outcome) => ({ build, ...(outcome === undefined ? {} : { outcome }) }),
-        );
-      },
-      { permission: Permission.ReadOnly, options: waitOptions },
-    ),
-  );
-
-  const diagnose = withView(
-    diagnosisRecord,
-    command(
-      "diagnose <build-id>",
-      "Summarize build problems and failed tests",
-      async ({ args }, context) => {
-        const id = integerValue(args["build-id"]);
-        const client = await clientFor(context);
-        const build = await client.getBuildSummary(id);
-        const [problems, failedTests] = await Promise.all([
-          section(context, () => client.listBuildProblems(id, { limit: problemLimit }), problem),
-          section(context, () => client.listFailedTests(id, testLimit), failedTest),
-        ]);
-        const outcome = buildOutcome(build);
-        const diagnosis: Diagnosis = {
-          build,
-          ...(outcome === undefined ? {} : { outcome }),
-          problems,
-          failedTests,
-          partial: problems.status === "unavailable" || failedTests.status === "unavailable",
-        };
-        if (diagnosis.partial) {
-          throw new CliError("Some diagnostics could not be read; the summary is partial.", {
-            code: "diagnose.partial",
-            result: diagnosis,
-          });
-        }
-        return diagnosis;
-      },
-      { permission: Permission.ReadOnly },
-    ),
-  );
-
-  const run = withView(
-    followedRecord,
-    command(
-      "run <job-id>",
-      "Queue a build",
-      async ({ args, options }, context) => {
-        const job = args["job-id"];
-        const properties = (options.param ?? []) as PlainProperty[];
-        if (
-          options.wait !== true &&
-          (options.timeout !== undefined || options.interval !== undefined)
-        )
-          throw new Error("--timeout and --interval apply only with --wait.");
-        const branch = optionalString(options, "branch");
-        const comment = optionalString(options, "comment");
-        const session = await commandClient(clientFor, context);
-        let queued: TeamCityBuild;
-        try {
-          queued = await session.client.runJob(job, {
-            ...(branch === undefined ? {} : { branch }),
-            ...(comment === undefined ? {} : { comment }),
-            properties,
-            ...(typeof options.moveToTop === "string" ? { moveToTop: options.moveToTop } : {}),
-            ...(options.cleanSources === true ? { cleanSources: true } : {}),
-          });
-        } catch (error) {
-          if (!(error instanceof TeamCityUnknownOutcomeError)) throw error;
-          // Never queue again automatically: the first request may already have been accepted.
-          // An accepted build can leave the queue within seconds, so the check covers every state.
-          // The job-wide check stays even with a branch, which a person's view may have to omit.
-          const check = ["builds", "list", "--job", job];
-          throw new CliError("The queue request's outcome is unknown.", {
             code: "run.unknownOutcome",
             // Keep the chain and frames while stating uncertainty only once.
-            cause: diagnosticCause(
-              error,
-              [],
-              error.message.replace("; remote outcome is unknown", ""),
-            ),
+            cause: diagnosticCause(error, [], error.message.replace("; remote outcome is unknown", "")),
             next: [
               ...(branch === undefined ? [] : [[...check, "--branch", branch, "--state", "any"]]),
               [...check, "--state", "any"],
             ],
-          });
-        }
-        if (options.wait !== true) return { accepted: true, build: queued };
-        return follow(
-          session,
-          context,
-          queued.id,
-          pause(options),
-          (build, outcome) => ({
-            accepted: true,
-            build: {
-              ...build,
-              ...(queued.parameterNames === undefined
-                ? {}
-                : { parameterNames: queued.parameterNames }),
-            },
-            ...(outcome === undefined ? {} : { outcome }),
-          }),
-          queued,
+          },
         );
-      },
-      {
-        permission: Permission.Update,
-        options: [
+      }
+      if (options.wait !== true) return { accepted: true, build: queued };
+      return follow(session, context, queued.id, pause(options), (build, outcome) => ({
+        accepted: true,
+        build: { ...build, ...(queued.parameterNames === undefined ? {} : { parameterNames: queued.parameterNames }) },
+        ...(outcome === undefined ? {} : { outcome }),
+      }), queued);
+    },
+    {
+      permission: Permission.Update,
+      options: [
           booleanOption("--move-to-top <boolean>", "Queue the build at the top"),
-          {
-            flags: "--branch <name>",
-            description: "Select the build branch",
-          },
-          { flags: "--comment <text>", description: "Attach a queue comment" },
-          {
-            flags: "--clean-sources",
-            description: "Clear this build's entire checkout before fetching",
-          },
-          pairOption("--param", "Set a one-off parameter; repeat for more"),
-          { flags: "--wait", description: "Wait for the build result" },
-          ...waitOptions,
-        ],
-      },
-    ),
-  );
+        {
+          flags: "--branch <name>",
+          description: "Select the build branch",
+        },
+        { flags: "--comment <text>", description: "Attach a queue comment" },
+        { flags: "--clean-sources", description: "Clear this build's entire checkout before fetching" },
+        pairOption(
+          "--param",
+          "Set a one-off parameter; repeat for more",
+        ),
+        { flags: "--wait", description: "Wait for the build result" },
+        ...waitOptions,
+      ],
+    },
+  ));
 
   return { show, wait, diagnose, run };
 }

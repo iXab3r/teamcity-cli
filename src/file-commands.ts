@@ -1,8 +1,5 @@
 import { fieldsOption } from "./projection.js";
-import {
-  command,
-  Permission,
-  type CommandContext,
+import { command, Permission, type CommandContext,
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
@@ -18,7 +15,11 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
     parse: integerValue,
   };
   const output = [
-    option("--output <path>", "Save to a relative or absolute path", false),
+    option(
+      "--output <path>",
+      "Save to a relative or absolute path",
+      false,
+    ),
     {
       ...option("--max-bytes <bytes>", "Limit downloaded bytes"),
       parse: integerValue,
@@ -53,39 +54,32 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
         ];
   const tree = (name: string, kind: FileTree) =>
     command(name, "Browse and save files", [
-      withView(
-        fileTable,
-        leaf(
-          "list <id>",
-          "List root files",
-          R,
-          (c, { args, options }) =>
-            c.listFiles(kind, args.id, undefined, Number(options.limit), controls(options)),
-          [count, ...nativeOptions(kind, "list")],
-        ),
-      ),
-      withView(
-        fileTable,
-        leaf(
-          "children <id> <path>",
-          "List directory children",
-          R,
-          (c, { args, options }) =>
-            c.listFiles(kind, args.id, args.path, Number(options.limit), controls(options)),
-          [count, ...nativeOptions(kind, "children")],
-        ),
-      ),
-      leaf(
-        "metadata <id> <path>",
-        "Read file metadata",
+      withView(fileTable, leaf(
+        "list <id>",
+        "List root files",
         R,
-        (c, { args, options }) => c.getFileMetadata(kind, args.id, args.path, controls(options)),
+        (c, { args, options }) =>
+          c.listFiles(kind, args.id, undefined, Number(options.limit), controls(options)),
+        [count, ...nativeOptions(kind, "list")],
+      )),
+      withView(fileTable, leaf(
+        "children <id> <path>",
+        "List directory children",
+        R,
+        (c, { args, options }) =>
+          c.listFiles(kind, args.id, args.path, Number(options.limit), controls(options)),
+        [count, ...nativeOptions(kind, "children")],
+      )),
+      leaf("metadata <id> <path>", "Read file metadata", R, (c, { args, options }) =>
+        c.getFileMetadata(kind, args.id, args.path, controls(options)),
         nativeOptions(kind, "metadata"),
       ),
       ...(["download", "archive"] as const).map((action) =>
         command(
           `${action} <id> <path>`,
-          action === "archive" ? "Save a directory as ZIP" : "Save a file",
+          action === "archive"
+            ? "Save a directory as ZIP"
+            : "Save a file",
           async ({ args, options }, context) =>
             (await clientFor(context)).downloadFile(
               kind,
@@ -99,11 +93,7 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
             ),
           {
             permission: R,
-            options: [
-              ...output,
-              ...nativeOptions(kind, action),
-              ...(action === "archive" ? [count] : []),
-            ],
+            options: [...output, ...nativeOptions(kind, action), ...(action === "archive" ? [count] : [])],
             view: savedFileRecord,
           },
         ),
@@ -123,22 +113,18 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
         ),
       {
         permission: R,
-        options: [
-          ...output,
-          {
-            ...option("--size <pixels>", "Set image size in pixels"),
-            defaultValue: 64,
-            parse: integerValue,
-          },
-        ],
+        options: [...output, { ...option("--size <pixels>", "Set image size in pixels"), defaultValue: 64, parse: integerValue }],
         view: savedFileRecord,
       },
     ),
   );
   const builds = [
     tree("artifacts", "builds"),
-    leaf("artifacts-path <id>", "Read the server artifact directory path", R, (c, { args }) =>
-      c.getArtifactsPath(args.id),
+    leaf(
+      "artifacts-path <id>",
+      "Read the server artifact directory path",
+      R,
+      (c, { args }) => c.getArtifactsPath(args.id),
     ),
     command(
       "source <id> <path>",
@@ -188,8 +174,11 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
     ),
   ];
   const settings = (kind: "projects" | "jobs" | "roots") =>
-    leaf("settings-path <id>", "Read the server configuration path", R, (c, { args }) =>
-      c.getSettingsPath(kind, args.id),
+    leaf(
+      "settings-path <id>",
+      "Read the server configuration path",
+      R,
+      (c, { args }) => c.getSettingsPath(kind, args.id),
     );
   const projects = [
     settings("projects"),
