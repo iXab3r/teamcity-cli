@@ -7,16 +7,13 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
-Job `features` and `triggers` accept whole-response `--fields` on
-`list/show/create/replace/replace-all`; features also accepts it on
-`parameters list/replace`. Default array and object shaping, write bodies,
-permissions and error handling remain unchanged. Other kinds and scalar
-sub-resource operations retain their existing options.
-
-Job `steps list/show/create/replace/replace-all` and `steps parameters list/replace`
-accept whole-response `--fields`. Unpaged lists keep their default array shaping
-when omitted. Scalar settings, parameter sub-resource leaves and deletes retain
-their existing options and workflows.
+Job `steps`, `features`, `triggers`, `agent-requirements`, `artifact-dependencies`
+and `snapshot-dependencies` accept whole-response `--fields` on
+`list/show/create/replace/replace-all`; steps and features also accept it on
+`parameters list/replace`. Explicit projections reach TeamCity unchanged and use
+native JSON and the generic human view. Omission preserves default array/object
+shaping, requests, permissions and errors. Scalar settings, other sub-resources
+and deletes retain their existing options and workflows.
 
 Job `files list/children` accept item `--fields` and keep `{count,items}`, their
 existing locator and default shaping, without lookahead. `metadata` projects the
