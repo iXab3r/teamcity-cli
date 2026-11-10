@@ -2183,22 +2183,26 @@ export class TeamCityClient {
     );
   }
 
-  public listAccountUsers(page: TeamCityPageOptions = {}) {
+  public listAccountUsers<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/users", [], "user", admin.accountUserFields,
       admin.safeAccountUser, page);
   }
 
-  public async createAccountUser(username: string, name?: string) {
+  public async getAccountUser<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", admin.accountPath("users", id),
+      { fields: admin.accountUserFields }, admin.safeAccountUser, fields);
+  }
+
+  public async createAccountUser<F extends string | undefined = undefined>(username: string, name?: string, fields?: F) {
     const body = {
       username: triage.inputText(username, "Username"),
       ...(name === undefined ? {} : { name: triage.inputText(name, "Name") }),
     };
-    return admin.safeAccountUser(
-      await this.#requestJson("POST", "/app/rest/users", { fields: admin.accountUserFields }, body),
-    );
+    return this.#projectedJson("POST", "/app/rest/users", { fields: admin.accountUserFields },
+      admin.safeAccountUser, fields, body);
   }
 
-  public async updateAccountUser(id: string, input: { username?: string; name?: string }) {
+  public async updateAccountUser<F extends string | undefined = undefined>(id: string, input: { username?: string; name?: string }, fields?: F) {
     triage.inputRecord(input, ["username", "name"]);
     const body = {
       ...(input.username === undefined
@@ -2207,14 +2211,8 @@ export class TeamCityClient {
       ...(input.name === undefined ? {} : { name: triage.inputText(input.name, "Name") }),
     };
     if (!Object.keys(body).length) throw new Error("At least one identity field is required.");
-    return admin.safeAccountUser(
-      await this.#requestJson(
-        "PUT",
-        admin.accountPath("users", id),
-        { fields: admin.accountUserFields },
-        body,
-      ),
-    );
+    return this.#projectedJson("PUT", admin.accountPath("users", id),
+      { fields: admin.accountUserFields }, admin.safeAccountUser, fields, body);
   }
 
   public async deleteAccountUser(id: string) {
@@ -2232,70 +2230,80 @@ export class TeamCityClient {
     return { userId: id, sessionsTerminated: true };
   }
 
-  public async listAccountGroups(kind: admin.AccountKind, id: string) {
+  public async listAccountGroups<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, fields?: F) {
     const suffix = kind === "users" ? "/groups" : "/parent-groups";
-    const value = await this.#requestJson<{ group?: unknown[] }>(
+    return this.#projectedJson(
       "GET",
       admin.accountPath(kind, id) + suffix,
       { fields: `count,group(${admin.groupFields})` },
+      raw => {
+        const value = raw as { group?: unknown[] };
+        return (value.group ?? []).map(admin.safeGroup);
+      }, fields,
     );
-    return (value.group ?? []).map(admin.safeGroup);
   }
 
-  public async replaceAccountGroups(kind: admin.AccountKind, id: string, keys: readonly string[]) {
+  public async replaceAccountGroups<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, keys: readonly string[], fields?: F) {
     const body = admin.groupKeys(keys);
-    const value = await this.#requestJson<{ group?: unknown[] }>(
+    return this.#projectedJson(
       "PUT",
       admin.accountPath(kind, id) + (kind === "users" ? "/groups" : "/parent-groups"),
       { fields: `count,group(${admin.groupFields})` },
+      raw => {
+        const value = raw as { group?: unknown[] };
+        return (value.group ?? []).map(admin.safeGroup);
+      }, fields,
       body,
     );
-    return (value.group ?? []).map(admin.safeGroup);
   }
 
-  public async getAccountUserGroup(id: string, key: string) {
+  public async getAccountUserGroup<F extends string | undefined = undefined>(id: string, key: string, fields?: F) {
     const suffix = "/" + admin.groupLocator(key);
-    return admin.safeGroup(
-      await this.#requestJson("GET", admin.accountPath("users", id) + "/groups" + suffix, {
-        fields: admin.groupFields,
-      }),
-    );
+    return this.#projectedJson("GET", admin.accountPath("users", id) + "/groups" + suffix,
+      { fields: admin.groupFields }, admin.safeGroup, fields);
   }
 
-  public async removeAccountUserGroup(id: string, key: string) {
+  public async removeAccountUserGroup<F extends string | undefined = undefined>(id: string, key: string, fields?: F) {
     const suffix = "/" + admin.groupLocator(key);
-    await this.#request("DELETE", admin.accountPath("users", id) + "/groups" + suffix);
-    return { userId: id, group: key, removed: true };
+    const contents = await this.#request("DELETE", admin.accountPath("users", id) + "/groups" + suffix,
+      fields === undefined ? {} : { fields: fieldsProjection(fields) });
+    return this.#projectedAcknowledgement(contents, fields, { userId: id, group: key, removed: true });
   }
 
-  public async listAccountPermissions(id: string, project?: string) {
-    const value = await this.#requestJson<{ permissionAssignment?: unknown[] }>(
+  public async listAccountPermissions<F extends string | undefined = undefined>(id: string, project?: string, fields?: F) {
+    return this.#projectedJson(
       "GET",
       admin.accountPath("users", id) + "/permissions",
       {
         ...(project === undefined ? {} : { locator: nestedId("project", project, "Project ID") }),
         fields: "count,permissionAssignment(permission(id),project(id),isGlobalScope)",
       },
+      raw => {
+        const value = raw as { permissionAssignment?: unknown[] };
+        return (value.permissionAssignment ?? []).map((item) => {
+            const raw = triage.object(item);
+            return {
+              ...triage.safeScalars(raw, ["isGlobalScope"]),
+              ...(raw.permission === undefined
+                ? {}
+                : { permission: triage.safeScalars(raw.permission, ["id"]) }),
+              ...(raw.project === undefined ? {} : { project: triage.safeScalars(raw.project, ["id"]) }),
+            };
+          });
+      }, fields,
     );
-    return (value.permissionAssignment ?? []).map((item) => {
-      const raw = triage.object(item);
-      return {
-        ...triage.safeScalars(raw, ["isGlobalScope"]),
-        ...(raw.permission === undefined
-          ? {}
-          : { permission: triage.safeScalars(raw.permission, ["id"]) }),
-        ...(raw.project === undefined ? {} : { project: triage.safeScalars(raw.project, ["id"]) }),
-      };
-    });
   }
 
-  public async listAccountPropertyNames(kind: admin.AccountKind, id: string) {
-    const value = await this.#requestJson<{ property?: unknown[] }>(
+  public async listAccountPropertyNames<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, fields?: F) {
+    return this.#projectedJson(
       "GET",
       admin.accountPath(kind, id) + "/properties",
       { fields: "count,property(name)" },
+      raw => {
+        const value = raw as { property?: unknown[] };
+        return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
+      }, fields,
     );
-    return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
   }
 
   public async checkAccountProperty(kind: admin.AccountKind, id: string, name: string) {
@@ -2386,29 +2394,24 @@ export class TeamCityClient {
     return { ...role, revoked: true };
   }
 
-  public async listCurrentUserTokens() {
-    const value = await this.#requestJson<{ token?: unknown[] }>(
-      "GET",
-      "/app/rest/users/current/tokens",
+  public async listCurrentUserTokens<F extends string | undefined = undefined>(fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/users/current/tokens",
       { fields: `count,token(${admin.tokenFields})` },
-    );
-    return (value.token ?? []).map(admin.safeToken);
+      raw => ((raw as { token?: unknown[] }).token ?? []).map(admin.safeToken), fields);
   }
 
-  public async createCurrentUserToken(input: admin.TokenCreationOptions, secrets: ScopedSecrets) {
+  public async createCurrentUserToken<F extends string | undefined = undefined>(input: admin.TokenCreationOptions, secrets: ScopedSecrets, fields?: F) {
     const body = admin.tokenBody(input);
     const key = admin.issuedTokenKey(input.alias);
     if ((await admin.readIssuedToken(secrets, input.alias)) !== undefined)
       throw new Error("Issued-token alias already exists; no HTTP was attempted.");
-    const raw = triage.object(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/users/current/tokens",
-        { fields: admin.tokenFields + ",value" },
-        body,
-      ),
-    );
-    if (raw.name !== body.name || typeof raw.value !== "string" || !raw.value.trim())
+    const value = await this.#requestJson<unknown>("POST", "/app/rest/users/current/tokens",
+      { fields: fields === undefined ? admin.tokenFields + ",value" : fieldsProjection(fields) }, body);
+    const raw = fields === undefined ? triage.object(value)
+      : value !== null && typeof value === "object" ? value as Record<string, unknown> : {};
+    if (fields !== undefined && (typeof raw.value !== "string" || !raw.value.trim()))
+      return this.#projectedValue(value, fields, () => ({ ...admin.safeToken(raw), alias: input.alias, stored: false }));
+    if ((fields === undefined && raw.name !== body.name) || typeof raw.value !== "string" || !raw.value.trim())
       throw new Error(
         "Token may have been created, but its one-time result was invalid; inspect/revoke the named remote token.",
       );
@@ -2421,7 +2424,7 @@ export class TeamCityClient {
         { cause: diagnosticCause(cause, [raw.value]) },
       );
     }
-    return { ...metadata, alias: input.alias, stored: true };
+    return this.#projectedValue(value, fields, () => ({ ...metadata, alias: input.alias, stored: true }));
   }
 
   public async deleteCurrentUserToken(name: string, secrets: ScopedSecrets, alias?: string) {

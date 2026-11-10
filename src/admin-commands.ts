@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
   command,
@@ -43,8 +44,9 @@ export function createAdminCommands(
       "properties",
       "Manage property names and assignments",
       [
-        withView(stringList, leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args }) =>
-          c.listAccountPropertyNames(kind, args.id),
+        withView(stringList, leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args, options }) =>
+          c.listAccountPropertyNames(kind, args.id, fieldsFromOptions(options)),
+          kind === "users" ? [fieldsOption] : [],
         )),
         leaf(
           "exists <id> <name>",
@@ -119,8 +121,9 @@ export function createAdminCommands(
   }
   function memberships(kind: AccountKind) {
     return [
-      leaf("list <id>", "List directly assigned groups", Permission.ReadOnly, (c, { args }) =>
-        c.listAccountGroups(kind, args.id),
+      leaf("list <id>", "List directly assigned groups", Permission.ReadOnly, (c, { args, options }) =>
+        c.listAccountGroups(kind, args.id, fieldsFromOptions(options)),
+        kind === "users" ? [fieldsOption] : [],
       ),
       leaf(
         "replace <id>",
@@ -129,14 +132,15 @@ export function createAdminCommands(
           : "Replace direct parent groups",
         "Admin",
         (c, { args, options }) =>
-          c.replaceAccountGroups(kind, args.id, (options.group ?? []) as string[]),
-        [groupOption],
+          c.replaceAccountGroups(kind, args.id, (options.group ?? []) as string[], fieldsFromOptions(options)),
+        [groupOption, ...(kind === "users" ? [fieldsOption] : [])],
       ),
     ];
   }
   const tokens = command("tokens", "Manage current-user tokens", [
-    leaf("list", "List token metadata", Permission.ReadOnly, (c) =>
-      c.listCurrentUserTokens(),
+    leaf("list", "List token metadata", Permission.ReadOnly, (c, { options }) =>
+      c.listCurrentUserTokens(fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command(
       "create <name>",
@@ -152,10 +156,12 @@ export function createAdminCommands(
             restrictions: (options.restriction ?? []) as unknown[],
           },
           context.secrets,
+          fieldsFromOptions(options),
         ),
       {
         permission: "Credentials",
         options: [
+          fieldsOption,
           option("--alias <name>", "Choose a new issued-token alias", true),
           option("--expires <timestamp>", "Set the token expiration timestamp"),
           option("--no-expiration", "Request a permanent token"),
@@ -204,16 +210,20 @@ export function createAdminCommands(
       "List account identities",
       Permission.ReadOnly,
       (c, { options }) =>
-        c.listAccountUsers({ limit: Number(options.limit), start: Number(options.start) }),
-      pageOptions,
+        c.listAccountUsers({ limit: Number(options.limit), start: Number(options.start), fields: fieldsFromOptions(options) }),
+      [...pageOptions, fieldsOption],
+    ),
+    leaf("show <id>", "Read one account identity", Permission.ReadOnly, (c, { args, options }) =>
+      c.getAccountUser(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create <username>",
       "Create an account identity",
       "Admin",
       (c, { args, options }) =>
-        c.createAccountUser(args.username, optional(options, "name")),
-      [option("--name <text>", "Set the display name")],
+        c.createAccountUser(args.username, optional(options, "name"), fieldsFromOptions(options)),
+      [fieldsOption, option("--name <text>", "Set the display name")],
     ),
     leaf(
       "update <id>",
@@ -223,8 +233,8 @@ export function createAdminCommands(
         c.updateAccountUser(args.id, {
           ...optionalText(options, "username"),
           ...optionalText(options, "name"),
-        }),
-      [option("--username <text>", "Set the username"), option("--name <text>", "Set the display name")],
+        }, fieldsFromOptions(options)),
+      [fieldsOption, option("--username <text>", "Set the username"), option("--name <text>", "Set the display name")],
     ),
     leaf("delete <id>", "Delete the remote account", "Admin", (c, { args }) =>
       c.deleteAccountUser(args.id),
@@ -249,10 +259,12 @@ export function createAdminCommands(
         "show <id> <key>",
         "Read one group membership",
         Permission.ReadOnly,
-        (c, { args }) => c.getAccountUserGroup(args.id, args.key),
+        (c, { args, options }) => c.getAccountUserGroup(args.id, args.key, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
-      leaf("remove <id> <key>", "Remove one membership", "Admin", (c, { args }) =>
-        c.removeAccountUserGroup(args.id, args.key),
+      leaf("remove <id> <key>", "Remove one membership", "Admin", (c, { args, options }) =>
+        c.removeAccountUserGroup(args.id, args.key, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
     command("permissions", "Inspect resolved remote permission assignments", [
@@ -261,8 +273,8 @@ export function createAdminCommands(
         "Read permission/project IDs and global flags",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.listAccountPermissions(args.id, optional(options, "project")),
-        [option("--project <id>", "Resolve within one project")],
+          c.listAccountPermissions(args.id, optional(options, "project"), fieldsFromOptions(options)),
+        [fieldsOption, option("--project <id>", "Resolve within one project")],
       ),
     ]),
     properties("users"),
