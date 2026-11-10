@@ -80,11 +80,11 @@ GET /app/rest/audit	Audit	ReadOnly	partial	audit list		fields	exercised-in-passi
 GET /app/rest/audit/{p1}	Audit	ReadOnly	partial	audit show <id>	getAudit	fields	exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/avatars/{p1}/{p2}/avatar.png	Avatar	ReadOnly	covered	users avatar download <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/avatars/{p1}/{p2}/avatar.{p3}.png	Avatar	ReadOnly	covered	users avatar download-hash <id> <hash>			exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/buildQueue	BuildQueue	ReadOnly	partial	queue list		fields	exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts
-GET /app/rest/buildQueue/order/{p1}	BuildQueue	ReadOnly	partial	queue position show <position>	getQueuePosition	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/buildQueue/{p1}	BuildQueue	ReadOnly	partial	queue show <build-id>	getQueuedBuild	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/buildQueue/{p1}/approvalInfo	BuildQueue	ReadOnly	partial	queue approval show <build-id>	getQueueApproval	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
-GET /app/rest/buildQueue/{p1}/compatibleAgents	BuildQueue	ReadOnly	partial	queue compatible-agents <build-id>	listQueueCompatibleAgents	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/buildQueue	BuildQueue	ReadOnly	covered	queue list			exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts;tests/queue-projection.test.ts
+GET /app/rest/buildQueue/order/{p1}	BuildQueue	ReadOnly	covered	queue position show <position>	getQueuePosition		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/queue-projection.test.ts
+GET /app/rest/buildQueue/{p1}	BuildQueue	ReadOnly	covered	queue show <build-id>	getQueuedBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/queue-projection.test.ts
+GET /app/rest/buildQueue/{p1}/approvalInfo	BuildQueue	ReadOnly	covered	queue approval show <build-id>	getQueueApproval		exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts;tests/queue-projection.test.ts
+GET /app/rest/buildQueue/{p1}/compatibleAgents	BuildQueue	ReadOnly	covered	queue compatible-agents <build-id>	listQueueCompatibleAgents		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/queue-projection.test.ts
 GET /app/rest/buildQueue/{p1}/tags	BuildQueue	ReadOnly	partial	queue tags list <build-id>	listTags	locator;fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/buildTypes	BuildType	ReadOnly	partial	jobs list		fields	exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts
 GET /app/rest/buildTypes/{p1}	BuildType	ReadOnly	partial	jobs show <id>	getJob	fields	exercised-in-passing-suite	tests/authoring.test.ts

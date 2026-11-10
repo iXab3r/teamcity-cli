@@ -3607,8 +3607,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue list",
@@ -3617,7 +3617,8 @@
      "--job <id>",
      "--project <id>",
      "--limit <count>",
-     "--start <offset>"
+     "--start <offset>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -3625,25 +3626,24 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/cli.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/queue-projection.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:52"
@@ -3674,33 +3674,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue position show <position>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getQueuePosition"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/operator.test.ts"
+    "tests/operator.test.ts",
+    "tests/queue-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -3726,33 +3727,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue show <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getQueuedBuild"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/operator.test.ts"
+    "tests/operator.test.ts",
+    "tests/queue-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -3778,33 +3780,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue approval show <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getQueueApproval"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/queue-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -3830,33 +3833,34 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "queue compatible-agents <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listQueueCompatibleAgents"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/operator.test.ts"
+    "tests/operator.test.ts",
+    "tests/queue-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
