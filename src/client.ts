@@ -180,7 +180,8 @@ export interface ListBuildsOptions<F extends string | undefined = string | undef
   status?: TeamCityBuildStatus;
 }
 
-export interface ListBuildTestsOptions extends TeamCityPageOptions {
+export interface ListBuildTestsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   status?: TeamCityTestStatus;
 }
 
@@ -470,10 +471,10 @@ export class TeamCityClient {
     );
   }
 
-  public listBuildTests(
+  public listBuildTests<F extends string | undefined = undefined>(
     id: number,
-    options: ListBuildTestsOptions = {},
-  ): Promise<TeamCityPage<TeamCityTestOccurrence>> {
+    options: ListBuildTestsOptions<F> = {},
+  ): Promise<TeamCityPage<Projected<TeamCityTestOccurrence, F>>> {
     return this.#list(
       "/app/rest/testOccurrences",
       [
@@ -487,10 +488,10 @@ export class TeamCityClient {
     );
   }
 
-  public listBuildProblems(
+  public listBuildProblems<F extends string | undefined = undefined>(
     id: number,
-    options: TeamCityPageOptions = {},
-  ): Promise<TeamCityPage<TeamCityProblemOccurrence>> {
+    options: TeamCityPageOptions & { fields?: F } = {},
+  ): Promise<TeamCityPage<Projected<TeamCityProblemOccurrence, F>>> {
     return this.#list(
       "/app/rest/problemOccurrences",
       [`build:(id:${integerId(id, "TeamCity build ID")})`],
@@ -2403,30 +2404,26 @@ export class TeamCityClient {
     return { muteId: id, deleted: true };
   }
 
-  public listTriageEntities(kind: "test" | "problem", page: TeamCityPageOptions = {}) {
+  public listTriageEntities<F extends string | undefined = undefined>(kind: "test" | "problem", page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list(`/app/rest/${kind}s`, [], kind,
       kind === "test" ? "id,name" : triage.problemFields,
       (item) => triage.safeEntity(item, kind), page);
   }
 
-  public async getTriageEntity(kind: "test" | "problem", id: string) {
+  public async getTriageEntity<F extends string | undefined = undefined>(kind: "test" | "problem", id: string, projection?: F) {
     const fields = kind === "test" ? "id,name" : triage.problemFields;
-    return triage.safeEntity(
-      await this.#requestJson("GET", `/app/rest/${kind}s/${idPath(id, "ID")}`, { fields }),
-      kind,
-    );
+    return this.#projectedJson("GET", `/app/rest/${kind}s/${idPath(id, "ID")}`, { fields },
+      raw => triage.safeEntity(raw, kind), projection);
   }
 
-  public async getTriageOccurrence(kind: "test" | "problem", id: string, buildId: number) {
+  public async getTriageOccurrence<F extends string | undefined = undefined>(kind: "test" | "problem", id: string, buildId: number, projection?: F) {
     const locator = joinLocator(
       nestedId("build", integerId(buildId, "Build ID"), "Build ID"),
       nestedId(kind, id, "Target ID"),
     );
     const fields = kind === "test" ? triage.testOccurrenceFields : triage.problemOccurrenceFields;
-    return triage.safeOccurrence(
-      await this.#requestJson("GET", `/app/rest/${kind}Occurrences/${locator}`, { fields }),
-      kind,
-    );
+    return this.#projectedJson("GET", `/app/rest/${kind}Occurrences/${locator}`, { fields },
+      raw => triage.safeOccurrence(raw, kind), projection);
   }
 
   public async listBuildRuntimeParameterNames<F extends string | undefined = undefined>(

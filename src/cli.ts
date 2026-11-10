@@ -26,7 +26,7 @@ import { createFileCommands } from "./file-commands.js";
 import { clientLeaf, integerValue, optionalText } from "./command-support.js";
 import { projectTree, jobTable, agentTable, buildRecord, buildTable, problemTable, testTable, withView } from "./presentation.js";
 import { createBuildFlowCommands } from "./build-flow.js";
-import { fieldsOption } from "./projection.js";
+import { fieldsFromOptions, fieldsOption } from "./projection.js";
 import type {
   TeamCityBuildState,
   TeamCityBuildStatus,
@@ -301,6 +301,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             return c.listBuildTests(integerValue(args.id), {
               ...(status === undefined ? {} : { status }),
               ...pageValues(options),
+              fields: fieldsFromOptions(options),
             });
           },
           [
@@ -308,6 +309,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               flags: "--status <status>",
               description: "Select failure, success, error, warning, normal or unknown",
             },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -316,8 +318,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "List problem occurrences for a build",
           Permission.ReadOnly,
           (c, { args, options }) =>
-            c.listBuildProblems(integerValue(args.id), pageValues(options)),
-          pageOptions,
+            c.listBuildProblems(integerValue(args.id), { ...pageValues(options), fields: fieldsFromOptions(options) }),
+          [...pageOptions, fieldsOption],
         )),
         leaf(
           "changes <id>",

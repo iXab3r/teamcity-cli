@@ -395,22 +395,23 @@ export function createTriageCommands(
         "list",
         "List results",
         Permission.ReadOnly,
-        (c, { options }) => c.listTriageEntities(kind, page(options)),
-        pageOptions,
+        (c, { options }) => c.listTriageEntities(kind, { ...page(options), fields: fieldsFromOptions(options) }),
+        [...pageOptions, fieldsOption],
       ),
       leaf(
         "show <id>",
         "Read one identity",
         Permission.ReadOnly,
-        (c, { args }) => c.getTriageEntity(kind, args.id),
+        (c, { args, options }) => c.getTriageEntity(kind, args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "occurrence <id>",
         "Read one build + test/problem occurrence",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.getTriageOccurrence(kind, args.id, num(options, "build")),
-        [option("--build <id>", "Select a build", true)],
+          c.getTriageOccurrence(kind, args.id, num(options, "build"), fieldsFromOptions(options)),
+        [fieldsOption, option("--build <id>", "Select a build", true)],
       ),
     ]),
   );

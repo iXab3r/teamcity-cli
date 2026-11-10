@@ -177,7 +177,7 @@ for (const scenario of buildProjectionCases.filter(c => c.collection)) {
     const requests = trackRequests(t, 2, request => {
       const url = new URL(request.url);
       assert.equal(url.searchParams.get("fields"), scenario.fields(projection));
-      assert.equal(url.searchParams.get("locator"), scenario.locator!.replace("start:3", `start:${page ? 4 : 3}`));
+      assert.equal(url.searchParams.get("locator"), scenario.locator!.replace("start:3", `start:${page ? 4 : 3}`).replace("count:3", `count:${page ? 2 : 3}`));
       return HttpResponse.json({[scenario.collection]: [native], ...(page++ === 0 ? {nextHref: "?locator=start:4,count:3"} : {})});
     });
     server.use(http.all("*", ({request}) => requests.handle(request)));
