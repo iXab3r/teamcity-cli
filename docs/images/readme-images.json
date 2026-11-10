@@ -8,19 +8,29 @@
       {
         "title": "teamcity 1.6.3",
         "subtitle": "JetBrains TeamCity CLI"
+      },
+      {
+        "title": "bbox 1.1.0",
+        "subtitle": "similarweb"
+      },
+      {
+        "title": "tctest 1.3.5",
+        "subtitle": "katbyte"
       }
     ],
     "rowHeader": "API area",
     "countHeader": "operations",
     "legend": "Share of published REST operations reachable",
-    "ariaLabel": "REST API coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations, the JetBrains teamcity 1.6.3 reaches 75 through dedicated commands",
+    "ariaLabel": "REST API coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations, the JetBrains teamcity 1.6.3 reaches 75 through dedicated commands, bbox 1.1.0 reaches 9 and tctest 1.3.5 reaches 6",
     "rows": [
       {
         "name": "Builds",
         "total": 57,
         "values": [
           57,
-          10
+          10,
+          1,
+          4
         ]
       },
       {
@@ -28,7 +38,9 @@
         "total": 15,
         "values": [
           15,
-          5
+          5,
+          2,
+          2
         ]
       },
       {
@@ -36,7 +48,9 @@
         "total": 109,
         "values": [
           109,
-          14
+          14,
+          1,
+          0
         ]
       },
       {
@@ -44,7 +58,9 @@
         "total": 48,
         "values": [
           48,
-          13
+          13,
+          2,
+          0
         ]
       },
       {
@@ -52,7 +68,9 @@
         "total": 16,
         "values": [
           16,
-          3
+          3,
+          0,
+          0
         ]
       },
       {
@@ -60,7 +78,9 @@
         "total": 31,
         "values": [
           31,
-          4
+          4,
+          3,
+          0
         ]
       },
       {
@@ -68,7 +88,9 @@
         "total": 18,
         "values": [
           18,
-          3
+          3,
+          0,
+          0
         ]
       },
       {
@@ -76,6 +98,8 @@
         "total": 12,
         "values": [
           12,
+          0,
+          0,
           0
         ]
       },
@@ -84,7 +108,9 @@
         "total": 30,
         "values": [
           30,
-          10
+          10,
+          0,
+          0
         ]
       },
       {
@@ -92,7 +118,9 @@
         "total": 10,
         "values": [
           10,
-          9
+          9,
+          0,
+          0
         ]
       },
       {
@@ -100,7 +128,9 @@
         "total": 56,
         "values": [
           56,
-          2
+          2,
+          0,
+          0
         ]
       },
       {
@@ -108,7 +138,9 @@
         "total": 38,
         "values": [
           38,
-          2
+          2,
+          0,
+          0
         ]
       },
       {
@@ -116,6 +148,8 @@
         "total": 9,
         "values": [
           9,
+          0,
+          0,
           0
         ]
       }
@@ -125,7 +159,9 @@
       "total": 449,
       "values": [
         449,
-        75
+        75,
+        9,
+        6
       ]
     }
   },

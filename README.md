@@ -30,11 +30,12 @@ Share of the 449 published REST operations each tool can call through its own co
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/coverage-matrix-dark.svg">
-  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands">
+  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands, bbox 1.1.0 reaches 9 (2%) and tctest 1.3.5 reaches 6 (1%)">
 </picture>
 
 The JetBrains CLI also has a raw `teamcity api` request command and features outside this API
-(build logs, pipelines, agent terminals) that this tool does not have.
+(build logs, pipelines, agent terminals) that this tool does not have. `bbox` and `tctest` are
+small single-purpose tools: build triggering and clean-up, and test runs for pull requests.
 Numbers, method and caveats: [coverage comparison](docs/coverage-comparison.md).
 
 ## Use it
