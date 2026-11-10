@@ -37,10 +37,10 @@ export const evidenceProjectionCases = [
       "42"
     ],
     "path": "/app/rest/builds/id:42/output-parameters",
-    "defaultFields": "count,property(name)",
+    "defaultFields": "count,property(name,value,inherited,type(rawValue))",
     "baselineResponse": {},
     "baselineResult": [],
-    "human": "No names found.\n",
+    "human": "No results.\n",
     "stderr": ""
   },
   {
@@ -96,10 +96,10 @@ export const evidenceProjectionCases = [
       "42"
     ],
     "path": "/app/rest/builds/id:42/resulting-properties",
-    "defaultFields": "count,property(name)",
+    "defaultFields": "count,property(name,value,inherited,type(rawValue))",
     "baselineResponse": {},
     "baselineResult": [],
-    "human": "No names found.\n",
+    "human": "No results.\n",
     "stderr": ""
   },
   {

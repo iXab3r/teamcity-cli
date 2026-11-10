@@ -29,7 +29,7 @@ for (const family of [
     type: family.type,
     inherited: false,
     ...(dependency ? { source } : {}),
-    properties: [{ name: "example.setting", type: "plain", redacted: true }],
+    properties: [{ name: "example.setting", value: "a=b", type: "plain", redacted: false }],
   };
   const prefix = ["jobs", family.group];
   const options = [

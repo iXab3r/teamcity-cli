@@ -1,5 +1,5 @@
 import { locatorValue, idPath, requiredText } from "./locator.js";
-import { plainProperty, propertiesBody, type PlainProperty } from "./authoring-models.js";
+import { plainProperty, propertiesBody, safeProperty, type RawProperty, type PlainProperty } from "./authoring-models.js";
 import { allowedField } from "./advanced-authoring-models.js";
 import { apiInputRecord, array, inputText, object, safeScalars } from "./triage-models.js";
 
@@ -176,11 +176,11 @@ export function versionedConfigBody(value: unknown) {
   return result;
 }
 export const safeVersionedConfig = (value: unknown) => safeScalars(value, versionedConfigKeys);
-export function contextParameters(value: unknown) {
+export function contextParameters(value: unknown, exposeValues = false) {
   return array(object(value).versionedSettingsContextParameter).map((item) => {
     const raw = object(item);
     return {
-      ...safeScalars(raw, ["name"]),
+      ...(exposeValues ? safeProperty(raw as unknown as RawProperty) : safeScalars(raw, ["name"])),
       hasValue: raw.value !== undefined && raw.value !== null,
     };
   });

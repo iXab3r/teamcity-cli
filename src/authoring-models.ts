@@ -94,7 +94,7 @@ export function parameterType(property: RawProperty): string {
   if (property.type === undefined) return "plain";
   const spec = property.type?.rawValue;
   if (typeof spec !== "string") return "unknown";
-  if (protectedSpec.test(spec)) return "protected";
+  if (/^\s*password(?:\s|$)/i.test(spec)) return "protected";
   const kind = spec.trim().split(/\s+/)[0] ?? "";
   return kind === "" ? "plain" : kind;
 }
@@ -110,10 +110,8 @@ export function isPlainParameter(property: RawProperty): boolean {
 
 export function safeProperty(property: RawProperty, exposeValue = true) {
   const redacted =
-    property.value === null ||
     !exposeValue ||
-    !isPlainParameter(property) ||
-    (property.value !== undefined && sensitiveValue(property.value));
+    isSecretProperty(property);
   return {
     name: property.name,
     ...(property.inherited === undefined ? {} : { inherited: property.inherited }),
@@ -121,6 +119,29 @@ export function safeProperty(property: RawProperty, exposeValue = true) {
     redacted,
     ...(!redacted && property.value !== undefined ? { value: property.value } : {}),
   };
+}
+
+/** Read policy follows TeamCity metadata, independently of argv/write validation. */
+export function isSecretProperty(property: RawProperty): boolean {
+  return /^secure:/i.test(property.name) ||
+    /^\s*password(?:\s|$)/i.test(property.type?.rawValue ?? "") ||
+    property.value == null ||
+    (typeof property.value === "string" && /^\*+$/.test(property.value));
+}
+
+/** Retain native configuration shape, removing only server-protected property values. */
+export function readableConfiguration(value: unknown, property = false): unknown {
+  if (Array.isArray(value)) return value.map((item) => readableConfiguration(item, property));
+  if (value === null || typeof value !== "object") return value;
+  const raw = value as Record<string, unknown>;
+  const result = Object.fromEntries(Object.entries(raw).map(([key, item]) =>
+    [key, readableConfiguration(item, key === "property")]));
+  if (typeof raw.name === "string" && (property || "value" in raw || typeof raw.type === "object" || /^secure:/i.test(raw.name)) &&
+      isSecretProperty(raw as unknown as RawProperty)) {
+    delete result.value;
+    result.redacted = true;
+  }
+  return result;
 }
 
 export function plainProperty(name: string, value: string): PlainProperty {
@@ -173,7 +194,7 @@ export function safeExtension(extension: RawExtension) {
     type: extension.type,
     ...(extension.disabled === undefined ? {} : { disabled: extension.disabled }),
     ...(extension.inherited === undefined ? {} : { inherited: extension.inherited }),
-    properties: (extension.properties?.property ?? []).map((p) => safeProperty(p, false)),
+    properties: (extension.properties?.property ?? []).map((p) => safeProperty(p)),
   };
 }
 
@@ -202,19 +223,13 @@ export function literalIdPath(id: string): string {
 }
 
 export function safeStep(step: RawStep) {
-  // Plugin properties (especially script content) are not a safe output schema.
-  const safeSetting = (p: RawProperty): boolean =>
-    (step.type === "simpleRunner" &&
-      p.name === "use.custom.script" &&
-      /^(true|false)$/.test(p.value ?? "")) ||
-    (p.name === "teamcity.step.mode" && /^(default|always|run_on_failure)$/.test(p.value ?? ""));
   return {
     id: step.id,
     name: step.name,
     type: step.type,
     ...(step.disabled === undefined ? {} : { disabled: step.disabled }),
     ...(step.inherited === undefined ? {} : { inherited: step.inherited }),
-    properties: (step.properties?.property ?? []).map((p) => safeProperty(p, safeSetting(p))),
+    properties: (step.properties?.property ?? []).map((p) => safeProperty(p)),
   };
 }
 

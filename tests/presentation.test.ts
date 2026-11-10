@@ -335,8 +335,7 @@ test("string collections use one line per item and readable empty output", async
   const runtime = await createTestRuntime(t);
   const cli = runtime.createCli();
   const commands = [["jobs", "tags", "Demo_Tests"], ["builds", "tags", "list", "101"],
-    ["changes", "attributes", "101"], ["users", "properties", "list", "3"],
-    ["builds", "output-parameters", "list", "101"]];
+    ["changes", "attributes", "101"], ["users", "properties", "list", "3"]];
   for (const argv of commands) {
     const result = await runtime.run(cli, argv);
     assert.equal(result.exitCode, 0, `${argv.join(" ")}: ${result.stderr}`);

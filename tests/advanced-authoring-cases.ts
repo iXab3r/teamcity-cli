@@ -51,10 +51,11 @@ for (const kind of ["agent-requirements", "artifact-dependencies", "projectFeatu
     type: body.type,
     ...(!isProject ? { disabled: false } : {}),
     ...(artifact ? { source: { id: "Source" } } : {}),
-    properties: body.properties.property.map(({ name }) => ({
+    properties: body.properties.property.map(({ name, value }) => ({
       name,
+      value,
       type: "plain",
-      redacted: true,
+      redacted: false,
     })),
   };
   advancedAuthoringCases.push(
@@ -136,7 +137,7 @@ for (const kind of [
   }
   if (kind !== "steps" && kind !== "features") continue;
   const property = { name: "example.setting", value: "synthetic-hidden" };
-  const expected = { name: property.name, type: "plain", redacted: true };
+  const expected = { ...property, type: "plain", redacted: false };
   advancedAuthoringCases.push(
     {
       argv: ["jobs", kind, "parameters", "list", "Example_Build", "Entity"],
@@ -162,14 +163,14 @@ for (const kind of [
       query: { fields: `property(${propertyFields})` },
       body: { property: [property] },
       response: { property: [property] },
-      expected: [expected],
+      expected: [{ name: property.name, type: "plain", redacted: true }],
     },
     {
       argv: ["jobs", kind, "parameters", "show", "Example_Build", "Entity", property.name],
       method: "GET",
-      path: `${path}/parameters/${property.name}`,
-      text: true,
-      response: property.value,
+      path: `${path}/parameters`,
+      query: { fields: `property(${propertyFields})` },
+      response: { property: [property] },
       expected,
     },
     {
@@ -188,7 +189,7 @@ for (const kind of [
       text: true,
       body: property.value,
       response: property.value,
-      expected,
+      expected: { name: property.name, type: "plain", redacted: true },
     },
   );
 }

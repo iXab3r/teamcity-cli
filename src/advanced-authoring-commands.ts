@@ -53,13 +53,13 @@ export function createAdvancedAuthoringCommands(
     return command("parameters", "Manage plugin parameters", [
       leaf(
         `list <job-id> <${arg}>`,
-        "List redacted property metadata",
+        "List property values",
         Permission.ReadOnly,
         (c, { args }) => c.listPluginParameters(kind, text(args, "job-id"), text(args, arg)),
       ),
       leaf(
         `show <job-id> <${arg}> <name>`,
-        "Check property existence",
+        "Show a property value",
         Permission.ReadOnly,
         (c, { args }) =>
           c.getPluginParameter(kind, text(args, "job-id"), text(args, arg), text(args, "name")),
@@ -173,12 +173,12 @@ export function createAdvancedAuthoringCommands(
   const featureOptions = [option("--type <type>", "Set the project feature type", true), propertyOption];
   const features = command("features", "Manage project features", [
     bulk.replaceAll("projectFeatures"),
-    leaf("list <project-id>", "List redacted features", Permission.ReadOnly, (c, { args }) =>
+    leaf("list <project-id>", "List project features", Permission.ReadOnly, (c, { args }) =>
       c.listProjectFeatures(args["project-id"]),
     ),
     leaf(
       "show <project-id> <feature-id>",
-      "Show a redacted feature",
+      "Show a project feature",
       Permission.ReadOnly,
       (c, { args }) => c.getProjectFeature(args["project-id"], args["feature-id"]),
     ),
@@ -215,6 +215,9 @@ export function createAdvancedAuthoringCommands(
     ),
   ]);
   const templates = command("templates", "Create templates and manage the project default", [
+    leaf("show <template-id>", "Show template configuration", Permission.ReadOnly, (c, { args }) =>
+      c.getJobConfiguration(args["template-id"]),
+    ),
     leaf("list <project-id>", "List own templates", Permission.ReadOnly, (c, { args }) =>
       c.listProjectTemplates(args["project-id"]),
     ),
@@ -257,11 +260,11 @@ export function createAdvancedAuthoringCommands(
     const arg = owner === "projects" ? "project-id" : "job-id";
     return command(
       "fields",
-      `Read id, name, description or ${owner === "projects" ? "archived" : "paused"}`,
+      "Read configuration fields",
       [
         leaf(
           `show <${arg}> <field>`,
-          "Read an allowed identity setting",
+          "Read a configuration field",
           Permission.ReadOnly,
           (c, { args }) => c.getOwnerField(owner, text(args, arg), text(args, "field")),
         ),
@@ -283,6 +286,11 @@ export function createAdvancedAuthoringCommands(
       ),
     ],
     jobs: [
+      command("configuration", "Inspect complete build configuration", [
+        leaf("show <job-id>", "Show build configuration content", Permission.ReadOnly, (c, { args }) =>
+          c.getJobConfiguration(args["job-id"]),
+        ),
+      ]),
       rules("agent-requirements"),
       rules("artifact-dependencies"),
       fields("jobs"),

@@ -143,8 +143,8 @@ export function createInfrastructureCommands(
       c.getVcsRootInstances(args.id),
     ),
     command("properties", "Manage VCS root properties", [
-      leaf("list <id>", "List property names", Permission.ReadOnly, (c, { args }) =>
-        c.listVcsRootPropertyNames(args.id),
+      leaf("list <id>", "List property values", Permission.ReadOnly, (c, { args }) =>
+        c.listVcsRootProperties(args.id),
       ),
       leaf(
         "replace <id>",
@@ -214,8 +214,8 @@ export function createInfrastructureCommands(
     leaf("show <id>", "Read identity/polling metadata", Permission.ReadOnly, (c, { args }) =>
       c.getVcsInstance(args.id),
     ),
-    leaf("properties <id>", "List parameter names", Permission.ReadOnly, (c, { args }) =>
-      c.listVcsInstancePropertyNames(args.id),
+    leaf("properties <id>", "List parameter values", Permission.ReadOnly, (c, { args }) =>
+      c.listVcsInstanceProperties(args.id),
     ),
     command("state", "Manage saved branch revisions", [
       leaf("show <id>", "Read branch/revision entries", Permission.ReadOnly, (c, { args }) =>
@@ -334,7 +334,7 @@ export function createInfrastructureCommands(
     command("context", "Manage DSL context parameters", [
       leaf(
         "list <id>",
-        "List DSL context parameter names",
+        "List DSL context parameter values",
         Permission.ReadOnly,
         (c, { args }) => c.listVersionedContext(args.id),
       ),

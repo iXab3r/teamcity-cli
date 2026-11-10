@@ -21,6 +21,12 @@ reviewed revision, platform checks and its own verified npm stage. **Core approv
 approve this product's publication.** Stage only from reviewed, clean current main; the owner
 approves that exact verified product stage with 2FA. Pre-merge branch checks use Verify or DryRun.
 
+## Next product version
+
+The #156 change prepares product **0.8.0**, still pinned to Core **0.7.1**.
+This version bump does not stage or publish a release. After merge, use 0.8.0 for all version
+arguments and release labels below; the 0.7.1 approval record above remains historical evidence.
+
 ## Local driver
 
 ```sh
@@ -28,15 +34,15 @@ npm ci
 npm test
 npm run test:package
 dotnet run --project build -- --target Verify
-dotnet run --project build -- --target SetVersion --release-version 0.7.1
-RELEASE_REVISION=$(git rev-parse HEAD) dotnet run --project build -- --target DryRun --release-version 0.7.1 --dry-run
+dotnet run --project build -- --target SetVersion --release-version 0.8.0
+RELEASE_REVISION=$(git rev-parse HEAD) dotnet run --project build -- --target DryRun --release-version 0.8.0 --dry-run
 ```
 
 Verify runs clean dependency installation, offline mocked tests, installed-package smoke and
 release-safety tests. Pack also performs Verify, packs this product, records source/SHA-1/SHA-512
 in `output/release/release-manifest.json` and tests those exact archive bytes. `npm run
 test:package -- --tarball /absolute/archive.tgz` checks an existing archive; `npm run test:registry
--- 0.7.1` checks the registry version. Installs use disposable prefixes/config/cache and synthetic
+-- 0.8.0` checks the registry version. Installs use disposable prefixes/config/cache and synthetic
 AppData/fetch/secrets, never real profiles. Core must resolve inside that prefix at the exact pin.
 Tests, source, local proof and build tools are excluded from the product archive.
 
@@ -83,10 +89,10 @@ After reviewed merge and exact-head CI, select exact main `<sha>`:
 
 ```text
 teamcity-cli jobs run EyeAuras_TeamCityCli_Verify --wait --timeout 30m
-teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--dry-run --param env.RELEASE_REVISION=<sha> --param release.build=0.7.1-dry-run
-teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--stage --param env.RELEASE_REVISION=<sha> --param release.build=0.7.1-stage
+teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--dry-run --param env.RELEASE_REVISION=<sha> --param release.build=0.8.0-dry-run
+teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--stage --param env.RELEASE_REVISION=<sha> --param release.build=0.8.0-stage
 # Only after owner npm approval:
-teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--verify-registry --param env.RELEASE_REVISION=<sha> --param release.build=0.7.1-verify
+teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--verify-registry --param env.RELEASE_REVISION=<sha> --param release.build=0.8.0-verify
 ```
 
 Omit --branch. RELEASE_REVISION guards the checkout; it does not select it. If main advances,
@@ -102,7 +108,7 @@ successful run produces its durable receipt.
 
 Only the owner approves that exact verified stage in npm Staged Packages with 2FA. Never approve
 `staged-unverified`, `0.0.0-stage` or a different ID. VerifyRegistry first checks registry
-version/latest/integrity and installed behavior, then creates GitHub Release `v0.7.1` at the packed
+version/latest/integrity and installed behavior, then creates GitHub Release `v0.8.0` at the packed
 source commit with archive/manifest. Mismatching existing tags/assets fail; matching assets can be
 retained and missing ones resumed. These are provenance records, not npm OIDC attestations.
 

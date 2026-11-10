@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { mkdtemp, readFile, rm, readdir, mkdir, writeFile, symlink, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, isAbsolute } from "node:path";
 import { createHash } from "node:crypto";
 import { AppArguments, CliError } from "@eyeauras/cli-factory";
 import { http, HttpResponse } from "msw";
@@ -287,7 +287,7 @@ test("S10 rejects traversal and absolute paths, devices, unsafe areas and missin
       assert.throws(() => remotePath(path));
       await assert.rejects(t.cli.execute([...download.slice(0, 4), path, ...download.slice(5)]));
     }
-    for (const name of ["C:\\other.bin", "CON", "nul.bin", "file.", "a:b"]) {
+    for (const name of [...(process.platform === "win32" ? [] : ["C:\\other.bin"]), "CON", "nul.bin", "file.", "a:b"]) {
       await assert.rejects(t.cli.execute([...download.slice(0, -1), name]));
     }
     for (const argv of [
@@ -695,7 +695,7 @@ test("downloads have no default byte ceiling and accept a caller budget above 64
     await mkdir(join(f.root, "nested"));
     for (const output of [undefined, "nested/relative.ts", join(f.root, "absolute.ts")]) {
       const result = await f.runtime.json(f.cli, ["builds", "source", "101", "src/example.ts", ...(output ? ["--output", output] : [])], { cwd: f.root }) as { path: string };
-      assert.equal(result.path, output ? (output.startsWith("/") ? output : join(f.root, output)) : join(f.root, "example.ts"));
+      assert.equal(result.path, output ? (isAbsolute(output) ? output : join(f.root, output)) : join(f.root, "example.ts"));
       assert.equal(await readFile(result.path, "utf8"), "synthetic-source");
     }
     assert.equal((await f.runtime.run(f.cli, ["builds", "source", "101", "src/example.ts"], { cwd: f.root })).exitCode, 1);
