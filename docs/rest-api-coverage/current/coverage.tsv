@@ -197,10 +197,10 @@ GET /app/rest/investigations	Investigation	ReadOnly	partial	investigations list	
 GET /app/rest/investigations/{p1}	Investigation	ReadOnly	partial	investigations show	getInvestigation	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/mutes	Mute	ReadOnly	partial	mutes list		fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/mutes/{p1}	Mute	ReadOnly	partial	mutes delete-many;mutes show <id>	deleteMutes;getMute	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/system.test.ts;tests/triage.test.ts;tests/validation-contract.test.ts
-GET /app/rest/problemOccurrences	ProblemOccurrence	ReadOnly	partial	builds diagnose <build-id>;builds problems <id>		fields	exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts
-GET /app/rest/problemOccurrences/{p1}	ProblemOccurrence	ReadOnly	partial	problems occurrence <id>	getTriageOccurrence	fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/problems	Problem	ReadOnly	partial	problems list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/problems/{p1}	Problem	ReadOnly	partial	problems show <id>	getTriageEntity	fields	exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/problemOccurrences	ProblemOccurrence	ReadOnly	covered	builds diagnose <build-id>;builds problems <id>			exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts;tests/triage-projection.test.ts
+GET /app/rest/problemOccurrences/{p1}	ProblemOccurrence	ReadOnly	covered	problems occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
+GET /app/rest/problems	Problem	ReadOnly	covered	problems list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
+GET /app/rest/problems/{p1}	Problem	ReadOnly	covered	problems show <id>	getTriageEntity		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
 GET /app/rest/projects	Project	ReadOnly	partial	projects list		fields	exercised-in-passing-suite	tests/cli.test.ts;tests/option-parsers.test.ts;tests/presentation.test.ts
 GET /app/rest/projects/{p1}	Project	ReadOnly	partial	projects show <id>	getProject	fields	evidence-gap	
 GET /app/rest/projects/{p1}/agentPools	Project	ReadOnly	partial	projects pools list <project-id>	listProjectPools	fields	exercised-in-passing-suite	tests/authoring.test.ts
@@ -253,10 +253,10 @@ GET /app/rest/server/nodes/{p1}/effectiveResponsibilities	Node	ReadOnly	partial	
 GET /app/rest/server/nodes/{p1}/enabledResponsibilities	Node	ReadOnly	partial	server nodes responsibilities enabled <id>	getNodeResponsibilities	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/server/plugins	Server	ReadOnly	partial	server plugins	getPlugins	fields;locator	exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/{p1}	Server	ReadOnly	covered	server field <field>	getServerField		exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/testOccurrences	TestOccurrence	ReadOnly	partial	builds diagnose <build-id>;builds tests <id>		fields	exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts
-GET /app/rest/testOccurrences/{p1}	TestOccurrence	ReadOnly	partial	tests occurrence <id>	getTriageOccurrence	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
-GET /app/rest/tests	Test	ReadOnly	partial	tests list		fields	exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/tests/{p1}	Test	ReadOnly	partial	tests show <id>	getTriageEntity	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
+GET /app/rest/testOccurrences	TestOccurrence	ReadOnly	covered	builds diagnose <build-id>;builds tests <id>			exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts;tests/triage-projection.test.ts
+GET /app/rest/testOccurrences/{p1}	TestOccurrence	ReadOnly	covered	tests occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
+GET /app/rest/tests	Test	ReadOnly	covered	tests list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
+GET /app/rest/tests/{p1}	Test	ReadOnly	covered	tests show <id>	getTriageEntity		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
 GET /app/rest/userGroups	Group	ReadOnly	partial	groups list	listAccountGroupsAll	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/userGroups/{p1}	Group	ReadOnly	partial	groups show <key>	getAccountGroup	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/userGroups/{p1}/parent-groups	Group	ReadOnly	partial	groups parents list <id>	listAccountGroups	fields	exercised-in-passing-suite	tests/authoring.test.ts

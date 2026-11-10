@@ -7,6 +7,12 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Tests and problems support item `--fields` on `tests list`, `problems list`,
+`builds tests`, and `builds problems`; `tests show/occurrence` and
+`problems show/occurrence` support whole-response fields. Occurrence reads require
+`--build <id>`. `builds diagnose` retains its fixed projections.
+
+
 `builds list` and both `builds show` selectors accept `--fields <projection>` as native TeamCity
 item fields. An explicit projection returns native objects using the generic human view. Lists retain their
 paging envelope and compose

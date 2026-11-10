@@ -9898,8 +9898,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds diagnose <build-id>",
@@ -9912,7 +9912,8 @@
     "permission": "ReadOnly",
     "options": [
      "--limit <count>",
-     "--start <offset>"
+     "--start <offset>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -9925,20 +9926,19 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/build-flow.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/triage-projection.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-builds.test.ts:159"
@@ -9966,13 +9966,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "problems occurrence <id>",
     "permission": "ReadOnly",
     "options": [
+     "--fields <projection>",
      "--build <id>"
     ],
     "clientMethod": "getTriageOccurrence"
@@ -9981,19 +9982,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/triage-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10020,15 +10020,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "problems list",
     "permission": "ReadOnly",
     "options": [
      "--limit <count>",
-     "--start <offset>"
+     "--start <offset>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -10036,24 +10037,23 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/triage-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10079,32 +10079,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "problems show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getTriageEntity"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/triage-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -12816,8 +12817,8 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "builds diagnose <build-id>",
@@ -12830,6 +12831,7 @@
     "permission": "ReadOnly",
     "options": [
      "--status <status>",
+     "--fields <projection>",
      "--limit <count>",
      "--start <offset>"
     ],
@@ -12845,19 +12847,18 @@
    {
     "name": "fields",
     "wire": "varies",
-    "callerControl": null
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/build-flow.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/triage-projection.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-builds.test.ts:123"
@@ -12885,13 +12886,14 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "tests occurrence <id>",
     "permission": "ReadOnly",
     "options": [
+     "--fields <projection>",
      "--build <id>"
     ],
     "clientMethod": "getTriageOccurrence"
@@ -12900,19 +12902,18 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/triage-projection.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12940,15 +12941,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "tests list",
     "permission": "ReadOnly",
     "options": [
      "--limit <count>",
-     "--start <offset>"
+     "--start <offset>",
+     "--fields <projection>"
     ],
     "clientMethod": null
    }
@@ -12956,24 +12958,23 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "typed locator dimensions"
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/triage-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -12999,32 +13000,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "tests show <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getTriageEntity"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/triage-projection.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],

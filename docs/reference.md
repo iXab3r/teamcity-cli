@@ -889,6 +889,12 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Tests and problems support item `--fields` on `tests list`, `problems list`,
+`builds tests`, and `builds problems`; `tests show/occurrence` and
+`problems show/occurrence` support whole-response fields. Occurrence reads require
+`--build <id>`. `builds diagnose` retains its fixed projections.
+
+
 Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
 Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
 keeps the public-name defaults. Explicit fields return native JSON and the generic view.

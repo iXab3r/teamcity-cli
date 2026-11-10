@@ -1,16 +1,16 @@
 {
-  "baselineHead": "f075dcc819a13e380ddc825ea2a1589086de0082",
+  "baselineHead": "6c1698c680de4bff4cc46dd2ba1bec4738bed99e",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 226,
-  "partial": 222,
+  "covered": 234,
+  "partial": 214,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 91,
-      "partial": 143,
+      "covered": 99,
+      "partial": 135,
       "missing": 1
     },
     "Update": {
@@ -119,14 +119,14 @@
     },
     "Problem": {
       "total": 2,
-      "covered": 0,
-      "partial": 2,
+      "covered": 2,
+      "partial": 0,
       "missing": 0
     },
     "ProblemOccurrence": {
       "total": 2,
-      "covered": 0,
-      "partial": 2,
+      "covered": 2,
+      "partial": 0,
       "missing": 0
     },
     "Project": {
@@ -161,14 +161,14 @@
     },
     "Test": {
       "total": 2,
-      "covered": 0,
-      "partial": 2,
+      "covered": 2,
+      "partial": 0,
       "missing": 0
     },
     "TestOccurrence": {
       "total": 2,
-      "covered": 0,
-      "partial": 2,
+      "covered": 2,
+      "partial": 0,
       "missing": 0
     },
     "User": {
@@ -206,7 +206,7 @@
     "addTimestamp": 1,
     "basePath": 9,
     "field": 6,
-    "fields": 210,
+    "fields": 202,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -219,7 +219,7 @@
     "requestor": 1,
     "resolveParameters": 5
   },
-  "partialOnlyBecauseOfFields": 196,
+  "partialOnlyBecauseOfFields": 188,
   "verificationEvidenceGaps": [
     "GET /app/rest/agents/{p1}",
     "GET /app/rest/changes",
