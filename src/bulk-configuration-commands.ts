@@ -278,7 +278,8 @@ export function createBulkConfigurationCommands(
       "show <type-id>",
       "Show agent type identity",
       Permission.ReadOnly,
-      (c, { args }) => c.getAgentType(number(args, "type-id")),
+      (c, { args, options }) => c.getAgentType(number(args, "type-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
   ]);
   return { parameters, replaceAll, templates, jobs, projects, poolProjects, queue, agentTypes };

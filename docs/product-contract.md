@@ -7,6 +7,41 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Deployment `deployments list` and `deployments instances list` accept item fields;
+`deployments show`, `deployments instances show`, and `server rest-plugin` accept
+whole-response fields. REST plugin info keeps its XML request/parser by default and
+requests native JSON for explicit fields.
+
+Cloud `images/instances/profiles list` accept item fields; their `show` commands
+and `cloud instances start` accept whole-response fields. Image/instance selectors use
+`--cloud-profile`, `--image`, and (for instance reads) `--instance`. Start retains its
+acknowledgement for empty or non-JSON successful responses.
+
+Pool projections are available on `pools list` and `pools agents list` (item fields),
+and `pools show`, `pools projects list`, and `pools agents assign` (whole response).
+
+Investigations and mutes accept item `--fields` on `investigations list` and `mutes list`,
+and whole-response fields on `investigations show/create/create-many/replace` and
+`mutes show/create/create-many/delete-many`. Bulk unmute keeps its fixed preflight reads;
+fields select only the DELETE response. Empty or non-JSON delete responses retain the acknowledgement.
+
+Agent projections are available on `agents list` (item fields) and whole-response
+`agents show`, `authorized show/set`, `enabled show/set`, `policy show/set`,
+`compatible-jobs`, `incompatible-jobs`, `pool show/set`, and `types show`.
+All four setters retain Update permission and their existing request bodies.
+
+
+Source-change projections are available on `builds changes` (item fields) and
+`changes show`, `attributes`, `duplicates`, `first-builds`, `parents`, and
+`root-instance` (whole-response fields).
+
+
+Tests and problems support item `--fields` on `tests list`, `problems list`,
+`builds tests`, and `builds problems`; `tests show/occurrence` and
+`problems show/occurrence` support whole-response fields. Occurrence reads require
+`--build <id>`. `builds diagnose` retains its fixed projections.
+
+
 `builds list` and both `builds show` selectors accept `--fields <projection>` as native TeamCity
 item fields. An explicit projection returns native objects using the generic human view. Lists retain their
 paging envelope and compose

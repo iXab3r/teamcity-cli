@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
   Permission,
@@ -55,12 +56,12 @@ export function createInfrastructureCommands(
       (c, { options }) =>
         c.listCloud(
           kind,
-          page(options),
+          { ...page(options), fields: fieldsFromOptions(options) },
           optional(options, "project"),
           optional(options, "cloudProfile"),
         ),
       [
-        ...pageOptions,
+        ...pageOptions, fieldsOption,
         option("--project <id>", "Select a project scope"),
         ...(kind === "profiles"
           ? []
@@ -70,8 +71,9 @@ export function createInfrastructureCommands(
   const cloud = command("cloud", "Manage remote cloud capacity", [
     command("profiles", "Inspect remote cloud profiles", [
       cloudLists("profiles"),
-      leaf("show <id>", "Show cloud profile metadata", Permission.ReadOnly, (c, { args }) =>
-        c.getCloudProfile(args.id),
+      leaf("show <id>", "Show cloud profile metadata", Permission.ReadOnly, (c, { args, options }) =>
+        c.getCloudProfile(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
     command("images", "Inspect cloud images", [
@@ -80,8 +82,8 @@ export function createInfrastructureCommands(
         "show",
         "Show one composite cloud image",
         Permission.ReadOnly,
-        (c, { options }) => c.getCloudImage(image(options)),
-        imageOptions,
+        (c, { options }) => c.getCloudImage(image(options), fieldsFromOptions(options)),
+        [...imageOptions, fieldsOption],
       ),
     ]),
     command("instances", "Manage cloud instances", [
@@ -90,15 +92,15 @@ export function createInfrastructureCommands(
         "show",
         "Read instance state",
         Permission.ReadOnly,
-        (c, { options }) => c.getCloudInstance(instance(options)),
-        instanceOptions,
+        (c, { options }) => c.getCloudInstance(instance(options), fieldsFromOptions(options)),
+        [...instanceOptions, fieldsOption],
       ),
       leaf(
         "start",
         "Start a cloud instance",
         Permission.Update,
-        (c, { options }) => c.startCloudInstance(image(options)),
-        imageOptions,
+        (c, { options }) => c.startCloudInstance(image(options), fieldsFromOptions(options)),
+        [...imageOptions, fieldsOption],
       ),
       ...(["delete", "force-stop", "stop"] as const).map((action) =>
         leaf(

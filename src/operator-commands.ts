@@ -41,11 +41,12 @@ export function createOperatorCommands(
       "list",
       "List agent pools",
       Permission.ReadOnly,
-      (c, { options }) => c.listPools(paging(options)),
-      pageOptions,
+      (c, { options }) => c.listPools({ ...paging(options), fields: fieldsFromOptions(options) }),
+      [...pageOptions, fieldsOption],
     ),
-    leaf("show <pool-id>", "Show pool identity", Permission.ReadOnly, (c, { args }) =>
-      c.getPool(number(args, "pool-id")),
+    leaf("show <pool-id>", "Show pool identity", Permission.ReadOnly, (c, { args, options }) =>
+      c.getPool(number(args, "pool-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create",
@@ -73,14 +74,15 @@ export function createOperatorCommands(
         "list <pool-id>",
         "List assigned agents",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listPoolAgents(number(args, "pool-id"), paging(options)),
-        pageOptions,
+        (c, { args, options }) => c.listPoolAgents(number(args, "pool-id"), { ...paging(options), fields: fieldsFromOptions(options) }),
+        [...pageOptions, fieldsOption],
       ),
       leaf(
         "assign <pool-id> <agent-id>",
         "Move an agent to this pool",
         Permission.Update,
-        (c, { args }) => c.assignPoolAgent(number(args, "pool-id"), number(args, "agent-id")),
+        (c, { args, options }) => c.assignPoolAgent(number(args, "pool-id"), number(args, "agent-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
     command("projects", "Manage pool/project membership", [
@@ -89,7 +91,8 @@ export function createOperatorCommands(
         "list <pool-id>",
         "List assigned projects in server order",
         Permission.ReadOnly,
-        (c, { args }) => c.listPoolProjects(number(args, "pool-id")),
+        (c, { args, options }) => c.listPoolProjects(number(args, "pool-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "assign <pool-id> <project-id>",
@@ -111,7 +114,8 @@ export function createOperatorCommands(
         "show <agent-id>",
         "Show status and comment metadata",
         Permission.ReadOnly,
-        (c, { args }) => c.getAgentStatus(number(args, "agent-id"), kind),
+        (c, { args, options }) => c.getAgentStatus(number(args, "agent-id"), kind, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <agent-id> <status>",
@@ -123,8 +127,9 @@ export function createOperatorCommands(
             kind,
             booleanText(args.status) === "true",
             comment(options),
+            fieldsFromOptions(options),
           ),
-        [commentOption],
+        [commentOption, fieldsOption],
       ),
     ]);
   }
@@ -142,17 +147,20 @@ export function createOperatorCommands(
       "compatible-jobs <agent-id>",
       "List compatible build configurations",
       Permission.ReadOnly,
-      (c, { args }) => c.listAgentCompatibleJobs(number(args, "agent-id")),
+      (c, { args, options }) => c.listAgentCompatibleJobs(number(args, "agent-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "incompatible-jobs <agent-id>",
       "List incompatible jobs",
       Permission.ReadOnly,
-      (c, { args }) => c.listAgentIncompatibleJobs(number(args, "agent-id")),
+      (c, { args, options }) => c.listAgentIncompatibleJobs(number(args, "agent-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("policy", "Manage allowed build configurations", [
-      leaf("show <agent-id>", "Show policy and selected jobs", Permission.ReadOnly, (c, { args }) =>
-        c.getAgentPolicy(number(args, "agent-id")),
+      leaf("show <agent-id>", "Show policy and selected jobs", Permission.ReadOnly, (c, { args, options }) =>
+        c.getAgentPolicy(number(args, "agent-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <agent-id> <policy>",
@@ -163,8 +171,9 @@ export function createOperatorCommands(
             number(args, "agent-id"),
             args.policy,
             (options.job ?? []) as string[],
+            fieldsFromOptions(options),
           ),
-        [repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
+        [fieldsOption, repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
       ),
     ]),
     command("pool", "Inspect or move pool membership", [
@@ -172,13 +181,15 @@ export function createOperatorCommands(
         "show <agent-id>",
         "Show the assigned pool",
         Permission.ReadOnly,
-        (c, { args }) => c.getAgentPool(number(args, "agent-id")),
+        (c, { args, options }) => c.getAgentPool(number(args, "agent-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <agent-id> <pool-id>",
         "Move the agent to a pool",
         Permission.Update,
-        (c, { args }) => c.setAgentPool(number(args, "agent-id"), number(args, "pool-id")),
+        (c, { args, options }) => c.setAgentPool(number(args, "agent-id"), number(args, "pool-id"), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
     command("fields", "Manage agent fields", [
@@ -368,14 +379,16 @@ export function createOperatorCommands(
   ];
   const changes = command("changes", "Inspect VCS change metadata", [
     ...triage.changes,
-    leaf("show <change-id>", "Show a change", Permission.ReadOnly, (c, { args }) =>
-      c.getChange(number(args, "change-id")),
+    leaf("show <change-id>", "Show a change", Permission.ReadOnly, (c, { args, options }) =>
+      c.getChange(number(args, "change-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "parents <change-id>",
       "List direct parent changes in server order",
       Permission.ReadOnly,
-      (c, { args }) => c.listChangeParents(number(args, "change-id")),
+      (c, { args, options }) => c.listChangeParents(number(args, "change-id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
   ]);
   return { pools, agents, queue, builds, changes };

@@ -180,7 +180,8 @@ export interface ListBuildsOptions<F extends string | undefined = string | undef
   status?: TeamCityBuildStatus;
 }
 
-export interface ListBuildTestsOptions extends TeamCityPageOptions {
+export interface ListBuildTestsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   status?: TeamCityTestStatus;
 }
 
@@ -190,7 +191,8 @@ export interface ListQueueOptions<F extends string | undefined = string | undefi
   project?: string;
 }
 
-export interface ListAgentsOptions extends TeamCityPageOptions {
+export interface ListAgentsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   connected?: TeamCityTriState;
   enabled?: TeamCityTriState;
   authorized?: TeamCityTriState;
@@ -470,10 +472,10 @@ export class TeamCityClient {
     );
   }
 
-  public listBuildTests(
+  public listBuildTests<F extends string | undefined = undefined>(
     id: number,
-    options: ListBuildTestsOptions = {},
-  ): Promise<TeamCityPage<TeamCityTestOccurrence>> {
+    options: ListBuildTestsOptions<F> = {},
+  ): Promise<TeamCityPage<Projected<TeamCityTestOccurrence, F>>> {
     return this.#list(
       "/app/rest/testOccurrences",
       [
@@ -487,10 +489,10 @@ export class TeamCityClient {
     );
   }
 
-  public listBuildProblems(
+  public listBuildProblems<F extends string | undefined = undefined>(
     id: number,
-    options: TeamCityPageOptions = {},
-  ): Promise<TeamCityPage<TeamCityProblemOccurrence>> {
+    options: TeamCityPageOptions & { fields?: F } = {},
+  ): Promise<TeamCityPage<Projected<TeamCityProblemOccurrence, F>>> {
     return this.#list(
       "/app/rest/problemOccurrences",
       [`build:(id:${integerId(id, "TeamCity build ID")})`],
@@ -501,10 +503,10 @@ export class TeamCityClient {
     );
   }
 
-  public listBuildChanges(
+  public listBuildChanges<F extends string | undefined = undefined>(
     id: number,
-    options: TeamCityPageOptions = {},
-  ): Promise<TeamCityPage<TeamCityChange>> {
+    options: TeamCityPageOptions & { fields?: F } = {},
+  ): Promise<TeamCityPage<Projected<TeamCityChange, F>>> {
     return this.#list(
       "/app/rest/changes",
       [`build:(id:${integerId(id, "TeamCity build ID")})`],
@@ -545,7 +547,7 @@ export class TeamCityClient {
     );
   }
 
-  public listAgents(options: ListAgentsOptions = {}): Promise<TeamCityPage<TeamCityAgent>> {
+  public listAgents<F extends string | undefined = undefined>(options: ListAgentsOptions<F> = {}): Promise<TeamCityPage<Projected<TeamCityAgent, F>>> {
     return this.#list(
       "/app/rest/agents",
       [
@@ -560,11 +562,12 @@ export class TeamCityClient {
     );
   }
 
-  public getAgent(id: number): Promise<TeamCityAgent> {
-    return this.#requestJson<TeamCityAgent>(
+  public getAgent<F extends string | undefined = undefined>(id: number, fields?: F): Promise<Projected<TeamCityAgent, F>> {
+    return this.#projectedJson(
       "GET",
       `/app/rest/agents/id:${integerId(id, "TeamCity agent ID")}`,
       { fields: agentFields },
+      raw => raw as TeamCityAgent, fields,
     );
   }
 
@@ -1331,7 +1334,7 @@ export class TeamCityClient {
     return { jobId: jobId, rootId: rootId, rules };
   }
 
-  public listPools(options: TeamCityPageOptions = {}) {
+  public listPools<F extends string | undefined = undefined>(options: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/agentPools", [], "agentPool", "id,name",
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
@@ -1347,10 +1350,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getPool(id: number) {
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>("GET", poolPath(id), { fields: "id,name" }),
-    );
+  public async getPool<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson("GET", poolPath(id), { fields: "id,name" },
+      value => safeNamed(value as AgentPoolSummary), fields);
   }
 
   public async deletePool(id: number) {
@@ -1371,30 +1373,20 @@ export class TeamCityClient {
     return { poolId: id, field, value: result };
   }
 
-  public listPoolAgents(id: number, options: TeamCityPageOptions = {}) {
+  public listPoolAgents<F extends string | undefined = undefined>(id: number, options: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list(`${poolPath(id)}/agents`, [], "agent", "id,name",
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
 
-  public async assignPoolAgent(poolId: number, id: number) {
+  public async assignPoolAgent<F extends string | undefined = undefined>(poolId: number, id: number, fields?: F) {
     integerId(id, "Agent ID");
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>(
-        "POST",
-        `${poolPath(poolId)}/agents`,
-        { fields: "id,name" },
-        { id },
-      ),
-    );
+    return this.#projectedJson("POST", `${poolPath(poolId)}/agents`, { fields: "id,name" },
+      value => safeNamed(value as AgentPoolSummary), fields, { id });
   }
 
-  public async listPoolProjects(poolId: number) {
-    const result = await this.#requestJson<{ project?: BuildTypeIdentity[] }>(
-      "GET",
-      `${poolPath(poolId)}/projects`,
-      { fields: "project(id,name)" },
-    );
-    return (result.project ?? []).map(safeIdentity);
+  public async listPoolProjects<F extends string | undefined = undefined>(poolId: number, fields?: F) {
+    return this.#projectedJson("GET", `${poolPath(poolId)}/projects`, { fields: "project(id,name)" },
+      value => ((value as { project?: BuildTypeIdentity[] }).project ?? []).map(safeIdentity), fields);
   }
 
   public async assignPoolProject(poolId: number, id: string) {
@@ -1421,86 +1413,69 @@ export class TeamCityClient {
     return { agentId: id, deleted: true };
   }
 
-  public async getAgentStatus(id: number, kind: "enabled" | "authorized") {
-    return safeBooleanStatus(
-      await this.#requestJson<BooleanStatus>("GET", `${agentPath(id)}/${kind}Info`, {
-        fields: booleanStatusFields,
-      }),
-    );
+  public async getAgentStatus<F extends string | undefined = undefined>(id: number, kind: "enabled" | "authorized", fields?: F) {
+    return this.#projectedJson("GET", `${agentPath(id)}/${kind}Info`, {
+      fields: booleanStatusFields,
+    }, raw => safeBooleanStatus(raw as BooleanStatus), fields);
   }
 
-  public async setAgentStatus(
+  public async setAgentStatus<F extends string | undefined = undefined>(
     id: number,
     kind: "enabled" | "authorized",
     status: boolean,
     comment?: string,
+    fields?: F,
   ) {
-    return safeBooleanStatus(
-      await this.#requestJson<BooleanStatus>(
-        "PUT",
-        `${agentPath(id)}/${kind}Info`,
-        { fields: booleanStatusFields },
-        this.#statusBody(status, comment),
-      ),
+    return this.#projectedJson(
+      "PUT", `${agentPath(id)}/${kind}Info`, { fields: booleanStatusFields },
+      raw => safeBooleanStatus(raw as BooleanStatus), fields, this.#statusBody(status, comment),
     );
   }
 
-  public async getAgentPolicy(id: number) {
-    return safePolicy(
-      await this.#requestJson<RawAgentPolicy>("GET", `${agentPath(id)}/compatibilityPolicy`, {
-        fields: policyFields,
-      }),
-    );
+  public async getAgentPolicy<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson("GET", `${agentPath(id)}/compatibilityPolicy`, {
+      fields: policyFields,
+    }, raw => safePolicy(raw as RawAgentPolicy), fields);
   }
 
-  public async setAgentPolicy(id: number, policy: string, jobs: readonly string[]) {
+  public async setAgentPolicy<F extends string | undefined = undefined>(id: number, policy: string, jobs: readonly string[], fields?: F) {
     if (!["any", "selected"].includes(requiredText(policy, "Policy").trim().toLowerCase()))
       throw new Error("Policy must be any or selected.");
     const ids = jobs.map((job) => requiredText(job, "Job ID"));
-    return safePolicy(
-      await this.#requestJson<RawAgentPolicy>(
-        "PUT",
-        `${agentPath(id)}/compatibilityPolicy`,
-        { fields: policyFields },
-        { policy, buildTypes: { buildType: ids.map((id) => ({ id })) } },
-      ),
+    return this.#projectedJson(
+      "PUT", `${agentPath(id)}/compatibilityPolicy`, { fields: policyFields },
+      raw => safePolicy(raw as RawAgentPolicy), fields,
+      { policy, buildTypes: { buildType: ids.map((id) => ({ id })) } },
     );
   }
 
-  public async listAgentCompatibleJobs(id: number) {
-    const result = await this.#requestJson<{ buildType?: BuildTypeIdentity[] }>(
-      "GET",
-      `${agentPath(id)}/compatibleBuildTypes`,
-      { fields: `buildType(${identityFields})` },
+  public async listAgentCompatibleJobs<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET", `${agentPath(id)}/compatibleBuildTypes`, { fields: `buildType(${identityFields})` },
+      raw => ((raw as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity), fields,
     );
-    return (result.buildType ?? []).map(safeIdentity);
   }
 
-  public async listAgentIncompatibleJobs(id: number) {
-    const result = await this.#requestJson<{
-      compatibility?: { compatible: boolean; buildType: BuildTypeIdentity }[];
-    }>("GET", `${agentPath(id)}/incompatibleBuildTypes`, {
-      fields: `compatibility(compatible,buildType(${identityFields}))`,
-    });
-    return (result.compatibility ?? []).map((entry) => ({
-      compatible: entry.compatible,
-      buildType: safeIdentity(entry.buildType),
-    }));
+  public async listAgentIncompatibleJobs<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET", `${agentPath(id)}/incompatibleBuildTypes`,
+      { fields: `compatibility(compatible,buildType(${identityFields}))` },
+      raw => ((raw as { compatibility?: { compatible: boolean; buildType: BuildTypeIdentity }[] }).compatibility ?? []).map((entry) => ({
+        compatible: entry.compatible,
+        buildType: safeIdentity(entry.buildType),
+      })), fields,
+    );
   }
 
-  public async getAgentPool(id: number) {
-    const result = await this.#optionalJson<AgentPoolSummary>(`${agentPath(id)}/pool`, "id,name");
-    return result === null ? null : safeNamed(result);
+  public async getAgentPool<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const result = await this.#optionalJson<AgentPoolSummary>(`${agentPath(id)}/pool`, fields === undefined ? "id,name" : fieldsProjection(fields));
+    return this.#projectedValue(result, fields, value => value === null ? null : safeNamed(value as AgentPoolSummary));
   }
 
-  public async setAgentPool(id: number, poolId: number) {
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>(
-        "PUT",
-        `${agentPath(id)}/pool`,
-        { fields: "id,name" },
-        { id: poolNumber(poolId) },
-      ),
+  public async setAgentPool<F extends string | undefined = undefined>(id: number, poolId: number, fields?: F) {
+    return this.#projectedJson(
+      "PUT", `${agentPath(id)}/pool`, { fields: "id,name" },
+      raw => safeNamed(raw as AgentPoolSummary), fields, { id: poolNumber(poolId) },
     );
   }
 
@@ -1663,23 +1638,22 @@ export class TeamCityClient {
     return this.#projectedValue(result, fields, value => value === null ? null : safeComment(value as OperationComment));
   }
 
-  public async getChange(id: number) {
-    return safeChange(
-      await this.#requestJson<ChangeSummary>(
-        "GET",
-        `/app/rest/changes/id:${integerId(id, "Change ID")}`,
-        { fields: changeSummaryFields },
-      ),
+  public async getChange<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET",
+      `/app/rest/changes/id:${integerId(id, "Change ID")}`,
+      { fields: changeSummaryFields },
+      raw => safeChange(raw as ChangeSummary), fields,
     );
   }
 
-  public async listChangeParents(id: number) {
-    const result = await this.#requestJson<{ change?: ChangeSummary[] }>(
+  public async listChangeParents<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/parentChanges`,
       { fields: `change(${changeSummaryFields})` },
+      raw => ((raw as { change?: ChangeSummary[] }).change ?? []).map(safeChange), fields,
     );
-    return (result.change ?? []).map(safeChange);
   }
 
   public async replaceAllParameters(
@@ -1987,16 +1961,17 @@ export class TeamCityClient {
     return { buildId: id, deleted: true };
   }
 
-  public async getAgentType(id: number) {
-    const value = await this.#requestJson<AgentPoolSummary & { isCloud?: boolean }>(
-      "GET",
-      `/app/rest/agentTypes/id:${integerId(id, "Agent type ID")}`,
-      { fields: "id,name,isCloud" },
+  public async getAgentType<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET", `/app/rest/agentTypes/id:${integerId(id, "Agent type ID")}`, { fields: "id,name,isCloud" },
+      raw => {
+        const value = raw as AgentPoolSummary & { isCloud?: boolean };
+        return {
+          ...safeNamed(value),
+          ...(value.isCloud === undefined ? {} : { isCloud: value.isCloud }),
+        };
+      }, fields,
     );
-    return {
-      ...safeNamed(value),
-      ...(value.isCloud === undefined ? {} : { isCloud: value.isCloud }),
-    };
   }
 
   public async getBuildBatchStatus(ids: readonly number[]) {
@@ -2254,22 +2229,22 @@ export class TeamCityClient {
     );
   }
 
-  public async getChangeDuplicates(id: number) {
-    const value = await this.#requestJson<{ change?: ChangeSummary[] }>(
+  public async getChangeDuplicates<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/duplicates`,
       { fields: `change(${changeSummaryFields})` },
+      raw => ((raw as { change?: ChangeSummary[] }).change ?? []).map(safeChange), fields,
     );
-    return (value.change ?? []).map(safeChange);
   }
 
-  public async getChangeFirstBuilds(id: number) {
-    const value = await this.#requestJson<{ build?: unknown[] }>(
+  public async getChangeFirstBuilds<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/firstBuilds`,
       { fields: `build(${triage.evidenceBuildFields})` },
+      raw => ((raw as { build?: unknown[] }).build ?? []).map(triage.safeEvidenceBuild), fields,
     );
-    return (value.build ?? []).map(triage.safeEvidenceBuild);
   }
 
   public async getChangeIssues(id: number) {
@@ -2291,14 +2266,12 @@ export class TeamCityClient {
     });
   }
 
-  public async getChangeRootInstance(id: number) {
-    return triage.safeScalars(
-      await this.#requestJson(
-        "GET",
-        `/app/rest/changes/id:${integerId(id, "Change ID")}/vcsRootInstance`,
-        { fields: "id,name,vcs-root-id" },
-      ),
-      ["id", "name", "vcs-root-id"],
+  public async getChangeRootInstance<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
+      "GET",
+      `/app/rest/changes/id:${integerId(id, "Change ID")}/vcsRootInstance`,
+      { fields: "id,name,vcs-root-id" },
+      raw => triage.safeScalars(raw, ["id", "name", "vcs-root-id"]), fields,
     );
   }
 
@@ -2311,45 +2284,31 @@ export class TeamCityClient {
     return { changeId: id, field, value };
   }
 
-  public listInvestigations(page: TeamCityPageOptions = {}) {
+  public listInvestigations<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/investigations", [], "investigation", triage.investigationFields,
       (item) => triage.safeAssignment(item, true), page);
   }
 
-  public async createInvestigation(input: unknown, replace = false) {
+  public async createInvestigation<F extends string | undefined = undefined>(input: unknown, replace = false, fields?: F) {
     const { locator, body } = triage.investigationBody(input);
-    return triage.safeAssignment(
-      await this.#requestJson(
-        replace ? "PUT" : "POST",
-        "/app/rest/investigations" + (replace ? "/" + locator : ""),
-        { fields: triage.investigationFields },
-        body,
-      ),
-      true,
-    );
+    return this.#projectedJson(replace ? "PUT" : "POST",
+      "/app/rest/investigations" + (replace ? "/" + locator : ""),
+      { fields: triage.investigationFields }, value => triage.safeAssignment(value, true), fields, body);
   }
 
-  public async createInvestigations(inputs: readonly unknown[]) {
+  public async createInvestigations<F extends string | undefined = undefined>(inputs: readonly unknown[], fields?: F) {
     const items = triage.typedItems(inputs).map(triage.investigationBody);
     textIds(items.map((item) => item.locator));
     const body = { investigation: items.map((item) => item.body) };
-    const value = await this.#requestJson<{ investigation?: unknown[] }>(
-      "POST",
-      "/app/rest/investigations/multiple",
+    return this.#projectedJson("POST", "/app/rest/investigations/multiple",
       { fields: `count,investigation(${triage.investigationFields})` },
-      body,
-    );
-    return (value.investigation ?? []).map((item) => triage.safeAssignment(item, true));
+      value => ((value as { investigation?: unknown[] }).investigation ?? []).map(item => triage.safeAssignment(item, true)), fields, body);
   }
 
-  public async getInvestigation(target: unknown) {
+  public async getInvestigation<F extends string | undefined = undefined>(target: unknown, fields?: F) {
     const { locator } = triage.investigationTarget(target);
-    return triage.safeAssignment(
-      await this.#requestJson("GET", "/app/rest/investigations/" + locator, {
-        fields: triage.investigationFields,
-      }),
-      true,
-    );
+    return this.#projectedJson("GET", "/app/rest/investigations/" + locator,
+      { fields: triage.investigationFields }, value => triage.safeAssignment(value, true), fields);
   }
 
   public async deleteInvestigation(target: unknown) {
@@ -2360,41 +2319,26 @@ export class TeamCityClient {
     return { deleted: true };
   }
 
-  public listMutes(page: TeamCityPageOptions = {}) {
+  public listMutes<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list("/app/rest/mutes", [], "mute", triage.muteFields,
       (item) => triage.safeAssignment(item, false), page);
   }
 
-  public async createMute(input: unknown) {
-    return triage.safeAssignment(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/mutes",
-        { fields: triage.muteFields },
-        triage.muteBody(input),
-      ),
-      false,
-    );
+  public async createMute<F extends string | undefined = undefined>(input: unknown, fields?: F) {
+    return this.#projectedJson("POST", "/app/rest/mutes", { fields: triage.muteFields },
+      value => triage.safeAssignment(value, false), fields, triage.muteBody(input));
   }
 
-  public async createMutes(inputs: readonly unknown[]) {
+  public async createMutes<F extends string | undefined = undefined>(inputs: readonly unknown[], fields?: F) {
     const body = { mute: triage.typedItems(inputs).map(triage.muteBody) };
-    const value = await this.#requestJson<{ mute?: unknown[] }>(
-      "POST",
-      "/app/rest/mutes/multiple",
+    return this.#projectedJson("POST", "/app/rest/mutes/multiple",
       { fields: `count,mute(${triage.muteFields})` },
-      body,
-    );
-    return (value.mute ?? []).map((item) => triage.safeAssignment(item, false));
+      value => ((value as { mute?: unknown[] }).mute ?? []).map(item => triage.safeAssignment(item, false)), fields, body);
   }
 
-  public async getMute(id: number) {
-    return triage.safeAssignment(
-      await this.#requestJson("GET", `/app/rest/mutes/id:${integerId(id, "Mute ID")}`, {
-        fields: triage.muteFields,
-      }),
-      false,
-    );
+  public async getMute<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson("GET", `/app/rest/mutes/id:${integerId(id, "Mute ID")}`,
+      { fields: triage.muteFields }, value => triage.safeAssignment(value, false), fields);
   }
 
   public async deleteMute(id: number, comment?: string) {
@@ -2403,30 +2347,26 @@ export class TeamCityClient {
     return { muteId: id, deleted: true };
   }
 
-  public listTriageEntities(kind: "test" | "problem", page: TeamCityPageOptions = {}) {
+  public listTriageEntities<F extends string | undefined = undefined>(kind: "test" | "problem", page: TeamCityPageOptions & { fields?: F } = {}) {
     return this.#list(`/app/rest/${kind}s`, [], kind,
       kind === "test" ? "id,name" : triage.problemFields,
       (item) => triage.safeEntity(item, kind), page);
   }
 
-  public async getTriageEntity(kind: "test" | "problem", id: string) {
+  public async getTriageEntity<F extends string | undefined = undefined>(kind: "test" | "problem", id: string, projection?: F) {
     const fields = kind === "test" ? "id,name" : triage.problemFields;
-    return triage.safeEntity(
-      await this.#requestJson("GET", `/app/rest/${kind}s/${idPath(id, "ID")}`, { fields }),
-      kind,
-    );
+    return this.#projectedJson("GET", `/app/rest/${kind}s/${idPath(id, "ID")}`, { fields },
+      raw => triage.safeEntity(raw, kind), projection);
   }
 
-  public async getTriageOccurrence(kind: "test" | "problem", id: string, buildId: number) {
+  public async getTriageOccurrence<F extends string | undefined = undefined>(kind: "test" | "problem", id: string, buildId: number, projection?: F) {
     const locator = joinLocator(
       nestedId("build", integerId(buildId, "Build ID"), "Build ID"),
       nestedId(kind, id, "Target ID"),
     );
     const fields = kind === "test" ? triage.testOccurrenceFields : triage.problemOccurrenceFields;
-    return triage.safeOccurrence(
-      await this.#requestJson("GET", `/app/rest/${kind}Occurrences/${locator}`, { fields }),
-      kind,
-    );
+    return this.#projectedJson("GET", `/app/rest/${kind}Occurrences/${locator}`, { fields },
+      raw => triage.safeOccurrence(raw, kind), projection);
   }
 
   public async listBuildRuntimeParameterNames<F extends string | undefined = undefined>(
@@ -2459,13 +2399,13 @@ export class TeamCityClient {
     return { name, exists: true };
   }
 
-  public async listChangeAttributeNames(id: number) {
-    const value = await this.#requestJson<{ entry?: unknown[] }>(
+  public async listChangeAttributeNames<F extends string | undefined = undefined>(id: number, fields?: F) {
+    return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/attributes`,
       { fields: "count,entry(name)" },
+      raw => ((raw as { entry?: unknown[] }).entry ?? []).map((item) => triage.safeScalars(item, ["name"]).name), fields,
     );
-    return (value.entry ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
   }
 
   public listAccountUsers(page: TeamCityPageOptions = {}) {
@@ -2843,9 +2783,9 @@ export class TeamCityClient {
     };
   }
 
-  public async listCloud(
+  public async listCloud<F extends string | undefined = undefined>(
     kind: infrastructure.CloudKind,
-    page: TeamCityPageOptions = {},
+    page: TeamCityPageOptions & { fields?: F } = {},
     project?: string,
     profile?: string,
   ) {
@@ -2864,41 +2804,26 @@ export class TeamCityClient {
     );
   }
 
-  public async getCloudProfile(id: string) {
-    return infrastructure.safeCloud(
-      await this.#requestJson("GET", "/app/rest/cloud/profiles/" + idPath(id, "Cloud profile ID"), {
-        fields: infrastructure.cloudFields.profiles,
-      }),
-      "profiles",
-    );
+  public async getCloudProfile<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/cloud/profiles/" + idPath(id, "Cloud profile ID"),
+      { fields: infrastructure.cloudFields.profiles }, value => infrastructure.safeCloud(value, "profiles"), fields);
   }
 
-  public async getCloudImage(input: infrastructure.CloudImageId) {
-    return infrastructure.safeCloud(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/cloud/images/" + idPath(infrastructure.cloudComposite(input), "Image ID"),
-        { fields: infrastructure.cloudFields.images },
-      ),
-      "images",
-    );
+  public async getCloudImage<F extends string | undefined = undefined>(input: infrastructure.CloudImageId, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/cloud/images/" + idPath(infrastructure.cloudComposite(input), "Image ID"),
+      { fields: infrastructure.cloudFields.images }, value => infrastructure.safeCloud(value, "images"), fields);
   }
 
-  public async getCloudInstance(input: infrastructure.CloudInstanceId) {
-    return infrastructure.safeCloud(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/cloud/instances/" + idPath(infrastructure.cloudComposite(input), "Instance ID"),
-        { fields: infrastructure.cloudFields.instances },
-      ),
-      "instances",
-    );
+  public async getCloudInstance<F extends string | undefined = undefined>(input: infrastructure.CloudInstanceId, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/cloud/instances/" + idPath(infrastructure.cloudComposite(input), "Instance ID"),
+      { fields: infrastructure.cloudFields.instances }, value => infrastructure.safeCloud(value, "instances"), fields);
   }
 
-  public async startCloudInstance(input: infrastructure.CloudImageId) {
+  public async startCloudInstance<F extends string | undefined = undefined>(input: infrastructure.CloudImageId, fields?: F) {
     const imageId = infrastructure.cloudComposite(input);
-    await this.#request("POST", "/app/rest/cloud/instances", {}, { image: { id: imageId } });
-    return { imageId, startRequested: true };
+    const contents = await this.#request("POST", "/app/rest/cloud/instances",
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, { image: { id: imageId } });
+    return this.#projectedAcknowledgement(contents, fields, { imageId, startRequested: true });
   }
 
   public async stopCloudInstance(
@@ -3524,7 +3449,7 @@ export class TeamCityClient {
       infrastructure.safeVcsInstance,
     );
   }
-  public listDashboards(page: TeamCityPageOptions, project?: string) {
+  public listDashboards<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F }, project?: string) {
     return this.#list(
       "/app/rest/deploymentDashboards",
       [project ? nestedId("project", project, "Project ID") : undefined],
@@ -3548,16 +3473,15 @@ export class TeamCityClient {
       ),
     );
   }
-  public async getDashboard(id: string) {
-    return system.safeDashboard(
-      await this.#requestJson("GET", system.dashboardPath(id), { fields: system.dashboardFields }),
-    );
+  public async getDashboard<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", system.dashboardPath(id), { fields: system.dashboardFields },
+      system.safeDashboard, fields);
   }
   public async deleteDashboard(id: string) {
     await this.#request("DELETE", system.dashboardPath(id));
     return { id, deleted: true };
   }
-  public listDeploymentInstances(id: string, page: TeamCityPageOptions) {
+  public listDeploymentInstances<F extends string | undefined = undefined>(id: string, page: TeamCityPageOptions & { fields?: F }) {
     return this.#list(system.dashboardPath(id) + "/instances", [], "deploymentInstance",
       system.instanceFields, system.safeInstance, page);
   }
@@ -3582,12 +3506,9 @@ export class TeamCityClient {
       ),
     );
   }
-  public async getDeploymentInstance(dashboard: string, id: string) {
-    return system.safeInstance(
-      await this.#requestJson("GET", system.instancePath(dashboard, id), {
-        fields: system.instanceFields,
-      }),
-    );
+  public async getDeploymentInstance<F extends string | undefined = undefined>(dashboard: string, id: string, fields?: F) {
+    return this.#projectedJson("GET", system.instancePath(dashboard, id), { fields: system.instanceFields },
+      system.safeInstance, fields);
   }
   public async appendDeploymentState(
     dashboard: string,
@@ -3639,19 +3560,20 @@ export class TeamCityClient {
       }),
     );
   }
-  public async getRestPlugin() {
-    return system.pluginXml(
-      await this.#request(
+  public async getRestPlugin<F extends string | undefined = undefined>(fields?: F): Promise<Projected<ReturnType<typeof system.pluginXml>, F>> {
+    if (fields !== undefined) return this.#projectedJson("GET", "/app/rest/info", {},
+      system.safePlugin, fields);
+    const contents = await this.#request(
         "GET",
         "/app/rest/info",
         { fields: system.pluginFields },
         undefined,
         "application/xml",
         { requireMedia: "application/xml" },
-      ),
-    );
+      );
+    return this.#projectedValue(contents, fields, value => system.pluginXml(value as string));
   }
-  public async deleteMutes(ids: readonly string[]) {
+  public async deleteMutes<F extends string | undefined = undefined>(ids: readonly string[], fields?: F) {
     const selected = triage
       .inputIds(ids)
       .map((id) => Number(integerId(id, "Mute ID")));
@@ -3665,10 +3587,12 @@ export class TeamCityClient {
           id,
         ),
       );
-    await this.#request("DELETE", "/app/rest/mutes/multiple", {}, { mute }, "application/json", {
-      discard: true,
+    const contents = await this.#request("DELETE", "/app/rest/mutes/multiple",
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, { mute }, "application/json", {
+      discard: fields === undefined,
     });
-    return { requestedIds: selected, serverAcknowledged: true, postconditionVerified: false };
+    return this.#projectedAcknowledgement(contents, fields,
+      { requestedIds: selected, serverAcknowledged: true, postconditionVerified: false });
   }
   public async getDefaultValueSets(id: string) {
     return system.collection(
