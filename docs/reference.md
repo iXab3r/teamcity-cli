@@ -889,6 +889,12 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
+Jobs `list` and `branches` accept item `--fields`; `show`, `builds`,
+`investigations`, `vcs-instances`, and `create` accept whole-response fields.
+`aliases` and `tags` accept native `--field <name>` unchanged; their output
+shaping is preserved. Omitting it retains the existing query, including tags’
+`field=tag(name)`. Job creation retains its Update permission and body.
+
 Deployment `deployments list` and `deployments instances list` accept item fields;
 `deployments show`, `deployments instances show`, and `server rest-plugin` accept
 whole-response fields. REST plugin info keeps its XML request/parser by default and
