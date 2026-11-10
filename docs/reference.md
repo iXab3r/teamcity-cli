@@ -933,7 +933,7 @@ accept only literal `true` or `false`.
 | `--log-build-usage` | `builds artifacts list/children/metadata/download/archive` | `logBuildUsage` |
 | `--move-to-top` | `jobs run` | `moveToTop` |
 | `--approve-all` | `queue approval approve` | `approveAll` |
-| `--requestor` | `builds start-agentless`; `vcs instances check-changes` | `requestor` |
+| `--requestor` | `vcs instances check-changes` | `requestor` |
 | `--ok-on-nothing-found` | `vcs instances notify-commit` | `okOnNothingFound` |
 | `--add-timestamp` | `server backup start` | `addTimestamp` |
 | `--include-configs` | `server backup start` | `includeConfigs` |
@@ -946,6 +946,7 @@ accept only literal `true` or `false`.
 `jobs tags` defaults to `field=tag(name)`; health category list and server plugins omit
 `locator` by default. Queue approval defaults to `approveAll=false`; VCS change-check
 requestor defaults to `user` and commit notification to `okOnNothingFound=false`.
+`builds start-agentless --requestor` is an existing option sent as the request body, not as a query parameter.
 Server and VCS-instance files expose neither resolve-parameters nor log-build-usage;
 job files expose resolve-parameters on all five leaves, and build artifacts expose both.
 Backup start retains Admin and required confirmation; its seven switches preserve omitted values.
