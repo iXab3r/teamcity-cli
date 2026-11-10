@@ -1619,17 +1619,13 @@ export class TeamCityClient {
     fields?: string,
   ) {
     const body = publicTags(tags);
+    const contents = await this.#request("POST", `${buildPath(id, owner)}/tags`,
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, body,
+    );
     if (fields !== undefined) {
-      return this.#projectedJson(
-        "POST",
-        `${buildPath(id, owner)}/tags`,
-        {},
-        (value) => value,
-        fields,
-        body,
-      );
+      const value = this.#acknowledgedJson(contents);
+      if (value !== undefined) return this.#projectedValue(value, fields, raw => raw);
     }
-    await this.#request("POST", `${buildPath(id, owner)}/tags`, {}, body);
     return { buildId: id, tags: body.tag.map((tag) => tag.name), added: true };
   }
 

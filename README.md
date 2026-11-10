@@ -884,6 +884,7 @@ See [release and Core adoption gates](docs/release.md) and [migration provenance
 Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
 Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
 keeps the public-name defaults. Explicit fields return native JSON and the generic view.
+Build tag add retains its local acknowledgement for empty or non-JSON successful bodies.
 
 Build artifacts support `--resolve-parameters true|false` and `--log-build-usage true|false`.
 List/children/archive also accept `--base-path`; archive accepts `--archive-name` for the server
@@ -918,6 +919,6 @@ projection options apply to their direct request leaves.
 
 All new controls follow parity with the default path: validation, permissions,
 confirmations, empty or malformed bodies, errors, exit status and unknown mutation
-outcomes retain their existing rules. Log append and queue delete-page keep their
+outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
 acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
 fields and passes through. Lost mutation responses are never retried automatically.
