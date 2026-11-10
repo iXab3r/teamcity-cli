@@ -2094,7 +2094,13 @@ export class TeamCityClient {
       mediaType,
       { accept: "application/json" },
     );
-    return this.#projectedValue(decodeJson(contents), fields, triage.safeMultiple);
+    const value = decodeJson(contents);
+    const raw = value as { count?: number; errorCount?: number } | null;
+    return this.#projectedMutation(value, fields, triage.safeMultiple,
+      Number(raw?.errorCount) > 0 ? {
+        code: "batch.partial", message: `${raw?.errorCount} of ${raw?.count} builds failed; see items.`,
+      } : undefined,
+    );
   }
 
   public async getArtifactDependencyChanges(id: number, fields?: string) {
@@ -2224,7 +2230,11 @@ export class TeamCityClient {
       body,
     );
     if (fields !== undefined)
-      return this.#projectedValue(value, fields, (raw) => raw) as typeof value & {
+      return this.#projectedMutation(value, fields, (raw) => raw,
+        (value?.errors?.item?.length ?? 0) > 0 ? {
+          code: "build.statusPartial", message: "The status changed with errors; see errorCount.",
+        } : undefined,
+      ) as typeof value & {
         errorCount: number;
         partialFailure: boolean;
       };
@@ -2245,15 +2255,16 @@ export class TeamCityClient {
   }
 
   public async addBuildVcsLabel(id: number, label: string, rootInstance: string, fields?: string) {
-    return this.#projectedValue(
-      await this.#textJson(
-        "POST",
-        `${buildPath(id)}/vcsLabels`,
-        { fields: fields === undefined ? triage.labelFields : fieldsProjection(fields), locator: idPath(rootInstance, "Root instance ID") },
-        triage.inputText(label, "Label"),
-      ),
-      fields,
-      (value) => this.#vcsLabels(value),
+    const value = await this.#textJson(
+      "POST",
+      `${buildPath(id)}/vcsLabels`,
+      { fields: fields === undefined ? triage.labelFields : fieldsProjection(fields), locator: idPath(rootInstance, "Root instance ID") },
+      triage.inputText(label, "Label"),
+    );
+    const failed = triage.array((value as { vcsLabel?: unknown[] } | null)?.vcsLabel)
+      .some(item => (item as { status?: unknown } | null)?.status === "FAILED");
+    return this.#projectedMutation(value, fields, raw => this.#vcsLabels(raw),
+      failed ? { code: "labels.partial", message: "Some VCS labels failed; see their status." } : undefined,
     );
   }
 
@@ -3390,6 +3401,17 @@ export class TeamCityClient {
       ...(fields === undefined ? {} : { fields: fieldsProjection(fields) }),
     }, body);
     return this.#projectedValue(value, fields, project);
+  }
+
+  /** Decide from native fields, then mask the result attached to a projected failure. */
+  #projectedMutation<T>(value: unknown, fields: string | undefined, project: (value: unknown) => T,
+    failure?: { code: string; message: string },
+  ): T {
+    const result = this.#projectedValue(value, fields, project);
+    if (fields !== undefined && failure) {
+      throw new CliError(failure.message, { code: failure.code, result });
+    }
+    return result;
   }
 
   #projectedValue<T>(value: unknown, fields: string | undefined, project: (value: unknown) => T): T {

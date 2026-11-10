@@ -68,7 +68,8 @@ Empty successful bodies retain each command's default behavior: log append retur
 acknowledgement; these other actions fail JSON decoding. Projections are never extended.
 For partial-failure detection include `errors(item)` for set-status or
 `vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
-native error result; absent detection fields return the native body with exit 0.
+native error result. Detection reads the native response before credential masking; the returned
+result is masked afterwards. Absent detection fields return the native body with exit 0.
 
 Batch `show`, `cancel`, `delete`, `comment set/clear`, `tags add/remove`, and `pin`
 accept `--fields`. The native response retains its envelope. Include `errorCount`
