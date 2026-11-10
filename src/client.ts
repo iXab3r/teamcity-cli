@@ -2783,9 +2783,9 @@ export class TeamCityClient {
     };
   }
 
-  public async listCloud(
+  public async listCloud<F extends string | undefined = undefined>(
     kind: infrastructure.CloudKind,
-    page: TeamCityPageOptions = {},
+    page: TeamCityPageOptions & { fields?: F } = {},
     project?: string,
     profile?: string,
   ) {
@@ -2804,41 +2804,26 @@ export class TeamCityClient {
     );
   }
 
-  public async getCloudProfile(id: string) {
-    return infrastructure.safeCloud(
-      await this.#requestJson("GET", "/app/rest/cloud/profiles/" + idPath(id, "Cloud profile ID"), {
-        fields: infrastructure.cloudFields.profiles,
-      }),
-      "profiles",
-    );
+  public async getCloudProfile<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/cloud/profiles/" + idPath(id, "Cloud profile ID"),
+      { fields: infrastructure.cloudFields.profiles }, value => infrastructure.safeCloud(value, "profiles"), fields);
   }
 
-  public async getCloudImage(input: infrastructure.CloudImageId) {
-    return infrastructure.safeCloud(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/cloud/images/" + idPath(infrastructure.cloudComposite(input), "Image ID"),
-        { fields: infrastructure.cloudFields.images },
-      ),
-      "images",
-    );
+  public async getCloudImage<F extends string | undefined = undefined>(input: infrastructure.CloudImageId, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/cloud/images/" + idPath(infrastructure.cloudComposite(input), "Image ID"),
+      { fields: infrastructure.cloudFields.images }, value => infrastructure.safeCloud(value, "images"), fields);
   }
 
-  public async getCloudInstance(input: infrastructure.CloudInstanceId) {
-    return infrastructure.safeCloud(
-      await this.#requestJson(
-        "GET",
-        "/app/rest/cloud/instances/" + idPath(infrastructure.cloudComposite(input), "Instance ID"),
-        { fields: infrastructure.cloudFields.instances },
-      ),
-      "instances",
-    );
+  public async getCloudInstance<F extends string | undefined = undefined>(input: infrastructure.CloudInstanceId, fields?: F) {
+    return this.#projectedJson("GET", "/app/rest/cloud/instances/" + idPath(infrastructure.cloudComposite(input), "Instance ID"),
+      { fields: infrastructure.cloudFields.instances }, value => infrastructure.safeCloud(value, "instances"), fields);
   }
 
-  public async startCloudInstance(input: infrastructure.CloudImageId) {
+  public async startCloudInstance<F extends string | undefined = undefined>(input: infrastructure.CloudImageId, fields?: F) {
     const imageId = infrastructure.cloudComposite(input);
-    await this.#request("POST", "/app/rest/cloud/instances", {}, { image: { id: imageId } });
-    return { imageId, startRequested: true };
+    const contents = await this.#request("POST", "/app/rest/cloud/instances",
+      fields === undefined ? {} : { fields: fieldsProjection(fields) }, { image: { id: imageId } });
+    return this.#projectedAcknowledgement(contents, fields, { imageId, startRequested: true });
   }
 
   public async stopCloudInstance(
