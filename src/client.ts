@@ -1972,46 +1972,46 @@ export class TeamCityClient {
     return { status };
   }
 
-  public async getBuildBatch(ids: readonly number[]) {
+  public async getBuildBatch(ids: readonly number[], fields?: string) {
     const value = await this.#requestJson<{ build?: unknown[] }>(
       "GET",
       `/app/rest/builds/multiple/${triage.buildUnion(ids)}`,
-      { fields: `count,nextHref,build(${triage.evidenceBuildFields})` },
+      { fields: fields === undefined ? `count,nextHref,build(${triage.evidenceBuildFields})` : fieldsProjection(fields) },
     );
-    return (value.build ?? []).map(triage.safeEvidenceBuild);
+    return this.#projectedValue(value, fields, raw => ((raw as { build?: unknown[] }).build ?? []).map(triage.safeEvidenceBuild));
   }
 
-  public async cancelBuildBatch(ids: readonly number[], comment: string) {
+  public async cancelBuildBatch(ids: readonly number[], comment: string, fields?: string) {
     return this.#buildBatch("POST", ids, "", {
       comment: triage.inputText(comment, "Comment"),
       readdIntoQueue: false,
-    });
+    }, "application/json", fields);
   }
 
-  public async deleteBuildBatch(ids: readonly number[]) {
-    return this.#buildBatch("DELETE", ids, "");
+  public async deleteBuildBatch(ids: readonly number[], fields?: string) {
+    return this.#buildBatch("DELETE", ids, "", undefined, "application/json", fields);
   }
 
-  public async setBuildBatchComment(ids: readonly number[], comment: string) {
+  public async setBuildBatchComment(ids: readonly number[], comment: string, fields?: string) {
     return this.#buildBatch(
       "PUT",
       ids,
       "/comment",
       triage.inputText(comment, "Comment"),
-      "text/plain",
+      "text/plain", fields,
     );
   }
 
-  public async clearBuildBatchComment(ids: readonly number[]) {
-    return this.#buildBatch("DELETE", ids, "/comment");
+  public async clearBuildBatchComment(ids: readonly number[], fields?: string) {
+    return this.#buildBatch("DELETE", ids, "/comment", undefined, "application/json", fields);
   }
 
-  public async pinBuildBatch(ids: readonly number[], status: boolean) {
-    return this.#buildBatch("PUT", ids, "/pinInfo", this.#statusBody(status));
+  public async pinBuildBatch(ids: readonly number[], status: boolean, fields?: string) {
+    return this.#buildBatch("PUT", ids, "/pinInfo", this.#statusBody(status), "application/json", fields);
   }
 
-  public async tagBuildBatch(ids: readonly number[], tags: readonly string[], remove = false) {
-    return this.#buildBatch(remove ? "DELETE" : "POST", ids, "/tags", publicTags(tags));
+  public async tagBuildBatch(ids: readonly number[], tags: readonly string[], remove = false, fields?: string) {
+    return this.#buildBatch(remove ? "DELETE" : "POST", ids, "/tags", publicTags(tags), "application/json", fields);
   }
 
   async #buildBatch(
@@ -2020,16 +2020,17 @@ export class TeamCityClient {
     suffix: string,
     body?: unknown,
     mediaType = "application/json",
+    fields?: string,
   ) {
     const contents = await this.#request(
       method,
       `/app/rest/builds/multiple/${triage.buildUnion(ids)}${suffix}`,
-      { fields: triage.multipleFields },
+      { fields: fields === undefined ? triage.multipleFields : fieldsProjection(fields) },
       body,
       mediaType,
       { accept: "application/json" },
     );
-    return triage.safeMultiple(decodeJson(contents));
+    return this.#projectedValue(decodeJson(contents), fields, triage.safeMultiple);
   }
 
   public async getArtifactDependencyChanges(id: number, fields?: string) {

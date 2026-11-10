@@ -67,3 +67,9 @@ acknowledgement; these other actions fail JSON decoding. Projections are never e
 For partial-failure detection include `errors(item)` for set-status or
 `vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
 native error result; absent detection fields return the native body with exit 0.
+
+Batch `show`, `cancel`, `delete`, `comment set/clear`, `tags add/remove`, and `pin`
+accept `--fields`. The native response retains its envelope. Include `errorCount`
+to retain `batch.partial` detection; absent detection fields imply no claim about
+partial failure. Empty or malformed responses retain default handling, and omitted
+options preserve the default request body, permissions and output.
