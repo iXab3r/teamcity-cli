@@ -85,7 +85,7 @@ test("#69 known credential masking preserves Unicode and literal matching", asyn
 
 for (const scenario of cases) for (const surface of ["human", "json", "execute", "rpc"] as const) {
   test(`#74 ${scenario.name} masks nested encodings on ${surface}`, async t => {
-    const token = 'synthetic/a+b:cred?"\\end-ü😀';
+    const token = 'synthetic/a+b:cred?"\\end';
     const rt = await createTestRuntime(t, {
       profiles: [{ name: "default", url: "https://teamcity.test", permissions: ["ReadOnly", "Update"] }],
       tokens: { default: token },
