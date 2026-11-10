@@ -12,6 +12,7 @@ import { clientLeaf, option, text, repeatOption } from "./command-support.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
 import type { createTriageCommands } from "./triage-commands.js";
 import { booleanText, allowedField } from "./advanced-authoring-models.js";
+import { requiredText } from "./locator.js";
 import { locatorOption } from "./command-support.js";
 
 function number(args: Record<string, unknown>, key: string): number {
