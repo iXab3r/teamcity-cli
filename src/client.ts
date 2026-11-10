@@ -2707,7 +2707,7 @@ export class TeamCityClient {
     return { rootId: id, field, updated: true };
   }
 
-  public listVcsInstances(page: TeamCityPageOptions = {}, root?: string) {
+  public listVcsInstances<F extends string | undefined = undefined>(page: TeamCityPageOptions & { fields?: F } = {}, root?: string) {
     return this.#list(
       "/app/rest/vcs-root-instances",
       [root === undefined ? undefined : nestedId("vcsRoot", root, "Root ID")],
@@ -2718,24 +2718,18 @@ export class TeamCityClient {
     );
   }
 
-  public async checkVcsInstanceChanges(id: string) {
-    const value = await this.#requestJson<Record<string, unknown>>(
-      "POST",
-      "/app/rest/vcs-root-instances/checkingForChangesQueue",
-      {
-        locator: idPath(id, "Instance ID"),
-        requestor: "user",
-        fields: `count,nextHref,vcs-root-instance(${infrastructure.vcsInstanceFields})`,
-      },
-    );
-    return triage.array(value["vcs-root-instance"]).map(infrastructure.safeVcsInstance);
+  public async checkVcsInstanceChanges<F extends string | undefined = undefined>(id: string, requestor?: string, fields?: F) {
+    return this.#projectedJson("POST", "/app/rest/vcs-root-instances/checkingForChangesQueue",
+      { locator: idPath(id, "Instance ID"), requestor: requestor === undefined ? "user" : requiredText(requestor, "Requestor"),
+        fields: `count,nextHref,vcs-root-instance(${infrastructure.vcsInstanceFields})` },
+      value => triage.array(triage.object(value)["vcs-root-instance"]).map(infrastructure.safeVcsInstance), fields);
   }
 
-  public async notifyVcsCommit(id: string) {
+  public async notifyVcsCommit(id: string, okOnNothingFound?: string) {
     await this.#request(
       "POST",
       "/app/rest/vcs-root-instances/commitHookNotification",
-      { locator: idPath(id, "Instance ID"), okOnNothingFound: "false" },
+      { locator: idPath(id, "Instance ID"), okOnNothingFound: okOnNothingFound === undefined ? "false" : okOnNothingFound },
       undefined,
       "text/plain",
       { discard: true, expectedStatus: 202 },
@@ -2743,40 +2737,25 @@ export class TeamCityClient {
     return { instanceId: id, scheduled: true };
   }
 
-  public async getVcsInstance(id: string) {
-    return infrastructure.safeVcsInstance(
-      await this.#requestJson("GET", infrastructure.vcsInstancePath(id), {
-        fields: infrastructure.vcsInstanceFields,
-      }),
-    );
+  public async getVcsInstance<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.vcsInstancePath(id),
+      { fields: infrastructure.vcsInstanceFields }, infrastructure.safeVcsInstance, fields);
   }
 
-  public async listVcsInstancePropertyNames(id: string) {
-    return infrastructure.propertyNames(
-      await this.#requestJson("GET", infrastructure.vcsInstancePath(id) + "/properties", {
-        fields: "count,property(name)",
-      }),
-    );
+  public async listVcsInstancePropertyNames<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.vcsInstancePath(id) + "/properties",
+      { fields: "count,property(name)" }, infrastructure.propertyNames, fields);
   }
 
-  public async getVcsRepositoryState(id: string) {
-    return infrastructure.repositoryEntries(
-      await this.#requestJson("GET", infrastructure.vcsInstancePath(id) + "/repositoryState", {
-        fields: "count,entry(name,value)",
-      }),
-    );
+  public async getVcsRepositoryState<F extends string | undefined = undefined>(id: string, fields?: F) {
+    return this.#projectedJson("GET", infrastructure.vcsInstancePath(id) + "/repositoryState",
+      { fields: "count,entry(name,value)" }, infrastructure.repositoryEntries, fields);
   }
 
-  public async replaceVcsRepositoryState(id: string, revisions: readonly PlainProperty[]) {
+  public async replaceVcsRepositoryState<F extends string | undefined = undefined>(id: string, revisions: readonly PlainProperty[], fields?: F) {
     const body = { entry: infrastructure.namedValues(revisions, true) };
-    return infrastructure.repositoryEntries(
-      await this.#requestJson(
-        "PUT",
-        infrastructure.vcsInstancePath(id) + "/repositoryState",
-        { fields: "count,entry(name,value)" },
-        body,
-      ),
-    );
+    return this.#projectedJson("PUT", infrastructure.vcsInstancePath(id) + "/repositoryState",
+      { fields: "count,entry(name,value)" }, infrastructure.repositoryEntries, fields, body);
   }
 
   public async resetVcsRepositoryState(id: string) {

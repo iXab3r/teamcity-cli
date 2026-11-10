@@ -8,6 +8,8 @@ import {
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
 import {
+  booleanOption,
+  textOption,
   clientLeaf,
   option,
   text,
@@ -202,30 +204,35 @@ export function createInfrastructureCommands(
       "list",
       "List results",
       Permission.ReadOnly,
-      (c, { options }) => c.listVcsInstances(page(options), optional(options, "root")),
-      [...pageOptions, option("--root <id>", "Select a VCS root")],
+      (c, { options }) => c.listVcsInstances({ ...page(options), fields: fieldsFromOptions(options) }, optional(options, "root")),
+      [...pageOptions, option("--root <id>", "Select a VCS root"), fieldsOption],
     ),
     leaf(
       "check-changes <id>",
       "Request a VCS change check",
       Permission.Update,
-      (c, { args }) => c.checkVcsInstanceChanges(args.id),
+      (c, { args, options }) => c.checkVcsInstanceChanges(args.id, optional(options, "requestor"), fieldsFromOptions(options)),
+      [textOption("--requestor <text>", "Set the change-check requestor"), fieldsOption],
     ),
     leaf(
       "notify-commit <id>",
       "Notify a VCS root instance",
       Permission.Update,
-      (c, { args }) => c.notifyVcsCommit(args.id),
+      (c, { args, options }) => c.notifyVcsCommit(args.id, optional(options, "okOnNothingFound")),
+      [booleanOption("--ok-on-nothing-found <boolean>", "Set whether unmatched notifications succeed")],
     ),
-    leaf("show <id>", "Read identity/polling metadata", Permission.ReadOnly, (c, { args }) =>
-      c.getVcsInstance(args.id),
+    leaf("show <id>", "Read identity/polling metadata", Permission.ReadOnly, (c, { args, options }) =>
+      c.getVcsInstance(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
-    leaf("properties <id>", "List parameter names", Permission.ReadOnly, (c, { args }) =>
-      c.listVcsInstancePropertyNames(args.id),
+    leaf("properties <id>", "List parameter names", Permission.ReadOnly, (c, { args, options }) =>
+      c.listVcsInstancePropertyNames(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("state", "Manage saved branch revisions", [
-      leaf("show <id>", "Read branch/revision entries", Permission.ReadOnly, (c, { args }) =>
-        c.getVcsRepositoryState(args.id),
+      leaf("show <id>", "Read branch/revision entries", Permission.ReadOnly, (c, { args, options }) =>
+        c.getVcsRepositoryState(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "replace <id>",
@@ -235,6 +242,7 @@ export function createInfrastructureCommands(
           c.replaceVcsRepositoryState(
             args.id,
             (options.revision ?? []) as PlainProperty[],
+            fieldsFromOptions(options),
           ),
         [
           {
@@ -242,6 +250,7 @@ export function createInfrastructureCommands(
             flags: "--revision <branch=revision>",
             description: "Supply branch and revision pairs; repeat",
           },
+          fieldsOption,
         ],
       ),
       leaf(
