@@ -19,28 +19,37 @@ export function fieldsFromOptions(options: Readonly<Record<string, unknown>>): s
   return options.fields as string | undefined;
 }
 
-/** Match known values only; Core's diagnostic API also rewrites unrelated URLs and text. */
+/** Match known values only; decode copies without changing unrelated output. */
 export function knownCredentialMask(credential: string): (text: string) => string {
-  const representations = new Set([credential, JSON.stringify(credential).slice(1, -1)]);
-  try {
-    representations.add(encodeURIComponent(credential));
-    representations.add(encodeURI(credential));
-  } catch { /* A malformed Unicode value can still be matched as text. */ }
-  const normalize = (text: string) => text.replace(/%[\da-f]{2}/gi, part => part.toUpperCase());
-  const copies = [...representations].filter(value => value !== "").sort((a, b) => b.length - a.length).map(normalize);
-  return text => {
-    for (const copy of copies) {
-      const normalized = normalize(text);
-      const parts: string[] = [];
-      let start = 0;
-      for (let match = normalized.indexOf(copy); match !== -1; match = normalized.indexOf(copy, start)) {
-        parts.push(text.slice(start, match), "[redacted]");
-        start = match + copy.length;
+  if (credential === "") return text => text;
+  const escapes: Record<string, string> = { '"': '"', "\\": "\\", "/": "/", b: "\b", f: "\f", n: "\n", r: "\r", t: "\t" };
+  const percentDecode = (text: string) => text.replace(/(?:%[\da-f]{2})+/gi, encoded => {
+    const parts: string[] = [];
+    for (let start = 0; start < encoded.length;) {
+      // Prefer UTF-8; decode individual bytes too, without a malformed neighbour hiding a match.
+      const byte = Number.parseInt(encoded.slice(start + 1, start + 3), 16);
+      const width = byte < 0x80 ? 1 : byte < 0xe0 ? 2 : byte < 0xf0 ? 3 : 4;
+      const part = encoded.slice(start, start + width * 3);
+      try {
+        parts.push(decodeURIComponent(part));
+        start += part.length;
+      } catch {
+        parts.push(String.fromCharCode(byte));
+        start += 3;
       }
-      parts.push(text.slice(start));
-      text = parts.join("");
     }
-    return text;
+    return parts.join("");
+  });
+  return text => {
+    let decoded = text;
+    for (let round = 0; round < 3; round++) {
+      const next = percentDecode(decoded).replace(/\\(?:u([\da-fA-F]{4})|["\\/bfnrt])/g, (escape: string, hex: string | undefined) =>
+        hex === undefined ? escapes[escape[1]!]! : String.fromCharCode(Number.parseInt(hex, 16)));
+      if (next === decoded) break;
+      if (next.includes(credential)) return "[redacted]";
+      decoded = next;
+    }
+    return text.split(credential).join("[redacted]");
   };
 }
 

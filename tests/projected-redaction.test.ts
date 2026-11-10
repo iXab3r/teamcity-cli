@@ -29,7 +29,7 @@ for (const scenario of cases) for (const surface of ["human", "json", "execute",
       value.replace(/%[0-9A-F]{2}/g, part => part[0]! + part[1]!.toLowerCase() + part[2]!),
     ])];
     const custom = Object.fromEntries(variants.map((value, i) => [`${i}:${value}`, [value, `before ${value} after`, 1, false, null]]));
-    const masked = Object.fromEntries(variants.map((_, i) => [`${i}:[redacted]`, ["[redacted]", "before [redacted] after", 1, false, null]]));
+    const masked = Object.fromEntries(variants.map((_, i) => [i === 0 ? "0:[redacted]" : "[redacted]", ["[redacted]", i === 0 ? "before [redacted] after" : "[redacted]", 1, false, null]]));
     const body = { ...scenario.body, custom, untouched: "https://fixture.test/path?q=value", ordinaryCase: token.toUpperCase() };
     const expected = { ...body, custom: masked };
     server.use(http.all("*", () => HttpResponse.json(body)));

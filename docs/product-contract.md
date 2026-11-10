@@ -8,9 +8,7 @@ Historical extraction provenance remains in [migration](migration.md).
 ## Field projections
 
 `builds list` and both `builds show` selectors accept `--fields <projection>` as native TeamCity
-item fields. An explicit projection returns native objects with known bearer credential copies
-(literal, percent-encoded in either hex case, and JSON-string-escaped) masked in keys and string
-values on success and partial-error results, using the generic human view. Lists retain their
+item fields. An explicit projection returns native objects using the generic human view. Lists retain their
 paging envelope and compose
 `nextHref,build(<projection>)`; the latest selector keeps its single `build(<projection>)` lookup.
 Blank projections fail locally. Omission preserves the default request, shaping and views.
@@ -18,6 +16,12 @@ Blank projections fail locally. Omission preserves the default request, shaping 
 Client calls with projections return opaque `NativeJson` (unknown) values, including native
 list items; callers must validate them before accessing shaped properties. Default calls keep
 their existing result types.
+
+Masking covers the literal credential and its percent-encoded (either hex case) and JSON-escaped
+forms up to three nested decoding rounds, in keys and string values on success and partial-error results.
+Literal matches are replaced in place; a decoded match redacts the whole original string.
+Other transformations (for example base64, hexadecimal dumps, hashes, or a credential split across fields)
+are not detected.
 
 The build evidence reads also accept whole-response `--fields`: `builds canceled-info`,
 `builds pin show`, `builds statistics list`, `builds related-issues`, `builds artifact-changes`,

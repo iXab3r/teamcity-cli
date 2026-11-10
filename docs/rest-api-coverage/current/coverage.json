@@ -6845,6 +6845,7 @@
     "tests/errors.test.ts",
     "tests/option-parsers.test.ts",
     "tests/presentation.test.ts",
+    "tests/projected-long-credential.test.ts",
     "tests/projected-redaction.test.ts",
     "tests/queue-action-projection.test.ts"
    ],
