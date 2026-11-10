@@ -77,6 +77,7 @@ for (const scenario of buildProjectionCases) {
       await assertHttpRequest(request, {
         method: scenario.method, url: origin + scenario.path,
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), fields: scenario.fields(projection) },
+        ...(scenario.method === "GET" ? {} : {body:{json:{tag:scenario.method === "POST" ? [{name:"release"}] : []}}}),
         headers: { accept: "application/json", authorization: `Bearer ${token}` },
       });
       return HttpResponse.json(scenario.response(native));
@@ -100,6 +101,7 @@ for (const scenario of buildProjectionCases) {
       await assertHttpRequest(request, {
         method: scenario.method, url: origin + scenario.path,
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.defaultFields === undefined ? {} : { fields: scenario.defaultFields }) },
+        ...(scenario.method === "GET" ? {} : {body:{json:{tag:scenario.method === "POST" ? [{name:"release"}] : []}}}),
         headers: { accept: "application/json", authorization: `Bearer ${token}` },
       });
       return HttpResponse.json(scenario.baselineResponse);
@@ -188,8 +190,8 @@ for (const scenario of buildProjectionCases.filter(c => c.method !== "POST")) {
  test(`US-003-A2 ${scenario.name}: locator preserved with projection`, async t => {
   const rt = await runtime(t, scenario.permission);
   const requests = trackRequests(t, 5, async request => {
-   await assertHttpRequest(request,{method:scenario.method,url:origin+scenario.path,query:{locator:" private:false,name:release / + ",fields:projection}});
-   if(scenario.method === "PUT") assert.deepEqual(await request.json(),{tag:[]});
+   await assertHttpRequest(request,{method:scenario.method,url:origin+scenario.path,query:{locator:" private:false,name:release / + ",fields:projection},...(scenario.method === "PUT" ? {body:{json:{tag:[]}}} : {})});
+
    return HttpResponse.json(native);
   });
   server.use(http.all("*",({request})=>requests.handle(request)));

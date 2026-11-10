@@ -1592,29 +1592,23 @@ export class TeamCityClient {
     );
   }
 
-  public async listTags(owner: "builds" | "queue", id: number) {
-    const result = await this.#requestJson<{ tag?: { name: string }[] }>(
-      "GET",
-      `${buildPath(id, owner)}/tags`,
-      { fields: "tag(name)" },
-    );
-    return (result.tag ?? []).map((tag) => tag.name);
+  public async listTags(owner: "builds" | "queue", id: number, fields?: string, locator?: string) {
+    return this.#projectedJson("GET", `${buildPath(id, owner)}/tags`,
+      { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
+      value => ((value as {tag?: {name:string}[]}).tag ?? []).map(tag => tag.name), fields);
   }
 
-  public async addTags(owner: "builds" | "queue", id: number, tags: readonly string[]) {
+  public async addTags(owner: "builds" | "queue", id: number, tags: readonly string[], fields?: string) {
     const body = publicTags(tags);
+    if (fields !== undefined) return this.#projectedJson("POST", `${buildPath(id, owner)}/tags`, {}, value => value, fields, body);
     await this.#request("POST", `${buildPath(id, owner)}/tags`, {}, body);
     return { buildId: id, tags: body.tag.map((tag) => tag.name), added: true };
   }
 
-  public async replaceBuildTags(id: number, tags: readonly string[]) {
-    const result = await this.#requestJson<{ tag?: { name: string }[] }>(
-      "PUT",
-      `${buildPath(id)}/tags`,
-      { fields: "tag(name)" },
-      publicTags(tags, true),
-    );
-    return (result.tag ?? []).map((tag) => tag.name);
+  public async replaceBuildTags(id: number, tags: readonly string[], fields?: string, locator?: string) {
+    return this.#projectedJson("PUT", `${buildPath(id)}/tags`,
+      { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
+      value => ((value as {tag?: {name:string}[]}).tag ?? []).map(tag => tag.name), fields, publicTags(tags, true));
   }
 
   public async listBuildStatistics(id: number, fields?: string) {
