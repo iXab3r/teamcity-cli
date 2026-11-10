@@ -26,6 +26,10 @@ parameter values can therefore be selected explicitly. Omission keeps existing o
 accept whole-response `--fields`. Explicit projections use native JSON and the generic view;
 omission preserves existing requests and output.
 
+Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
+Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
+keeps the public-name defaults. Explicit fields return native JSON and the generic view.
+
 ## Paging
 
 TeamCity retains `--limit 100 --start 0`: limit bounds retained rows across wire requests.

@@ -879,3 +879,7 @@ the common package and how to start the next in-repo or external integration.
 
 `npm ci`, `npm test`, and `npm run test:package` build and test this repository independently.
 See [release and Core adoption gates](docs/release.md) and [migration provenance](docs/migration.md).
+
+Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
+Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
+keeps the public-name defaults. Explicit fields return native JSON and the generic view.

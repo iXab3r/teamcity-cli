@@ -85,7 +85,7 @@ GET /app/rest/buildQueue/order/{p1}	BuildQueue	ReadOnly	covered	queue position s
 GET /app/rest/buildQueue/{p1}	BuildQueue	ReadOnly	covered	queue show <build-id>	getQueuedBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/queue-projection.test.ts
 GET /app/rest/buildQueue/{p1}/approvalInfo	BuildQueue	ReadOnly	covered	queue approval show <build-id>	getQueueApproval		exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts;tests/queue-projection.test.ts
 GET /app/rest/buildQueue/{p1}/compatibleAgents	BuildQueue	ReadOnly	covered	queue compatible-agents <build-id>	listQueueCompatibleAgents		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/queue-projection.test.ts
-GET /app/rest/buildQueue/{p1}/tags	BuildQueue	ReadOnly	partial	queue tags list <build-id>	listTags	locator;fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+GET /app/rest/buildQueue/{p1}/tags	BuildQueue	ReadOnly	covered	queue tags list <build-id>	listTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
 GET /app/rest/buildTypes	BuildType	ReadOnly	partial	jobs list		fields	exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts
 GET /app/rest/buildTypes/{p1}	BuildType	ReadOnly	partial	jobs show <id>	getJob	fields	exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/buildTypes/{p1}/agent-requirements	BuildType	ReadOnly	partial	jobs agent-requirements list <job-id>	listRules	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts
@@ -164,7 +164,7 @@ GET /app/rest/builds/{p1}/statistics/{p2}	Build	ReadOnly	covered	builds statisti
 GET /app/rest/builds/{p1}/status	Build	ReadOnly	covered	builds status <build-id>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/builds/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds icon <id>			exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/builds/{p1}/statusText	Build	ReadOnly	covered	builds status-text show <build-id>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/builds/{p1}/tags	Build	ReadOnly	partial	builds tags list <build-id>	listTags	locator;fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/presentation.test.ts
+GET /app/rest/builds/{p1}/tags	Build	ReadOnly	covered	builds tags list <build-id>	listTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/presentation.test.ts;tests/tag-projection.test.ts
 GET /app/rest/builds/{p1}/testOccurrences	Build	ReadOnly	covered	builds test-occurrences <id>	listBuildOccurrences		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/vcsLabels	Build	ReadOnly	covered	builds vcs-labels list <id>	getBuildVcsLabels		exercised-in-passing-suite	tests/authoring.test.ts;tests/evidence-projection.test.ts
 GET /app/rest/builds/{p1}/{p2}	Build	ReadOnly	covered	builds fields show <build-id> <field>	getBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
@@ -320,7 +320,7 @@ POST /app/rest/builds/{p1}	Build	Update	partial	builds cancel <id>	cancelBuild	f
 POST /app/rest/builds/{p1}/log	Build	Update	partial	builds log append <id>	appendBuildLog	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
 POST /app/rest/builds/{p1}/problemOccurrences	Build	Update	partial	builds problem-occurrences add <id>	addBuildProblem	fields	exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/builds/{p1}/status	Build	Update	partial	builds set-status <id> <status>	setBuildStatus	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
-POST /app/rest/builds/{p1}/tags	Build	Update	partial	builds tags add <build-id>	addTags	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+POST /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
 POST /app/rest/builds/{p1}/vcsLabels	Build	Update	partial	builds vcs-labels add <id>	addBuildVcsLabel	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
 POST /app/rest/cloud/instances	CloudInstance	Update	partial	cloud instances start	startCloudInstance	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 POST /app/rest/cloud/instances/{p1}/actions/forceStop	CloudInstance	Update	covered	cloud instances force-stop	stopCloudInstance		exercised-in-passing-suite	tests/authoring.test.ts
@@ -410,7 +410,7 @@ PUT /app/rest/builds/{p1}/number	Build	Update	covered	builds number set <build-i
 PUT /app/rest/builds/{p1}/pinInfo	Build	Update	partial	builds pin set <build-id> <status>	setBuildPin	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 PUT /app/rest/builds/{p1}/runningData	Build	Update	partial	builds start-agentless <id>	startAgentlessBuild	fields	exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/builds/{p1}/statusText	Build	Update	covered	builds status-text set <build-id> <value>	setBuildScalar		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/builds/{p1}/tags	Build	Update	partial	builds tags replace <build-id>	replaceBuildTags	locator;fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
+PUT /app/rest/builds/{p1}/tags	Build	Update	covered	builds tags replace <build-id>	replaceBuildTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/tag-projection.test.ts
 PUT /app/rest/investigations/{p1}	Investigation	Update	partial	investigations replace	createInvestigation	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
 PUT /app/rest/projects/{p1}/agentPools	Project	Update	partial	projects pools replace-all <project-id>	replaceProjectPools	fields	exercised-in-passing-suite	tests/authoring.test.ts;tests/bulk-configuration.test.ts
 PUT /app/rest/projects/{p1}/defaultTemplate	Project	Update	partial	projects templates default set <project-id>	setDefaultTemplate	fields	exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts

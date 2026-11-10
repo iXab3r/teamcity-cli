@@ -1,22 +1,22 @@
 {
-  "baselineHead": "59550def4004b6079a957c162e01f3646c2892aa",
+  "baselineHead": "25a20382d8555a2c908569ec5c71bba925f8fcef",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 197,
-  "partial": 251,
+  "covered": 201,
+  "partial": 247,
   "missing": 1,
   "reached": 448,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 83,
-      "partial": 151,
+      "covered": 85,
+      "partial": 149,
       "missing": 1
     },
     "Update": {
       "total": 214,
-      "covered": 114,
-      "partial": 100,
+      "covered": 116,
+      "partial": 98,
       "missing": 0
     }
   },
@@ -53,14 +53,14 @@
     },
     "Build": {
       "total": 57,
-      "covered": 34,
-      "partial": 23,
+      "covered": 37,
+      "partial": 20,
       "missing": 0
     },
     "BuildQueue": {
       "total": 15,
-      "covered": 9,
-      "partial": 6,
+      "covered": 10,
+      "partial": 5,
       "missing": 0
     },
     "BuildType": {
@@ -207,14 +207,14 @@
     "approveAll": 1,
     "basePath": 12,
     "field": 6,
-    "fields": 236,
+    "fields": 232,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
     "includePersonalChanges": 1,
     "includeRunningBuilds": 1,
     "includeSupplimentaryData": 1,
-    "locator": 9,
+    "locator": 6,
     "logBuildUsage": 5,
     "moveToTop": 1,
     "name": 4,
@@ -222,7 +222,7 @@
     "requestor": 1,
     "resolveParameters": 10
   },
-  "partialOnlyBecauseOfFields": 215,
+  "partialOnlyBecauseOfFields": 214,
   "verificationEvidenceGaps": [
     "GET /app/rest/agents/{p1}",
     "GET /app/rest/changes",
