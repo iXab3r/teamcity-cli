@@ -24,6 +24,7 @@ import type {
 import { buildOutcome, type BuildOutcome } from "./outcome.js";
 import type { TeamCityPage } from "./paging.js";
 import { buildRecord, diagnosisRecord, followedRecord, withView } from "./presentation.js";
+import { fieldsOption } from "./projection.js";
 
 type ClientFor = (context: CommandContext) => Promise<TeamCityClient>;
 
@@ -256,17 +257,18 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
       const id = optionalString(args, "build-id");
       const job = optionalString(options, "job");
       const branch = optionalString(options, "branch");
+      const fields = optionalString(options, "fields");
       if (options.latest !== true) {
         if (job !== undefined || branch !== undefined)
           throw new Error("--job and --branch select a build only together with --latest.");
         if (id === undefined) throw new Error("Specify a build ID, or --job <id> --latest.");
-        return (await clientFor(context)).getBuild(integerValue(id));
+        return (await clientFor(context)).getBuild(integerValue(id), fields);
       }
       if (id !== undefined) throw new Error("Use either a build ID or --latest, not both.");
       if (job === undefined) throw new Error("--latest requires --job <id>.");
-      const build = await (await clientFor(context)).getLatestFinishedBuild(job, branch);
+      const build = await (await clientFor(context)).getLatestFinishedBuild(job, branch, fields);
       if (build === undefined) throw new Error("No finished build matches this job and branch.");
-      context.progress(
+      if (fields === undefined) context.progress(
         `Latest finished build on ${branch === undefined ? "all branches" : "the selected branch"}: ${build.id}`,
       );
       return build;
@@ -274,6 +276,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     {
       permission: Permission.ReadOnly,
       options: [
+        fieldsOption,
         { flags: "--job <id>", description: "Select a job for --latest" },
         {
           flags: "--branch <name>",

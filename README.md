@@ -211,6 +211,8 @@ instead of reporting an older successful default-branch build.
 ```text
 teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 teamcity-cli builds show --job Demo_Tests --branch main --latest
+teamcity-cli builds list --job Demo_Tests --fields "number,agent(name)" --limit 10 --json
+teamcity-cli builds show 101 --fields "number,statusText,triggered(type)" --json
 teamcity-cli jobs run Demo_Tests --branch main --param env.MODE=test --wait --timeout 10m
 teamcity-cli builds wait 101
 teamcity-cli builds diagnose 101
@@ -225,7 +227,12 @@ teamcity-cli builds diagnose 101
   request.
 - `--latest` reads once and returns the first finished, non-personal build in TeamCity's order
   (newest start first), whatever its result, including failed and canceled builds. Without
-  `--branch` it searches all branches; in human mode stderr names the scope.
+  `--branch` it searches all branches; without `--fields`, human stderr names the scope.
+- `builds list` and both `builds show` selectors accept `--fields <projection>`. TeamCity receives
+  the projection unchanged and returns native JSON with known bearer credential values masked;
+  human output uses the generic view. For lists, the projection selects each item: the CLI wraps
+  it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections fail
+  locally. Omitting `--fields` preserves the default projection, shaping and views.
 - Without `--state`, `builds list` includes queued, running and finished builds across all branches.
   It sends `defaultFilter:false` without a state dimension. JetBrains'
   [optional API reference: BuildPromotionFinder source](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildPromotionFinder.java#L936)

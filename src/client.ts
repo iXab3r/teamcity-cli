@@ -1,4 +1,5 @@
 import { teamCityUrl } from "./server-url.js";
+import { fieldsProjection } from "./projection.js";
 import * as triage from "./triage-models.js";
 import * as admin from "./admin-models.js";
 import * as infrastructure from "./infrastructure-models.js";
@@ -171,6 +172,7 @@ export interface ListJobsOptions extends TeamCityPageOptions {
 }
 
 export interface ListBuildsOptions extends TeamCityPageOptions {
+  fields?: string;
   job?: string;
   project?: string;
   branch?: string;
@@ -398,8 +400,9 @@ export class TeamCityClient {
   public async getLatestFinishedBuild(
     job: string,
     branch?: string,
+    fields?: string,
   ): Promise<TeamCityBuild | undefined> {
-    const response = await this.#requestJson<BuildsResponse>("GET", "/app/rest/builds", {
+    const response = await this.#projectedJson("GET", "/app/rest/builds", {
       locator: joinLocator(
         "defaultFilter:false",
         nestedId("buildType", job, "TeamCity job ID"),
@@ -409,7 +412,8 @@ export class TeamCityClient {
         "count:1",
       ),
       fields: `build(${buildFields})`,
-    });
+    }, value => value as BuildsResponse,
+    fields === undefined ? undefined : `build(${fieldsProjection(fields)})`);
     return response.build?.[0];
   }
 
@@ -433,11 +437,13 @@ export class TeamCityClient {
     );
   }
 
-  public getBuild(id: number): Promise<TeamCityBuild> {
-    return this.#requestJson<TeamCityBuild>(
+  public getBuild(id: number, fields?: string): Promise<TeamCityBuild> {
+    return this.#projectedJson(
       "GET",
       `/app/rest/builds/id:${integerId(id, "TeamCity build ID")}`,
       { fields: buildFields },
+      value => value as TeamCityBuild,
+      fields,
     );
   }
 
@@ -3271,6 +3277,38 @@ export class TeamCityClient {
     return decodeJson<T>(contents);
   }
 
+  /** Defaults retain their shaping; explicit projections return native JSON with known credentials masked. */
+  async #projectedJson<T>(
+    method: HttpMethod,
+    path: string,
+    query: Record<string, string>,
+    project: (value: unknown) => T,
+    fields?: string,
+    body?: unknown,
+  ): Promise<T> {
+    const value = await this.#requestJson<unknown>(method, path, {
+      ...query,
+      ...(fields === undefined ? {} : { fields: fieldsProjection(fields) }),
+    }, body);
+    return this.#projectedValue(value, fields, project);
+  }
+
+  #projectedValue<T>(value: unknown, fields: string | undefined, project: (value: unknown) => T): T {
+    if (fields === undefined) return project(value);
+    if (!this.#token) return value as T;
+    const credential = this.#token;
+    const mask = (text: string) => text.replaceAll(credential, "[redacted]");
+    const redact = (item: unknown): unknown => {
+      if (typeof item === "string") return mask(item);
+      if (Array.isArray(item)) return item.map(redact);
+      if (item !== null && typeof item === "object") {
+        return Object.fromEntries(Object.entries(item).map(([key, nested]) => [mask(key), redact(nested)]));
+      }
+      return item;
+    };
+    return redact(value) as T;
+  }
+
   /** A bounded selection of `key` items that follows TeamCity's continuation; see `readPages`. */
   async #list<T>(
     path: string,
@@ -3278,9 +3316,10 @@ export class TeamCityClient {
     key: string,
     fields: string,
     project: (item: unknown) => T,
-    page: TeamCityPageOptions,
+    page: TeamCityPageOptions & { fields?: string },
   ): Promise<TeamCityPage<T>> {
     const { limit, start } = normalizePage(page);
+    const projection = page.fields === undefined ? undefined : fieldsProjection(page.fields);
     return readPages(limit, start, async (request) => {
       const response = triage.object(await this.#requestJson("GET", path, {
         locator: joinLocator(
@@ -3289,9 +3328,12 @@ export class TeamCityClient {
           `count:${request.count}`,
           request.lookupLimit === undefined ? undefined : `lookupLimit:${request.lookupLimit}`,
         ),
-        fields: `nextHref,${key}(${fields})`,
+        fields: `nextHref,${key}(${projection ?? fields})`,
       }));
-      return { items: triage.array(response[key]).map(project), nextHref: response.nextHref };
+      return {
+        items: triage.array(response[key]).map(item => this.#projectedValue(item, projection, project)),
+        nextHref: response.nextHref,
+      };
     }, this.#signal);
   }
 

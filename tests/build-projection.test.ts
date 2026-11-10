@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
-import type { CliApplication } from "@eyeauras/cli-factory";
+import type { CliApplication, CliError } from "@eyeauras/cli-factory";
 import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -242,4 +242,37 @@ test("US-001 persistent RPC keeps default/custom projections and two profile cre
     ["builds", "show", "42"],
   ]);
   assert.deepEqual(replies, [{ jsonrpc: "2.0", id: 0, result: { custom: "[redacted]" } }, { jsonrpc: "2.0", id: 1, result: { custom: "[redacted]" } }, { jsonrpc: "2.0", id: 2, result: baselineBuild }]);
+});
+
+for (const credential of ["1", 'synthetic-quote"slash\\credential']) {
+  test(`US-001 credential masking preserves JSON types and continuation (${credential === "1" ? "short" : "escaped"})`, async t => {
+    const rt = await createTestRuntime(t, { tokens: { default: credential } });
+    const requests = trackRequests(t, 2, async (request, index) => {
+      await assertHttpRequest(request, {
+        method: "GET", url: origin + "/app/rest/builds",
+        query: { fields: "nextHref,build(custom)", locator: "defaultFilter:false,branch:default:any," + (index === 0 ? "start:0,count:3" : "start:1,count:2") },
+      });
+      const build = [{ custom: { echo: `before ${credential} after`, number: 1, flag: false, empty: null } }];
+      return HttpResponse.json(index === 0 ? { build, nextHref: "/app/rest/builds?locator=start:1" } : { build });
+    });
+    server.use(http.all("*", ({ request }) => requests.handle(request)));
+    assert.deepEqual(await rt.createCli().execute(["builds", "list", "--limit", "2", "--fields", "custom"]), {
+      count: 2, items: Array.from({ length: 2 }, () => ({ custom: { echo: "before [redacted] after", number: 1, flag: false, empty: null } })), hasMore: false, nextStart: null,
+    });
+  });
+}
+
+test("US-001 later page errors retain masked native items in list.incomplete", async t => {
+  const rt = await runtime(t);
+  const requests = trackRequests(t, 2, (_request, index) => index === 0
+    ? HttpResponse.json({ build: [{ custom: token }], nextHref: "/app/rest/builds?locator=start:1" })
+    : HttpResponse.text(`synthetic-server-payload ${token}`, { status: 503 }));
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await assert.rejects(rt.createCli().execute(["builds", "list", "--fields", "custom", "--limit", "2"]), error => {
+    const failure = error as CliError;
+    assert.equal(failure.code, "list.incomplete");
+    assert.deepEqual(failure.result, { count: 1, items: [{ custom: "[redacted]" }], hasMore: null, nextStart: 1 });
+    assert.equal((failure.cause as CliError).code, "http.serverError");
+    return true;
+  });
 });
