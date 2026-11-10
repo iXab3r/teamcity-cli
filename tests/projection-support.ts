@@ -146,6 +146,16 @@ for (const scenario of buildProjectionCases) {
     assert.deepEqual(await snapshot(rt.root), before);
   });
 
+  for (const option of Object.keys(scenario.nativeQuery ?? {})) for (const value of ["", " "]) {
+    test(`${story}-A${acceptance.blank} ${scenario.name}: rejects blank ${option} ${JSON.stringify(value)} on all surfaces`, async t => {
+      const rt = await runtime(t, [scenario.permission]);
+      const cli = rt.createCli();
+      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      for (const surface of surfaces) await failure(rt, cli, [...scenario.argv, "--" + option, value], surface, "usage");
+    });
+  }
+
   for (const fields of ["", " \t\n "]) {
     test(`${story}-A${acceptance.blank} ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
       const rt = await runtime(t, [scenario.permission]);
