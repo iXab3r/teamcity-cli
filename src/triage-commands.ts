@@ -26,11 +26,15 @@ async function partial<T extends { count: number; errorCount: number }>(
   return value;
 }
 
-async function statusPartial<T extends { errorCount: number }>(result: Promise<T>): Promise<T> {
+async function statusPartial<T extends { errorCount: number }>(
+  result: Promise<T>,
+  fields?: string,
+): Promise<T> {
   const value = await result;
-  if (
-    (value.errorCount ?? (value as { errors?: { item?: unknown[] } }).errors?.item?.length ?? 0) > 0
-  ) {
+  const errorCount = fields === undefined
+    ? value.errorCount
+    : (value as { errors?: { item?: unknown[] } }).errors?.item?.length ?? 0;
+  if (errorCount > 0) {
     throw new CliError("The status changed with errors; see errorCount.", {
       code: "build.statusPartial",
       result: value,
@@ -249,6 +253,7 @@ export function createTriageCommands(
             text(options, "comment"),
             fieldsFromOptions(options),
           ),
+          fieldsFromOptions(options),
         ),
       [fieldsOption, comment],
     ),

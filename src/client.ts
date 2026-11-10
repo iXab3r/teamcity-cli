@@ -1939,7 +1939,8 @@ export class TeamCityClient {
       ...(fields === undefined ? {} : { fields: fieldsProjection(fields) }),
     });
     if (fields !== undefined && contents.trim() !== "") {
-      return this.#projectedValue(decodeJson(contents), fields, (value) => value);
+      const value = this.#acknowledgedJson(contents);
+      if (value !== undefined) return this.#projectedValue(value, fields, raw => raw);
     }
     return { jobId: jobId, pageDeleted: true };
   }
@@ -2162,8 +2163,8 @@ export class TeamCityClient {
         body,
         "text/plain",
       );
-      if (contents.trim() !== "")
-        return this.#projectedValue(decodeJson(contents), fields, (value) => value);
+      const value = this.#acknowledgedJson(contents);
+      if (value !== undefined) return this.#projectedValue(value, fields, raw => raw);
       return { buildId: id, appended: true };
     }
     await this.#requestText("POST", `${buildPath(id)}/log`, body);
@@ -3383,6 +3384,15 @@ export class TeamCityClient {
   ): Promise<T> {
     const contents = await this.#request(method, path, query, body);
     return decodeJson<T>(contents);
+  }
+
+  // Acknowledgement commands already accept empty or non-JSON successful bodies.
+  #acknowledgedJson(contents: string): unknown {
+    try {
+      return JSON.parse(contents);
+    } catch {
+      return undefined;
+    }
   }
 
   /** Defaults retain their shaping; explicit projections return native JSON with known credentials masked. */
