@@ -7,7 +7,7 @@ import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing"
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createTestRuntime } from "./support.js";
-export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; issuedToken?: boolean; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
+export type ProjectionCase = {name: string; argv: string[]; method: string; path: string; query: Record<string,string>; body: string; baselineResponse: Record<string,unknown>; baselineResult: unknown; human: string; stderr: string; collection: string; permission: string; issuedToken?: string; parityAcceptance?: number; field?: boolean; acknowledgement?: boolean; fileCollection?: boolean; fixedQuery?: Record<string,string>; nativeQuery?: Record<string,string>; preflight: {path: string; query: Record<string,string>} | null};
 export function projectionAcceptance(story: string, cases: ProjectionCase[], acceptance = {native: 1, paging: 2, mutation: 3, parity: 4, denied: 5, error: 6, blank: 7}) {
 const buildProjectionCases = cases.map(c => ({ ...c, locator: (c.query as Record<string,string>).locator, defaultFields: (c.query as Record<string,string>).fields, fields: (s: string) => c.fileCollection ? `count,file(${s})` : c.collection ? `nextHref,${c.collection}(${s})` : s, response: <T>(v: T) => c.fileCollection ? {file: [v]} : c.collection ? { [c.collection]: [v] } : v, result: <T>(v: T) => c.fileCollection ? {count: 1, items: [v]} : c.collection ? {count: 1, items: [v], hasMore: false, nextStart: null} : v }));
 
@@ -30,14 +30,14 @@ async function runtime(t: test.TestContext, permissions: string[] = ["ReadOnly"]
   });
 }
 
-async function success(rt: Runtime, cli: CliApplication, argv: string[], surface: Surface, expected: unknown) {
-  if (argv.includes("--alias") && argv.includes("create") && argv.includes("tokens")) {
-    await rt.secretStore.delete("ai-cli-factory:teamcity-cli", "default:issued-token:automation");
+async function success(rt: Runtime, cli: CliApplication, argv: string[], surface: Surface, expected: unknown, issuedToken?: string) {
+  if (issuedToken !== undefined) {
+    await rt.secretStore.delete("ai-cli-factory:teamcity-cli", "default:issued-token:" + issuedToken);
   }
   if (surface === "execute") assert.deepEqual(await cli.execute(argv), expected);
   else if (surface === "rpc") {
     // Two requests share one persistent session; parsing and projection must stay invocation-local.
-    assert.deepEqual(await rt.rpc(cli, argv.includes("--alias") ? [argv] : [argv, argv]), (argv.includes("--alias") ? [0] : [0, 1]).map(id => ({ jsonrpc: "2.0", id, result: JSON.parse(JSON.stringify(expected)) })));
+    assert.deepEqual(await rt.rpc(cli, issuedToken !== undefined ? [argv] : [argv, argv]), (issuedToken !== undefined ? [0] : [0, 1]).map(id => ({ jsonrpc: "2.0", id, result: JSON.parse(JSON.stringify(expected)) })));
   } else {
     const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
     assert.equal(rendered.exitCode, 0, rendered.stderr);
@@ -76,35 +76,46 @@ async function failure(rt: Runtime, cli: CliApplication, argv: string[], surface
 
 for (const scenario of buildProjectionCases) {
   test(`${story}-A${acceptance.native} ${scenario.name}: native projection on all four surfaces`, async t => {
-    const rt = await runtime(t, [scenario.permission]);
-    const cli = rt.createCli();
-    const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
-      if (scenario.preflight && request.method === "GET") {
-        await assertHttpRequest(request.clone(), {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
-        return HttpResponse.json(scenario.baselineResponse);
-      }
-      await assertHttpRequest(request.clone(), {
-        method: scenario.method, url: origin + scenario.path,
-        query: { ...scenario.fixedQuery, ...scenario.nativeQuery, ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.field ? {field: projection} : {fields: scenario.fields(projection)}) },
-        headers: { accept: "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+    for (const includeValue of scenario.issuedToken === undefined ? [false] : [false, true]) {
+      const responseValue = includeValue ? { ...native, value: "synthetic-issued-token" } : native;
+      const rt = await runtime(t, [scenario.permission]);
+      const cli = rt.createCli();
+      const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
+        if (scenario.preflight && request.method === "GET") {
+          await assertHttpRequest(request.clone(), {method: "GET", url: origin + scenario.preflight.path, query: scenario.preflight.query});
+          return HttpResponse.json(scenario.baselineResponse);
+        }
+        await assertHttpRequest(request.clone(), {
+          method: scenario.method, url: origin + scenario.path,
+          query: { ...scenario.fixedQuery, ...scenario.nativeQuery, ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.field ? {field: projection} : {fields: scenario.fields(projection)}) },
+          headers: { accept: "application/json", authorization: `Bearer ${token}` },
+          body: { text: scenario.body },
+        });
+        assert.equal(await request.text(), scenario.body);
+        return HttpResponse.json(scenario.field ? scenario.baselineResponse : scenario.response(responseValue));
       });
-      assert.equal(await request.text(), scenario.body);
-      return HttpResponse.json(scenario.field ? scenario.baselineResponse : scenario.response(native));
-    });
-    server.use(http.all("*", ({ request }) => requests.handle(request)));
-    for (const surface of surfaces) {
-      const rendered = await success(rt, cli, [...scenario.argv, ...Object.entries(scenario.nativeQuery ?? {}).flatMap(([key,value]) => ["--" + key, value]), scenario.field ? "--field" : "--fields", projection], surface, scenario.field ? scenario.baselineResult : scenario.result(native));
-      if (rendered && surface === "human" && !scenario.field) {
-        assert.match(rendered.stdout, /triggered:/);
-        assert.match(rendered.stdout, /fixture-user/);
-        assert.match(rendered.stdout, /custom:/);
-        assert.doesNotMatch(rendered.stdout + rendered.stderr, /BUILD\s+JOB|Build undefined|Next:|undefined/);
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
+      for (const surface of surfaces) {
+        const rendered = await success(rt, cli, [...scenario.argv, ...Object.entries(scenario.nativeQuery ?? {}).flatMap(([key,value]) => ["--" + key, value]), scenario.field ? "--field" : "--fields", projection], surface, scenario.field ? scenario.baselineResult : scenario.result(responseValue), scenario.issuedToken);
+        if (scenario.issuedToken !== undefined) {
+          const stored = await rt.secretStore.get("ai-cli-factory:teamcity-cli", "default:issued-token:" + scenario.issuedToken);
+          if (includeValue) {
+            assert.deepEqual(JSON.parse(stored!), { name: scenario.baselineResponse.name, value: "synthetic-issued-token" });
+          } else {
+            assert.equal(stored, undefined);
+          }
+        }
+        if (rendered && surface === "human" && !scenario.field) {
+          assert.match(rendered.stdout, /triggered:/);
+          assert.match(rendered.stdout, /fixture-user/);
+          assert.match(rendered.stdout, /custom:/);
+          assert.doesNotMatch(rendered.stdout + rendered.stderr, /BUILD\s+JOB|Build undefined|Next:|undefined/);
+        }
       }
     }
   });
 
-  test(`${story}-A${acceptance.parity} ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
+  test(`${story}-A${scenario.parityAcceptance ?? acceptance.parity} ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
     const rt = await runtime(t, [scenario.permission]);
     const cli = rt.createCli();
     const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
@@ -123,7 +134,10 @@ for (const scenario of buildProjectionCases) {
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
     for (const surface of surfaces) {
-      const rendered = await success(rt, cli, scenario.argv, surface, scenario.baselineResult);
+      const rendered = await success(rt, cli, scenario.argv, surface, scenario.baselineResult, scenario.issuedToken);
+      if (scenario.issuedToken !== undefined) {
+        assert.deepEqual(JSON.parse((await rt.secretStore.get("ai-cli-factory:teamcity-cli", "default:issued-token:" + scenario.issuedToken))!), {name: scenario.baselineResponse.name, value: scenario.baselineResponse.value});
+      }
       if (rendered) assert.equal(rendered.stderr, surface === "human" ? scenario.stderr : "");
       if (rendered && surface === "human") assert.equal(rendered.stdout, scenario.human);
     }
@@ -173,7 +187,7 @@ for (const scenario of buildProjectionCases) {
   }
 }
 
-const errorCase = cases.find(c => !c.acknowledgement && !c.field) ?? cases[0]!;
+const errorCase = cases.find(c => c.parityAcceptance === 8) ?? cases.find(c => !c.acknowledgement && !c.field) ?? cases[0]!;
 const failures = [
   { name: "401", code: "http.unauthorized", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 401 }) },
   { name: "403", code: "http.forbidden", response: () => HttpResponse.text(`synthetic-server-payload ${token}`, { status: 403 }) },
@@ -183,12 +197,14 @@ const failures = [
   { name: "decoding", code: "error", response: () => HttpResponse.text(`invalid JSON synthetic-server-payload ${token}`) },
 ];
 for (const example of failures) {
-  test(`${story}-A${acceptance.error} ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
+  test(`${story}-A${example.name === "404" && errorCase.parityAcceptance === 8 ? 8 : acceptance.error} ${example.name}: existing safe error contract without retries on all surfaces`, async t => {
     const rt = await runtime(t, [errorCase.permission]);
     const cli = rt.createCli();
-    const requests = trackRequests(t, 5, () => example.response());
+    const defaultRead = example.name === "404" && errorCase.parityAcceptance === 8;
+    const requests = trackRequests(t, defaultRead ? 10 : 5, () => example.response());
     server.use(http.all("*", ({ request }) => requests.handle(request)));
     for (const surface of surfaces) {
+      if (defaultRead) await failure(rt, cli, errorCase.argv, surface, example.code);
       const evidence = await failure(rt, cli, [...errorCase.argv, "--fields", projection], surface, example.code);
       if (surface !== "human" && ["transport", "decoding"].includes(example.name)) assert.match(evidence, /cause/);
     }

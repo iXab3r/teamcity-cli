@@ -47,6 +47,7 @@ export const cases: ProjectionCase[] = [
   },
   {
     "name": "users show 12",
+    "parityAcceptance": 8,
     "argv": [
       "users",
       "show",
@@ -419,6 +420,6 @@ export const cases: ProjectionCase[] = [
     "collection": "",
     "permission": "Credentials",
     "preflight": null,
-    "issuedToken": true
+    "issuedToken": "automation"
   }
 ];
