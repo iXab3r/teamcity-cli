@@ -511,7 +511,7 @@ User/group/node writes require **Admin**, token issuance/revocation/local owned-
 requires **Credentials**. Both categories default off; granting Update does not enable either.
 They are local safety gates, not remote authorization. No live administrative proof runs in CI.
 
-`users` exposes bounded list, identity-only create/update/delete, direct groups, roles,
+`users` exposes bounded list, `show <id>`, identity-only create/update/delete, direct groups, roles,
 resolved permissions, property names/existence, safe identity fields and remote session commands.
 `groups` exposes identities, direct parents, roles and properties. User update preserves omitted
 collections; role/group replacement is explicit and can be non-atomic. No items clears direct
@@ -888,6 +888,14 @@ the common package and how to start the next in-repo or external integration.
 See [release and Core adoption gates](release.md) and [migration provenance](migration.md).
 
 ## Native projections and controls
+
+User projections are available on `users list` (item fields) and whole-response
+`users show/create/update`, `groups list/show/replace/remove`, `permissions list`,
+`properties list`, and `tokens list/create`. `users show <id>` uses the existing
+user ID selector and requests `id,username,name` by default, returning that safe
+record; missing users return `http.notFound`. Token creation keeps Credentials
+permission and stores an issued value under the requested alias when present;
+if explicit fields omit the value, no issued-token record is stored.
 
 Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
 deployments list/show, parent, and templates list/default show. Project list and branches

@@ -1,22 +1,22 @@
 {
-  "baselineHead": "08167d1dbe4e40d0dd0f3d5896306b327e38dbed",
+  "baselineHead": "f97ccfe87634a9bd4f7abc67c52befd9edc24f1b",
   "dateUTC": "2026-11-10",
   "total": 449,
-  "covered": 401,
-  "partial": 47,
-  "missing": 1,
-  "reached": 448,
+  "covered": 413,
+  "partial": 36,
+  "missing": 0,
+  "reached": 449,
   "byPermission": {
     "ReadOnly": {
       "total": 235,
-      "covered": 201,
-      "partial": 33,
-      "missing": 1
+      "covered": 208,
+      "partial": 27,
+      "missing": 0
     },
     "Update": {
       "total": 214,
-      "covered": 200,
-      "partial": 14,
+      "covered": 205,
+      "partial": 9,
       "missing": 0
     }
   },
@@ -173,9 +173,9 @@
     },
     "User": {
       "total": 28,
-      "covered": 16,
-      "partial": 11,
-      "missing": 1
+      "covered": 28,
+      "partial": 0,
+      "missing": 0
     },
     "VcsRoot": {
       "total": 14,
@@ -205,7 +205,7 @@
   "unsupportedByParameter": {
     "addTimestamp": 1,
     "basePath": 3,
-    "fields": 45,
+    "fields": 34,
     "includeBuildLogs": 1,
     "includeConfigs": 1,
     "includeDatabase": 1,
@@ -215,11 +215,9 @@
     "locator": 2,
     "name": 1
   },
-  "partialOnlyBecauseOfFields": 41,
+  "partialOnlyBecauseOfFields": 30,
   "verificationEvidenceGaps": [],
-  "nonLeafTransportOperations": [
-    "GET /app/rest/users/{p1}"
-  ],
+  "nonLeafTransportOperations": [],
   "gateDiffersFromMethod": [
     "GET /app/rest/buildTypes/{p1}/output-parameters",
     "GET /app/rest/buildTypes/{p1}/output-parameters/{p2}",
@@ -232,14 +230,14 @@
     "GET /app/rest/projects/{p1}/parameters/{p2}",
     "GET /app/rest/projects/{p1}/secure/values/{p2}"
   ],
-  "leaves": 456,
+  "leaves": 457,
   "leafPermissions": {
     "Admin": 37,
     "Credentials": 14,
-    "ReadOnly": 234,
+    "ReadOnly": 235,
     "Update": 171
   },
-  "leavesReachingTransport": 452,
+  "leavesReachingTransport": 453,
   "localLeavesWithoutRequest": [
     "projects secure forget-reference <alias>",
     "users tokens forget",

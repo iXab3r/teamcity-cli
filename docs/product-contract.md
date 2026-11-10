@@ -7,6 +7,14 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Users support item fields on list and whole-response fields on show/create/update,
+groups list/show/replace/remove, permissions list, properties list and tokens list/create.
+Explicit fields on account and token operations are unchanged passthrough with the
+existing permission categories. Token creation stores a returned value under the
+requested alias; a projection omitting it stores nothing. Omission preserves safe
+identity/token shaping, existing bodies and acknowledgements. `users show <id>`
+returns the same `id,username,name` shape as a default list item.
+
 Project reads accept `--fields` on list/show, pools list, branches, default-value-sets,
 deployments list/show, parent, and templates list/default show. Project list and branches
 retain their paging envelopes; other scoped reads project the whole response.
