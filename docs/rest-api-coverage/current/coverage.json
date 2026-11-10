@@ -12007,14 +12007,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "server files list <id>",
     "permission": "ReadOnly",
     "options": [
-     "--limit <count>"
+     "--limit <count>",
+     "--fields <projection>",
+     "--base-path <path>"
     ],
     "clientMethod": "listFiles"
    }
@@ -12022,8 +12024,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -12032,20 +12034,19 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/server-controls.test.ts",
+    "tests/server-files-projection.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12073,8 +12074,8 @@
   "produces": [
    "*/*"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "server files archive <id> <path>",
@@ -12082,6 +12083,8 @@
     "options": [
      "--output <path>",
      "--max-bytes <bytes>",
+     "--base-path <path>",
+     "--archive-name <name>",
      "--limit <count>"
     ],
     "clientMethod": null
@@ -12090,8 +12093,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -12100,20 +12103,18 @@
    },
    {
     "name": "name",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "--archive-name <name>"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "name"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/server-controls.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -12182,32 +12183,33 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "server files metadata <id> <path>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getFileMetadata"
    }
   ],
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/server-files-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -12235,14 +12237,16 @@
    "application/xml",
    "application/json"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "server files children <id> <path>",
     "permission": "ReadOnly",
     "options": [
-     "--limit <count>"
+     "--limit <count>",
+     "--fields <projection>",
+     "--base-path <path>"
     ],
     "clientMethod": "listFiles"
    }
@@ -12250,8 +12254,8 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "omitted",
-    "callerControl": null
+    "wire": "fixed",
+    "callerControl": "same-named option"
    },
    {
     "name": "locator",
@@ -12260,20 +12264,19 @@
    },
    {
     "name": "fields",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    }
   ],
-  "unsupportedQueryParameters": [
-   "basePath",
-   "fields"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/server-controls.test.ts",
+    "tests/server-files-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17742,14 +17745,21 @@
   "produces": [
    "text/plain"
   ],
-  "status": "partial",
-  "reason": "The core action is shipped; documented query controls remain unavailable to the caller.",
+  "status": "covered",
+  "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
     "command": "server backup start <name>",
     "permission": "Admin",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--add-timestamp <boolean>",
+     "--include-configs <boolean>",
+     "--include-database <boolean>",
+     "--include-build-logs <boolean>",
+     "--include-personal-changes <boolean>",
+     "--include-running-builds <boolean>",
+     "--include-supplementary-data <boolean>"
     ],
     "clientMethod": "startBackup"
    }
@@ -17762,54 +17772,47 @@
    },
    {
     "name": "addTimestamp",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "includeConfigs",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "includeDatabase",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "includeBuildLogs",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "includePersonalChanges",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "includeRunningBuilds",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "same-named option"
    },
    {
     "name": "includeSupplimentaryData",
-    "wire": "fixed",
-    "callerControl": null
+    "wire": "varies",
+    "callerControl": "--include-supplementary-data <boolean>"
    }
   ],
-  "unsupportedQueryParameters": [
-   "addTimestamp",
-   "includeConfigs",
-   "includeDatabase",
-   "includeBuildLogs",
-   "includePersonalChanges",
-   "includeRunningBuilds",
-   "includeSupplimentaryData"
-  ],
+  "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/server-controls.test.ts",
     "tests/system.test.ts",
     "tests/validation-contract.test.ts"
    ],

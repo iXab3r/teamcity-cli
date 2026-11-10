@@ -7,6 +7,15 @@ Historical extraction provenance remains in [migration](migration.md).
 
 ## Field projections
 
+Server file list/children accept item `--fields` and `--base-path`, preserving
+`{count,items}`, the existing locator and default fields without lookahead. Metadata
+accepts whole-response fields; archive accepts `--base-path` and `--archive-name`
+(query `name`). Server files expose neither resolve-parameters nor log-build-usage.
+Backup start retains Admin and required confirmation; its seven explicit boolean
+switches control timestamp, configs, database, build logs, personal changes, running
+builds and supplementary data. Each accepts only `true` or `false`; omitted switches
+retain their existing values, including the wire spelling `includeSupplimentaryData`.
+
 Health and audit lists accept item `--fields` and preserve their paging envelopes
 and scope filters. Health show, health category list/show, and audit show accept
 whole-response fields. Category list also accepts unchanged `--locator`, omitted

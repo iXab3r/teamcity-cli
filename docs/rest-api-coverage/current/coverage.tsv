@@ -236,11 +236,11 @@ GET /app/rest/server	Server	ReadOnly	covered	server status	getServerStatus		exer
 GET /app/rest/server/authSettings	Server Authentication Settings	ReadOnly	covered	server authentication show	getAuthenticationSettings		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/backup	Server	ReadOnly	covered	server backup status	getBackupStatus		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/cleanup	Server	ReadOnly	covered	server cleanup show	getCleanup		exercised-in-passing-suite	tests/system.test.ts
-GET /app/rest/server/files/{p1}	Server	ReadOnly	partial	server files list <id>	listFiles	basePath;fields	exercised-in-passing-suite	tests/files.test.ts;tests/validation-contract.test.ts
-GET /app/rest/server/files/{p1}/archived{p2}	Server	ReadOnly	partial	server files archive <id> <path>		basePath;name	exercised-in-passing-suite	tests/files.test.ts
+GET /app/rest/server/files/{p1}	Server	ReadOnly	covered	server files list <id>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts;tests/server-files-projection.test.ts;tests/validation-contract.test.ts
+GET /app/rest/server/files/{p1}/archived{p2}	Server	ReadOnly	covered	server files archive <id> <path>			exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts
 GET /app/rest/server/files/{p1}/files{p2}	Server	ReadOnly	covered	server files download <id> <path>			exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/server/files/{p1}/metadata{p2}	Server	ReadOnly	partial	server files metadata <id> <path>	getFileMetadata	fields	exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/server/files/{p1}/{p2}	Server	ReadOnly	partial	server files children <id> <path>	listFiles	basePath;fields	exercised-in-passing-suite	tests/files.test.ts
+GET /app/rest/server/files/{p1}/metadata{p2}	Server	ReadOnly	covered	server files metadata <id> <path>	getFileMetadata		exercised-in-passing-suite	tests/files.test.ts;tests/server-files-projection.test.ts
+GET /app/rest/server/files/{p1}/{p2}	Server	ReadOnly	covered	server files children <id> <path>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts;tests/server-files-projection.test.ts
 GET /app/rest/server/globalSettings	Global Server Settings	ReadOnly	covered	server settings show	getGlobalSettings		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/licensingData	Server	ReadOnly	covered	server licenses summary	getLicenseSummary		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
 GET /app/rest/server/licensingData/licenseKeys	Server	ReadOnly	covered	server licenses list	listLicenses		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
@@ -344,7 +344,7 @@ POST /app/rest/projects/{p1}/versionedSettings/commitCurrentSettings	VersionedSe
 POST /app/rest/projects/{p1}/versionedSettings/loadSettings	VersionedSettings	Update	covered	projects versioned-settings load <id>	loadVersionedSettings		exercised-in-passing-suite	tests/authoring.test.ts;tests/versioned-settings-projection.test.ts
 POST /app/rest/projects/{p1}/versionedSettings/tokens	VersionedSettings	Update	covered	projects versioned-settings tokens set <id>	setVersionedTokens		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 POST /app/rest/roles	Role	Update	covered	roles create	createRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
-POST /app/rest/server/backup	Server	Update	partial	server backup start <name>	startBackup	addTimestamp;includeConfigs;includeDatabase;includeBuildLogs;includePersonalChanges;includeRunningBuilds;includeSupplimentaryData	exercised-in-passing-suite	tests/system.test.ts;tests/validation-contract.test.ts
+POST /app/rest/server/backup	Server	Update	covered	server backup start <name>	startBackup		exercised-in-passing-suite	tests/server-controls.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
 POST /app/rest/server/licensingData/licenseKeys	Server	Update	covered	server licenses add	addLicense		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
 POST /app/rest/userGroups	Group	Update	covered	groups create <key>	createAccountGroup		exercised-in-passing-suite	tests/authoring.test.ts;tests/groups-projection.test.ts
 POST /app/rest/userGroups/{p1}/roles	Group	Update	covered	groups roles add <id> <role-id>	addAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
