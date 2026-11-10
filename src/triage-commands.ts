@@ -62,6 +62,9 @@ export function createTriageCommands(
     start: Number(options.start),
   });
   const ids = (options: Record<string, unknown>) => ((options.build ?? []) as string[]).map(Number);
+  const partialFields = (field: string): OptionDefinition => ({
+    ...fieldsOption, description: `Include ${field} for partial-failure detection`,
+  });
   const batchIds = repeatOption("--build <id>", "Repeat build IDs", true);
   const comment = option("--comment <text>", "Attach a comment", true);
   const message = option("--text <text>", "Supply build log text", true);
@@ -89,14 +92,14 @@ export function createTriageCommands(
         "Cancel selected builds",
         Permission.Update,
         (c, { options }) => partial(c.cancelBuildBatch(ids(options), text(options, "comment"), fieldsFromOptions(options))),
-        [batchIds, comment, fieldsOption],
+        [batchIds, comment, partialFields("errorCount")],
       ),
       leaf(
         "delete",
         "Delete selected builds and history",
         Permission.Update,
         (c, { options }) => partial(c.deleteBuildBatch(ids(options), fieldsFromOptions(options))),
-        [batchIds, fieldsOption],
+        [batchIds, partialFields("errorCount")],
       ),
       command("comment", "Change selected build comments", [
         leaf(
@@ -106,14 +109,14 @@ export function createTriageCommands(
           (c, { options }) => partial(c.setBuildBatchComment(ids(options), text(options, "text"),
                 fieldsFromOptions(options),
               )),
-          [batchIds, message, fieldsOption],
+          [batchIds, message, partialFields("errorCount")],
         ),
         leaf(
           "clear",
           "Remove comments",
           Permission.Update,
           (c, { options }) => partial(c.clearBuildBatchComment(ids(options), fieldsFromOptions(options))),
-          [batchIds, fieldsOption],
+          [batchIds, partialFields("errorCount")],
         ),
       ]),
       leaf(
@@ -124,7 +127,7 @@ export function createTriageCommands(
           partial(c.pinBuildBatch(ids(options), booleanText(text(options, "status")) === "true",
               fieldsFromOptions(options),
             )),
-        [batchIds, fieldsOption, option("--status <boolean>", "Set true or false", true)],
+        [batchIds, partialFields("errorCount"), option("--status <boolean>", "Set true or false", true)],
       ),
       command(
         "tags",
@@ -138,7 +141,7 @@ export function createTriageCommands(
               partial(c.tagBuildBatch(ids(options), options.tag as string[], action === "remove",
                   fieldsFromOptions(options),
                 )),
-            [batchIds, fieldsOption, repeatOption("--tag <name>", "Repeat public tags", true)],
+            [batchIds, partialFields("errorCount"), repeatOption("--tag <name>", "Repeat public tags", true)],
           ),
         ),
       ),
@@ -218,7 +221,7 @@ export function createTriageCommands(
             fieldsFromOptions(options),
           ),
           fieldsFromOptions(options)),
-      [fieldsOption, comment],
+      [partialFields("errors(item)"), comment],
     ),
     leaf(
       "test-occurrences <id>",
@@ -247,7 +250,7 @@ export function createTriageCommands(
               fieldsFromOptions(options),
           )),
         [
-          fieldsOption,
+          partialFields("vcsLabel(status)"),
           option("--label <text>", "Set the label", true),
           option("--root-instance <id>", "Select a VCS root instance", true),
         ],
