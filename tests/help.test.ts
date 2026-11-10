@@ -38,3 +38,24 @@ test("TeamCity help uses short actions and retains scenario examples", async t =
   assert.match(configure.stdout, /Read the token from stdin/);
   assert.match(configure.stdout, /My Settings & Tools >\s+Access Tokens/);
 });
+
+for (const { argv, field } of [
+  ...[["cancel"], ["delete"], ["comment", "set"], ["comment", "clear"], ["pin"], ["tags", "add"], ["tags", "remove"]].map(path => ({ argv: ["builds", "batch", ...path], field: "errorCount" })),
+  { argv: ["builds", "set-status"], field: "errors(item)" },
+  { argv: ["builds", "vcs-labels", "add"], field: "vcsLabel(status)" },
+]) test(`#72 ${argv.join(" ")} help names the partial-failure field`, async t => {
+  const runtime = await createTestRuntime(t);
+  const help = await runtime.run(runtime.createCli(), [...argv, "--help"]);
+  assert.equal(help.exitCode, 0);
+  assert.ok(help.stdout.includes(`Include ${field} for partial-failure detection`), help.stdout);
+});
+
+test("#72 other projections retain the generic fields description", async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  for (const argv of [["builds", "show"], ["builds", "batch", "show"], ["builds", "vcs-labels", "list"]]) {
+    const help = await runtime.run(cli, [...argv, "--help"]);
+    assert.match(help.stdout, /--fields <projection>\s+Select native TeamCity fields/);
+    assert.doesNotMatch(help.stdout, /partial-failure detection/);
+  }
+});
