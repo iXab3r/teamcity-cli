@@ -282,3 +282,43 @@ export function fileControlsAcceptance(story: string) {
     });
   }
 }
+
+export function nativeControlsAcceptance(story: string, cases: Array<{argv: string[]; query: Record<string,string>; controls: Record<string,string>; boolean?: string; archive?: boolean; permission: string}>) {
+  const server = setupServer();
+  test.before(() => server.listen({onUnhandledRequest: "error"}));
+  test.afterEach(() => server.resetHandlers());
+  test.after(() => server.close());
+  for (const c of cases) {
+    const response = () => c.archive ? new HttpResponse(new Uint8Array([80,75,5,6,...Array(18).fill(0)]), {headers: {"content-type":"application/zip"}}) : c.argv.includes("notify-commit") ? new HttpResponse(null, {status:202}) : HttpResponse.json({file:[{name:"src",size:7}]});
+    for (const explicit of [false,true]) test(`${story}-A${explicit ? 1 : 4} ${c.argv.join(" ")}: ${explicit ? "explicit controls" : "default parity"} on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, {profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
+      const requests = trackRequests(t, 4, request => {
+        assert.deepEqual(Object.fromEntries(new URL(request.url).searchParams), {...c.query,...(explicit ? Object.fromEntries(Object.entries(c.controls).map(([key,value]) => [{"base-path":"basePath","archive-name":"name","ok-on-nothing-found":"okOnNothingFound"}[key] ?? key,value])) : {})});
+        return response();
+      });
+      server.use(http.all("*", ({request}) => requests.handle(request)));
+      const cli = rt.createCli();
+      for (const surface of ["human","json","execute","rpc"]) {
+        const argv = [...c.argv,...(explicit ? Object.entries(c.controls).flatMap(([k,v])=>["--"+k,v]) : []),...(c.archive ? ["--output",join(rt.root,surface+explicit)] : [])];
+        if (surface === "execute") await cli.execute(argv);
+        else if (surface === "rpc") assert.ok(!(await rt.rpc(cli,[argv]) as {error?:unknown}[])[0]!.error);
+        else assert.equal((await rt.run(cli,[...argv,...(surface === "json" ? ["--json"] : [])])).exitCode,0);
+      }
+    });
+    for (const key of Object.keys(c.controls)) for (const value of [""," ",...(c.boolean === key ? ["TRUE","1"] : [])]) test(`${story}-A7 ${c.argv.join(" ")}: rejects ${key} ${JSON.stringify(value)} locally`, async t => {
+      const rt = await createTestRuntime(t,{profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
+      const requests=trackRequests(t,0,response);server.use(http.all("*",({request})=>requests.handle(request)));
+      await assert.rejects(rt.createCli().execute([...c.argv,"--"+key,value]),{code:"usage"});
+    });
+    if (c.archive) test(`${story}-A1 archive retains no-overwrite and byte bounds`, async t => {
+      const {writeFile} = await import("node:fs/promises");
+      const rt = await createTestRuntime(t);server.use(http.all("*",response));
+      const argv=[...c.argv,...Object.entries(c.controls).flatMap(([k,v])=>["--"+k,v])];
+      const target=join(rt.root,"existing");await writeFile(target,"fixture");
+      await assert.rejects(rt.createCli().execute([...argv,"--output",target]),/already exists/);
+      assert.equal(await readFile(target,"utf8"),"fixture");
+      await assert.rejects(rt.createCli().execute([...argv,"--output",join(rt.root,"bounded"),"--max-bytes","1"]));
+      await assert.rejects(readFile(join(rt.root,"bounded")));
+    });
+  }
+}
