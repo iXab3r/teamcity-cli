@@ -1,5 +1,5 @@
 import { teamCityUrl } from "./server-url.js";
-import { fieldsProjection, knownCredentialMask } from "./projection.js";
+import { fieldsProjection, knownCredentialMask, type Projected } from "./projection.js";
 import * as triage from "./triage-models.js";
 import * as admin from "./admin-models.js";
 import * as infrastructure from "./infrastructure-models.js";
@@ -171,8 +171,8 @@ export interface ListJobsOptions extends TeamCityPageOptions {
   project?: string;
 }
 
-export interface ListBuildsOptions extends TeamCityPageOptions {
-  fields?: string;
+export interface ListBuildsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   job?: string;
   project?: string;
   branch?: string;
@@ -184,8 +184,8 @@ export interface ListBuildTestsOptions extends TeamCityPageOptions {
   status?: TeamCityTestStatus;
 }
 
-export interface ListQueueOptions extends TeamCityPageOptions {
-  fields?: string;
+export interface ListQueueOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
+  fields?: F;
   job?: string;
   project?: string;
 }
@@ -206,8 +206,8 @@ export interface RunJobOptions {
   properties?: readonly PlainProperty[];
 }
 
-export interface CancelBuildOptions {
-  fields?: string;
+export interface CancelBuildOptions<F extends string | undefined = string | undefined> {
+  fields?: F;
   comment?: string;
 }
 
@@ -400,12 +400,12 @@ export class TeamCityClient {
    * The first finished, non-personal build of one job in TeamCity's order (newest start first),
    * on one branch or on all branches. Any result counts, including failed and canceled builds.
    */
-  public async getLatestFinishedBuild(
+  public async getLatestFinishedBuild<F extends string | undefined = undefined>(
     job: string,
     branch?: string,
-    fields?: string,
-  ): Promise<TeamCityBuild | undefined> {
-    const response = await this.#projectedJson("GET", "/app/rest/builds", {
+    fields?: F,
+  ): Promise<Projected<TeamCityBuild | undefined, F>> {
+    const response = await this.#requestJson<BuildsResponse>("GET", "/app/rest/builds", {
       locator: joinLocator(
         "defaultFilter:false",
         nestedId("buildType", job, "TeamCity job ID"),
@@ -414,13 +414,12 @@ export class TeamCityClient {
         "personal:false",
         "count:1",
       ),
-      fields: `build(${buildFields})`,
-    }, value => value as BuildsResponse,
-    fields === undefined ? undefined : `build(${fieldsProjection(fields)})`);
-    return response.build?.[0];
+      fields: `build(${fields === undefined ? buildFields : fieldsProjection(fields)})`,
+    });
+    return this.#projectedValue(response.build?.[0], fields, value => value as TeamCityBuild | undefined);
   }
 
-  public listBuilds(options: ListBuildsOptions = {}): Promise<TeamCityPage<TeamCityBuild>> {
+  public listBuilds<F extends string | undefined = undefined>(options: ListBuildsOptions<F> = {}): Promise<TeamCityPage<Projected<TeamCityBuild, F>>> {
     return this.#list(
       "/app/rest/builds",
       [
@@ -440,7 +439,7 @@ export class TeamCityClient {
     );
   }
 
-  public getBuild(id: number, fields?: string): Promise<TeamCityBuild> {
+  public getBuild<F extends string | undefined = undefined>(id: number, fields?: F): Promise<Projected<TeamCityBuild, F>> {
     return this.#projectedJson(
       "GET",
       `/app/rest/builds/id:${integerId(id, "TeamCity build ID")}`,
@@ -532,7 +531,7 @@ export class TeamCityClient {
     );
   }
 
-  public listQueue(options: ListQueueOptions = {}): Promise<TeamCityPage<TeamCityBuild>> {
+  public listQueue<F extends string | undefined = undefined>(options: ListQueueOptions<F> = {}): Promise<TeamCityPage<Projected<TeamCityBuild, F>>> {
     return this.#list(
       "/app/rest/buildQueue",
       [
@@ -630,11 +629,11 @@ export class TeamCityClient {
     return { ...summary, parameterNames };
   }
 
-  public cancelBuild(id: number, options: CancelBuildOptions = {}): Promise<TeamCityBuild> {
+  public cancelBuild<F extends string | undefined = undefined>(id: number, options: CancelBuildOptions<F> = {}): Promise<Projected<TeamCityBuild, F>> {
     return this.#cancel(`/app/rest/builds/id:${integerId(id, "TeamCity build ID")}`, options);
   }
 
-  public cancelQueuedBuild(id: number, options: CancelBuildOptions = {}): Promise<TeamCityBuild> {
+  public cancelQueuedBuild<F extends string | undefined = undefined>(id: number, options: CancelBuildOptions<F> = {}): Promise<Projected<TeamCityBuild, F>> {
     return this.#cancel(
       `/app/rest/buildQueue/id:${integerId(id, "TeamCity queued build ID")}`,
       options,
@@ -1517,7 +1516,7 @@ export class TeamCityClient {
     return { agentId: id, field, value: result };
   }
 
-  public async getQueuedBuild(id: number, fields?: string) {
+  public async getQueuedBuild<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson("GET", `${buildPath(id, "queue")}`, {
         fields: operationBuildFields,
       },
@@ -1525,7 +1524,7 @@ export class TeamCityClient {
     );
   }
 
-  public async listQueueCompatibleAgents(id: number, fields?: string) {
+  public async listQueueCompatibleAgents<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
       "GET",
       `${buildPath(id, "queue")}/compatibleAgents`,
@@ -1534,7 +1533,7 @@ export class TeamCityClient {
     );
   }
 
-  public async getQueuePosition(position: string, fields?: string) {
+  public async getQueuePosition<F extends string | undefined = undefined>(position: string, fields?: F) {
     return this.#projectedJson(
         "GET",
         `/app/rest/buildQueue/order/${queuePosition(position)}`,
@@ -1543,7 +1542,7 @@ export class TeamCityClient {
     );
   }
 
-  public async setQueuePosition(position: string, id: number, fields?: string) {
+  public async setQueuePosition<F extends string | undefined = undefined>(position: string, id: number, fields?: F) {
     integerId(id, "Build ID");
     return this.#projectedValue(
       await this.#requestJson<OperationBuild>(
@@ -1586,7 +1585,7 @@ export class TeamCityClient {
     return { buildId: id, field, value: result };
   }
 
-  public async getBuildPin(id: number, fields?: string) {
+  public async getBuildPin<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson("GET", `${buildPath(id)}/pinInfo`, {
         fields: booleanStatusFields,
       },
@@ -1594,7 +1593,7 @@ export class TeamCityClient {
     );
   }
 
-  public async setBuildPin(id: number, status: boolean, comment?: string, fields?: string) {
+  public async setBuildPin<F extends string | undefined = undefined>(id: number, status: boolean, comment?: string, fields?: F) {
     return this.#projectedJson(
         "PUT",
         `${buildPath(id)}/pinInfo`,
@@ -1605,7 +1604,7 @@ export class TeamCityClient {
     );
   }
 
-  public async listTags(owner: "builds" | "queue", id: number, fields?: string, locator?: string) {
+  public async listTags<F extends string | undefined = undefined>(owner: "builds" | "queue", id: number, fields?: F, locator?: string) {
     return this.#projectedJson(
       "GET",
       `${buildPath(id, owner)}/tags`,
@@ -1615,22 +1614,20 @@ export class TeamCityClient {
     );
   }
 
-  public async addTags(owner: "builds" | "queue", id: number, tags: readonly string[],
-    fields?: string,
+  public async addTags<F extends string | undefined = undefined>(owner: "builds" | "queue", id: number, tags: readonly string[],
+    fields?: F,
   ) {
     const body = publicTags(tags);
     const contents = await this.#request("POST", `${buildPath(id, owner)}/tags`,
       fields === undefined ? {} : { fields: fieldsProjection(fields) }, body,
     );
-    if (fields !== undefined) {
-      const value = this.#acknowledgedJson(contents);
-      if (value !== undefined) return this.#projectedValue(value, fields, raw => raw);
-    }
-    return { buildId: id, tags: body.tag.map((tag) => tag.name), added: true };
+    return this.#projectedAcknowledgement(contents, fields,
+      { buildId: id, tags: body.tag.map((tag) => tag.name), added: true },
+    );
   }
 
-  public async replaceBuildTags(id: number, tags: readonly string[],
-    fields?: string,
+  public async replaceBuildTags<F extends string | undefined = undefined>(id: number, tags: readonly string[],
+    fields?: F,
     locator?: string,
   ) {
     return this.#projectedJson(
@@ -1643,7 +1640,7 @@ export class TeamCityClient {
     );
   }
 
-  public async listBuildStatistics(id: number, fields?: string) {
+  public async listBuildStatistics<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
       "GET", `${buildPath(id)}/statistics`, { fields: "property(name,value)" },
       value => ((value as { property?: { name: string; value: string }[] }).property ?? []).map(p => statistic(p.name, p.value)), fields,
@@ -1658,7 +1655,7 @@ export class TeamCityClient {
     return statistic(name, value);
   }
 
-  public async getBuildCanceledInfo(id: number, fields?: string) {
+  public async getBuildCanceledInfo<F extends string | undefined = undefined>(id: number, fields?: F) {
     const result = await this.#optionalJson<OperationComment>(
       `${buildPath(id)}/canceledInfo`,
       fields === undefined ? "text,timestamp" : fieldsProjection(fields),
@@ -1928,19 +1925,15 @@ export class TeamCityClient {
     return { poolId, cleared: true };
   }
 
-  public async deleteQueuePage(jobId: string, options: TeamCityPageOptions = {}, fields?: string) {
+  public async deleteQueuePage<F extends string | undefined = undefined>(jobId: string, options: TeamCityPageOptions = {}, fields?: F) {
     const contents = await this.#request("DELETE", "/app/rest/buildQueue", {
       locator: joinLocator(nestedId("buildType", jobId, "Job ID"), ...pageDimensions(options)),
       ...(fields === undefined ? {} : { fields: fieldsProjection(fields) }),
     });
-    if (fields !== undefined && contents.trim() !== "") {
-      const value = this.#acknowledgedJson(contents);
-      if (value !== undefined) return this.#projectedValue(value, fields, raw => raw);
-    }
-    return { jobId: jobId, pageDeleted: true };
+    return this.#projectedAcknowledgement(contents, fields, { jobId: jobId, pageDeleted: true });
   }
 
-  public async reorderQueue(ids: readonly number[], fields?: string) {
+  public async reorderQueue<F extends string | undefined = undefined>(ids: readonly number[], fields?: F) {
     if (!ids.length) throw new Error("At least one build ID is required.");
     const body = {
       build: textIds(ids.map((id) => integerId(id, "Build ID"))).map((id) => ({
@@ -1970,7 +1963,7 @@ export class TeamCityClient {
     return { paused, updated: true };
   }
 
-  public async getQueueApproval(id: number, fields?: string) {
+  public async getQueueApproval<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson("GET", `${buildPath(id, "queue")}/approvalInfo`, {
         fields: approvalFields,
       },
@@ -1978,7 +1971,7 @@ export class TeamCityClient {
     );
   }
 
-  public async approveQueuedBuild(id: number, fields?: string, approveAll?: string) {
+  public async approveQueuedBuild<F extends string | undefined = undefined>(id: number, fields?: F, approveAll?: string) {
     return this.#projectedValue(
       await this.#requestJson<ApprovalSummary>("POST", `${buildPath(id, "queue")}/approve`, {
         fields: fields === undefined ? approvalFields : fieldsProjection(fields),
@@ -2014,7 +2007,7 @@ export class TeamCityClient {
     return { status };
   }
 
-  public async getBuildBatch(ids: readonly number[], fields?: string) {
+  public async getBuildBatch<F extends string | undefined = undefined>(ids: readonly number[], fields?: F) {
     const value = await this.#requestJson<{ build?: unknown[] }>(
       "GET",
       `/app/rest/builds/multiple/${triage.buildUnion(ids)}`,
@@ -2029,7 +2022,7 @@ export class TeamCityClient {
     );
   }
 
-  public async cancelBuildBatch(ids: readonly number[], comment: string, fields?: string) {
+  public async cancelBuildBatch<F extends string | undefined = undefined>(ids: readonly number[], comment: string, fields?: F) {
     return this.#buildBatch("POST", ids, "", {
       comment: triage.inputText(comment, "Comment"),
       readdIntoQueue: false,
@@ -2039,11 +2032,11 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteBuildBatch(ids: readonly number[], fields?: string) {
+  public async deleteBuildBatch<F extends string | undefined = undefined>(ids: readonly number[], fields?: F) {
     return this.#buildBatch("DELETE", ids, "", undefined, "application/json", fields);
   }
 
-  public async setBuildBatchComment(ids: readonly number[], comment: string, fields?: string) {
+  public async setBuildBatchComment<F extends string | undefined = undefined>(ids: readonly number[], comment: string, fields?: F) {
     return this.#buildBatch(
       "PUT",
       ids,
@@ -2054,19 +2047,19 @@ export class TeamCityClient {
     );
   }
 
-  public async clearBuildBatchComment(ids: readonly number[], fields?: string) {
+  public async clearBuildBatchComment<F extends string | undefined = undefined>(ids: readonly number[], fields?: F) {
     return this.#buildBatch("DELETE", ids, "/comment", undefined, "application/json", fields);
   }
 
-  public async pinBuildBatch(ids: readonly number[], status: boolean, fields?: string) {
+  public async pinBuildBatch<F extends string | undefined = undefined>(ids: readonly number[], status: boolean, fields?: F) {
     return this.#buildBatch("PUT", ids, "/pinInfo", this.#statusBody(status),
       "application/json",
       fields,
     );
   }
 
-  public async tagBuildBatch(ids: readonly number[], tags: readonly string[], remove = false,
-    fields?: string,
+  public async tagBuildBatch<F extends string | undefined = undefined>(ids: readonly number[], tags: readonly string[], remove = false,
+    fields?: F,
   ) {
     return this.#buildBatch(remove ? "DELETE" : "POST", ids, "/tags", publicTags(tags),
       "application/json",
@@ -2074,13 +2067,13 @@ export class TeamCityClient {
     );
   }
 
-  async #buildBatch(
+  async #buildBatch<F extends string | undefined = undefined>(
     method: HttpMethod,
     ids: readonly number[],
     suffix: string,
     body?: unknown,
     mediaType = "application/json",
-    fields?: string,
+    fields?: F,
   ) {
     const contents = await this.#request(
       method,
@@ -2099,7 +2092,7 @@ export class TeamCityClient {
     );
   }
 
-  public async getArtifactDependencyChanges(id: number, fields?: string) {
+  public async getArtifactDependencyChanges<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
       "GET",
       `${buildPath(id)}/artifactDependencyChanges`,
@@ -2138,25 +2131,15 @@ export class TeamCityClient {
     return { buildId: id, acceptedFinishTime };
   }
 
-  public async appendBuildLog(id: number, message: string, fields?: string) {
+  public async appendBuildLog<F extends string | undefined = undefined>(id: number, message: string, fields?: F) {
     const body = triage.inputText(message, "Log message");
-    if (fields !== undefined) {
-      const contents = await this.#request(
-        "POST",
-        `${buildPath(id)}/log`,
-        { fields: fieldsProjection(fields) },
-        body,
-        "text/plain",
-      );
-      const value = this.#acknowledgedJson(contents);
-      if (value !== undefined) return this.#projectedValue(value, fields, raw => raw);
-      return { buildId: id, appended: true };
-    }
-    await this.#requestText("POST", `${buildPath(id)}/log`, body);
-    return { buildId: id, appended: true };
+    const contents = fields === undefined
+      ? await this.#requestText("POST", `${buildPath(id)}/log`, body)
+      : await this.#request("POST", `${buildPath(id)}/log`, { fields: fieldsProjection(fields) }, body, "text/plain");
+    return this.#projectedAcknowledgement(contents, fields, { buildId: id, appended: true });
   }
 
-  public async listBuildOccurrences(id: number, kind: "test" | "problem", projection?: string) {
+  public async listBuildOccurrences<F extends string | undefined = undefined>(id: number, kind: "test" | "problem", projection?: F) {
     const key = kind + "Occurrence";
     const fields = kind === "test" ? triage.testOccurrenceFields : triage.problemOccurrenceFields;
     return this.#projectedJson(
@@ -2170,7 +2153,7 @@ export class TeamCityClient {
     );
   }
 
-  public async addBuildProblem(id: number, description: string, fields?: string) {
+  public async addBuildProblem<F extends string | undefined = undefined>(id: number, description: string, fields?: F) {
     const body = triage.inputText(description, "Description");
     return this.#projectedValue(
       await this.#textJson(
@@ -2185,7 +2168,7 @@ export class TeamCityClient {
     );
   }
 
-  public async getBuildRelatedIssues(id: number, fields?: string) {
+  public async getBuildRelatedIssues<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson(
       "GET",
       `${buildPath(id)}/relatedIssues`,
@@ -2197,7 +2180,7 @@ export class TeamCityClient {
     );
   }
 
-  public async startAgentlessBuild(id: number, requestor: string, fields?: string) {
+  public async startAgentlessBuild<F extends string | undefined = undefined>(id: number, requestor: string, fields?: F) {
     return this.#projectedValue(
       await this.#textJson(
         "PUT",
@@ -2210,7 +2193,7 @@ export class TeamCityClient {
     );
   }
 
-  public async setBuildStatus(id: number, status: string, comment: string, fields?: string) {
+  public async setBuildStatus<F extends string | undefined = undefined>(id: number, status: string, comment: string, fields?: F) {
     const body = {
       status: plainProperty("status", status).value,
       comment: triage.inputText(comment, "Comment"),
@@ -2225,32 +2208,27 @@ export class TeamCityClient {
       },
       body,
     );
-    if (fields !== undefined)
-      return this.#projectedMutation(value, fields, (raw) => raw,
-        (value?.errors?.item?.length ?? 0) > 0 ? {
-          code: "build.statusPartial", message: "The status changed with errors; see errorCount.",
-        } : undefined,
-      ) as typeof value & {
-        errorCount: number;
-        partialFailure: boolean;
+    return this.#projectedMutation(value, fields, () => {
+      const errorCount = triage.array(value.errors?.item).length;
+      if (value.build === undefined && errorCount === 0)
+        throw new Error("Missing build status result; success is unknown.");
+      return {
+        ...(value.build === undefined ? {} : { build: triage.safeEvidenceBuild(value.build) }),
+        errorCount,
+        partialFailure: errorCount > 0,
       };
-    const errorCount = triage.array(value.errors?.item).length;
-    if (value.build === undefined && errorCount === 0)
-      throw new Error("Missing build status result; success is unknown.");
-    return {
-      ...(value.build === undefined ? {} : { build: triage.safeEvidenceBuild(value.build) }),
-      errorCount,
-      partialFailure: errorCount > 0,
-    };
+    }, (value?.errors?.item?.length ?? 0) > 0 ? {
+      code: "build.statusPartial", message: "The status changed with errors; see errorCount.",
+    } : undefined);
   }
 
-  public async getBuildVcsLabels(id: number, fields?: string) {
+  public async getBuildVcsLabels<F extends string | undefined = undefined>(id: number, fields?: F) {
     return this.#projectedJson("GET", `${buildPath(id)}/vcsLabels`, { fields: triage.labelFields },
       value => this.#vcsLabels(value), fields,
     );
   }
 
-  public async addBuildVcsLabel(id: number, label: string, rootInstance: string, fields?: string) {
+  public async addBuildVcsLabel<F extends string | undefined = undefined>(id: number, label: string, rootInstance: string, fields?: F) {
     const value = await this.#textJson(
       "POST",
       `${buildPath(id)}/vcsLabels`,
@@ -2451,10 +2429,10 @@ export class TeamCityClient {
     );
   }
 
-  public async listBuildRuntimeParameterNames(
+  public async listBuildRuntimeParameterNames<F extends string | undefined = undefined>(
     id: number,
     kind: "output-parameters" | "resulting-properties",
-    fields?: string,
+    fields?: F,
   ) {
     return this.#projectedJson(
       "GET",
@@ -3348,7 +3326,7 @@ export class TeamCityClient {
     return contents.trim() === "" ? null : decodeJson<T | null>(contents);
   }
 
-  #cancel(path: string, options: CancelBuildOptions): Promise<TeamCityBuild> {
+  #cancel<F extends string | undefined>(path: string, options: CancelBuildOptions<F>): Promise<Projected<TeamCityBuild, F>> {
     return this.#projectedJson(
       "POST",
       path,
@@ -3374,6 +3352,15 @@ export class TeamCityClient {
     return decodeJson<T>(contents);
   }
 
+  #projectedAcknowledgement<T, F extends string | undefined>(contents: string, fields: F | undefined,
+    acknowledgement: T,
+  ): Projected<T, F> {
+    const value = fields === undefined ? undefined : this.#acknowledgedJson(contents);
+    return this.#projectedValue<T, F>(value === undefined ? acknowledgement : value, value === undefined ? undefined : fields,
+      () => acknowledgement,
+    );
+  }
+
   // Acknowledgement commands already accept empty or non-JSON successful bodies.
   #acknowledgedJson(contents: string): unknown {
     try {
@@ -3384,35 +3371,35 @@ export class TeamCityClient {
   }
 
   /** Defaults retain their shaping; explicit projections return native JSON with known credentials masked. */
-  async #projectedJson<T>(
+  async #projectedJson<T, F extends string | undefined = undefined>(
     method: HttpMethod,
     path: string,
     query: Record<string, string>,
     project: (value: unknown) => T,
-    fields?: string,
+    fields?: F,
     body?: unknown,
-  ): Promise<T> {
+  ): Promise<Projected<T, F>> {
     const value = await this.#requestJson<unknown>(method, path, {
       ...query,
       ...(fields === undefined ? {} : { fields: fieldsProjection(fields) }),
     }, body);
-    return this.#projectedValue(value, fields, project);
+    return this.#projectedValue<T, F>(value, fields, project);
   }
 
   /** Decide from native fields, then mask the result attached to a projected failure. */
-  #projectedMutation<T>(value: unknown, fields: string | undefined, project: (value: unknown) => T,
+  #projectedMutation<T, F extends string | undefined>(value: unknown, fields: F | undefined, project: (value: unknown) => T,
     failure?: { code: string; message: string },
-  ): T {
-    const result = this.#projectedValue(value, fields, project);
+  ): Projected<T, F> {
+    const result = this.#projectedValue<T, F>(value, fields, project);
     if (fields !== undefined && failure) {
       throw new CliError(failure.message, { code: failure.code, result });
     }
     return result;
   }
 
-  #projectedValue<T>(value: unknown, fields: string | undefined, project: (value: unknown) => T): T {
-    if (fields === undefined) return project(value);
-    if (!this.#token) return value as T;
+  #projectedValue<T, F extends string | undefined>(value: unknown, fields: F | undefined, project: (value: unknown) => T): Projected<T, F> {
+    if (fields === undefined) return project(value) as Projected<T, F>;
+    if (!this.#token) return value as Projected<T, F>;
     const mask = knownCredentialMask(this.#token);
     const redact = (item: unknown): unknown => {
       if (typeof item === "string") return mask(item);
@@ -3422,18 +3409,18 @@ export class TeamCityClient {
       }
       return item;
     };
-    return redact(value) as T;
+    return redact(value) as Projected<T, F>;
   }
 
   /** A bounded selection of `key` items that follows TeamCity's continuation; see `readPages`. */
-  async #list<T>(
+  async #list<T, F extends string | undefined = undefined>(
     path: string,
     locator: readonly (string | undefined)[],
     key: string,
     fields: string,
     project: (item: unknown) => T,
-    page: TeamCityPageOptions & { fields?: string },
-  ): Promise<TeamCityPage<T>> {
+    page: TeamCityPageOptions & { fields?: F },
+  ): Promise<TeamCityPage<Projected<T, F>>> {
     const { limit, start } = normalizePage(page);
     const projection = page.fields === undefined ? undefined : fieldsProjection(page.fields);
     return readPages(limit, start, async (request) => {
@@ -3446,7 +3433,7 @@ export class TeamCityClient {
         ),
         fields: `nextHref,${key}(${projection ?? fields})`,
       }));
-      return { items: triage.array(response[key]).map(item => this.#projectedValue(item, projection, project)), nextHref: response.nextHref };
+      return { items: triage.array(response[key]).map(item => this.#projectedValue<T, F>(item, page.fields, project)), nextHref: response.nextHref };
     }, this.#signal);
   }
 
@@ -3897,12 +3884,12 @@ export class TeamCityClient {
     };
   }
 
-  public async listFiles(
+  public async listFiles<F extends string | undefined = undefined>(
     kind: files.FileTree,
     id: string,
     path: string | undefined,
     count: number,
-    controls: files.FileControls = {},
+    controls: files.FileControls<F> = {},
   ) {
     const suffix = path === undefined ? "" : "/" + files.remotePath(path);
     if (kind !== "builds")
@@ -3933,11 +3920,11 @@ export class TeamCityClient {
       hasMore: entries.length > count ? true : entries.length < requested ? false : null,
     };
   }
-  public async getFileMetadata(
+  public async getFileMetadata<F extends string | undefined = undefined>(
     kind: files.FileTree,
     id: string,
     path: string,
-    controls: files.FileControls = {},
+    controls: files.FileControls<F> = {},
   ) {
     return this.#projectedJson(
         "GET",

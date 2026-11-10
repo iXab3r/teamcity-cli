@@ -71,8 +71,8 @@ export function sensitiveSegment(value: string) {
   return encodeURIComponent(value);
 }
 
-export interface FileControls {
-  fields?: string;
+export interface FileControls<F extends string | undefined = string | undefined> {
+  fields?: F;
   basePath?: string;
   archiveName?: string;
   resolveParameters?: string;

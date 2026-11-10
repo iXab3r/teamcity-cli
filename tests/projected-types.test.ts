@@ -7,6 +7,13 @@ async function projectionTypes(client: TeamCityClient) {
   build.id.toFixed();
   // @ts-expect-error Arbitrary native JSON does not promise the default build shape.
   (await client.getBuild(42, "number")).id.toFixed();
+  (await client.getBuild(42, undefined)).id.toFixed();
+  (await client.getLatestFinishedBuild("Demo_Build"))?.id.toFixed();
+  (await client.addTags("builds", 42, ["release"])).added.valueOf();
+  (await client.appendBuildLog(42, "Fixture")).appended.valueOf();
+  (await client.deleteQueuePage("Demo_Build")).pageDeleted.valueOf();
+  // @ts-expect-error Projected acknowledgements may instead be arbitrary native JSON.
+  (await client.appendBuildLog(42, "Fixture", "custom")).appended.valueOf();
   const status = await client.setBuildStatus(42, "SUCCESS", "Fixture");
   status.errorCount.toFixed();
   // @ts-expect-error A native status projection has no synthesized errorCount.

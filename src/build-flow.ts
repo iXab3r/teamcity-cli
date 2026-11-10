@@ -266,9 +266,14 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
       }
       if (id !== undefined) throw new Error("Use either a build ID or --latest, not both.");
       if (job === undefined) throw new Error("--latest requires --job <id>.");
-      const build = await (await clientFor(context)).getLatestFinishedBuild(job, branch, fields);
+      const client = await clientFor(context);
+      if (fields !== undefined) {
+        const build = await client.getLatestFinishedBuild(job, branch, fields);
+        if (build === undefined) throw new Error("No finished build matches this job and branch.");
+        return build;
+      }
+      const build = await client.getLatestFinishedBuild(job, branch);
       if (build === undefined) throw new Error("No finished build matches this job and branch.");
-        if (fields === undefined)
       context.progress(
         `Latest finished build on ${branch === undefined ? "all branches" : "the selected branch"}: ${build.id}`,
       );

@@ -37,3 +37,7 @@ export function knownCredentialMask(credential: string): (text: string) => strin
   const pattern = new RegExp(patterns.join("|"), "gu");
   return text => text.replace(pattern, "[redacted]");
 }
+
+/** Arbitrary TeamCity JSON requires validation before any shaped property access. */
+export type NativeJson = unknown;
+export type Projected<T, Fields extends string | undefined> = Fields extends undefined ? T : NativeJson;

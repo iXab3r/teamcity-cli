@@ -13,22 +13,23 @@ import { clientLeaf, option, text, repeatOption, jsonOption } from "./command-su
 import { booleanText } from "./advanced-authoring-models.js";
 
 /** A batch that partly failed keeps every item's result and exits non-zero. */
-async function partial<T extends { count: number; errorCount: number }>(result: Promise<T>): Promise<T> {
+async function partial<T>(result: Promise<T>): Promise<T> {
   const value = await result;
-  if (value?.errorCount > 0) {
-    throw new CliError(`${value.errorCount} of ${value.count} builds failed; see items.`, {
+  const counts = value as { count: number; errorCount: number } | null;
+  if (counts && counts.errorCount > 0) {
+    throw new CliError(`${counts.errorCount} of ${counts.count} builds failed; see items.`, {
       code: "batch.partial", result: value,
     });
   }
   return value;
 }
 
-async function statusPartial<T extends { errorCount: number }>(result: Promise<T>,
+async function statusPartial<T>(result: Promise<T>,
   fields?: string,
 ): Promise<T> {
   const value = await result;
   const errorCount = fields === undefined
-    ? value.errorCount
+    ? (value as { errorCount: number }).errorCount
     : (value as { errors?: { item?: unknown[] } } | null)?.errors?.item?.length ?? 0;
   if (errorCount > 0) {
     throw new CliError("The status changed with errors; see errorCount.", {
@@ -39,10 +40,10 @@ async function statusPartial<T extends { errorCount: number }>(result: Promise<T
 }
 
 /** HTTP success can still contain failed labels. */
-async function labelsPartial<T extends { status?: unknown }>(result: Promise<T[]>): Promise<T[]> {
+async function labelsPartial<T>(result: Promise<T>): Promise<T> {
   const labels = await result;
   if (
-    (Array.isArray(labels) ? labels : ((labels as { vcsLabel?: T[] } | null)?.vcsLabel ?? [])).some((label) => label.status === "FAILED")) {
+    (Array.isArray(labels) ? labels : ((labels as { vcsLabel?: { status?: unknown }[] } | null)?.vcsLabel ?? [])).some((label) => label.status === "FAILED")) {
     throw new CliError("Some VCS labels failed; see their status.", {
       code: "labels.partial", result: labels,
     });

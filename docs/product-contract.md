@@ -15,6 +15,9 @@ paging envelope and compose
 `nextHref,build(<projection>)`; the latest selector keeps its single `build(<projection>)` lookup.
 Blank projections fail locally. Omission preserves the default request, shaping and views.
 `builds wait`, `builds diagnose` and `jobs run` retain their fixed projections.
+Client calls with projections return opaque `NativeJson` (unknown) values, including native
+list items; callers must validate them before accessing shaped properties. Default calls keep
+their existing result types.
 
 The build evidence reads also accept whole-response `--fields`: `builds canceled-info`,
 `builds pin show`, `builds statistics list`, `builds related-issues`, `builds artifact-changes`,
