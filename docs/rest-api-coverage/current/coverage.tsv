@@ -233,7 +233,7 @@ GET /app/rest/projects/{p1}/{p2}	Project	ReadOnly	covered	projects fields show <
 GET /app/rest/roles	Role	ReadOnly	covered	roles list	listRoleDefinitions		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
 GET /app/rest/roles/id:{p1}	Role	ReadOnly	covered	roles show <id>	getRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
 GET /app/rest/server	Server	ReadOnly	covered	server status	getServerStatus		exercised-in-passing-suite	tests/cli.test.ts;tests/server-projection.test.ts
-GET /app/rest/server/authSettings	Server Authentication Settings	ReadOnly	covered	server authentication show	getAuthenticationSettings		exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/server/authSettings	Server Authentication Settings	ReadOnly	covered	server authentication show	getAuthenticationSettings		exercised-in-passing-suite	tests/read-values-review.test.ts;tests/system.test.ts
 GET /app/rest/server/backup	Server	ReadOnly	covered	server backup status	getBackupStatus		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/cleanup	Server	ReadOnly	covered	server cleanup show	getCleanup		exercised-in-passing-suite	tests/system.test.ts
 GET /app/rest/server/files/{p1}	Server	ReadOnly	covered	server files list <id>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/server-controls.test.ts;tests/server-files-projection.test.ts;tests/validation-contract.test.ts

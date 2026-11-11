@@ -434,7 +434,7 @@ project-template/feature lists preserve native scoped order without paging.
 
 Pool and agent changes can alter where builds run. Numeric IDs must be safe integers; the server
 validates identity and deletion semantics, including pool 0 (the default). Field selectors are
-encoded and sent to the API, excluding credential-shaped names. Assigning an agent moves its pool membership; unassigning a project
+encoded and sent to the API; writes reject credential-shaped names. Assigning an agent moves its pool membership; unassigning a project
 removes membership, never the project. Deleting an agent requires inactivity, validated by TeamCity.
 
 ```text
@@ -451,7 +451,7 @@ teamcity-cli builds statistics list 42 --profile uat --json
 
 `agents enabled/authorized set` and `builds pin set` accept strict `true`/`false` plus an optional
 non-secret `--comment`. Raw scalar field writes preserve text; the server validates these values. Dedicated JSON Boolean
-controls require `true` or `false`. `authToken` is forbidden, not hidden behind ReadOnly.
+controls require `true` or `false`. Writing `authToken` is forbidden; reading it returns what the server returns.
 Policy is `any` or `selected` (case-insensitive, as on the server); supplied spelling and job lists
 are forwarded unchanged, including repetitions. An empty `selected` list permits none. It fully replaces selection. Policy output is `{policy, jobs}`. Agent/pool and
 compatibility responses expose identities. `agents parameters list <agent-id>` returns all system,
@@ -644,7 +644,7 @@ types are checked, and inline encryption keys and credential-shaped data remain 
 schedules a timestamped config/database backup, excluding logs/personal changes/running builds/
 supplementary data; returned filename is not completion proof. License commands use input-secret
 aliases even where native REST embeds a key in the URL. Server scalar fields are encoded and server-validated; credential-shaped names such as
-superuser-token remain blocked. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
+superuser-token are readable but cannot be written. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
 
 `pools tokens create <id> --ttl <seconds> --store-as <alias>` mints one-time registration tokens,
 not user access tokens. Repeat aliases for a batch; TTL uses the API's signed integer type in seconds; lifetime semantics are validated by TeamCity.

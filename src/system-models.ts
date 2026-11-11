@@ -8,7 +8,7 @@ import {
   safeScalars,
 } from "./triage-models.js";
 import { allowedField } from "./advanced-authoring-models.js";
-import { pathSegment, propertiesBody } from "./authoring-models.js";
+import { pathSegment, propertiesBody, safeProperty, type RawProperty } from "./authoring-models.js";
 import { idPath, nestedId, joinLocator, integerId } from "./locator.js";
 import { open, lstat } from "node:fs/promises";
 import { constants } from "node:fs";
@@ -187,13 +187,20 @@ const authBooleans = [
   "perProjectPermissions",
   "emailVerification",
 ];
-export function safeAuth(value: unknown) {
+// Replace output stays names-only: the server can echo secrets the caller just submitted.
+export function safeAuth(value: unknown, withProperties = false) {
   const v = object(value);
   return {
     ...safeScalars(v, [...authBooleans, "buildAuthenticationMode"]),
-    modules: array(v.modules === undefined ? undefined : object(v.modules).module).map((x) =>
-      safeScalars(x, ["name"]),
-    ),
+    modules: array(v.modules === undefined ? undefined : object(v.modules).module).map((x) => {
+      const m = object(x);
+      return {
+        ...safeScalars(m, ["name"]),
+        ...(!withProperties || m.properties == null
+          ? {}
+          : { properties: array(object(m.properties).property).map((p) => safeProperty(p as RawProperty)) }),
+      };
+    }),
   };
 }
 export async function authBody(value: unknown, secrets: ScopedSecrets) {
