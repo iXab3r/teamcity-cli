@@ -6,6 +6,7 @@ import {
   array,
   inputRecord,
   apiInputRecord,
+  collectionEnvelope,
   inputText,
   object,
   safeScalars,
@@ -68,7 +69,7 @@ export function roleSuffix(input: RoleInput) {
   return { role, suffix: "/" + pathSegment(inputText(role.roleId, "Role ID")) + "/" + pathSegment(inputText(role.scope, "Scope")) };
 }
 export function roleBodies(inputs: readonly unknown[]) {
-  return { role: inputs.map(roleBody) };
+  return collectionEnvelope(inputs, "role") ?? { role: inputs.map(roleBody) };
 }
 export function safeToken(value: unknown) {
   const raw = object(value);

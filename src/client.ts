@@ -3021,8 +3021,8 @@ export class TeamCityClient {
     inputs: readonly unknown[],
     fields?: F,
   ) {
-    const items = triage.typedItems(inputs).map(triage.investigationBody);
-    const body = { investigation: items.map((item) => item.body) };
+    const body = triage.collectionEnvelope(inputs, "investigation") ??
+      { investigation: triage.typedItems(inputs).map(item => triage.investigationBody(item).body) };
     return this.#projectedJson(
       "POST",
       "/app/rest/investigations/multiple",
@@ -3083,7 +3083,8 @@ export class TeamCityClient {
     inputs: readonly unknown[],
     fields?: F
   ) {
-    const body = { mute: triage.typedItems(inputs).map(triage.muteBody) };
+    const body = triage.collectionEnvelope(inputs, "mute") ??
+      { mute: triage.typedItems(inputs).map(triage.muteBody) };
     return this.#projectedJson(
       "POST",
       "/app/rest/mutes/multiple",
@@ -4031,7 +4032,7 @@ export class TeamCityClient {
     fields?: F,
     native: Record<string, unknown> = {},
   ) {
-    const body = { entry: infrastructure.namedValues(revisions, true) };
+    const body = { entry: infrastructure.namedValues(revisions) };
     return this.#projectedJson(
       "PUT",
       infrastructure.vcsInstancePath(id) + "/repositoryState",

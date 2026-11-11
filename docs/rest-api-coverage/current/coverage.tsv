@@ -299,7 +299,7 @@ POST /app/rest/agentPools/{p1}/agents	AgentPool	Update	covered	pools agents assi
 POST /app/rest/agentPools/{p1}/authorizationTokens	AgentPool	Update	covered	pools tokens create <id>	createPoolTokens		exercised-in-passing-suite	tests/native-request-bodies.test.ts;tests/system.test.ts;tests/thin-requests.test.ts
 POST /app/rest/agentPools/{p1}/projects	AgentPool	Update	covered	pools projects assign <pool-id> <project-id>	assignPoolProject		exercised-in-passing-suite	tests/authoring.test.ts;tests/native-request-bodies.test.ts;tests/operator.test.ts
 POST /app/rest/buildQueue	BuildQueue	Update	covered	jobs run <job-id>	runJob		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-flow.test.ts;tests/cli.test.ts;tests/errors.test.ts;tests/queue-action-projection.test.ts;tests/thin-requests.test.ts
-POST /app/rest/buildQueue/{p1}	BuildQueue	Update	covered	queue cancel <id>	cancelQueuedBuild		exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts
+POST /app/rest/buildQueue/{p1}	BuildQueue	Update	covered	queue cancel <id>	cancelQueuedBuild		exercised-in-passing-suite	tests/cli.test.ts;tests/presentation.test.ts;tests/thin-requests.test.ts
 POST /app/rest/buildQueue/{p1}/approve	BuildQueue	Update	covered	queue approval approve <build-id>	approveQueuedBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/queue-action-projection.test.ts;tests/thin-requests.test.ts
 POST /app/rest/buildQueue/{p1}/tags	BuildQueue	Update	covered	queue tags add <build-id>	addTags		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 POST /app/rest/buildTypes	BuildType	Update	covered	jobs create <id>	createJob		exercised-in-passing-suite	tests/authoring.test.ts;tests/jobs-projection.test.ts;tests/thin-requests.test.ts
@@ -436,7 +436,7 @@ PUT /app/rest/server/globalSettings	Global Server Settings	Update	covered	server
 PUT /app/rest/server/nodes/{p1}/enabledResponsibilities/{p2}	Node	Update	covered	server nodes responsibilities set <id> <name> <enabled>	setNodeResponsibility		exercised-in-passing-suite	tests/authoring.test.ts
 PUT /app/rest/userGroups/{p1}/parent-groups	Group	Update	covered	groups parents replace <id>	replaceAccountGroups		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/groups-projection.test.ts;tests/native-request-bodies.test.ts;tests/validation-contract.test.ts
 PUT /app/rest/userGroups/{p1}/properties/{p2}	Group	Update	covered	groups properties set <id> <name> <value>	setAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts
-PUT /app/rest/userGroups/{p1}/roles	Group	Update	covered	groups roles replace <id>	replaceAccountRoles		exercised-in-passing-suite	tests/authoring.test.ts
+PUT /app/rest/userGroups/{p1}/roles	Group	Update	covered	groups roles replace <id>	replaceAccountRoles		exercised-in-passing-suite	tests/authoring.test.ts;tests/thin-requests.test.ts
 PUT /app/rest/users/{p1}	User	Update	covered	users update <id>	updateAccountUser		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/thin-requests.test.ts;tests/users-projection.test.ts
 PUT /app/rest/users/{p1}/groups	User	Update	covered	users groups replace <id>	replaceAccountGroups		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/native-request-bodies.test.ts;tests/users-projection.test.ts
 PUT /app/rest/users/{p1}/properties/{p2}	User	Update	covered	users properties set <id> <name> <value>	setAccountProperty		exercised-in-passing-suite	tests/authoring.test.ts

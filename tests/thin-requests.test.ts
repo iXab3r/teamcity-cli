@@ -17,6 +17,22 @@ const json = JSON.stringify;
 type Case = { name: string; argv: string[]; path: string; method?: string; permission?: string;
   query?: Record<string, string>; body?: unknown; response?: unknown; text?: string };
 const cases: Case[] = [
+  {"name": "r2 repeated items mutes", "argv": ["mutes", "create-many", "--fields", "id", "--item", "{\"id\": 7, \"future\": true}", "--item", "{\"id\": 8, \"future\": null}"], "method": "POST", "path": "/mutes/multiple", "body": {"mute": [{"id": 7, "future": true}, {"id": 8, "future": null}]}, "query": {"fields": "id"}},
+  {"name": "r2 repeated items investigations", "argv": ["investigations", "create-many", "--fields", "id", "--item", "{\"id\": 7, \"future\": true}", "--item", "{\"id\": 8, \"future\": null}"], "method": "POST", "path": "/investigations/multiple", "body": {"investigation": [{"id": 7, "future": true}, {"id": 8, "future": null}]}, "query": {"fields": "id"}},
+  {"name": "r2 repeated items users", "argv": ["users", "roles", "replace", "7", "--item", "{\"roleId\": \"R\", \"global\": true, \"future\": true}", "--item", "{\"roleId\": \"S\", \"scope\": \"g\", \"future\": null}"], "method": "PUT", "path": "/users/id:7/roles", "body": {"role": [{"roleId": "R", "scope": "g", "future": true}, {"roleId": "S", "scope": "g", "future": null}]}, "permission": "Admin"},
+  {"name": "r2 repeated items groups", "argv": ["groups", "roles", "replace", "7", "--item", "{\"roleId\": \"R\", \"global\": true, \"future\": true}", "--item", "{\"roleId\": \"S\", \"scope\": \"g\", \"future\": null}"], "method": "PUT", "path": "/userGroups/key:7/roles", "body": {"role": [{"roleId": "R", "scope": "g", "future": true}, {"roleId": "S", "scope": "g", "future": null}]}, "permission": "Admin"},
+
+  {"name": "r2 native builds cancellation", "argv": ["builds", "cancel", "7", "--comment", "compact", "--requeue", "false", "--item", "{\"comment\": null, \"readdIntoQueue\": true, \"future\": true}", "--fields", "id"], "method": "POST", "path": "/builds/id:7", "body": {"comment": null, "readdIntoQueue": true, "future": true}, "query": {"fields": "id"}},
+  {"name": "r2 native queue cancellation", "argv": ["queue", "cancel", "7", "--comment", "compact", "--requeue", "false", "--item", "{\"comment\": null, \"readdIntoQueue\": true, \"future\": true}"], "method": "POST", "path": "/buildQueue/id:7", "body": {"comment": null, "readdIntoQueue": true, "future": true}, "query": {"fields": "id,buildTypeId,number,state,status,statusText,branchName,defaultBranch,personal,failedToStart,canceledInfo(timestamp),queuedDate,startDate,finishDate,percentageComplete,queuePosition,waitReason,webUrl,agent(id,name)"}},
+  {"name": "r2 envelope mutesTrue", "argv": ["mutes", "create-many", "--fields", "id", "--item", "{\"mute\": [], \"count\": 0, \"future\": null}"], "method": "POST", "path": "/mutes/multiple", "body": {"mute": [], "count": 0, "future": null}, "query": {"fields": "id"}},
+  {"name": "r2 envelope mutesFalse", "argv": ["mutes", "create-many", "--fields", "id", "--item", "{\"mute\": [{\"id\": 7, \"future\": true}], \"count\": 1, \"future\": null}"], "method": "POST", "path": "/mutes/multiple", "body": {"mute": [{"id": 7, "future": true}], "count": 1, "future": null}, "query": {"fields": "id"}},
+  {"name": "r2 envelope investigationsTrue", "argv": ["investigations", "create-many", "--fields", "id", "--item", "{\"investigation\": [], \"count\": 0, \"future\": null}"], "method": "POST", "path": "/investigations/multiple", "body": {"investigation": [], "count": 0, "future": null}, "query": {"fields": "id"}},
+  {"name": "r2 envelope investigationsFalse", "argv": ["investigations", "create-many", "--fields", "id", "--item", "{\"investigation\": [{\"id\": 7, \"future\": true}], \"count\": 1, \"future\": null}"], "method": "POST", "path": "/investigations/multiple", "body": {"investigation": [{"id": 7, "future": true}], "count": 1, "future": null}, "query": {"fields": "id"}},
+  {"name": "r2 envelope usersTrue", "argv": ["users", "roles", "replace", "7", "--item", "{\"role\": [], \"count\": 0, \"future\": null}"], "method": "PUT", "path": "/users/id:7/roles", "body": {"role": [], "count": 0, "future": null}, "permission": "Admin"},
+  {"name": "r2 envelope usersFalse", "argv": ["users", "roles", "replace", "7", "--item", "{\"role\": [{\"id\": 7, \"future\": true}], \"count\": 1, \"future\": null}"], "method": "PUT", "path": "/users/id:7/roles", "body": {"role": [{"id": 7, "future": true}], "count": 1, "future": null}, "permission": "Admin"},
+  {"name": "r2 envelope groupsTrue", "argv": ["groups", "roles", "replace", "7", "--item", "{\"role\": [], \"count\": 0, \"future\": null}"], "method": "PUT", "path": "/userGroups/key:7/roles", "body": {"role": [], "count": 0, "future": null}, "permission": "Admin"},
+  {"name": "r2 envelope groupsFalse", "argv": ["groups", "roles", "replace", "7", "--item", "{\"role\": [{\"id\": 7, \"future\": true}], \"count\": 1, \"future\": null}"], "method": "PUT", "path": "/userGroups/key:7/roles", "body": {"role": [{"id": 7, "future": true}], "count": 1, "future": null}, "permission": "Admin"},
+
   { name: "1 open agent policy", argv: ["agents", "policy", "set", "7", "future", "--fields", "id"], path: "/agents/id:7/compatibilityPolicy", query: { fields: "id" }, body: { policy: "future" } },
   { name: "1 authentication mode", argv: ["server", "authentication", "replace", "--item", json({ buildAuthenticationMode: "future" }), "--confirm"], permission: "Admin", path: "/server/authSettings", body: { buildAuthenticationMode: "future" } },
   { name: "1 cleanup ranges", argv: ["server", "cleanup", "configure", "--item", json({ daily: { hour: -1, minute: 99 }, maxCleanupDuration: 2147483648 })], permission: "Admin", path: "/server/cleanup", body: { daily: { hour: -1, minute: 99 }, maxCleanupDuration: 2147483648 } },
@@ -205,4 +221,19 @@ test("#381 category 6 percent-bearing parameter names keep resolution storage", 
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   await cli.execute(["builds", "resolve-parameter", "7", "%caller%", "--store-as", "fixture"]);
   assert.equal(await runtime.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:fixture"), "synthetic-resolved");
+});
+
+for (const native of [undefined, { entry: [], count: 0, future: true }]) test("#381 r2 optional SDK revision " + JSON.stringify(native), async t => {
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "PUT", url: base + "/vcs-root-instances/id:8/repositoryState", query: { fields: "id" },
+      body: { json: native ?? { entry: [{ name: "main" }] } } });
+    return HttpResponse.json({});
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await new TeamCityClient({ baseUrl: "https://teamcity.test", token: "fixture-token" })
+    .replaceVcsRepositoryState("8", [{ name: "main" }] as never, "id", native);
+});
+test("#381 r2 supplied SDK revision primitive validation", async () => {
+  await assert.rejects(new TeamCityClient({ baseUrl: "https://teamcity.test", token: "fixture-token" })
+    .replaceVcsRepositoryState("8", [{ name: "main", value: 42 }] as never, "id"), /text|string/);
 });

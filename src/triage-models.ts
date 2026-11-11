@@ -254,3 +254,9 @@ export function investigationLocator(value: unknown): string {
   if (!dimensions.length) throw new Error("Select one investigation URL target.");
   return dimensions.join(",");
 }
+
+/** A single native collection envelope already has the complete request shape. */
+export function collectionEnvelope(inputs: readonly unknown[], key: string) {
+  const single = inputs.length === 1 ? apiInputRecord(inputs[0], []) : undefined;
+  return single !== undefined && key in single ? single : undefined;
+}

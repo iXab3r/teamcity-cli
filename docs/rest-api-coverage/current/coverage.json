@@ -15282,7 +15282,8 @@
     "permission": "Update",
     "options": [
      "--comment <text>",
-     "--requeue <boolean>"
+     "--requeue <boolean>",
+     "--item <json>"
     ],
     "clientMethod": "cancelQueuedBuild"
    }
@@ -15297,7 +15298,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/cli.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:183"
@@ -15656,7 +15658,7 @@
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/thin-requests.test.ts:132"
+    "tests/thin-requests.test.ts:148"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -15886,7 +15888,7 @@
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/thin-requests.test.ts:133"
+    "tests/thin-requests.test.ts:149"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -15948,7 +15950,7 @@
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/thin-requests.test.ts:131"
+    "tests/thin-requests.test.ts:147"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -16292,7 +16294,8 @@
     "options": [
      "--comment <text>",
      "--requeue <boolean>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "cancelBuild"
    }
@@ -22717,7 +22720,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -23073,7 +23077,9 @@
     "tests/native-request-bodies.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
-   "nonLeafTransportTests": [],
+   "nonLeafTransportTests": [
+    "tests/thin-requests.test.ts:234"
+   ],
    "liveService": "not-run",
    "independentReview": "not-performed"
   }

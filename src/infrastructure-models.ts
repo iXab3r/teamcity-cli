@@ -103,9 +103,8 @@ export function anonymousGitRoot(
     } }),
   };
 }
-export function namedValues(values: readonly PlainProperty[], requireValue = false) {
+export function namedValues(values: readonly PlainProperty[]) {
   const result = propertiesBody(values).property;
-  if (requireValue) for (const item of result) requiredText(item.value, "Revision");
   return result;
 }
 export const propertyNames = (value: unknown) =>

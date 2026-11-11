@@ -192,8 +192,9 @@ configuration reads retain native type metadata. Create/set and collection repla
 without protected-metadata preflights.
 
 JSON request commands accept `--item <json>` alongside compact options; native fields take precedence.
-For configuration `replace-all`, repeat `--item` for individual settings or supply one native collection
-envelope containing its collection key (for example `{"step":[],"count":0,"future":true}`).
+For configuration `replace-all`, investigations/mutes `create-many`, and users/groups `roles replace`,
+repeat `--item` for individual items or supply one native collection envelope containing its collection key
+(for example `{"step":[],"count":0,"future":true}`).
 Raw-text and multipart endpoints keep their text/file inputs.
 
 The password helper reads metadata to preserve the existing specification when available and otherwise
@@ -259,8 +260,8 @@ teamcity-cli builds diagnose 101
   Literal matches are replaced in place; a decoded match redacts the whole original string.
   Other transformations (for example base64, hexadecimal dumps, hashes, or a credential split across fields)
   are not detected. For lists, the projection selects each item: the CLI wraps
-  it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections fail
-  locally. Omitting `--fields` preserves the default projection, shaping and views.
+  it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections are
+  forwarded unchanged. Omitting `--fields` preserves the default projection, shaping and views.
 - Omitted `builds list` filters are left to TeamCity; `--latest` retains its documented selection below.
 - Queued and running builds are listed with `builds list --state queued|running`. TeamCity lists
   queued builds in queue order, not newest first, so "latest" never means "next in queue".

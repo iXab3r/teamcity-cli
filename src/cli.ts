@@ -23,7 +23,7 @@ import { adminCategories } from "./admin-models.js";
 import { createInfrastructureCommands } from "./infrastructure-commands.js";
 import { createSystemCommands } from "./system-commands.js";
 import { createFileCommands } from "./file-commands.js";
-import { clientLeaf, integerValue, optionalText, booleanOption } from "./command-support.js";
+import { clientLeaf, integerValue, optionalText, booleanOption, nativeInput, jsonOption } from "./command-support.js";
 import { projectTree, jobTable, agentTable, buildRecord, buildTable, problemTable, testTable, withView } from "./presentation.js";
 import { createBuildFlowCommands } from "./build-flow.js";
 import { fieldsFromOptions, fieldsOption } from "./projection.js";
@@ -358,9 +358,9 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...optionalText(options, "fields"),
               ...(comment === undefined ? {} : { comment }),
               ...(options.requeue === undefined ? {} : { requeue: options.requeue === "true" }),
-            });
+            }, nativeInput(options));
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again"), fieldsOption],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again"), fieldsOption, jsonOption("--item <json>", "Supply a native body")],
         )),
       ], "Evidence"), {
         examples: [
@@ -405,9 +405,9 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             return c.cancelQueuedBuild(integerValue(args.id), {
               ...(comment === undefined ? {} : { comment }),
               ...(options.requeue === undefined ? {} : { requeue: options.requeue === "true" }),
-            });
+            }, nativeInput(options));
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again")],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again"), jsonOption("--item <json>", "Supply a native body")],
         )),
       ], "Control")),
       command("agents", "Inspect TeamCity build agents", helpLayout([
