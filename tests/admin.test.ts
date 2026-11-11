@@ -60,13 +60,11 @@ test("S7 invalid identities, scopes, replacements, field names and node booleans
   );
   for (const argv of [
 
-    ["users", "update", "7"],
     ["users", "fields", "get", "7", "\ud800"],
 
     ["users", "roles", "grant", "7", "ROLE"],
     ["users", "roles", "grant", "7", "ROLE", "--global", "--project", "Example"],
 
-    ["users", "roles", "replace", "7", "--item", '{"roleId":"R","global":false}'],
 
     ["server", "nodes", "responsibilities", "set", "node1", "CAN_PROCESS_BUILD_MESSAGES", "yes"],
   ])
@@ -74,7 +72,7 @@ test("S7 invalid identities, scopes, replacements, field names and node booleans
   assert.equal(calls, 0);
 });
 
-test("S7 explicit token expiry/permission choices and existing alias fail before issuance", async (testContext) => {
+test("S7 an existing token alias fails before issuance", async (testContext) => {
   const { cli, runtime } = await administrator(testContext);
   let calls = 0;
   server.use(
@@ -83,27 +81,6 @@ test("S7 explicit token expiry/permission choices and existing alias fail before
       return HttpResponse.json({});
     }),
   );
-  const head = ["users", "tokens", "create", "ExampleToken", "--alias", "automation"];
-  for (const flags of [
-    [],
-    ["--no-expiration"],
-    ["--same-permissions"],
-    ["--no-expiration", "--expires", "20991231T235959+0000", "--same-permissions"],
-    [
-      "--no-expiration",
-      "--same-permissions",
-      "--restriction",
-      '{"permission":"VIEW_PROJECT","global":true}',
-    ],
-    ["--no-expiration", "--restriction", '{"permission":"VIEW_PROJECT"}'],
-    [
-      "--no-expiration",
-      "--restriction",
-      '{"permission":"VIEW_PROJECT","global":true,"project":"Example"}',
-    ],
-
-  ])
-    await assert.rejects(cli.execute([...head, ...flags]), Error);
   await runtime.secretStore.set(service, "default:issued-token:automation", "synthetic-existing");
   await assert.rejects(cli.execute(create), /already exists/);
   assert.equal(calls, 0);

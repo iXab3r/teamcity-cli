@@ -1,5 +1,5 @@
 {
-  "baselineHead": "3cebdf72e27632c8d875311e8da81370ad7ef777",
+  "baselineHead": "3e311409a9b73739666e0e84b1b0108b5b25c940",
   "dateUTC": "2026-11-10",
   "total": 449,
   "covered": 449,
@@ -210,7 +210,6 @@
     "GET /app/rest/buildTypes/{p1}/parameters/{p2}",
     "GET /app/rest/builds/{p1}",
     "GET /app/rest/builds/{p1}/resolved/{p2}",
-    "GET /app/rest/mutes/{p1}",
     "GET /app/rest/projects/{p1}/secure/values/{p2}"
   ],
   "leaves": 460,

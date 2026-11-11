@@ -21,7 +21,7 @@ for each profile and reimport auxiliary secrets. Existing profiles and permissio
 
 ## URL and token input
 
-Copy the service base address, for example `https://teamcity.example.test/` or `https://example.test/teamcity/`. Include any context path and port; omit `/app/rest`, build/project pages and query strings. HTTP and HTTPS are supported. Context segments named `api`, `app/rest`, `admin` or `issues` are
+Copy the service base address, for example `https://teamcity.example.test/` or `https://example.test/teamcity/`. Include any context path and port; omit `/app/rest` and build/project pages. Query strings are supported. HTTP and HTTPS are supported. Context segments named `api`, `app/rest`, `admin` or `issues` are
 valid deployment contexts; the CLI appends its own service endpoints to the configured base.
 Create/copy an access token in **My Settings & Tools > Access Tokens** (the user profile).
 See the [optional API reference: TeamCity user-profile guide](https://www.jetbrains.com/help/teamcity/configuring-your-user-profile.html). Paste only its value: `FICTIONAL_TOKEN_VALUE` is a fictional example.
@@ -59,7 +59,7 @@ Licensed under MIT. See the [release guide](release.md).
 | `projects list`, `projects show <id>` | Discover projects | `ReadOnly` |
 | `jobs list`, `jobs show <id>` | Discover build configurations | `ReadOnly` |
 | `jobs run <id>` | Queue one build, optionally with `--branch`, `--comment`, one-off `--param`, `--clean-sources` and `--wait` | `Update` |
-| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | Inspect builds across all branches and states, one `--branch`, or the latest finished build of a job | `ReadOnly` |
+| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | List builds using TeamCity defaults or supplied filters, inspect one build, or select the latest finished build of a job | `ReadOnly` |
 | `builds wait <id>`, `builds diagnose <id>` | Wait for a result; summarize problems and failed tests | `ReadOnly` |
 | `builds tests/problems/changes <id>` | Diagnose a build | `ReadOnly` |
 | `builds cancel <id>` | Cancel a running build | `Update` |
@@ -71,7 +71,7 @@ Licensed under MIT. See the [release guide](release.md).
 | `jobs copy <source-id> <id> --name <name> --project <id>` | Copy settings server-side, including protected parameters, without exposing their values | `Credentials` |
 | `projects parameters list/show`, `jobs parameters list/show` | Inspect safe parameter values and metadata | `ReadOnly` |
 | `projects parameters create/set/delete`, `jobs parameters create/set/delete` | Manage parameters | `Update` |
-| `jobs parameters set-password <job-id> <name> --value <value>` (or `--value-secret <alias>`) | Replace a parameter from `--value` or the active profile's input-secret; retain its specification and return no value | `Credentials` |
+| `jobs parameters set-password <job-id> <name> --value <value>` (or `--value-secret <alias>`) | Replace a parameter from `--value` or the active profile's input-secret; retain available type metadata, default to password type, and return no value | `Credentials` |
 | `jobs steps list/show` | Inspect ordered step summaries | `ReadOnly` |
 | `jobs steps create/replace/delete` | Manage build steps | `Update` |
 | `vcs roots list/show` | Discover existing roots without connection properties | `ReadOnly` |
@@ -176,7 +176,7 @@ teamcity-cli jobs show Example_Build --profile uat --json
 teamcity-cli jobs run Example_Build --profile uat --json
 ```
 
-Project creation defaults its parent to TeamCity's standard `_Root`; `--parent` overrides it.
+Project creation sends a parent only when `--parent` is supplied; TeamCity applies its default.
 Both create commands accept `--description`. `projects set <id> <field> <value>` and `jobs set`
 forward scalar fields and string values unchanged; TeamCity validates field availability and semantics. Move with `projects move <id> --parent <id>` or
 `jobs move <id> --project <id>`. No create command promises client-side upsert or conflict semantics.
@@ -189,11 +189,21 @@ and values the server withholds have `redacted: true` and no value. The CLI neve
 Literal `*` and `*****` values remain readable; names and value spelling do not imply secrecy.
 An absent/empty type spec means a plain parameter. Ordinary parameter reads return the type name;
 configuration reads retain native type metadata. Create/set and collection replacement send writes
-without protected-metadata preflights. The password helper reads metadata to preserve the existing
-specification, accepts `--value` or `--value-secret`, and leaves validation to TeamCity.
+without protected-metadata preflights.
+
+JSON request commands accept `--item <json>` alongside compact options; native fields take precedence.
+For configuration `replace-all`, investigations/mutes `create-many`, and users/groups `roles replace`,
+repeat `--item` for individual items or supply one native collection envelope containing its collection key
+(for example `{"step":[],"count":0,"future":true}`).
+Raw-text and multipart endpoints keep their text/file inputs.
+
+The password helper reads metadata to preserve the existing specification when available and otherwise
+sends `type: {rawValue: "password"}`, including when the metadata read fails. It accepts `--value` or
+`--value-secret` and always sends a type. A native `--item` can supply additional fields and override the type;
+an absent or null native type uses the available metadata or the password fallback.
 
 Steps accept `--name`, `--type`, and repeatable `--property <key=value>` (split on the first `=`;
-duplicate/empty keys fail). `jobs steps replace <job-id> <step-id>` fully replaces writable input:
+empty keys fail). `jobs steps replace <job-id> <step-id>` fully replaces writable input:
 omitted properties are not preserved and no GET/merge runs first. Reads return all plugin property
 values, including full script content, executable arguments,
 Docker images and options, subject to the server-secret rule above.
@@ -211,9 +221,15 @@ Successful empty responses return an acknowledgement; a missing entity remains a
 Mutations are not automatically retried. HTTP errors expose status only, not remote body text;
 malformed JSON errors contain no response excerpts.
 
-`builds list` deliberately disables TeamCity's implicit build filter and includes default and
-non-default branches. This keeps running, failed, canceled, personal and branch builds visible,
-instead of reporting an older successful default-branch build.
+`builds list` sends only supplied filters. TeamCity chooses its defaults; `--default-filter`,
+`--state`, `--status` and `--branch` select filters. Project/job lists likewise omit archived/template
+filters unless `--archived`, `--include-archived` or `--template-flag` is supplied.
+
+Request payload options are optional; absent fields are not sent. Native JSON DTOs are accepted
+alongside compact forms. Supplied native fields take precedence over compact conveniences, including
+property-envelope metadata. Empty body collections are forwarded. Primitive integer/boolean/JSON
+parsing, HTTP-path operands, unambiguous selectors, permission gates, confirmations and local-machine
+safety remain enforced. TeamCity owns service enums, ranges, mandatory fields and defaults.
 
 ## Run, wait and diagnose
 
@@ -244,13 +260,9 @@ teamcity-cli builds diagnose 101
   Literal matches are replaced in place; a decoded match redacts the whole original string.
   Other transformations (for example base64, hexadecimal dumps, hashes, or a credential split across fields)
   are not detected. For lists, the projection selects each item: the CLI wraps
-  it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections fail
-  locally. Omitting `--fields` preserves the default projection, shaping and views.
-- Without `--state`, `builds list` includes queued, running and finished builds across all branches.
-  It sends `defaultFilter:false` without a state dimension. JetBrains'
-  [optional API reference: BuildPromotionFinder source](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildPromotionFinder.java#L936)
-  defaults the missing state to `any`; `setLocatorDefaults` returns early for `defaultFilter:false`.
-  The locator remains unchanged: an explicit default would add no selection guarantee.
+  it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections are
+  forwarded unchanged. Omitting `--fields` preserves the default projection, shaping and views.
+- Omitted `builds list` filters are left to TeamCity; `--latest` retains its documented selection below.
 - Queued and running builds are listed with `builds list --state queued|running`. TeamCity lists
   queued builds in queue order, not newest first, so "latest" never means "next in queue".
 - Latest is resolved per call. To keep working on one build, reuse the returned ID.
@@ -352,14 +364,13 @@ teamcity-cli jobs templates detach Example_Build Example_Template --inline-setti
 ```
 
 Triggers/features accept `create <job-id>`, `show/delete <job-id> <trigger-id|feature-id>` and
-`replace <job-id> <trigger-id|feature-id>`. Both create and replace require `--type`, accept
+`replace <job-id> <trigger-id|feature-id>`. Both create and replace accept optional `--type` and
 repeatable `--property <key=value>`, and leave omitted activation fields to TeamCity.
 Extensions may be enabled by server defaults; `--enabled` sends `disabled:false`. Replacement is a full writable replacement: omitted properties
-and trigger customization are not retained. No hidden GET/merge or retries occur. Trigger
-`buildCustomization` is not supported by this slice.
+and trigger customization are not retained. No hidden GET/merge or retries occur. Native `--item` fields, including trigger `buildCustomization`, are forwarded.
 
-Snapshot dependencies use the same list/show/create/replace/delete shape, with required
-`--source <upstream-job-id>` instead of `--type` for writes. Their dependency ID is the upstream
+Snapshot dependencies use the same list/show/create/replace/delete shape, with optional
+`--source <upstream-job-id>` or a native `--item` body for writes. Their dependency ID is the upstream
 build configuration ID. TeamCity validates dependency targets, cycles and
 plugin settings. Removing a dependency never deletes its upstream job.
 Trigger/dependency path IDs accept letters, digits, `_` and `-`, not raw locators such as `id:...`.
@@ -372,10 +383,9 @@ such as `cronExpression_dm` belong to the trigger's `properties` collection; pas
 scalar fields can return HTTP 400. Read them with `jobs triggers show <job-id> <trigger-id>`
 or select the collection with `--fields 'properties(property(name,value,type(rawValue)))'`.
 
-Template attach preserves other attachments. By default it sends `optimizeSettings=false`;
+Template attach preserves other attachments. Omitted optimization/inline flags are not sent;
 `--optimize-settings` asks TeamCity to remove redundant local settings. Detach affects only the
-named attachment and never deletes the template. By default `inlineSettings=false` means inherited
-settings are not copied; `--inline-settings` copies them locally before detachment. Template
+named attachment and never deletes the template. `--inline-settings` requests local copies of inherited settings before detachment. Template
 creation is available through `projects templates create`; `jobs templates replace-all` replaces
 attachments in explicit order, and `clear --confirm` detaches all. Dependency per-property
 subroutes remain unsupported.
@@ -409,10 +419,9 @@ teamcity-cli projects templates default set Example --template Example_Template 
 teamcity-cli projects templates default clear Example --profile uat
 ```
 
-Requirements need `--type` and `--parameter`; `--value` depends on the requirement type. Artifact
-dependencies need `--source`, `--rules`, and `--revision`; optional `--revision-value`, `--branch`
-and `--clean` express revision selection and destination cleanup. Both rule families are active
-unless `--disabled` is supplied. The server validates dependencies and revisions,
+Requirements accept optional `--type`, `--parameter` and `--value`. Artifact dependencies accept
+optional `--source`, `--rules`, `--revision`, `--revision-value`, `--branch` and `--clean`.
+Both accept native `--item` DTOs; omitted activation and cleanup flags are not sent. The server validates dependencies and revisions,
 cycles and plugin semantics. Replace is full writable replacement, not a hidden read/merge.
 
 The `fields show/set` subtree forwards scalar field names and text values to the API; steps
@@ -423,7 +432,7 @@ password types remain protected. Output parameters use the same read policy. Wri
 caller input without secrecy refusals or protected-metadata preflights.
 
 Project features accept `--type` and repeatable properties, have no disabled toggle,
-and take effect immediately. Project template creation requires an ID and `--name`. Clearing the
+and take effect immediately. Project template creation requires its positional ID; `--name` is optional. Clearing the
 own default does not delete the template and may reveal an inherited default. `jobs templates show`
 inspects one attachment. `jobs branches` is bounded with `--limit`/`--start`; aliases, tags and
 project-template/feature lists preserve native scoped order without paging.
@@ -450,14 +459,14 @@ teamcity-cli builds statistics list 42 --profile uat --json
 `agents enabled/authorized set` and `builds pin set` accept strict `true`/`false` plus an optional
 `--comment`. Raw scalar field writes preserve text; the server validates these values. Dedicated JSON Boolean
 controls require `true` or `false`. Scalar writes also forward credential-like names such as `authToken`.
-Policy is `any` or `selected` (case-insensitive, as on the server); supplied spelling and job lists
-are forwarded unchanged, including repetitions. An empty `selected` list permits none. It fully replaces selection. Policy output is `{policy, jobs}`. Agent/pool and
+Policy text and supplied job lists are forwarded unchanged, including repetitions.
+An omitted job list is not sent; TeamCity validates policy values and empty selections. Policy output is `{policy, jobs}`. Agent/pool and
 compatibility responses expose identities. `agents parameters list <agent-id>` returns all system,
 environment and configuration parameter values available to the token, with server secrets redacted.
 
-Queue position strings are encoded and validated by TeamCity; set requires `--build <id>`.
+Queue position strings are encoded and validated by TeamCity; set accepts optional `--build <id>`.
 `1`, `first` and `last` remain useful server-supported forms, not a closed CLI enum. No auto-polling or implicit launch/cancel occurs. Tag add
-requires at least one repeatable `--tag` and preserves other tags. Build tag replace with no tags
+accepts repeatable `--tag`, including an empty collection, and preserves other tags. Build tag replace with no tags
 clears public tags. These operations never target private users' tags. Tag add returns a local
 acknowledgement and discards any successful response body; list/replace returns names only.
 
@@ -486,9 +495,9 @@ forward caller input without a metadata preflight; scalar value responses have n
 
 Project pools, pool projects, project child ordering and template attachments have explicit full
 replacement commands. `queue delete-page --job Example_Build --limit 10 --confirm` deletes only
-one bounded page for one job. `queue delete <id>` removes cancellation history as well, unlike
-`queue cancel`. `queue reorder --build <id>` preserves explicit ID order. Queue pause requires a
-reason, and `queue approval approve <id>` approves only that build as the current user, not its chain.
+one bounded page, optionally scoped to one job. `queue delete <id>` removes cancellation history as well, unlike
+`queue cancel`. `queue reorder --build <id>` preserves explicit ID order. Queue pause accepts an optional
+reason. Approval omits `approveAll` unless `--approve-all` is supplied; TeamCity applies its default.
 All these writes require Update and are mock-tested, not exercised against a live server.
 
 ## Build triage and evidence
@@ -507,9 +516,9 @@ succeed partly:
 `finish`/`finish-at` return accepted timestamps, not proof of completion. Timestamp strings are
 forwarded unchanged; the server owns configured date formats and temporal validation. `start-agentless` starts
 queued work without an agent. TeamCity interprets service messages in appended log text. VCS labels mutate an
-external VCS and require one `--root-instance`.
+external VCS; `--root-instance` is an optional locator filter.
 
-Investigations use a strict typed item, for example:
+Investigations accept native DTOs or a compact item, for example:
 
 ```json
 {"target":{"kind":"test","projectId":"Example","testId":"9223372036854775807"},"state":"TAKEN","assignee":3,"resolution":"whenFixed","comment":"Synthetic example"}
@@ -518,11 +527,11 @@ Investigations use a strict typed item, for example:
 Pass it with `investigations create --item <json>` or `replace`; `create-many` repeats items.
 Target may instead be `{"kind":"job","jobId":"Build"}` or a project/problem target.
 Show/delete take only `--target <json>`. Replacement is server-side delete/create and **not atomic**.
-The CLI validates the entire body first and never retries that mutation.
+A replacement needs one unambiguous URL target derived from the DTO. The CLI never retries that mutation.
 
 Mutes use `{"project":"Example","tests":["123"],"resolution":"manually"}`; replace project with
-`jobs:["Build"]`, tests with `problems:["123"]`, or choose whenFixed/atTime (time required).
-One scope/target kind, no implicit all-problems mute. Create/create-many/show/delete are explicit.
+`jobs:["Build"]`, tests with `problems:["123"]`, or choose a resolution string with optional time.
+Scope, target, resolution and time fields are optional and server-validated. Native DTOs are accepted.
 Tests/problems expose list/show/occurrence; occurrence requires `--build`. IDs stay strings.
 
 Runtime `builds output-parameters/resulting-properties list` returns parameter names, types and
@@ -537,13 +546,12 @@ User/group/node writes require **Admin**, token issuance/revocation/local owned-
 requires **Credentials**. Both categories default off; granting Update does not enable either.
 They are local safety gates, not remote authorization. No live administrative proof runs in CI.
 
-`users` exposes bounded list, `show <id>`, identity-only create/update/delete, direct groups, roles,
+`users` exposes bounded list, `show <id>`, create/update/delete, direct groups, roles,
 resolved permissions, property names/existence, safe identity fields and remote session commands.
 `groups` exposes identities, direct parents, roles and properties. User update preserves omitted
 collections; role/group replacement is explicit and can be non-atomic. No items clears direct
-assignments; the server retains All Users membership. Role scope is exactly one `--global` or
-`--project <id>`. Replace uses repeated `--item '{"roleId":"R","project":"Example"}'`.
-Password/email workflows are not exposed; username-only create does not guarantee login.
+assignments; the server retains All Users membership. Compact role scope uses `--global` or `--project <id>`; native `scope` is accepted in replacement items. Replace uses repeated `--item '{"roleId":"R","project":"Example"}'`.
+`users update --item <json>` forwards native fields, including email; username-only create does not guarantee login.
 
 `users tokens` is **current-user only**. To issue into the selected profile's platform secret store:
 
@@ -551,8 +559,8 @@ Password/email workflows are not exposed; username-only create does not guarante
 teamcity-cli users tokens create ExampleToken --alias automation --expires 20991231T235959+0000 --restriction '{"permission":"VIEW_PROJECT","project":"Example"}' --profile uat
 ```
 
-Expiry or explicit `--no-expiration` is required; expiration-time semantics are validated by TeamCity; choose restrictions or explicitly
-`--same-permissions`. The latter inherits the user's remote rights, not the local ReadOnly gate.
+Expiry and permission choices are optional. Supplied expiry/restrictions reach TeamCity for validation;
+`--item` accepts a native token body. `--no-expiration` and `--same-permissions` leave those fields absent.
 The one-time value is stored as a private `issued-token:<alias>` secure record and never printed.
 Existing aliases fail before HTTP and never overwrite the active auth credential. The preflight
 is not an atomic reservation across multiple processes. If storage fails after issuance, the
@@ -575,7 +583,7 @@ Image/instance commands require `--cloud-profile`, `--image` and, when applicabl
 Start may incur cost. Stop schedules graceful shutdown; delete/force-stop require `--confirm`
 and may interrupt running work. Acknowledgement is not proof of the final provider state.
 
-`vcs roots create` provisions anonymous Git with explicit URL/branch/project/name, preserving
+`vcs roots create` accepts optional URL/branch/project/name and a native `--item` body, preserving
 service strings and URL spelling. Supported Git transports are validated by TeamCity.
 URL values, including embedded authentication and signature parameters, are forwarded unchanged.
 Property lists return plain values with server secrets redacted; existence reads return an
@@ -627,12 +635,12 @@ atomic: failure after remote success reports partial/unknown outcome without aut
 
 `audit` returns action/timestamp metadata without comments or related private payloads. `health`
 accepts project/global/category selectors, including combined scopes. TeamCity validates detail uniqueness.
-`roles` defines server roles; user/group `roles` assigns them. Create takes a name and optional
-permission/include IDs, never a caller-supplied role ID. Role writes require Admin.
+`roles` defines server roles; user/group `roles` assigns them. Create takes optional name and
+permission/include IDs or native `--item` fields, including a caller-supplied role ID. Role writes require Admin.
 
-`deployments` creates/deletes dashboards within projects. Instance `upsert` supplies an explicit
-initial state/date history; `append-state` adds one entry. State uses uppercase native values
-and TeamCity timestamps. Parent IDs remain explicit. Destructive/upsert commands require confirmation.
+`deployments` creates/deletes dashboards within projects. Instance `upsert` accepts optional
+initial state/date history; `append-state` adds one entry. Native `--item` fields and state strings
+are forwarded for TeamCity to validate. Parent IDs remain explicit. Destructive/upsert commands require confirmation.
 
 `server authentication replace --item <json> --confirm` replaces the **complete module list** and
 can lock out users. Omitted scalar settings are preserved; omitted modules are not injected. Typed
@@ -642,8 +650,7 @@ It never reads and rewrites masked existing credentials. `server settings set` p
 types are checked; caller-supplied names and values are forwarded.
 
 `server cleanup configure` changes a future schedule, not immediate cleanup. `server backup start`
-schedules a timestamped config/database backup, excluding logs/personal changes/running builds/
-supplementary data; returned filename is not completion proof. License commands use input-secret
+schedules a backup with only the supplied inclusion/timestamp flags; returned filename is not completion proof. License commands use input-secret
 aliases or direct `--key <value>` inputs (`add`, `show`, `delete`), including where native REST
 embeds a key in the URL. Scalar fields are encoded and server-validated. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
 
@@ -651,8 +658,8 @@ embeds a key in the URL. Scalar fields are encoded and server-validated. XML-onl
 not user access tokens. Repeat aliases for a batch; TTL uses the API's signed integer type in seconds; lifetime semantics are validated by TeamCity.
 Every returned token must be stored before success is reported. Values are never printed.
 
-`mutes delete-many --id <id> --confirm` accepts distinct explicit IDs, preflights each
-full scope/target/resolution and sends one native Mutes DELETE. Current docs define body/void
+`mutes delete-many --id <id> --confirm` sends the supplied IDs in one native Mutes DELETE,
+including an empty selection, without preflight GETs. Current docs define body/void
 response but do not establish handler identity/atomicity. Actual2xx returns
 `serverAcknowledged:true,postconditionVerified:false`, not a claimed deletion count. No retry or
 rollback claim. Like config reset, this is documented native action coverage, not live proof.
@@ -662,16 +669,15 @@ rollback claim. Like config reset, this is documented native action coverage, no
 The four trees are `jobs files`, `builds artifacts`, `vcs instances files` and `server files`.
 Each has list/children/metadata/download/archive. Server areas, including configured `custom.*`
 areas, are validated by TeamCity. Remote path segments are encoded once; literal percent signs,
-colons, backslashes and Unicode are preserved. Empty/dot segments and leading separators are
-rejected because they would change URL route composition. Lists/ZIP selection are nonrecursive and exclude hidden files. ZIP selection does not
-browse archives. Artifact lists recognize archives without enumerating their contents. No automatic href traversal. Artifact reads disable usage recording and
-parameter resolution; job VCS reads disable parameter resolution.
+colons, backslashes and Unicode are preserved. Dot segments (`.`/`..`) are rejected to prevent URL traversal. Leading separators and empty segments
+are forwarded. Omitted recursion, hidden-file, usage-recording and parameter-resolution controls are
+not sent. Artifact lists enable archive recognition; no automatic href traversal occurs.
 
 Artifact lists add `directory` and `archive` booleans. NAME marks directories with `/` and archives
 with `(archive)`. These indicators come from the presence of `children` and `content` in the
 [optional API reference: File model](https://www.jetbrains.com/help/teamcity/rest/file.html): directories have children;
 archives have both children and content. The request selects `children(href),content(href)`
-and enables archive recognition (`browseArchives:true`) while keeping `recursive:false`; the
+and enables archive recognition (`browseArchives:true`); the
 hrefs only mark presence and are not printed (TeamCity rejects `children($none)` with HTTP 400). See JetBrains'
 [optional API reference: archive projection](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildArtifactsFinder.java#L464).
 Each listing reads one extra entry to establish `hasMore` without another request; only the
@@ -955,7 +961,7 @@ These families accept `--fields` (slash-separated leaves share the preceding com
 | `audit` | `audit list/show` |
 | `health` | `health list/show`; `health categories list/show` |
 
-Other native controls retain their omitted defaults. Text values must be nonblank; booleans
+Other native controls are not sent when omitted. Text values, including empty and blank strings, pass through unchanged; booleans
 accept only literal `true` or `false`.
 
 | Option | Commands | Wire query parameter |
@@ -979,12 +985,12 @@ accept only literal `true` or `false`.
 | `--include-supplementary-data` | `server backup start` | `includeSupplimentaryData` |
 
 `jobs tags` defaults to `field=tag(name)`; health category list and server plugins omit
-`locator` by default. Queue approval defaults to `approveAll=false`; VCS change-check
-requestor defaults to `user` and commit notification to `okOnNothingFound=false`.
+`locator` by default. Queue approval, VCS change-check requestor and commit-notification
+controls are not sent when omitted.
 `builds start-agentless --requestor` is an existing option sent as the request body, not as a query parameter.
 Server and VCS-instance files expose neither resolve-parameters nor log-build-usage;
 job files expose resolve-parameters on all five leaves, and build artifacts expose both.
-Backup start retains Admin and required confirmation; its seven switches preserve omitted values.
+Backup start retains Admin and required confirmation; its seven switches are not sent when omitted.
 
 `jobs run`, `builds wait`, `builds diagnose`, `jobs copy`, parameter value/type/raw-type,
 `jobs parameters set-password` and scalar-setting leaves deliberately have no `--fields`.

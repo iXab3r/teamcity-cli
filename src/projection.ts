@@ -4,8 +4,8 @@ import type { OptionDefinition } from "@eyeauras/cli-factory";
 export function fieldsProjection(
   value: string
 ): string {
-  if (typeof value !== "string" || value.trim() === "") {
-    throw new Error("Expected a non-empty fields projection.");
+  if (typeof value !== "string") {
+    throw new Error("Fields projection must be text.");
   }
   return value;
 }

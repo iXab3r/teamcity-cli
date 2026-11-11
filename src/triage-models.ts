@@ -1,5 +1,5 @@
 import { plainProperty } from "./authoring-models.js";
-import { nestedId, integerId, requiredText } from "./locator.js";
+import { nestedId, idPath, integerId, requiredText } from "./locator.js";
 import { allowedField } from "./advanced-authoring-models.js";
 
 export const evidenceBuildFields = "id,buildTypeId,number,state,status";
@@ -33,7 +33,6 @@ export function apiInputRecord(value: unknown, known: readonly string[]) {
   if (![Object.prototype, null].includes(Object.getPrototypeOf(item))) throw new Error("Expected a JSON object.");
   const ancestors = new Set<object>();
   const validate = (key: string, value: unknown): void => {
-    plainProperty(key, typeof value === "string" ? value : "");
     if (value === null || typeof value === "string" || typeof value === "boolean") return;
     if (typeof value === "number" && Number.isFinite(value)) return;
     if (typeof value !== "object" || ancestors.has(value) ||
@@ -58,11 +57,9 @@ export function array(value: unknown): unknown[] {
 }
 export function inputIds(value: unknown): string[] {
   const ids = array(value).map((v) => inputText(v, "ID"));
-  if (!ids.length) throw new Error("At least one explicit ID is required.");
   return ids;
 }
-export function typedItems(value: readonly unknown[]): readonly unknown[] {
-  if (!value.length) throw new Error("Expected at least one typed item.");
+export function typedItems(value: readonly unknown[] = []): readonly unknown[] {
   return value;
 }
 export function safeScalars(value: unknown, keys: readonly string[]) {
@@ -172,103 +169,94 @@ export function safeMultiple(value: unknown) {
 }
 export function buildUnion(ids: readonly number[]) {
   const values = ids.map((id) => integerId(id, "Build ID"));
-  if (!values.length) throw new Error("At least one build ID is required.");
+  if (!values.length) throw new Error("At least one build ID is required for the URL.");
   return values.map((id) => `item:(id:${id})`).join(",");
 }
-export function investigationTarget(value: unknown) {
+export function investigationTarget(value: unknown): { locator: string } {
+  const supplied = object(value);
+  if (supplied.kind === undefined) return { locator: investigationLocator(supplied) };
   const input = inputRecord(value, ["kind", "jobId", "projectId", "testId", "problemId"]);
   const kind = allowedField(inputText(input.kind, "Target kind"), ["job", "test", "problem"]);
-  if (kind === "job") {
-    if (
-      input.projectId !== undefined ||
-      input.testId !== undefined ||
-      input.problemId !== undefined
-    )
-      throw new Error("Job target cannot include a project/test/problem.");
-    const id = inputText(input.jobId, "Job ID");
-    return {
-      locator: nestedId("buildType", id, "Job ID"),
-      scope: { buildTypes: { buildType: [{ id }] } },
-      target: { anyProblem: true },
+  return { locator: investigationLocator(investigationBody({ target: { ...input, kind } }).body) };
+}
+export function investigationBody(value: unknown = {}) {
+  const input = apiInputRecord(value, []);
+  const { comment, ...native } = input;
+  const targetInput = input.target == null ? undefined : object(input.target);
+  const compact = targetInput?.kind === "job" || targetInput?.kind === "test" || targetInput?.kind === "problem";
+  let scope: Record<string, unknown> = {};
+  let target: Record<string, unknown> = {};
+  if (compact) {
+    const { kind, jobId, projectId, testId, problemId, ...extra } = targetInput!;
+    scope = {
+      ...(jobId === undefined ? {} : { buildTypes: { buildType: [{ id: inputText(jobId, "Job ID") }] } }),
+      ...(projectId === undefined ? {} : { project: { id: inputText(projectId, "Project ID") } }),
+    };
+    target = {
+      ...(kind === "job" ? { anyProblem: true } : {}),
+      ...(testId === undefined ? {} : { tests: { test: [{ id: inputText(testId, "Test ID") }] } }),
+      ...(problemId === undefined ? {} : { problems: { problem: [{ id: inputText(problemId, "Problem ID") }] } }),
+      ...extra,
     };
   }
-  if (input.jobId !== undefined || input[kind === "test" ? "problemId" : "testId"] !== undefined)
-    throw new Error("Exactly one investigation target is required.");
-  const projectId = inputText(input.projectId, "Project ID");
-  const id = inputText(input[kind + "Id"], "Target ID");
-  return {
-    locator: `${nestedId("assignmentProject", projectId, "Project ID")},${nestedId(kind, id, "Target ID")}`,
-    scope: { project: { id: projectId } },
-    target: kind === "test" ? { tests: { test: [{ id }] } } : { problems: { problem: [{ id }] } },
-  };
-}
-export function investigationBody(value: unknown) {
-  const input = apiInputRecord(value, ["target", "state", "assignee", "resolution", "comment"]);
-  const { comment, ...native } = input;
-  const { locator, scope, target } = investigationTarget(input.target);
-  const assignee = input.assignee === undefined ? undefined
+  const assignee = input.assignee == null ? input.assignee
     : typeof input.assignee === "number" ? { id: Number(integerId(input.assignee, "Assignee")) }
     : apiInputRecord(input.assignee, []);
   return {
-    locator,
     body: {
+      ...(!compact ? {} : { scope, target }),
+      ...(comment === undefined ? {} : { assignment: { text: inputText(comment, "Comment") } }),
       ...native,
-      ...(input.state === undefined ? {} : { state: inputText(input.state, "State") }),
+      ...(!compact ? {} : { target }),
       ...(assignee === undefined ? {} : { assignee }),
-      ...(input.comment === undefined
-        ? {}
-        : { assignment: { text: inputText(input.comment, "Comment") } }),
-      scope,
-      target,
-      ...(input.resolution === undefined ? {} : { resolution: typeof input.resolution === "string"
-        ? { type: inputText(input.resolution, "Resolution") } : apiInputRecord(input.resolution, []) }),
+      ...(input.resolution === undefined || typeof input.resolution === "object" ? {} : { resolution: { type: inputText(input.resolution, "Resolution") } }),
     },
   };
 }
-export function muteBody(value: unknown) {
-  const input = apiInputRecord(value, [
-    "project",
-    "jobs",
-    "tests",
-    "problems",
-    "resolution",
-    "time",
-    "comment",
-  ]);
-  if (input.scope !== undefined || input.target !== undefined ||
-      (input.resolution !== undefined && typeof input.resolution === "object")) {
-    const native = apiInputRecord(value, []);
-    for (const key of ["scope", "target", "resolution"]) if (native[key] !== undefined) object(native[key]);
-    return native;
-  }
-  const { project, jobs, tests, problems, time, comment, ...native } = input;
-  if (
-    (input.project === undefined) === (input.jobs === undefined) ||
-    (input.tests === undefined) === (input.problems === undefined)
-  )
-    throw new Error("Mute needs exactly one scope and one target kind.");
-  const type = allowedField(inputText(input.resolution, "Resolution"), [
-    "manually",
-    "whenFixed",
-    "atTime",
-  ], true);
-  if (type.toLowerCase() === "attime") inputText(input.time, "Time");
+export function muteBody(value: unknown = {}) {
+  const input = apiInputRecord(value, []);
+  const { project, jobs, tests, problems, time, comment, resolution, ...native } = input;
   return {
+    ...(project === undefined && jobs === undefined ? {} : { scope: {
+      ...(project === undefined ? {} : { project: { id: inputText(project, "Project ID") } }),
+      ...(jobs === undefined ? {} : { buildTypes: { buildType: inputIds(jobs).map(id => ({ id })) } }),
+    } }),
+    ...(tests === undefined && problems === undefined ? {} : { target: {
+      ...(tests === undefined ? {} : { tests: { test: inputIds(tests).map(id => ({ id })) } }),
+      ...(problems === undefined ? {} : { problems: { problem: inputIds(problems).map(id => ({ id })) } }),
+    } }),
+    ...(comment === undefined ? {} : { assignment: { text: inputText(comment, "Comment") } }),
+    ...(resolution === undefined && time === undefined ? {} : { resolution: typeof resolution === "object" ? resolution : {
+      ...(resolution === undefined ? {} : { type: inputText(resolution, "Resolution") }),
+      ...(time === undefined ? {} : { time: inputText(time, "Time") }),
+    } }),
     ...native,
-    ...(input.comment === undefined
-      ? {}
-      : { assignment: { text: inputText(input.comment, "Comment") } }),
-    scope:
-      input.project !== undefined
-        ? { project: { id: inputText(input.project, "Project ID") } }
-        : { buildTypes: { buildType: inputIds(input.jobs).map((id) => ({ id })) } },
-    target:
-      input.tests !== undefined
-        ? { tests: { test: inputIds(input.tests).map((id) => ({ id })) } }
-        : { problems: { problem: inputIds(input.problems).map((id) => ({ id })) } },
-    resolution: {
-      type,
-      ...(input.time === undefined ? {} : { time: inputText(input.time, "Time") }),
-    },
   };
+}
+
+/** Replacement needs one URL target; creation forwards even incomplete DTOs. */
+export function investigationLocator(value: unknown): string {
+  const body = object(value);
+  if (body.id !== undefined) return idPath(typeof body.id === "number" ? integerId(body.id, "Investigation ID") : inputText(body.id, "Investigation ID"), "Investigation ID");
+  const scope = object(body.scope);
+  const target = object(body.target);
+  const jobs = scope.buildTypes === undefined ? [] : array(object(scope.buildTypes).buildType);
+  const tests = target.tests === undefined ? [] : array(object(target.tests).test);
+  const problems = target.problems === undefined ? [] : array(object(target.problems).problem);
+  if (jobs.length > 1 || tests.length + problems.length > 1)
+    throw new Error("Select one investigation URL target.");
+  const dimensions = [
+    ...(scope.project === undefined ? [] : [nestedId("assignmentProject", inputText(object(scope.project).id, "Project ID"), "Project ID")]),
+    ...jobs.map(job => nestedId("buildType", inputText(object(job).id, "Job ID"), "Job ID")),
+    ...tests.map(test => nestedId("test", inputText(object(test).id, "Test ID"), "Test ID")),
+    ...problems.map(problem => nestedId("problem", inputText(object(problem).id, "Problem ID"), "Problem ID")),
+  ];
+  if (!dimensions.length) throw new Error("Select one investigation URL target.");
+  return dimensions.join(",");
+}
+
+/** A single native collection envelope already has the complete request shape. */
+export function collectionEnvelope(inputs: readonly unknown[], key: string) {
+  const single = inputs.length === 1 ? apiInputRecord(inputs[0], []) : undefined;
+  return single !== undefined && key in single ? single : undefined;
 }

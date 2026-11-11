@@ -83,9 +83,10 @@ for (const scenario of buildProjectionCases) {
         method: scenario.method, url: origin + scenario.path,
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), fields: scenario.fields(projection) },
         headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+        body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
       });
-      assert.equal(await request.text(), scenario.body);
+      if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
       return HttpResponse.json(scenario.response(native));
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -112,9 +113,10 @@ for (const scenario of buildProjectionCases) {
         method: scenario.method, url: origin + scenario.path,
         query: scenario.query,
         headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+        body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
       });
-      assert.equal(await request.text(), scenario.body);
+      if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
       return scenario.argv.includes("rest-plugin") ? HttpResponse.text(`<plugin name="rest"/>`, {headers: {"content-type": "application/xml"}}) : HttpResponse.json(scenario.baselineResponse);
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -146,15 +148,19 @@ for (const scenario of buildProjectionCases) {
   });
 
   for (const fields of ["", " \t\n "]) {
-    test(`US-011-A6 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
-      const rt = await runtime(t, [scenario.permission]);
+    test(`US-011-A6 ${scenario.name}: forwards ${fields === "" ? "empty" : "blank"} fields on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, { profiles: [{ name: "default", url: origin, permissions: ["ReadOnly", "Update", "Admin", "Credentials"] }] });
       const cli = rt.createCli();
-      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      const requests = trackRequests(t, 5, request => {
+
+        const url = new URL(request.url);
+        assert.equal(url.pathname, scenario.path);
+        assert.equal(url.searchParams.get("fields"), scenario.fields(fields));
+        return HttpResponse.json(scenario.response(native));
+      });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
-      for (const surface of surfaces) {
-        const evidence = await failure(rt, cli, [...scenario.argv, "--fields", fields], surface, "usage");
-        assert.match(evidence, /non-empty.*projection/i);
-      }
+      for (const surface of surfaces)
+        await success(rt, cli, [...scenario.argv, "--fields", fields], surface, scenario.result(native));
     });
   }
 }
@@ -208,7 +214,7 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
       if (kind === "lost") {
         await failure(rt, cli, c.argv, surface, "request.unknownOutcome");
         await failure(rt, cli, [...c.argv, "--fields", projection], surface, "request.unknownOutcome");
-      } else if (c.preflight || c.argv.includes("start")) {
+      } else if (c.argv.includes("delete-many") || c.argv.includes("start")) {
         await success(rt, cli, c.argv, surface, c.baselineResult);
         await success(rt, cli, [...c.argv, "--fields", projection], surface, c.baselineResult);
       } else {

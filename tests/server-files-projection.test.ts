@@ -9,7 +9,7 @@ const cases: ProjectionCase[] = ["list", "children", "metadata"].map(action => {
     path: "/app/rest/server/files/logs" +
       (action === "list" ? "" : action === "children" ? "/src" : "/metadata/src"),
     query: {
-      ...(list ? {locator: "count:100,recursive:false,hidden:false,browseArchives:false"} : {}),
+      ...(list ? {locator: "count:100"} : {}),
       fields: list ? "count,file(name,size,modificationTime)" : "name,size,modificationTime",
     },
     body: "",

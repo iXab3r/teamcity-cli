@@ -1,4 +1,5 @@
-import { requiredText } from "./locator.js";
+import { apiInputRecord } from "./triage-models.js";
+import { requiredText, urlText } from "./locator.js";
 
 export type ParameterOwner = "projects" | "jobs" | "output";
 export interface PlainProperty {
@@ -12,19 +13,22 @@ export interface RawProperty {
   type?: { rawValue?: string };
 }
 export interface StepInput {
-  name: string;
-  type: string;
-  properties?: readonly PlainProperty[];
+  [key: string]: unknown;
+  name?: string;
+  type?: string;
+  properties?: readonly PlainProperty[] | Record<string, unknown> | null;
 }
 export type ExtensionKind = "triggers" | "features";
 export interface ExtensionInput {
-  type: string;
+  [key: string]: unknown;
+  type?: string;
   enabled?: boolean;
-  properties?: readonly PlainProperty[];
+  properties?: readonly PlainProperty[] | Record<string, unknown> | null;
 }
 export interface SnapshotDependencyInput {
-  source: string;
-  properties?: readonly PlainProperty[];
+  [key: string]: unknown;
+  source?: string;
+  properties?: readonly PlainProperty[] | Record<string, unknown> | null;
 }
 export interface BuildTypeIdentity {
   id: string;
@@ -115,34 +119,42 @@ export function plainProperty(name: string, value: string): PlainProperty {
 
 export function propertiesBody(input: readonly PlainProperty[] = []) {
   const properties = input.map((p) => {
-    const plain = plainProperty(p.name, p.value);
-    return { ...p, ...plain };
+    const item = apiInputRecord(p, []);
+    if (item.name !== undefined) requiredText(item.name as string, "Property name");
+    if (item.value !== undefined) requiredText(item.value as string, "Property value");
+    return p;
   });
   return { property: properties };
 }
 
+/** Compact property arrays are optional; native envelopes retain their metadata. */
+export function inputProperties(value: unknown) {
+  return value === null ? null : Array.isArray(value) ? propertiesBody(value) : apiInputRecord(value, []);
+}
 export function stepBody(input: StepInput) {
-  return {
-    name: requiredText(input.name, "Step name"),
-    type: requiredText(input.type, "Runner type"),
-    properties: propertiesBody(input.properties),
+  const body = apiInputRecord(input, []);
+  return { ...body,
+    ...(input.name === undefined ? {} : { name: requiredText(input.name, "Step name") }),
+    ...(input.type === undefined ? {} : { type: requiredText(input.type, "Runner type") }),
+    ...(input.properties === undefined ? {} : { properties: inputProperties(input.properties) }),
   };
 }
-
 export function extensionBody(input: ExtensionInput) {
+  const { enabled, ...body } = apiInputRecord(input, []);
+  if (enabled !== undefined && typeof enabled !== "boolean") throw new Error("Enabled must be a boolean.");
   return {
-    type: requiredText(input.type, "Extension type"),
-    ...(input.enabled === undefined ? {} : { disabled: !input.enabled }),
-    properties: propertiesBody(input.properties),
+    ...(enabled === undefined ? {} : { disabled: !enabled }),
+    ...body,
+    ...(input.type === undefined ? {} : { type: requiredText(input.type, "Extension type") }),
+    ...(input.properties === undefined ? {} : { properties: inputProperties(input.properties) }),
   };
 }
-
 export function snapshotBody(jobId: string, input: SnapshotDependencyInput) {
-  const source = requiredText(input.source, "Source build configuration ID");
+  const { source, ...body } = apiInputRecord(input, []);
   return {
-    type: "snapshot_dependency",
-    "source-buildType": { id: source },
-    properties: propertiesBody(input.properties),
+    ...(source === undefined ? {} : { type: "snapshot_dependency", "source-buildType": { id: requiredText(source as string, "Source build configuration ID") } }),
+    ...body,
+    ...(input.properties === undefined ? {} : { properties: inputProperties(input.properties) }),
   };
 }
 
@@ -174,7 +186,7 @@ export function safeSnapshot(dependency: RawSnapshotDependency) {
 
 // These endpoints parse a single-value locator, not an id: dimension.
 export function literalIdPath(id: string): string {
-  const value = requiredText(id, "Resource ID");
+  const value = urlText(id, "Resource ID");
   return /^[A-Za-z0-9_-]+$/.test(value)
     ? value
     : `$base64:${Buffer.from(value).toString("base64url")}`;

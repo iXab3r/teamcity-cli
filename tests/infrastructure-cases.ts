@@ -165,8 +165,7 @@ export const infrastructureCases: AuthoringCase[] = [
       project: { id: "Example" },
       properties: {
         property: [
-          { name: "authMethod", value: "ANONYMOUS" },
-          { name: "branch", value: "refs/heads/main" },
+            { name: "branch", value: "refs/heads/main" },
           { name: "url", value: "https://git.example.test/repository.git" },
         ],
       },
@@ -275,7 +274,7 @@ export const infrastructureCases: AuthoringCase[] = [
     ["vcs", "instances", "check-changes", "8"],
     "POST",
     "/vcs-root-instances/checkingForChangesQueue",
-    { locator: "id:8", requestor: "user", fields: `count,nextHref,vcs-root-instance(${VI})` },
+    { locator: "id:8", fields: `count,nextHref,vcs-root-instance(${VI})` },
     { "vcs-root-instance": [vcsInstance] },
     [vcsInstance],
   ),
@@ -284,7 +283,7 @@ export const infrastructureCases: AuthoringCase[] = [
       ["vcs", "instances", "notify-commit", "8"],
       "POST",
       "/vcs-root-instances/commitHookNotification",
-      { locator: "id:8", okOnNothingFound: "false" },
+      { locator: "id:8" },
       "synthetic-hidden",
       { instanceId: "8", scheduled: true },
     ),

@@ -149,15 +149,19 @@ for (const scenario of buildProjectionCases) {
   });
 
   for (const fields of ["", " \t\n "]) {
-    test(`US-001-A7 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
-      const rt = await runtime(t);
+    test(`US-001-A7 ${scenario.name}: forwards ${fields === "" ? "empty" : "blank"} fields on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, { profiles: [{ name: "default", url: origin, permissions: ["ReadOnly", "Update", "Admin", "Credentials"] }] });
       const cli = rt.createCli();
-      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      const requests = trackRequests(t, 5, request => {
+
+        const url = new URL(request.url);
+        assert.equal(url.pathname, scenario.path);
+        assert.equal(url.searchParams.get("fields"), scenario.fields(fields));
+        return HttpResponse.json(scenario.response(native));
+      });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
-      for (const surface of surfaces) {
-        const evidence = await failure(rt, cli, [...scenario.argv, "--fields", fields], surface, "usage");
-        assert.match(evidence, /non-empty.*projection/i);
-      }
+      for (const surface of surfaces)
+        await success(rt, cli, [...scenario.argv, "--fields", fields], surface, scenario.result(native));
     });
   }
 }
@@ -171,7 +175,7 @@ test("US-001-A2 native item projections preserve filtered multi-page selection o
       method: "GET", url: origin + "/app/rest/builds",
       query: {
         fields: "nextHref,build(number,agent(name))",
-        locator: "defaultFilter:false,branch:(name:main),buildType:(id:Demo_Build)," +
+        locator: "branch:(name:main),buildType:(id:Demo_Build)," +
           "affectedProject:(id:Demo),state:finished,status:SUCCESS," + (second ? "start:8,count:2,lookupLimit:20" : "start:7,count:3"),
       },
     });
@@ -250,7 +254,7 @@ for (const credential of ["1", 'synthetic-quote"slash\\credential']) {
     const requests = trackRequests(t, 2, async (request, index) => {
       await assertHttpRequest(request, {
         method: "GET", url: origin + "/app/rest/builds",
-        query: { fields: "nextHref,build(custom)", locator: "defaultFilter:false,branch:default:any," + (index === 0 ? "start:0,count:3" : "start:1,count:2") },
+        query: { fields: "nextHref,build(custom)", locator: "" + (index === 0 ? "start:0,count:3" : "start:1,count:2") },
       });
       const build = [{ custom: { echo: `before ${credential} after`, number: 1, flag: false, empty: null } }];
       return HttpResponse.json(index === 0 ? { build, nextHref: "/app/rest/builds?locator=start:1" } : { build });

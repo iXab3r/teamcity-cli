@@ -50,26 +50,14 @@ test("S5 validates typed items, IDs, booleans, confirmation and bounded queue sc
     ["jobs", "parameters", "clear", "Build"],
     ["jobs", "templates", "clear", "Build"],
     ["pools", "projects", "clear", "1"],
-    ["queue", "delete-page", "--confirm"],
     ["queue", "delete-page", "--job", "Build"],
 
     ["queue", "paused", "set", "yes", "--reason", "Maintenance"],
-    ["queue", "paused", "set", "false"],
-    ["queue", "reorder"],
 
-    ["projects", "jobs", "create", "Example", "Build"],
     ["jobs", "steps", "replace-all", "Build", "--item", "{broken"],
     ["jobs", "steps", "replace-all", "Build", "--item", "null"],
 
     ["jobs", "features", "replace-all", "Build", "--item", '{"type":"plugin","enabled":"false"}'],
-    [
-      "jobs",
-      "artifact-dependencies",
-      "replace-all",
-      "Build",
-      "--item",
-      '{"source":"Source","rules":"*.zip"}',
-    ],
 
   ];
   for (const argv of invalid) await assert.rejects(cli.execute(argv), Error, argv.join(" "));
@@ -173,7 +161,7 @@ test("S5 typed item validation preserves false and repeated native entries", asy
     '{"type":"exists","parameter":"env.MODE","disabled":true}',
   ]);
   assert.deepEqual(bodies, [
-    { feature: [{ type: "plugin", disabled: true, properties: { property: [] } }] },
+    { feature: [{ type: "plugin", enabled: false, disabled: true }] },
     {
       "agent-requirement": [
         {

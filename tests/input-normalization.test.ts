@@ -23,7 +23,7 @@ for (const endpoint of ["http://example.test", "https://example.test", "http://e
       assert.equal(teamCityUrl(value), canonical);
       assert.equal(teamCityUrl(teamCityUrl(value)), canonical);
     }
-    for (const value of [" ", "not-a-url", "https://", "https://example.test?fictional-private", "https://fictional:private@example.test"]) {
+    for (const value of [" ", "not-a-url", "https://", "https://fictional:private@example.test"]) {
       assert.throws(() => teamCityUrl(value), (error: Error) => {
         assert.match(error.message, /TeamCity URL must be http\(s\):\/\/host/);
         assert.doesNotMatch(error.message, /fictional-private|fictional:private/);
@@ -89,7 +89,7 @@ for (const endpoint of ["http://example.test", "https://example.test", "http://e
       assert.ok(human.stdout.includes(canonical));
       const before = await h.profileStore.list();
       for (const action of ["configure", "create", "set"]) {
-        await assert.rejects(reloaded.execute(["profile", action, action === "create" ? "new" : "default", "--url", base + "?invalid"]));
+        await assert.rejects(reloaded.execute(["profile", action, action === "create" ? "new" : "default", "--url", base + "#invalid"]));
       }
       const replies = await h.rpc(reloaded, [["profile", "configure", "--url", "  "], ["profile", "show"]], { environment });
       assert.ok((replies[0] as { error: unknown }).error);

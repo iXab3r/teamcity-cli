@@ -48,31 +48,6 @@ test("S3 validates flags, fields, booleans, paths and self-dependencies locally"
     }),
   );
   const invalid = [
-    ["jobs", "agent-requirements", "create", "Build", "--type", "equals"],
-    [
-      "jobs",
-      "artifact-dependencies",
-      "create",
-      "Build",
-      "--source",
-      "Source",
-      "--revision",
-      "lastSuccessful",
-    ],
-    [
-      "jobs",
-      "artifact-dependencies",
-      "create",
-      "Build",
-      "--source",
-      "Source",
-      "--revision",
-      "lastSuccessful",
-    ],
-
-    ["projects", "features", "replace", "Example", "Feature"],
-    ["projects", "templates", "create", "Example", "Template"],
-    ["projects", "templates", "default", "set", "Example"],
 
     ["jobs", "branches", "Build", "--start", "-1"],
 
@@ -188,7 +163,7 @@ test("S3 handles empty lists, full property clearing and safe malformed/delete e
 test("S3 JSON-RPC keeps two profiles isolated and resumes after validation and permission errors", async (testContext) => {
   const commands = [
     ["jobs", "artifact-dependencies", "replace", "--help"],
-    ["projects", "templates", "create", "Example", "Template", "--profile", "uat"],
+    ["projects", "templates", "create", "Example", "Template", "--unknown-flag", "--profile", "uat"],
     ["projects", "templates", "create", "Example", "Template", "--name", "Template"],
     [
       "projects",
@@ -237,7 +212,7 @@ test("S3 JSON-RPC keeps two profiles isolated and resumes after validation and p
     .map((line) => JSON.parse(line));
   assert.equal(frames.length, 5);
   assert.match(frames[0].result.help, /Replace all rule settings/);
-  assert.match(frames[1].error.message, /required option/);
+  assert.match(frames[1].error.message, /unknown option/);
   assert.match(frames[2].error.message, /Permission 'Update'/);
   assert.deepEqual(frames[3].result, { id: "Template" });
   assert.deepEqual(frames[4].result, ["OldId"]);

@@ -21,12 +21,12 @@ const cases = [
   {
     argv: ["jobs", "triggers", "create", "Build", "--type", "future-plugin"],
     permission: "Update", path: "/buildTypes/id:Build/triggers", method: "POST",
-    body: { type: "future-plugin", properties: { property: [] } },
+    body: { type: "future-plugin" },
   },
   {
     argv: ["jobs", "features", "replace-all", "Build", "--item", '{"type":"plugin","futureOption":false}'],
     permission: "Update", path: "/buildTypes/id:Build/features",
-    body: { feature: [{ type: "plugin", properties: { property: [] }, futureOption: false }] },
+    body: { feature: [{ type: "plugin", futureOption: false }] },
   },
   {
     argv: ["agents", "policy", "set", "0", " SELECTED ", "--job", " Job ", "--job", " Job "],
@@ -81,7 +81,6 @@ for (const url of ["http://git.example.test:80/repo.git?branch=main", "git://git
       assert.equal(request.method, "POST");
       assert.equal(body.name, " Git name ");
       assert.deepEqual(body.properties.property, [
-        { name: "authMethod", value: "ANONYMOUS" },
         { name: "branch", value: " main " },
         { name: "url", value: url },
       ]);
@@ -111,10 +110,10 @@ test("self references and service-message text keep safe remote validation witho
   await cli.execute(["permissions", "grant", "Admin"]);
   const rows = [
     { argv: ["jobs", "snapshot-dependencies", "create", "Build", "--source", "Build"],
-      path: "/buildTypes/id:Build/snapshot-dependencies", body: { type: "snapshot_dependency", "source-buildType": { id: "Build" }, properties: { property: [] } } },
+      path: "/buildTypes/id:Build/snapshot-dependencies", body: { type: "snapshot_dependency", "source-buildType": { id: "Build" } } },
     { argv: ["jobs", "artifact-dependencies", "create", "Build", "--source", "Build", "--rules", "*.zip", "--revision", "lastSuccessful"],
-      path: "/buildTypes/id:Build/artifact-dependencies", body: { type: "artifact_dependency", disabled: false, "source-buildType": { id: "Build" }, properties: { property: [
-        { name: "pathRules", value: "*.zip" }, { name: "revisionName", value: "lastSuccessful" }, { name: "cleanDestinationDirectory", value: "false" },
+      path: "/buildTypes/id:Build/artifact-dependencies", body: { type: "artifact_dependency", "source-buildType": { id: "Build" }, properties: { property: [
+        { name: "pathRules", value: "*.zip" }, { name: "revisionName", value: "lastSuccessful" },
       ] } } },
     { argv: ["groups", "parents", "replace", "Developers", "--group", "Developers"],
       path: "/userGroups/key:Developers/parent-groups", body: { group: [{ key: "Developers" }] } },
@@ -188,7 +187,7 @@ test("native filters, custom file areas and backup names are server-validated", 
       return HttpResponse.json({ build: [] });
     }
     assert.equal(url.pathname, "/app/rest/server/files/custom.future");
-    assert.match(url.searchParams.get("locator")!, /^count:0,/);
+    assert.match(url.searchParams.get("locator")!, /^count:0$/);
     return HttpResponse.json({ file: [] });
   });
   server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -292,22 +291,4 @@ test("queue positions, token statuses and expiration semantics reach remote vali
     assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
     assert.ok(!result.stderr.includes("synthetic-private-response"));
   }
-});
-
-test("bulk unmute preserves native anyProblem targets and validates identity before DELETE", async t => {
-  const f = await createTestRuntime(t);
-  const cli = f.createCli();
-  await cli.execute(["permissions", "grant", "Update"]);
-  const mute = { id: 9, scope: { project: { id: "Example" } }, target: { anyProblem: true }, resolution: { type: "manually" } };
-  const requests = trackRequests(t, 2, async request => {
-    if (request.method === "GET") {
-      assert.match(new URL(request.url).searchParams.get("fields")!, /anyProblem/);
-      return HttpResponse.json(mute);
-    }
-    assert.equal(request.method, "DELETE");
-    assert.deepEqual(await request.json(), { mute: [mute] });
-    return new HttpResponse(null, { status: 204 });
-  });
-  server.use(http.all("*", ({ request }) => requests.handle(request)));
-  await cli.execute(["mutes", "delete-many", "--id", "9", "--confirm"]);
 });

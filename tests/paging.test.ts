@@ -32,7 +32,7 @@ test("the continuation reads only top-level numeric start and lookupLimit", () =
     continuation(href("buildType:(id:X,start:9),branch:(name:($base64:YSxi)),start:20,count:21,lookupLimit:10000")),
     { start: 20, lookupLimit: 10000 },
   );
-  assert.deepEqual(continuation(href("defaultFilter:false,start:5,count:6")), { start: 5 });
+  assert.deepEqual(continuation(href("start:5,count:6")), { start: 5 });
   for (const value of [undefined, "", 42, href("count:6"), href("start:x"), "/no-locator", "::"]) {
     assert.equal(continuation(value), undefined, String(value));
   }
@@ -194,7 +194,7 @@ test("builds list reads across a lookup-limit continuation and reports completen
     locators.push(url.searchParams.get("locator") ?? "");
     assert.equal(url.searchParams.get("fields")?.startsWith("nextHref,build("), true);
     return locators.length === 1
-      ? HttpResponse.json({ build: [], nextHref: href("defaultFilter:false,start:0,count:3,lookupLimit:10000") })
+      ? HttpResponse.json({ build: [], nextHref: href("start:0,count:3,lookupLimit:10000") })
       : HttpResponse.json({ build: [{ id: 9, state: "finished", status: "SUCCESS" }] });
   }));
   const runtime = await createTestRuntime(t);
@@ -204,8 +204,8 @@ test("builds list reads across a lookup-limit continuation and reports completen
   assert.match(result.stdout, /^BUILD\s+JOB\s+BRANCH\s+STATE\s+RESULT\s+AGE\n9\s+finished\s+SUCCESS/);
   assert.doesNotMatch(result.stdout, /More results|Shown:/);
   assert.deepEqual(locators, [
-    "defaultFilter:false,branch:default:any,status:SUCCESS,start:0,count:3",
-    "defaultFilter:false,branch:default:any,status:SUCCESS,start:0,count:3,lookupLimit:10000",
+    "status:SUCCESS,start:0,count:3",
+    "status:SUCCESS,start:0,count:3,lookupLimit:10000",
   ]);
 });
 

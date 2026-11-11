@@ -1,3 +1,4 @@
+import { jsonOption, nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
@@ -61,8 +62,8 @@ export function createOperatorCommands(
       "create",
       "Create a pool",
       Permission.Update,
-      (c, { options }) => c.createPool(text(options, "name")),
-      [option("--name <name>", "Set the pool name", true)],
+      (c, { options }) => c.createPool(options.name as string | undefined, nativeInput(options)),
+      [option("--name <name>", "Set the pool name"), jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "delete <pool-id>",
@@ -95,8 +96,8 @@ export function createOperatorCommands(
         "Move an agent to this pool",
         Permission.Update,
         (c, { args, options }) =>
-          c.assignPoolAgent(number(args, "pool-id"), number(args, "agent-id"), fieldsFromOptions(options)),
-        [fieldsOption],
+          c.assignPoolAgent(number(args, "pool-id"), number(args, "agent-id"), fieldsFromOptions(options), nativeInput(options)),
+        [fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     command("projects", "Manage pool/project membership", [
@@ -112,7 +113,8 @@ export function createOperatorCommands(
         "assign <pool-id> <project-id>",
         "Assign a project to the pool",
         Permission.Update,
-        (c, { args }) => c.assignPoolProject(number(args, "pool-id"), args["project-id"]),
+        (c, { args, options }) => c.assignPoolProject(number(args, "pool-id"), args["project-id"], nativeInput(options)),
+        [jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "unassign <pool-id> <project-id>",
@@ -142,8 +144,9 @@ export function createOperatorCommands(
             booleanText(args.status) === "true",
             comment(options),
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [commentOption, fieldsOption],
+        [commentOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ]);
   }
@@ -196,10 +199,11 @@ export function createOperatorCommands(
           c.setAgentPolicy(
             number(args, "agent-id"),
             args.policy,
-            (options.job ?? []) as string[],
+            options.job as string[] | undefined,
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [fieldsOption, repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
+        [fieldsOption, repeatOption("--job <job-id>", "Select allowed jobs; repeat for more"), jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     command("pool", "Inspect or move pool membership", [
@@ -215,8 +219,8 @@ export function createOperatorCommands(
         "Move the agent to a pool",
         Permission.Update,
         (c, { args, options }) =>
-          c.setAgentPool(number(args, "agent-id"), number(args, "pool-id"), fieldsFromOptions(options)),
-        [fieldsOption],
+          c.setAgentPool(number(args, "agent-id"), number(args, "pool-id"), fieldsFromOptions(options), nativeInput(options)),
+        [fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     command("fields", "Manage agent fields", [
@@ -236,7 +240,7 @@ export function createOperatorCommands(
     ]),
   ];
   function tags(owner: "builds" | "queue") {
-    const tagOption = repeatOption("--tag <tag>", "Select public tags; repeat for more", true);
+    const tagOption = repeatOption("--tag <tag>", "Select public tags; repeat for more");
     return command("tags", "Inspect or change public tags", [
       withView(
         stringList,
@@ -265,9 +269,10 @@ export function createOperatorCommands(
             number(args, "build-id"),
             (options.tag ?? []) as string[],
             fieldsFromOptions(options),
+            nativeInput(options),
 
           ),
-        [tagOption, ...(owner === "builds" ? [fieldsOption] : [])],
+        [tagOption, ...(owner === "builds" ? [fieldsOption] : []), jsonOption("--item <json>", "Supply a native body")],
       ),
       ...(owner === "builds"
         ? [
@@ -281,9 +286,10 @@ export function createOperatorCommands(
                 (options.tag ?? []) as string[],
                 fieldsFromOptions(options),
                 options.locator as string | undefined,
+                nativeInput(options),
 
               ),
-            [{ ...tagOption, required: false }, fieldsOption, locatorOption],
+            [{ ...tagOption, required: false }, fieldsOption, locatorOption, jsonOption("--item <json>", "Supply a native body")],
             ),
           ]
         : []),
@@ -322,8 +328,8 @@ export function createOperatorCommands(
         "Move a build to a queue position",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePosition(args.position, number(options, "build"), fieldsFromOptions(options)),
-        [option("--build <build-id>", "Select a queued build", true), fieldsOption],
+          c.setQueuePosition(args.position, options.build === undefined ? undefined : number(options, "build"), fieldsFromOptions(options), nativeInput(options)),
+        [option("--build <build-id>", "Select a queued build"), fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
   ];
@@ -370,8 +376,8 @@ export function createOperatorCommands(
         "Replace the build comment",
         Permission.Update,
         (c, { args, options }) =>
-          c.setBuildComment(number(args, "build-id"), text(options, "text")),
-        [option("--text <text>", "Set the comment text", true)],
+          c.setBuildComment(number(args, "build-id"), options.text as string | undefined),
+        [option("--text <text>", "Set the comment text")],
       ),
       leaf("clear <build-id>", "Remove the comment", Permission.Update, (c, { args }) =>
         c.clearBuildComment(number(args, "build-id")),
@@ -395,8 +401,9 @@ export function createOperatorCommands(
             booleanText(args.status) === "true",
             comment(options),
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [commentOption, fieldsOption],
+        [commentOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     command("statistics", "Read build statistics", [

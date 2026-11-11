@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { join } from "node:path";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { TeamCityClient } from "../src/client.js";
@@ -20,18 +21,19 @@ const blankControls = [
 ];
 for (const argv of blankControls) {
   for (const value of ["", "   "]) {
-    test(`#236 ${argv.slice(0, 3).join(" ")} rejects ${JSON.stringify(value)} for ${argv.at(-1)} before HTTP`, async t => {
+    test(`#236 ${argv.slice(0, 3).join(" ")} forwards ${JSON.stringify(value)} for ${argv.at(-1)}`, async t => {
       const rt = await createTestRuntime(t);
       let calls = 0;
-      server.use(http.all("*", () => {
+      server.use(http.all("*", ({ request }) => {
         calls++;
-        return HttpResponse.json({});
+        const key = argv.at(-1) === "--archive-name" ? "name" : "basePath";
+        assert.equal(new URL(request.url).searchParams.get(key), value);
+        return argv.includes("archive") ? new HttpResponse(new Uint8Array([80,75,5,6,...Array(18).fill(0)]), { headers: { "content-type": "application/zip" } }) : HttpResponse.json({file:[]});
       }));
       const cli = rt.createCli();
-      const result = await rt.run(cli, [...argv, value]);
-      assert.equal(result.exitCode, 1);
-      await assert.rejects(cli.execute([...argv, value]));
-      assert.equal(calls, 0);
+      const input = argv.map(part => part === "result.zip" ? join(rt.root, "blank-control.zip") : part);
+      await cli.execute([...input, value]);
+      assert.equal(calls, 1);
     });
   }
 }

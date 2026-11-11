@@ -65,7 +65,7 @@ for (const metadata of [
       http.put(path, async ({ request }) => {
         writes++;
         assert.deepEqual(await request.json(), { name: "npm.token", value: secret,
-          ...("type" in metadata ? { type: metadata.type } : {}) });
+          type: "type" in metadata ? metadata.type : { rawValue: "password" } });
         return new HttpResponse(null, { status: 204 });
       }),
     );

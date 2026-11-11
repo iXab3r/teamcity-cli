@@ -348,7 +348,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "step(id,name,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))))"
     },
-    "body": "{\"step\":[{\"name\":\"Echo\",\"type\":\"simpleRunner\",\"properties\":{\"property\":[]}}]}",
+    "body": "{\"step\":[{\"name\":\"Echo\",\"type\":\"simpleRunner\"}]}",
     "baselineResponse": {
       "step": [
         {

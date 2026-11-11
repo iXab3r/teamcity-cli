@@ -227,7 +227,7 @@ export const cases: Case[] = [
     "method": "DELETE",
     "path": "/app/rest/mutes/multiple",
     "query": {},
-    "body": "{\"mute\":[{\"id\":9,\"scope\":{},\"target\":{},\"resolution\":{}}]}",
+    "body": "{\"mute\":[{\"id\":9}]}",
     "baselineResponse": {
       "id": 9,
       "scope": {},
@@ -245,13 +245,6 @@ export const cases: Case[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "method": "GET",
-      "path": "/app/rest/mutes/id:9",
-      "query": {
-        "fields": "id,scope(project(id),buildTypes(buildType(id))),target(anyProblem,tests(test(id)),problems(problem(id))),resolution(type,time)"
-      },
-      "body": ""
-    }
+    "preflight": null
   }
 ];

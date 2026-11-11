@@ -93,9 +93,10 @@ for (const scenario of buildProjectionCases) {
           method: scenario.method, url: origin + scenario.path,
           query: { ...scenario.fixedQuery, ...scenario.nativeQuery, ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.field ? {field: projection} : {fields: scenario.fields(projection)}) },
           headers: { accept: "application/json", authorization: `Bearer ${token}` },
-          body: { text: scenario.body },
+          body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
         });
-        assert.equal(await request.text(), scenario.body);
+        if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
         return HttpResponse.json(scenario.field ? scenario.baselineResponse : scenario.response(responseValue));
       });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -133,9 +134,10 @@ for (const scenario of buildProjectionCases) {
         method: scenario.method, url: origin + scenario.path,
         query: scenario.query,
         headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+        body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
       });
-      assert.equal(await request.text(), scenario.body);
+      if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
       return scenario.argv.includes("rest-plugin") ? HttpResponse.text(`<plugin name="rest"/>`, {headers: {"content-type": "application/xml"}}) : HttpResponse.json(scenario.baselineResponse);
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -170,25 +172,32 @@ for (const scenario of buildProjectionCases) {
   });
 
   for (const option of Object.keys(scenario.nativeQuery ?? {})) for (const value of ["", " "]) {
-    test(`${story}-A${acceptance.blank} ${scenario.name}: rejects blank ${option} ${JSON.stringify(value)} on all surfaces`, async t => {
+    test(`${story}-A${acceptance.blank} ${scenario.name}: forwards blank ${option} ${JSON.stringify(value)} on all surfaces`, async t => {
       const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
       const cli = rt.createCli();
-      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      const requests = trackRequests(t, 5, request => {
+        assert.equal(new URL(request.url).searchParams.get(option), value);
+        return HttpResponse.json(scenario.response(native));
+      });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
-      for (const surface of surfaces) await failure(rt, cli, [...scenario.argv, "--" + option, value], surface, "usage");
+      for (const surface of surfaces) await success(rt, cli, [...scenario.argv, "--" + option, value, "--fields", projection], surface, scenario.result(native));
     });
   }
 
   for (const fields of ["", " \t\n "]) {
-    test(`${story}-A${acceptance.blank} ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
+    test(`${story}-A${acceptance.blank} ${scenario.name}: forwards ${fields === "" ? "empty" : "blank"} fields on all surfaces`, async t => {
       const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
       const cli = rt.createCli();
-      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, request => {
+        if (scenario.preflight && request.method === "GET") return HttpResponse.json(scenario.baselineResponse);
+        const url = new URL(request.url);
+        assert.equal(url.pathname, scenario.path);
+        assert.equal(url.searchParams.get(scenario.field ? "field" : "fields"), scenario.field ? fields : scenario.fields(fields));
+        return HttpResponse.json(scenario.field ? scenario.baselineResponse : scenario.response(native));
+      });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
-      for (const surface of surfaces) {
-        const evidence = await failure(rt, cli, [...scenario.argv, scenario.field ? "--field" : "--fields", fields], surface, "usage");
-        assert.match(evidence, /non-empty/i);
-      }
+      for (const surface of surfaces)
+        await success(rt, cli, [...scenario.argv, scenario.field ? "--field" : "--fields", fields], surface, scenario.field ? scenario.baselineResult : scenario.result(native), scenario.issuedToken);
     });
   }
 }
@@ -340,11 +349,20 @@ export function nativeControlsAcceptance(story: string, cases: Array<{argv: stri
         else assert.equal((await rt.run(cli,[...argv,...(surface === "json" ? ["--json"] : [])])).exitCode,0);
       }
     });
-    for (const key of Object.keys(c.controls)) for (const value of [""," ",...(c.boolean === key ? ["TRUE","1"] : [])]) test(`${story}-A${acceptance.blank} ${c.argv.join(" ")}: rejects ${key} ${JSON.stringify(value)} locally`, async t => {
+    for (const key of Object.keys(c.controls)) for (const value of [""," ",...(c.boolean === key ? ["TRUE","1"] : [])]) test(`${story}-A${acceptance.blank} ${c.argv.join(" ")}: parses or forwards ${key} ${JSON.stringify(value)}`, async t => {
       const rt = await createTestRuntime(t,{profiles:[{name:"default",url:"https://teamcity.test",permissions:[c.permission]}]});
-      const requests=trackRequests(t,0,response);server.use(http.all("*",({request})=>requests.handle(request)));
+      const requests = trackRequests(t, c.boolean === key ? 0 : 1, request => {
+        const wireKey = { "base-path": "basePath", "archive-name": "name" }[key] ?? key;
+        assert.deepEqual(Object.fromEntries(new URL(request.url).searchParams), { ...c.query, [wireKey]: value });
+        return response();
+      });
+      server.use(http.all("*", ({ request }) => requests.handle(request)));
       const cli = rt.createCli();
-      const argv = [...c.argv, "--" + key, value];
+      const argv = [...c.argv, "--" + key, value, ...(c.archive ? ["--output", join(rt.root, "blank-archive.zip")] : [])];
+      if (c.boolean !== key) {
+        await cli.execute(argv);
+        return;
+      }
       await assert.rejects(cli.execute(argv), {code: "usage"});
       for (const json of [false, true]) {
         const rendered = await rt.run(cli, [...argv, ...(json ? ["--json"] : [])]);

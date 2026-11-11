@@ -66,7 +66,7 @@ test("lists all known agents with explicit state filters", async () => {
       const url = assertAuthorization(request);
       assert.equal(
         url.searchParams.get("locator"),
-        "connected:true,enabled:any,authorized:false,start:0,count:11",
+        "connected:true,authorized:false,start:0,count:11",
       );
       assert.equal(url.searchParams.get("fields"), `nextHref,agent(${agentFields})`);
       return HttpResponse.json({
@@ -164,14 +164,14 @@ test("cancels running and queued builds with metadata-preserving POSTs", async (
       assert.equal(url.searchParams.get("fields"), buildFields);
       assert.deepEqual(await request.json(), {
         comment: "Fixture cancellation",
-        readdIntoQueue: false,
+
       });
       return HttpResponse.json({ id: 101, state: "finished", status: "UNKNOWN" });
     }),
     http.post(`${baseUrl}/app/rest/buildQueue/id:201`, async ({ request }) => {
       const url = assertAuthorization(request);
       assert.equal(url.searchParams.get("fields"), buildFields);
-      assert.deepEqual(await request.json(), { readdIntoQueue: false });
+      assert.deepEqual(await request.json(), {});
       return HttpResponse.json({ id: 201, state: "finished", status: "UNKNOWN" });
     }),
   );

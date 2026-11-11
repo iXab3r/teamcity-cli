@@ -15,8 +15,8 @@ test("TeamCity paging preserves defaults, leading zeros, signed zero and safe of
   const cli = f.createCli();
   const locators = [
     // One extra item proves whether more exist; a request keeps at most 1000 plus that one.
-    "archived:false,start:0,count:101", "archived:false,start:0,count:2",
-    "archived:false,start:9007199254740891,count:101", "archived:false,start:3,count:2", "archived:false,start:0,count:1001",
+    "start:0,count:101", "start:0,count:2",
+    "start:9007199254740891,count:101", "start:3,count:2", "start:0,count:1001",
   ];
   let calls = 0;
   server.use(http.get("https://teamcity.test/app/rest/projects", ({ request }) => {
@@ -83,8 +83,8 @@ test("TeamCity repeated JSON remains ordered and numeric IDs retain strict valid
     http.put("https://teamcity.test/app/rest/buildTypes/id:Fixture_Job/steps", async ({ request }) => {
       puts++;
       assert.deepEqual(await request.json(), { step: [
-        { name: "First", type: "simpleRunner", properties: { property: [] } },
-        { name: "Second", type: "simpleRunner", properties: { property: [] } },
+        { name: "First", type: "simpleRunner" },
+        { name: "Second", type: "simpleRunner" },
       ] });
       return HttpResponse.json({ step: [] });
     }),
@@ -121,7 +121,7 @@ test("TeamCity preserves a large explicit batch, typed replacement and returned 
     }),
     http.put("https://teamcity.test/app/rest/buildTypes/id:Fixture_Job/steps", async ({ request }) => {
       calls++;
-      assert.deepEqual(await request.json(), { step: steps.map(step => ({ ...step, properties: { property: [] } })) });
+      assert.deepEqual(await request.json(), { step: steps.map(step => ({ ...step })) });
       return HttpResponse.json({ step: [] });
     }),
     http.get("https://teamcity.test/app/rest/health/category", () => {

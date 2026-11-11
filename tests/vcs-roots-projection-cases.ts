@@ -454,7 +454,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,name,vcsName,project(id)"
     },
-    "body": "{\"id\":\"Demo\",\"name\":\"Demo\",\"vcsName\":\"jetbrains.git\",\"project\":{\"id\":\"Demo\"},\"properties\":{\"property\":[{\"name\":\"authMethod\",\"value\":\"ANONYMOUS\"},{\"name\":\"branch\",\"value\":\"refs/heads/main\"},{\"name\":\"url\",\"value\":\"https://example.test/repo.git\"}]}}",
+    "body": "{\"id\":\"Demo\",\"name\":\"Demo\",\"vcsName\":\"jetbrains.git\",\"project\":{\"id\":\"Demo\"},\"properties\":{\"property\":[{\"name\":\"branch\",\"value\":\"refs/heads/main\"},{\"name\":\"url\",\"value\":\"https://example.test/repo.git\"}]}}",
     "baselineResult": {
       "id": "Demo",
       "name": "Demo",

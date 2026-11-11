@@ -32,12 +32,17 @@ export function requiredText(value: string, description: string): string {
   if (typeof value !== "string") {
     throw new Error(`${description} must be text.`);
   }
+  return value;
+}
+
+export function urlText(value: string, description: string): string {
+  requiredText(value, description);
   try { encodeURIComponent(value); } catch { throw new Error(`${description} must contain valid Unicode text.`); }
   return value;
 }
 
 export function locatorValue(value: string, description: string): string {
-  const normalized = requiredText(value, description);
+  const normalized = urlText(value, description);
   return simpleLocatorValuePattern.test(normalized)
     ? normalized
     : `($base64:${Buffer.from(normalized).toString("base64url")})`;
@@ -51,9 +56,9 @@ export function idLocator(value: string, description: string): string {
  * All branches, or one branch name. TeamCity re-parses a branch value as a nested locator even
  * after base64 decoding, so a non-simple name travels as an explicit value condition.
  */
-export function branchDimension(name?: string): string {
-  if (name === undefined) return "branch:default:any";
-  const value = requiredText(name, "TeamCity branch name");
+export function branchDimension(name?: string): string | undefined {
+  if (name === undefined) return undefined;
+  const value = urlText(name, "TeamCity branch name");
   return simpleLocatorValuePattern.test(value)
     ? `branch:(name:${value})`
     : `branch:(name:(value:($base64:${Buffer.from(value).toString("base64url")})))`;

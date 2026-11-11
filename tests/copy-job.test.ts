@@ -18,7 +18,7 @@ test("native job copy is Credentials-gated and never returns protected settings"
   await cli.execute(["permissions", "grant", "Credentials"]);
   server.use(http.post("https://teamcity.test/app/rest/projects/id:Destination/buildTypes", async ({ request }) => {
     assert.deepEqual(await request.json(), { id: "Copied", name: "Copied job",
-      sourceBuildType: { id: "Source" }, copyAllAssociatedSettings: true });
+      sourceBuildType: { id: "Source" } });
     return HttpResponse.json({ id: "Copied", name: "Copied job", projectId: "Destination",
       parameters: { property: [{ name: "npm.token", value: "synthetic-not-for-output" }] } });
   }));

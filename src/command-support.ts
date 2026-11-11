@@ -6,6 +6,7 @@ import {
   type OptionDefinition,
   type TargetCommand,
 } from "@eyeauras/cli-factory";
+import { apiInputRecord } from "./triage-models.js";
 import type { TeamCityClient } from "./client.js";
 import type { PlainProperty } from "./authoring-models.js";
 import { normalizePage, requiredText } from "./locator.js";
@@ -41,7 +42,6 @@ export function textOption(flags: string, description: string): OptionDefinition
     flags,
     description,
     parse(value) {
-      if (!value.trim()) throw new Error(`${flags.split(" ")[0]} requires a non-empty value.`);
       return value;
     },
   };
@@ -51,7 +51,6 @@ export const locatorOption: OptionDefinition = {
   flags: "--locator <locator>",
   description: "Filter native TeamCity tags",
   parse(value) {
-    if (!value.trim()) throw new Error("Expected a non-empty locator.");
     return requiredText(value, "locator");
   },
 };
@@ -73,7 +72,7 @@ export function jsonOption(flags: string, description: string, repeat = false): 
   return {
     flags,
     description,
-    required: true,
+    required: false,
     parse(value, previous) {
       const item = typedJson(value);
       return repeat ? [...(Array.isArray(previous) ? previous : []), item] : item;
@@ -123,7 +122,10 @@ export const fieldOption: OptionDefinition = {
   flags: "--field <name>",
   description: "Select a native TeamCity field",
   parse(value) {
-    if (!value.trim()) throw new Error("Expected a non-empty field.");
     return value;
   },
 };
+
+export function nativeInput(options: Record<string, unknown>): Record<string, unknown> {
+  return apiInputRecord(options.item ?? {}, []);
+}

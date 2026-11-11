@@ -15,7 +15,7 @@ export const buildProjectionCases = [
   {
     name: "list", argv: ["builds", "list", "--limit", "2", "--start", "3"],
     path: "/app/rest/builds",
-    locator: "defaultFilter:false,branch:default:any,start:3,count:3",
+    locator: "start:3,count:3",
     fields: (item: string) => `nextHref,build(${item})`,
     response: <T>(build: T) => ({ build: [build] }),
     result: <T>(build: T) => ({ count: 1, items: [build], hasMore: false, nextStart: null }),

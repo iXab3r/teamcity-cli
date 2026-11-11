@@ -292,7 +292,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "feature(id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))))"
     },
-    "body": "{\"feature\":[{\"type\":\"swabra\",\"properties\":{\"property\":[]}}]}",
+    "body": "{\"feature\":[{\"type\":\"swabra\"}]}",
     "baselineResponse": {
       "feature": [
         {
@@ -531,7 +531,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "trigger(id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))))"
     },
-    "body": "{\"trigger\":[{\"type\":\"vcsTrigger\",\"properties\":{\"property\":[]}}]}",
+    "body": "{\"trigger\":[{\"type\":\"vcsTrigger\"}]}",
     "baselineResponse": {
       "trigger": [
         {

@@ -6,6 +6,7 @@ import {
   array,
   inputRecord,
   apiInputRecord,
+  collectionEnvelope,
   inputText,
   object,
   safeScalars,
@@ -43,31 +44,32 @@ export function groupKeys(keys: readonly string[]) {
   return { group: textIds(keys).map((key) => ({ key })) };
 }
 export interface RoleInput {
-  roleId: string;
+  roleId?: string;
+  scope?: string;
+  [key: string]: unknown;
   global?: boolean;
   project?: string;
 }
 function assignmentScope(input: { global?: unknown; project?: unknown }) {
   if (input.global !== undefined && typeof input.global !== "boolean")
     throw new Error("Global scope must be a boolean.");
-  if ((input.global === true) === (input.project !== undefined))
-    throw new Error("Choose exactly one global or project scope.");
-  return input.global ? "g" : "p:" + inputText(input.project, "Project ID");
+  if (input.global === true && input.project !== undefined)
+    throw new Error("Choose either global or project scope.");
+  return input.global === true ? "g" : input.project === undefined ? undefined : "p:" + inputText(input.project, "Project ID");
 }
-export function roleBody(value: unknown) {
-  const input = apiInputRecord(value, ["roleId", "global", "project", "scope"]);
-  const { global, project, ...native } = input;
-  return { ...native, roleId: inputText(input.roleId, "Role ID"),
-    scope: input.scope === undefined ? assignmentScope(input) : inputText(input.scope, "Scope") };
+export function roleBody(value: unknown): Record<string, unknown> {
+  const { global, project, ...native } = apiInputRecord(value, []);
+  if (global !== undefined && typeof global !== "boolean") throw new Error("Global scope must be a boolean.");
+  if (global === true && project !== undefined) return { ...native, global, project };
+  const scope = native.scope === undefined ? assignmentScope({ global, project }) : native.scope;
+  return { ...native, ...(scope === undefined ? {} : { scope }) };
 }
 export function roleSuffix(input: RoleInput) {
-  const role = roleBody(input);
-  return { role, suffix: "/" + pathSegment(role.roleId) + "/" + pathSegment(role.scope) };
+  const role = { roleId: input.roleId, scope: input.scope ?? assignmentScope(input) };
+  return { role, suffix: "/" + pathSegment(inputText(role.roleId, "Role ID")) + "/" + pathSegment(inputText(role.scope, "Scope")) };
 }
 export function roleBodies(inputs: readonly unknown[]) {
-  const roles = inputs.map(roleBody);
-  textIds(roles.map((role) => JSON.stringify([role.roleId, role.scope])));
-  return { role: roles };
+  return collectionEnvelope(inputs, "role") ?? { role: inputs.map(roleBody) };
 }
 export function safeToken(value: unknown) {
   const raw = object(value);
@@ -87,40 +89,24 @@ export interface TokenCreationOptions {
   noExpiration?: boolean;
   samePermissions?: boolean;
   restrictions?: readonly unknown[];
+  item?: Record<string, unknown>;
 }
 export function tokenBody(input: TokenCreationOptions) {
   const name = inputText(input.name, "Name");
-  if ((input.expires !== undefined) === (input.noExpiration === true))
-    throw new Error("Choose expiry or explicit no-expiration.");
-  let expirationTime: string | undefined;
-  if (input.expires !== undefined) {
-    expirationTime = inputText(input.expires, "Expiration time");
-  }
-  const restrictions = input.restrictions ?? [];
-  if ((input.samePermissions === true) === restrictions.length > 0)
-    throw new Error("Choose same-permissions or explicit restrictions.");
-  const permissionRestriction = restrictions.map((value) => {
-    const item = apiInputRecord(value, ["permission", "global", "project", "isGlobalScope"]);
-    const { global, project, ...native } = item;
-    const permission = typeof item.permission === "string"
-      ? { id: inputText(item.permission, "Permission") } : apiInputRecord(item.permission, []);
-    if (item.isGlobalScope === true || (project !== null && typeof project === "object")) {
-      if (item.isGlobalScope !== undefined && typeof item.isGlobalScope !== "boolean")
-        throw new Error("Global scope must be a boolean.");
-      return { ...native, permission, ...(project === undefined ? {} : { project: apiInputRecord(project, []) }) };
-    }
-    const scope = assignmentScope(item);
+  const permissionRestriction = input.restrictions?.map(value => {
+    const { global, project, ...native } = apiInputRecord(value, []);
     return {
+      ...(global === undefined ? {} : { isGlobalScope: global }),
+      ...(project === undefined ? {} : { project: typeof project === "string" ? { id: project } : project }),
       ...native,
-      permission,
-      ...(scope === "g" ? { isGlobalScope: true } : { project: { id: scope.slice(2) } }),
+      ...(typeof native.permission === "string" ? { permission: { id: native.permission } } : {}),
     };
   });
-  textIds(permissionRestriction.map((item) => JSON.stringify(item)));
   return {
     name,
-    ...(expirationTime === undefined ? {} : { expirationTime }),
-    ...(permissionRestriction.length ? { permissionRestrictions: { permissionRestriction } } : {}),
+    ...(input.expires === undefined ? {} : { expirationTime: inputText(input.expires, "Expiration time") }),
+    ...(permissionRestriction === undefined ? {} : { permissionRestrictions: { permissionRestriction } }),
+    ...input.item,
   };
 }
 export function credentialAlias(alias: string) {

@@ -28,7 +28,7 @@ Read [the router](../../AGENTS.md), [runtime contract](../DESIGN.md),
 - Fixtures must be public-safe and minimal.
 - Follow [API-faithful validation](../DESIGN.md#api-faithful-validation): primary contracts govern
   service values. Examples are not closed enums; preserve literal strings and additional native fields.
-  Record versions/evidence for semantic checks and concrete reasons for transport checks.
+  Leave request enums, ranges, mandatory payload fields and defaults to TeamCity; retain primitive parsing and concrete transport checks.
   Writes forward caller input for TeamCity to validate; optional aliases do not restrict direct values.
   Reads retain server-secret hiding; permission categories and profile-credential masking remain.
 

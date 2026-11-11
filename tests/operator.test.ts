@@ -49,7 +49,6 @@ test("S4 validates IDs, required options, fields, booleans, policy and required 
     }),
   );
   const invalid = [
-    ["pools", "create"],
 
     ["pools", "show", "1.5"],
     ["pools", "show", "NaN"],
@@ -60,20 +59,14 @@ test("S4 validates IDs, required options, fields, booleans, policy and required 
     ["agents", "fields", "show", "7", "\ud800"],
     ["agents", "enabled", "set", "7", "TRUE"],
     ["agents", "authorized", "set", "7", "0"],
-    ["agents", "policy", "set", "7", "all"],
 
-    ["queue", "position", "set", "last"],
 
     ["builds", "pin", "set", "42", "yes"],
 
-    ["builds", "comment", "set", "42"],
     ["builds", "statistics", "show", "42", ".."],
 
     ["changes", "parents", "1.5"],
   ];
-  for (const owner of ["builds", "queue"]) {
-    invalid.push([owner, "tags", "add", "42"]);
-  }
   for (const argv of invalid) await assert.rejects(cli.execute(argv), Error, argv.join(" "));
   assert.equal(calls, 0);
 });
@@ -109,8 +102,8 @@ test("S4 preserves false, empty selected policy, empty tag replacement and pool 
     { status: false },
     { status: false },
     { status: false },
-    { policy: "selected", buildTypes: { buildType: [] } },
-    { policy: "any", buildTypes: { buildType: [] } },
+    { policy: "selected" },
+    { policy: "any" },
     { tag: [] },
     { id: 0 },
   ]);

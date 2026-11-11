@@ -61,24 +61,10 @@ test("S6 validates identities, controls and body types before HTTP", async (test
     ["builds", "batch", "delete", "--build", "9007199254740993"],
     ["builds", "batch", "pin", "--build", "42", "--status", "yes"],
     ["builds", "finish-at", "42"],
-    ["builds", "vcs-labels", "add", "42", "--label", "example"],
 
     ["investigations", "create", "--item", "{synthetic-invalid"],
     ["investigations", "replace", ...item({ ...investigation, assignee: "wrong type" })],
     ["investigations", "create", ...item({ ...investigation, resolution: 1 })],
-    ["investigations", "show", "--target", '{"kind":"job","jobId":"Build","projectId":"Example"}'],
-    ["mutes", "create", ...item({ project: "Example", tests: [], resolution: "manually" })],
-    [
-      "mutes",
-      "create",
-      ...item({ project: "Example", jobs: ["Build"], tests: ["1"], resolution: "manually" }),
-    ],
-    [
-      "mutes",
-      "create",
-      ...item({ project: "Example", tests: ["1"], problems: ["2"], resolution: "manually" }),
-    ],
-    ["mutes", "create", ...item({ project: "Example", tests: ["1"], resolution: "atTime" })],
     [
       "mutes",
       "create",

@@ -1,3 +1,4 @@
+import { nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
@@ -7,7 +8,7 @@ import {
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { locatorOption, clientLeaf, text, optionalText, option, propertyOption } from "./command-support.js";
+import { locatorOption, clientLeaf, text, optionalText, option, propertyOption, jsonOption } from "./command-support.js";
 import { createAdvancedAuthoringCommands } from "./advanced-authoring-commands.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
 import type {
@@ -19,9 +20,9 @@ import type {
 
 function stepInput(options: Record<string, unknown>): StepInput {
   return {
-    name: text(options, "name"),
-    type: text(options, "type"),
-    properties: (options.property ?? []) as PlainProperty[],
+    ...optionalText(options, "name"),
+    ...optionalText(options, "type"),
+    ...(options.property === undefined ? {} : { properties: options.property as PlainProperty[] }),
   };
 }
 
@@ -33,9 +34,9 @@ export function createAuthoringCommands(
   const leaf = clientLeaf(clientFor);
   const advanced = createAdvancedAuthoringCommands(leaf, pageOptions, bulk);
 
-  const nameOption = option("--name <name>", "Set the display name", true);
+  const nameOption = option("--name <name>", "Set the display name");
   const descriptionOption = option("--description <text>", "Set the description");
-  const parentOption = option("--parent <id>", "Select the parent project", true);
+  const parentOption = option("--parent <id>", "Select the parent project");
   const projectOption = option("--project <id>", "Select a project", true);
 
   function parameters(owner: ParameterOwner): CommandDefinition {
@@ -45,7 +46,7 @@ export function createAuthoringCommands(
     const valueOption = option(
       "--value <value>",
       "Set the parameter value",
-      true,
+      false,
     );
     return command(
       owner === "output" ? "output-parameters" : "parameters",
@@ -58,8 +59,11 @@ export function createAuthoringCommands(
           async ({ args, options }, context) =>
             (await clientFor(context)).setPasswordParameter(
               args["job-id"], args.name, options.valueSecret as string | undefined, context.secrets, options.value as string | undefined,
+              nativeInput(options),
             ),
-          { permission: "Credentials", options: [option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias")] },
+          { permission: "Credentials", options: [
+            jsonOption("--item <json>", "Supply a native body"),
+            option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias")] },
         )] : []),
         leaf(
           `list <${ownerArg}>`,
@@ -91,10 +95,11 @@ export function createAuthoringCommands(
               owner,
               text(args, ownerArg),
               text(args, "name"),
-              text(options, "value"),
+              options.value as string | undefined,
               fields(options),
+              nativeInput(options),
             ),
-          [valueOption, ...projections],
+          [valueOption, ...projections, jsonOption("--item <json>", "Supply a native body")],
         ),
         leaf(
           `set <${ownerArg}> <name>`,
@@ -105,10 +110,11 @@ export function createAuthoringCommands(
               owner,
               text(args, ownerArg),
               text(args, "name"),
-              text(options, "value"),
+              options.value as string | undefined,
               fields(options),
+              nativeInput(options),
             ),
-          [valueOption, ...projections],
+          [valueOption, ...projections, jsonOption("--item <json>", "Supply a native body")],
         ),
         leaf(
           `delete <${ownerArg}> <name>`,
@@ -122,20 +128,22 @@ export function createAuthoringCommands(
 
   const stepOptions = [
     nameOption,
-    option("--type <runner-type>", "Set the runner type", true),
+    option("--type <runner-type>", "Set the runner type"),
     propertyOption,
+    jsonOption("--item <json>", "Supply a native body"),
   ];
   const extensionOptions = [
-    option("--type <type>", "Set the extension type", true),
+    option("--type <type>", "Set the extension type"),
     option("--enabled", "Enable the extension"),
     propertyOption,
+    jsonOption("--item <json>", "Supply a native body"),
   ];
   function extensions(kind: ExtensionKind): CommandDefinition {
     const idArg = kind === "triggers" ? "trigger-id" : "feature-id";
     const input = (options: Record<string, unknown>) => ({
-      type: text(options, "type"),
+      ...optionalText(options, "type"),
       ...(options.enabled === undefined ? {} : { enabled: options.enabled === true }),
-      properties: (options.property ?? []) as PlainProperty[],
+      ...(options.property === undefined ? {} : { properties: options.property as PlainProperty[] }),
     });
     return command(kind, "Manage job extensions", [
       bulk.replaceAll(kind),
@@ -164,7 +172,7 @@ export function createAuthoringCommands(
         "Add an extension",
         Permission.Update,
         (c, { args, options }) =>
-          c.createExtension(kind, args["job-id"], input(options), fieldsFromOptions(options)),
+          c.createExtension(kind, args["job-id"], input(options), fieldsFromOptions(options), nativeInput(options)),
         [...extensionOptions, fieldsOption],
       ),
       leaf(
@@ -178,6 +186,7 @@ export function createAuthoringCommands(
             text(args, idArg),
             input(options),
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
         [...extensionOptions, fieldsOption],
       ),
@@ -187,12 +196,13 @@ export function createAuthoringCommands(
     ]);
   }
   const snapshotOptions = [
-    option("--source <upstream-job-id>", "Select an upstream job", true),
+    option("--source <upstream-job-id>", "Select an upstream job"),
     propertyOption,
+    jsonOption("--item <json>", "Supply a native body"),
   ];
   const snapshotInput = (options: Record<string, unknown>) => ({
-    source: text(options, "source"),
-    properties: (options.property ?? []) as PlainProperty[],
+    ...optionalText(options, "source"),
+    ...(options.property === undefined ? {} : { properties: options.property as PlainProperty[] }),
   });
   const snapshots = command(
     "snapshot-dependencies",
@@ -219,7 +229,7 @@ export function createAuthoringCommands(
         "Add an upstream dependency",
         Permission.Update,
         (c, { args, options }) =>
-          c.createSnapshotDependency(args["job-id"], snapshotInput(options), fieldsFromOptions(options)),
+          c.createSnapshotDependency(args["job-id"], snapshotInput(options), fieldsFromOptions(options), nativeInput(options)),
         [...snapshotOptions, fieldsOption],
       ),
       leaf(
@@ -232,6 +242,7 @@ export function createAuthoringCommands(
             args["dependency-id"],
             snapshotInput(options),
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
         [...snapshotOptions, fieldsOption],
       ),
@@ -268,17 +279,19 @@ export function createAuthoringCommands(
       (c, { args, options }) =>
         c.attachTemplate(
           args["job-id"],
-          text(options, "template"),
-          options.optimizeSettings === true,
+          options.template as string | undefined,
+          options.optimizeSettings as boolean | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
         fieldsOption,
-        option("--template <template-id>", "Select an existing template", true),
+        option("--template <template-id>", "Select an existing template"),
         option(
           "--optimize-settings",
           "Remove duplicated local settings",
         ),
+        jsonOption("--item <json>", "Supply a native body"),
       ],
     ),
     leaf(
@@ -289,7 +302,7 @@ export function createAuthoringCommands(
         c.detachTemplate(
           args["job-id"],
           args["template-id"],
-          options.inlineSettings === true,
+          options.inlineSettings as boolean | undefined,
         ),
       [
         option(
@@ -323,7 +336,7 @@ export function createAuthoringCommands(
       "create <job-id>",
       "Add a build step",
       Permission.Update,
-      (c, { args, options }) => c.createStep(args["job-id"], stepInput(options), fieldsFromOptions(options)),
+      (c, { args, options }) => c.createStep(args["job-id"], stepInput(options), fieldsFromOptions(options), nativeInput(options)),
       [...stepOptions, fieldsOption],
     ),
     leaf(
@@ -331,7 +344,7 @@ export function createAuthoringCommands(
       "Replace a build step",
       Permission.Update,
       (c, { args, options }) =>
-        c.replaceStep(args["job-id"], args["step-id"], stepInput(options), fieldsFromOptions(options)),
+        c.replaceStep(args["job-id"], args["step-id"], stepInput(options), fieldsFromOptions(options), nativeInput(options)),
       [...stepOptions, fieldsOption],
     ),
     leaf("delete <job-id> <step-id>", "Delete one build step", Permission.Update, (c, { args }) =>
@@ -342,7 +355,6 @@ export function createAuthoringCommands(
   const checkoutOption = option(
     "--checkout-rules <rules>",
     "Set checkout rules",
-    true,
   );
   const vcs = command("vcs", "Manage existing VCS root attachments", [
     bulk.replaceAll("vcs-root-entries"),
@@ -367,14 +379,16 @@ export function createAuthoringCommands(
       (c, { args, options }) =>
         c.attachVcsRoot(
           args["job-id"],
-          text(options, "root"),
-          typeof options.checkoutRules === "string" ? options.checkoutRules : "",
+          options.root as string | undefined,
+          options.checkoutRules as string | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
         fieldsOption,
-        option("--root <root-id>", "Select an existing VCS root", true),
-        { ...checkoutOption, required: false },
+        option("--root <root-id>", "Select an existing VCS root"),
+        checkoutOption,
+        jsonOption("--item <json>", "Supply a native body"),
       ],
     ),
     leaf(
@@ -385,10 +399,11 @@ export function createAuthoringCommands(
         c.replaceVcsEntry(
           args["job-id"],
           args["root-id"],
-          text(options, "checkoutRules"),
+          options.checkoutRules as string | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
-      [checkoutOption, fieldsOption],
+      [checkoutOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "detach <job-id> <root-id>",
@@ -405,8 +420,8 @@ export function createAuthoringCommands(
         "Replace checkout rules",
         Permission.Update,
         (c, { args, options }) =>
-          c.setCheckoutRules(args["job-id"], args["root-id"], text(options, "rules")),
-        [option("--rules <rules>", "Set checkout rules", true)],
+          c.setCheckoutRules(args["job-id"], args["root-id"], options.rules as string | undefined),
+        [option("--rules <rules>", "Set checkout rules")],
       ),
     ]),
   ]);
@@ -443,11 +458,12 @@ export function createAuthoringCommands(
       Permission.Update,
       (c, { args, options }) =>
         c.createProject(args.id, {
-          name: text(options, "name"),
+          ...optionalText(options, "name"),
           ...optionalText(options, "parent"),
           ...optionalText(options, "description"),
+          ...nativeInput(options),
         }),
-      [nameOption, { ...parentOption, required: false }, descriptionOption],
+      [nameOption, { ...parentOption, required: false }, descriptionOption, jsonOption("--item <json>", "Supply a native project body")],
     ),
     leaf(
       "set <id> <field> <value>",
@@ -460,8 +476,8 @@ export function createAuthoringCommands(
       "move <id>",
       "Move a project to a parent",
       Permission.Update,
-      (c, { args, options }) => c.moveProject(args.id, text(options, "parent"), fieldsFromOptions(options)),
-      [fieldsOption, parentOption],
+      (c, { args, options }) => c.moveProject(args.id, options.parent as string | undefined, fieldsFromOptions(options), nativeInput(options)),
+      [fieldsOption, parentOption, jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "delete <id>",
@@ -473,8 +489,8 @@ export function createAuthoringCommands(
   const jobs = [
     leaf("copy <source-id> <id>", "Copy a build configuration", "Credentials",
       (c, { args, options }) => c.copyJob(args["source-id"], args.id, {
-        name: text(options, "name"), project: text(options, "project"),
-      }), [nameOption, projectOption]),
+        ...optionalText(options, "name"), project: text(options, "project"),
+      }, nativeInput(options)), [nameOption, projectOption, jsonOption("--item <json>", "Supply a native copy body")]),
     ...bulk.jobs,
     ...advanced.jobs,
     parameters("output"),
@@ -491,13 +507,14 @@ export function createAuthoringCommands(
       Permission.Update,
       (c, { args, options }) =>
         c.createJob(args.id, {
-          name: text(options, "name"),
-          project: text(options, "project"),
+          ...optionalText(options, "name"),
+          ...optionalText(options, "project"),
           ...optionalText(options, "description"),
+          ...nativeInput(options),
         },
           fieldsFromOptions(options)
         ),
-      [nameOption, projectOption, descriptionOption, fieldsOption],
+      [nameOption, { ...projectOption, required: false }, descriptionOption, fieldsOption, jsonOption("--item <json>", "Supply a native job body")],
     ),
     leaf(
       "set <id> <field> <value>",
@@ -509,8 +526,8 @@ export function createAuthoringCommands(
       "move <id>",
       "Move a job to a project",
       Permission.Update,
-      (c, { args, options }) => c.moveJob(args.id, text(options, "project")),
-      [projectOption],
+      (c, { args, options }) => c.moveJob(args.id, options.project as string | undefined),
+      [{ ...projectOption, required: false }],
     ),
     leaf(
       "delete <id>",

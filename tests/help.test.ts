@@ -31,8 +31,8 @@ test("TeamCity help uses short actions and retains scenario examples", async t =
   const runtime = await createTestRuntime(t);
   const cli = runtime.createCli();
   const help = await runtime.run(cli, ["builds", "list", "--help"]);
-  assert.match(help.stdout, /List queued, running and finished builds/);
-  assert.match(help.stdout, /Select queued, running, finished or any \(default\)/);
+  assert.match(help.stdout, /List builds/);
+  assert.match(help.stdout, /Filter by build state/);
   const configure = await runtime.run(cli, ["profile", "configure", "--help"]);
   assert.match(configure.stdout, /--url <url>\s+Set URL: http\(s\):\/\/host\[:port\]\[\/context\]/);
   assert.match(configure.stdout, /Read the token from stdin/);
