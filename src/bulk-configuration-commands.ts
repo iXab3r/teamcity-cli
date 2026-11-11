@@ -43,7 +43,7 @@ export function createBulkConfigurationCommands(
     return [
       leaf(
         "replace-all <owner-id>",
-        "Replace all plain parameters",
+        "Replace all parameters",
         Permission.Update,
         (c, { args, options }) =>
           c.replaceAllParameters(

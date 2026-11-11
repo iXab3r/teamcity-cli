@@ -69,3 +69,10 @@ export async function forgetInputSecret(secrets: ScopedSecrets, alias: string) {
   }
   return { alias, forgotten: true };
 }
+
+/** Direct values take precedence; profile aliases remain an optional input source. */
+export async function inputValue(secrets: ScopedSecrets, alias?: string, value?: string) {
+  if (value !== undefined) return value;
+  if (alias !== undefined) return requireInputSecret(secrets, alias);
+  throw new Error("Supply a value or an input-secret alias.");
+}

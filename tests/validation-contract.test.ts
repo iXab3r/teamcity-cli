@@ -50,7 +50,7 @@ const cases = [
   {
     argv: ["projects", "versioned-settings", "config", "replace", "Example", "--item", JSON.stringify(config)],
     permission: "Update", path: "/projects/id:Example/versionedSettings/config",
-    body: { ...config, storeSecureValuesOutsideVcs: true },
+    body: config,
   },
 ];
 for (const row of cases) {
@@ -135,17 +135,13 @@ test("self references and service-message text keep safe remote validation witho
   }
 });
 
-test("future parameter UI metadata permits a plain value write after metadata-only preflight", async t => {
+test("parameter writes send input without a metadata preflight", async t => {
   const f = await createTestRuntime(t);
   const cli = f.createCli();
   await cli.execute(["permissions", "grant", "Update"]);
-  const requests = trackRequests(t, 2, async request => {
+  const requests = trackRequests(t, 1, async request => {
     const url = new URL(request.url);
     assert.equal(url.pathname, "/app/rest/projects/id:Example/parameters/env.MODE");
-    if (request.method === "GET") {
-      assert.equal(url.searchParams.get("fields"), "name,inherited,type(rawValue)");
-      return HttpResponse.json({ name: "env.MODE", type: { rawValue: "future-control" } });
-    }
     assert.equal(request.method, "PUT");
     assert.deepEqual(await request.json(), { name: "env.MODE", value: " next " });
     return HttpResponse.json({ name: "env.MODE", value: " next " });

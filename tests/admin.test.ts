@@ -67,8 +67,6 @@ test("S7 invalid identities, scopes, replacements, field names and node booleans
     ["users", "roles", "grant", "7", "ROLE", "--global", "--project", "Example"],
 
     ["users", "roles", "replace", "7", "--item", '{"roleId":"R","global":false}'],
-    ["users", "properties", "set", "7", "password", "synthetic-invalid"],
-    ["groups", "properties", "set", "Developers", "theme", "Bearer synthetic-invalid"],
 
     ["server", "nodes", "responsibilities", "set", "node1", "CAN_PROCESS_BUILD_MESSAGES", "yes"],
   ])

@@ -1443,7 +1443,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -1899,10 +1900,11 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
-    "command": "server licenses delete <alias>",
+    "command": "server licenses delete [alias]",
     "permission": "Admin",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--key <value>"
     ],
     "clientMethod": "deleteLicense"
    }
@@ -1914,7 +1916,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -3401,8 +3404,8 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/admin.test.ts:316",
-    "tests/admin.test.ts:376",
+    "tests/admin.test.ts:314",
+    "tests/admin.test.ts:374",
     "tests/response-body.test.ts:107",
     "tests/response-body.test.ts:42",
     "tests/response-body.test.ts:48",
@@ -4935,15 +4938,6 @@
      "--locator <locator>"
     ],
     "clientMethod": "listParameters"
-   },
-   {
-    "command": "jobs output-parameters replace-all <owner-id>",
-    "permission": "Update",
-    "options": [
-     "--property <key=value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "replaceAllParameters"
    }
   ],
   "query": [
@@ -4960,9 +4954,7 @@
   ],
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
-  "gateDiffersFromMethod": [
-   "jobs output-parameters replace-all <owner-id> [Update]"
-  ],
+  "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
@@ -4999,36 +4991,12 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
-    "command": "jobs output-parameters create <job-id> <name>",
-    "permission": "Update",
-    "options": [
-     "--value <value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "createParameter"
-   },
-   {
-    "command": "jobs output-parameters set <job-id> <name>",
-    "permission": "Update",
-    "options": [
-     "--value <value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "setParameter"
-   },
-   {
     "command": "jobs output-parameters show <job-id> <name>",
     "permission": "ReadOnly",
     "options": [
      "--fields <projection>"
     ],
     "clientMethod": "getParameter"
-   },
-   {
-    "command": "jobs output-parameters value set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
    },
    {
     "command": "jobs output-parameters value show <owner-id> <name>",
@@ -5046,11 +5014,7 @@
   ],
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
-  "gateDiffersFromMethod": [
-   "jobs output-parameters create <job-id> <name> [Update]",
-   "jobs output-parameters set <job-id> <name> [Update]",
-   "jobs output-parameters value set <owner-id> <name> <value> [Update]"
-  ],
+  "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
@@ -5134,15 +5098,6 @@
      "--locator <locator>"
     ],
     "clientMethod": "listParameters"
-   },
-   {
-    "command": "jobs parameters replace-all <owner-id>",
-    "permission": "Update",
-    "options": [
-     "--property <key=value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "replaceAllParameters"
    }
   ],
   "query": [
@@ -5159,14 +5114,11 @@
   ],
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
-  "gateDiffersFromMethod": [
-   "jobs parameters replace-all <owner-id> [Update]"
-  ],
+  "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
     "tests/read-values.test.ts"
    ],
@@ -5198,39 +5150,16 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
-    "command": "jobs parameters create <job-id> <name>",
-    "permission": "Update",
-    "options": [
-     "--value <value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "createParameter"
-   },
-   {
-    "command": "jobs parameters raw-type set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
-   },
-   {
     "command": "jobs parameters raw-type show <owner-id> <name>",
     "permission": "ReadOnly",
     "options": [],
     "clientMethod": "getParameterPart"
    },
    {
-    "command": "jobs parameters set <job-id> <name>",
-    "permission": "Update",
-    "options": [
-     "--value <value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "setParameter"
-   },
-   {
     "command": "jobs parameters set-password <job-id> <name>",
     "permission": "Credentials",
     "options": [
+     "--value <value>",
      "--value-secret <alias>"
     ],
     "clientMethod": "setPasswordParameter"
@@ -5244,22 +5173,10 @@
     "clientMethod": "getParameter"
    },
    {
-    "command": "jobs parameters type set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
-   },
-   {
     "command": "jobs parameters type show <owner-id> <name>",
     "permission": "ReadOnly",
     "options": [],
     "clientMethod": "getParameterPart"
-   },
-   {
-    "command": "jobs parameters value set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
    },
    {
     "command": "jobs parameters value show <owner-id> <name>",
@@ -5278,12 +5195,7 @@
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
   "gateDiffersFromMethod": [
-   "jobs parameters create <job-id> <name> [Update]",
-   "jobs parameters raw-type set <owner-id> <name> <value> [Update]",
-   "jobs parameters set <job-id> <name> [Update]",
-   "jobs parameters set-password <job-id> <name> [Credentials]",
-   "jobs parameters type set <owner-id> <name> <value> [Update]",
-   "jobs parameters value set <owner-id> <name> <value> [Update]"
+   "jobs parameters set-password <job-id> <name> [Credentials]"
   ],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
@@ -5292,7 +5204,8 @@
     "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
     "tests/password-parameter.test.ts",
-    "tests/read-values-review.test.ts"
+    "tests/read-values-review.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -7659,7 +7572,7 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/triage.test.ts:274"
+    "tests/triage.test.ts:271"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -10831,15 +10744,6 @@
      "--locator <locator>"
     ],
     "clientMethod": "listParameters"
-   },
-   {
-    "command": "projects parameters replace-all <owner-id>",
-    "permission": "Update",
-    "options": [
-     "--property <key=value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "replaceAllParameters"
    }
   ],
   "query": [
@@ -10856,9 +10760,7 @@
   ],
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
-  "gateDiffersFromMethod": [
-   "projects parameters replace-all <owner-id> [Update]"
-  ],
+  "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
@@ -10894,34 +10796,10 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
-    "command": "projects parameters create <project-id> <name>",
-    "permission": "Update",
-    "options": [
-     "--value <value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "createParameter"
-   },
-   {
-    "command": "projects parameters raw-type set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
-   },
-   {
     "command": "projects parameters raw-type show <owner-id> <name>",
     "permission": "ReadOnly",
     "options": [],
     "clientMethod": "getParameterPart"
-   },
-   {
-    "command": "projects parameters set <project-id> <name>",
-    "permission": "Update",
-    "options": [
-     "--value <value>",
-     "--fields <projection>"
-    ],
-    "clientMethod": "setParameter"
    },
    {
     "command": "projects parameters show <project-id> <name>",
@@ -10932,22 +10810,10 @@
     "clientMethod": "getParameter"
    },
    {
-    "command": "projects parameters type set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
-   },
-   {
     "command": "projects parameters type show <owner-id> <name>",
     "permission": "ReadOnly",
     "options": [],
     "clientMethod": "getParameterPart"
-   },
-   {
-    "command": "projects parameters value set <owner-id> <name> <value>",
-    "permission": "Update",
-    "options": [],
-    "clientMethod": "setParameterPart"
    },
    {
     "command": "projects parameters value show <owner-id> <name>",
@@ -10965,23 +10831,16 @@
   ],
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
-  "gateDiffersFromMethod": [
-   "projects parameters create <project-id> <name> [Update]",
-   "projects parameters raw-type set <owner-id> <name> <value> [Update]",
-   "projects parameters set <project-id> <name> [Update]",
-   "projects parameters type set <owner-id> <name> <value> [Update]",
-   "projects parameters value set <owner-id> <name> <value> [Update]"
-  ],
+  "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
     "tests/project-configuration-projection.test.ts",
-    "tests/read-values-review.test.ts",
-    "tests/validation-contract.test.ts"
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/authoring.test.ts:409"
+    "tests/authoring.test.ts:336"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -11300,6 +11159,7 @@
     "command": "projects secure resolve <id>",
     "permission": "Credentials",
     "options": [
+     "--reference-value <reference>",
      "--reference <alias>",
      "--store-as <alias>"
     ],
@@ -11315,7 +11175,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -12531,10 +12392,11 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
-    "command": "server licenses show <alias>",
+    "command": "server licenses show [alias]",
     "permission": "ReadOnly",
     "options": [
-     "--fields <projection>"
+     "--fields <projection>",
+     "--key <value>"
     ],
     "clientMethod": "getLicense"
    }
@@ -12553,10 +12415,11 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/server-projection.test.ts",
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/system.test.ts:331"
+    "tests/system.test.ts:320"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -13926,7 +13789,7 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/admin.test.ts:377"
+    "tests/admin.test.ts:375"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -15834,7 +15697,7 @@
      "--value <value>",
      "--fields <projection>"
     ],
-    "clientMethod": null
+    "clientMethod": "createParameter"
    }
   ],
   "query": [
@@ -15891,7 +15754,7 @@
      "--value <value>",
      "--fields <projection>"
     ],
-    "clientMethod": null
+    "clientMethod": "createParameter"
    }
   ],
   "query": [
@@ -17398,7 +17261,7 @@
      "--value <value>",
      "--fields <projection>"
     ],
-    "clientMethod": null
+    "clientMethod": "createParameter"
    }
   ],
   "query": [
@@ -17505,6 +17368,7 @@
     "command": "projects secure create-reference <id>",
     "permission": "Credentials",
     "options": [
+     "--value <value>",
      "--value-secret <alias>",
      "--store-as <alias>"
     ],
@@ -17518,7 +17382,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17731,6 +17596,7 @@
     "command": "projects versioned-settings tokens set <id>",
     "permission": "Credentials",
     "options": [
+     "--property <key=value>",
      "--mapping <remote-name=alias>"
     ],
     "clientMethod": "setVersionedTokens"
@@ -17744,7 +17610,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17939,6 +17806,7 @@
     "permission": "Admin",
     "options": [
      "--fields <projection>",
+     "--key <value>",
      "--secret <alias>"
     ],
     "clientMethod": "addLicense"
@@ -17958,7 +17826,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/server-projection.test.ts",
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18852,6 +18721,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -19725,7 +19595,7 @@
      "--value <value>",
      "--fields <projection>"
     ],
-    "clientMethod": null
+    "clientMethod": "setParameter"
    }
   ],
   "query": [
@@ -19741,6 +19611,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
     "tests/job-parameters-projection.test.ts"
    ],
@@ -19774,7 +19645,7 @@
     "command": "jobs output-parameters value set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -19841,9 +19712,12 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/thin-writes.test.ts"
    ],
-   "nonLeafTransportTests": [],
+   "nonLeafTransportTests": [
+    "tests/thin-writes.test.ts:151"
+   ],
    "liveService": "not-run",
    "independentReview": "not-performed"
   }
@@ -19880,12 +19754,13 @@
      "--value <value>",
      "--fields <projection>"
     ],
-    "clientMethod": null
+    "clientMethod": "setParameter"
    },
    {
     "command": "jobs parameters set-password <job-id> <name>",
     "permission": "Credentials",
     "options": [
+     "--value <value>",
      "--value-secret <alias>"
     ],
     "clientMethod": "setPasswordParameter"
@@ -19906,7 +19781,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/job-parameters-projection.test.ts",
-    "tests/password-parameter.test.ts"
+    "tests/password-parameter.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -19940,7 +19816,7 @@
     "command": "jobs parameters type set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -19982,7 +19858,7 @@
     "command": "jobs parameters raw-type set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -20024,7 +19900,7 @@
     "command": "jobs parameters value set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -20035,7 +19911,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -20208,7 +20085,8 @@
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
     "tests/job-steps-projection.test.ts",
-    "tests/option-parsers.test.ts"
+    "tests/option-parsers.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21113,7 +20991,9 @@
    "tests": [
     "tests/authoring.test.ts"
    ],
-   "nonLeafTransportTests": [],
+   "nonLeafTransportTests": [
+    "tests/thin-writes.test.ts:153"
+   ],
    "liveService": "not-run",
    "independentReview": "not-performed"
   }
@@ -21708,7 +21588,7 @@
      "--value <value>",
      "--fields <projection>"
     ],
-    "clientMethod": null
+    "clientMethod": "setParameter"
    }
   ],
   "query": [
@@ -21760,7 +21640,7 @@
     "command": "projects parameters type set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -21802,7 +21682,7 @@
     "command": "projects parameters raw-type set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -21844,7 +21724,7 @@
     "command": "projects parameters value set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [],
-    "clientMethod": null
+    "clientMethod": "setParameterPart"
    }
   ],
   "query": [],
@@ -22076,6 +21956,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
+    "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts",
     "tests/versioned-settings-projection.test.ts"
    ],
@@ -22120,7 +22001,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -22353,6 +22235,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/system.test.ts",
+    "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22444,6 +22327,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/system.test.ts",
+    "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],

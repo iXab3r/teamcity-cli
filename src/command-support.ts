@@ -80,7 +80,7 @@ export function jsonOption(flags: string, description: string, repeat = false): 
     },
   };
 }
-/** A repeatable non-secret `key=value` option; values are never echoed in errors. */
+/** A repeatable `key=value` option; values are never echoed in errors. */
 export function pairOption(flag: string, description: string): OptionDefinition {
   return {
     flags: `${flag} <key=value>`,

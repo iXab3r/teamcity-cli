@@ -439,20 +439,21 @@ export function createInfrastructureCommands(
       ),
       command(
         "set <id>",
-        "Set mappings from this profile's input-secret aliases",
+        "Set secure-value mappings",
         async ({ args, options }, context) =>
           (await clientFor(context)).setVersionedTokens(
             args.id,
-            options.mapping as string[],
+            (options.mapping ?? []) as string[],
             context.secrets,
+            (options.property ?? []) as PlainProperty[],
           ),
         {
           permission: "Credentials",
           options: [
+            propertyOption,
             repeatOption(
               "--mapping <remote-name=alias>",
-              "Supply mapping names and input-secret aliases; repeat",
-              true,
+              "Supply alias mappings; direct properties take precedence",
             ),
           ],
         },

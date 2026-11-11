@@ -194,36 +194,40 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
     command("secure", "Manage project secure references", [
       command(
         "create-reference <id>",
-        "Save a reference from an input-secret alias",
+        "Save a secure reference",
         async ({ args, options }, context) =>
           (await clientFor(context)).createSecureReference(
             args.id,
-            text(options, "valueSecret"),
+            options.valueSecret as string | undefined,
             text(options, "storeAs"),
             context.secrets,
+            options.value as string | undefined,
           ),
         {
           permission: "Credentials",
           options: [
-            option("--value-secret <alias>", "Select an input-secret source", true),
+            option("--value <value>", "Supply the reference value"),
+            option("--value-secret <alias>", "Select an input-secret source"),
             option("--store-as <alias>", "Choose a new secure-reference alias", true),
           ],
         },
       ),
       command(
         "resolve <id>",
-        "Resolve a secure reference into secret storage",
+        "Resolve a secure reference",
         async ({ args, options }, context) =>
           (await clientFor(context)).resolveSecureReference(
             args.id,
-            text(options, "reference"),
+            options.reference as string | undefined,
             text(options, "storeAs"),
             context.secrets,
+            options.referenceValue as string | undefined,
           ),
         {
           permission: "Credentials",
           options: [
-            option("--reference <alias>", "Select a secure-reference alias", true),
+            option("--reference-value <reference>", "Supply a secure reference; overrides alias"),
+            option("--reference <alias>", "Select a secure-reference alias"),
             option("--store-as <alias>", "Choose a new input-secret destination", true),
           ],
         },

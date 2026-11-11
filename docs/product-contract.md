@@ -10,7 +10,8 @@ Historical extraction provenance remains in [migration](migration.md).
 Read commands return plain values supplied by TeamCity, including scripts and unknown plugin,
 requirement, trigger, dependency, VCS and agent properties. Password-type parameters, `secure:`
 properties and values withheld by the server remain redacted. Read policy does not use
-credential-name or value heuristics; plain write validation and protected-metadata preflights remain.
+credential-name or value heuristics. Writes forward caller input without secrecy heuristics or
+protected-metadata refusals; TeamCity validates it. Input-secret aliases are optional alongside direct values.
 Literal `*` and `*****` values are readable unless TeamCity marks their property as protected.
 `jobs configuration show` and `projects templates show` preserve native configuration/type metadata,
 including build settings, while `agents parameters list` reads system/env/config parameters.
@@ -44,10 +45,10 @@ include `errorCount` for `batch.partial`, `errors(item)` for build set-status, a
 partial-failure claim; native `null` passes through.
 
 Fixed projections remain in `jobs run`, `jobs copy`, `builds wait`, `builds diagnose`, latest-build
-resolution, parameter-write and bulk-unmute preflight reads, and versioned-settings token/secure-value
+resolution, password-helper metadata preservation and bulk-unmute preflight reads, and versioned-settings token/secure-value
 workflows. Options affect only their direct request leaves. `jobs parameters set-password`, parameter
 value/type/raw-type leaves, scalar-setting leaves, detach/clear/delete and checkout-rule sub-resources
-retain their existing workflows and options; consult the explicit command list for projection support.
+retain their projection support; consult the explicit command list.
 
 Successful empty/non-JSON bodies keep acknowledgements on project move/default-template clear,
 cloud instance start, bulk unmute, build tag add, build log append and queue delete-page.
@@ -57,7 +58,7 @@ empty success. Batch empty/malformed handling remains unchanged.
 
 Token creation retains Credentials permission and stores a returned value under the requested alias;
 if fields omit it, nothing is stored. `users show <id>` defaults to `id,username,name`, matching a
-safe list item, and missing users return `http.notFound`. License keys use local aliases.
+safe list item, and missing users return `http.notFound`. License keys accept direct values or local aliases.
 Default parameter, VCS and feature property projections return the values TeamCity returns; only
 password-typed, `secure:` and server-withheld values are hidden.
 REST plugin info retains XML request/parsing by default and requests JSON with explicit fields.

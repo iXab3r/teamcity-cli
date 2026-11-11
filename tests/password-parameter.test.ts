@@ -54,13 +54,23 @@ for (const metadata of [
   { name: "npm.token", type: { rawValue: "text display='hidden'" } },
   { name: "npm.token", inherited: true, type: { rawValue: "password" } },
 ]) {
-  test(`password replacement refuses unsuitable metadata ${JSON.stringify(metadata)}`, async (t) => {
+  test(`password replacement preserves available metadata ${JSON.stringify(metadata)}`, async (t) => {
     const runtime = await createTestRuntime(t);
     const cli = runtime.createCli();
     await cli.execute(["permissions", "grant", "Credentials"]);
     await runtime.secretStore.set("ai-cli-factory:teamcity-cli", "default:input-secret:fixture-npm", secret);
-    server.use(http.get(path, () => HttpResponse.json(metadata)));
-    await assert.rejects(cli.execute(argv), /job-owned password/);
+    let writes = 0;
+    server.use(
+      http.get(path, () => HttpResponse.json(metadata)),
+      http.put(path, async ({ request }) => {
+        writes++;
+        assert.deepEqual(await request.json(), { name: "npm.token", value: secret,
+          ...("type" in metadata ? { type: metadata.type } : {}) });
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    await cli.execute(argv);
+    assert.equal(writes, 1);
   });
 }
 
