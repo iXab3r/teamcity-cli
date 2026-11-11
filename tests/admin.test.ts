@@ -61,7 +61,7 @@ test("S7 invalid identities, scopes, replacements, field names and node booleans
   for (const argv of [
 
     ["users", "update", "7"],
-    ["users", "fields", "get", "7", "password"],
+    ["users", "fields", "get", "7", "\ud800"],
 
     ["users", "roles", "grant", "7", "ROLE"],
     ["users", "roles", "grant", "7", "ROLE", "--global", "--project", "Example"],

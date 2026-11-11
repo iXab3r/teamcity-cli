@@ -59,7 +59,9 @@ teamcity-cli builds --help
 
 Read commands return the configuration values TeamCity makes available to your token, including
 full scripts, Docker options, requirement operands and VCS connection settings. Only password-type
-parameters, `secure:` properties and values masked or omitted by TeamCity stay hidden.
+parameters, `secure:` properties and values withheld by TeamCity stay hidden.
+Plain values such as `*` (a cron wildcard) and `*****` remain readable; their spelling does not
+determine secrecy. Read schedule properties with `jobs triggers show <job-id> <trigger-id>`.
 Use `jobs configuration show <job-id> --json` for build settings and content,
 `projects templates show <template-id> --json` for a template, and
 `agents parameters list <agent-id> --json` for system, environment and configuration parameters.

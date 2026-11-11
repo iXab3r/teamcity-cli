@@ -263,8 +263,9 @@ test("parameter reads use server secret metadata and preserve plain UI types and
     { name: "password-type", value: "synthetic-hidden", type: { rawValue: "password" } },
     { name: "secure:credential", value: "synthetic-hidden" },
     { name: "server-withheld", value: null },
-    { name: "server-masked", value: "********" },
     { name: "server-omitted" },
+    { name: "plain-asterisks", value: "*****" },
+    { name: "cronExpression_dm", value: "*" },
     { name: "hidden-text", value: "visible", type: { rawValue: "text display='hidden'" } },
     { name: "future", value: "visible", type: { rawValue: "future-kind label='Future'" } },
     { name: "malformed", value: "visible", type: {} },
@@ -276,8 +277,8 @@ test("parameter reads use server secret metadata and preserve plain UI types and
   const cli = runtime.createCli();
   const result = await cli.execute(["projects", "parameters", "list", "Example"]) as { value?: string; redacted: boolean }[];
   assert.equal(result[0]!.value, "debug");
-  for (const item of result.slice(1, 6)) assert.deepEqual([item.redacted, item.value], [true, undefined]);
-  for (const item of result.slice(6)) assert.equal(item.redacted, false);
+  for (const item of result.slice(1, 5)) assert.deepEqual([item.redacted, item.value], [true, undefined]);
+  for (const item of result.slice(5)) assert.equal(item.redacted, false);
   for (const format of [[], ["--json"]]) {
     runtime.resetOutput();
     assert.equal(await cli.run(["projects", "parameters", "list", "Example", ...format]), 0);

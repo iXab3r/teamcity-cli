@@ -38,3 +38,54 @@ for (const field of ["", "   "]) test(`#156 builds fields show rejects blank fie
   const rt = await createTestRuntime(t);
   await assert.rejects(rt.createCli().execute(["builds", "fields", "show", "101", field]), /Field name is required/);
 });
+
+for (const [argv, path] of [
+  [["jobs", "triggers", "fields", "show", "Example_Build", "Trigger"], `${job}/triggers/Trigger`],
+  [["jobs", "fields", "show", "Example_Build"], job],
+  [["projects", "fields", "show", "Example"], "/projects/id:Example"],
+  [["pools", "fields", "show", "1"], "/agentPools/id:1"],
+  [["agents", "fields", "show", "1"], "/agents/id:1"],
+  [["builds", "fields", "show", "101"], "/builds/id:101"],
+  [["changes", "field", "1"], "/changes/id:1"],
+  [["users", "fields", "get", "1"], "/users/id:1"],
+  [["vcs", "roots", "fields", "get", "Root"], "/vcs-roots/id:Root"],
+  [["vcs", "instances", "fields", "get", "1"], "/vcs-root-instances/id:1"],
+  [["projects", "versioned-settings", "config", "fields", "get", "Example"], "/projects/id:Example/versionedSettings/config/parameters"],
+  [["server", "field"], "/server"],
+] as const) {
+  test(`#376 ${argv.join(" ")} does not infer secrecy from a field name or value`, async t => {
+    const rt = await createTestRuntime(t);
+    let calls = 0;
+    server.use(http.get(`${base}${path}/access_token`, ({ request }) => {
+      assert.equal(new URL(request.url).search, "");
+      calls++;
+      return HttpResponse.text("*****");
+    }));
+    const result = await rt.createCli().execute([...argv, "access_token"]) as { value: string };
+    assert.equal(result.value, "*****");
+    assert.equal(calls, 1);
+  });
+}
+
+test("#376 trigger cron properties are read through the trigger, not its scalar field route", async t => {
+  const rt = await createTestRuntime(t);
+  const cli = rt.createCli();
+  let scalarReads = 0;
+  server.use(
+    http.get(`${base}${job}/triggers/Trigger/cronExpression_dm`, () => {
+      scalarReads++;
+      return HttpResponse.text("synthetic-private-response", { status: 400 });
+    }),
+    http.get(`${base}${job}/triggers/Trigger`, () => HttpResponse.json({
+      id: "Trigger", type: "schedulingTrigger",
+      properties: { property: [{ name: "cronExpression_dm", value: "*" }] },
+    })),
+  );
+  const rejected = await rt.run(cli, ["jobs", "triggers", "fields", "show", "Example_Build", "Trigger", "cronExpression_dm", "--json"]);
+  assert.equal(rejected.exitCode, 1);
+  assert.equal(JSON.parse(rejected.stderr).error.code, "http.rejected");
+  assert.doesNotMatch(rejected.stderr, /synthetic-private-response/);
+  assert.equal(scalarReads, 1);
+  const result = await cli.execute(["jobs", "triggers", "show", "Example_Build", "Trigger"]) as { properties: unknown };
+  assert.deepEqual(result.properties, [{ name: "cronExpression_dm", type: "plain", value: "*", redacted: false }]);
+});

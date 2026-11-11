@@ -11,6 +11,11 @@ test.afterEach(() => server.resetHandlers());
 test.after(() => server.close());
 
 const plain = [
+  { name: "cronExpression_dm", value: "*" },
+  { name: "cronExpression_hour", value: "*" },
+  { name: "cronExpression_month", value: "*" },
+  { name: "cronExpression_year", value: "*" },
+  { name: "plain.asterisks", value: "*****" },
   { name: "script.content", value: "echo first\necho second --token=ordinary-text" },
   { name: "plugin.docker.imageId", value: "example/image:latest" },
   { name: "command.parameters", value: "--input source --output dist" },
@@ -30,7 +35,6 @@ const plain = [
 const secrets = [
   { name: "login", value: "synthetic-protected-value", type: { rawValue: "password label='Login'" } },
   { name: "secure:connection", value: "synthetic-protected-value" },
-  { name: "server.masked", value: "********" },
   { name: "server.null", value: null },
   { name: "server.omitted" },
 ];

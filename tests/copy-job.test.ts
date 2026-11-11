@@ -25,12 +25,12 @@ test("native job copy is Credentials-gated and never returns protected settings"
   assert.deepEqual(await cli.execute(copy), { id: "Copied", name: "Copied job", projectId: "Destination" });
 });
 
-test("masked build resolutions are not stored as usable input credentials", async (t) => {
+for (const value of ["*", "*****"]) test("asterisk build resolutions can be stored as input credentials", async (t) => {
   const runtime = await createTestRuntime(t);
   const cli = runtime.createCli();
   await cli.execute(["permissions", "grant", "Credentials"]);
   server.use(http.get("https://teamcity.test/app/rest/builds/id:123/resolved/%25npm.token%25",
-    () => HttpResponse.text("******")));
-  await assert.rejects(cli.execute(["builds", "resolve-parameter", "123", "npm.token", "--store-as", "masked"]), /unresolved/);
-  assert.equal(await runtime.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:masked"), undefined);
+    () => HttpResponse.text(value)));
+  assert.deepEqual(await cli.execute(["builds", "resolve-parameter", "123", "npm.token", "--store-as", "resolved"]), { alias: "resolved", stored: true });
+  assert.equal(await runtime.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:resolved"), value);
 });
