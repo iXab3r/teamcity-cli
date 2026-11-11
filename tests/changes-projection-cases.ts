@@ -59,13 +59,13 @@ export const cases = [
     ],
     "path": "/app/rest/changes/id:7/attributes",
     "defaultQuery": {
-      "fields": "count,entry(name)"
+      "fields": "count,entry(name,value)"
     },
     "method": "GET",
     "body": "",
     "baselineResponse": {},
     "baselineResult": [],
-    "human": "No names found.\n",
+    "human": "No results.\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly"

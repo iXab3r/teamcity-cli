@@ -22,9 +22,9 @@ const properties = (owner: "users" | "groups", path: string): AuthoringCase[] =>
     argv: [owner, "properties", "list", "7"],
     method: "GET",
     path: path + "/properties",
-    query: { fields: "count,property(name)" },
+    query: { fields: "count,property(name,value,inherited,type(rawValue))" },
     response: { property: [{ name: "theme", value: "synthetic-hidden" }] },
-    expected: ["theme"],
+    expected: [{ name: "theme", type: "plain", redacted: false, value: "synthetic-hidden" }],
   },
   {
     argv: [owner, "properties", "exists", "7", "theme"],

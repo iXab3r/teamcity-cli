@@ -16,7 +16,7 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 | **Read-only by default** | A fresh profile can only read. Writes need `permissions grant Update` for that profile; account and server administration need `Admin`, token and secret workflows need `Credentials`, each granted separately. |
 | **Made for build triage** | `builds diagnose` answers "why did it fail" in one call: up to 10 problems and 20 failed tests. `jobs run --wait` and `builds wait` exit 0 on success, 1 on failure, 124 on timeout, 130 on Ctrl+C. |
 | **Cheap for agents** | `--json` on every command, paged lists (`--limit`, `--start`) that return `hasMore` and `nextStart`, stable error codes, and a persistent `--json-rpc` session without restarting Node. |
-| **No leaked secrets** | Tokens live in the platform secret store, never in profile JSON or command arguments. Password parameters come back as `redacted: true`, and errors carry the HTTP status, never the response body. |
+| **Server-visible configuration** | Reads return the values TeamCity supplies, including scripts and plugin properties. Password-type, `secure:` and server-withheld values stay hidden. The profile access token remains masked; errors omit response bodies. |
 | **Predictable** | No write is retried or replayed. When the answer to a queue request is lost, `jobs run` reports `run.unknownOutcome` and the command to check with, instead of posting again. |
 
 <picture>

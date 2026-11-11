@@ -46,7 +46,8 @@ export const cases: ProjectionCase[] = [
           {
             "name": "script.content",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "echo a=b"
           },
           {
             "name": "use.custom.script",
@@ -57,7 +58,7 @@ export const cases: ProjectionCase[] = [
         ]
       }
     ],
-    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: true\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
+    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: false\n    value: echo a=b\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -112,7 +113,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "script.content",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "echo a=b"
         },
         {
           "name": "use.custom.script",
@@ -122,7 +124,7 @@ export const cases: ProjectionCase[] = [
         }
       ]
     },
-    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: true\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
+    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: false\n    value: echo a=b\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -170,7 +172,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "script.content",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "echo a=b"
         },
         {
           "name": "use.custom.script",
@@ -180,7 +183,7 @@ export const cases: ProjectionCase[] = [
         }
       ]
     },
-    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: true\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
+    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: false\n    value: echo a=b\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -236,7 +239,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "script.content",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "echo a=b"
         },
         {
           "name": "use.custom.script",
@@ -246,7 +250,7 @@ export const cases: ProjectionCase[] = [
         }
       ]
     },
-    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: true\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
+    "human": "id: RUNNER_1\nname: Echo\ntype: simpleRunner\ndisabled: false\nproperties:\n  -\n    name: script.content\n    type: plain\n    redacted: false\n    value: echo a=b\n  -\n    name: use.custom.script\n    type: plain\n    redacted: false\n    value: true\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -280,10 +284,11 @@ export const cases: ProjectionCase[] = [
       {
         "name": "example.setting",
         "type": "plain",
-        "redacted": true
+        "redacted": false,
+        "value": "synthetic-hidden"
       }
     ],
-    "human": "name             type   redacted\n---------------  -----  --------\nexample.setting  plain  true\n",
+    "human": "name             type   redacted  value\n---------------  -----  --------  ----------------\nexample.setting  plain  false     synthetic-hidden\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -319,10 +324,11 @@ export const cases: ProjectionCase[] = [
       {
         "name": "example.setting",
         "type": "plain",
-        "redacted": true
+        "redacted": false,
+        "value": "synthetic-hidden"
       }
     ],
-    "human": "name             type   redacted\n---------------  -----  --------\nexample.setting  plain  true\n",
+    "human": "name             type   redacted  value\n---------------  -----  --------  ----------------\nexample.setting  plain  false     synthetic-hidden\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",

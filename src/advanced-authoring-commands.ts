@@ -29,7 +29,7 @@ export function createAdvancedAuthoringCommands(
       [
         leaf(
           `show <job-id> <${arg}> <field>`,
-          "Read an allowed setting",
+          "Read a configuration setting",
           Permission.ReadOnly,
           (c, { args }) =>
             c.getEntitySetting(kind, text(args, "job-id"), text(args, arg), text(args, "field")),
@@ -55,7 +55,7 @@ export function createAdvancedAuthoringCommands(
     return command("parameters", "Manage plugin parameters", [
       leaf(
         `list <job-id> <${arg}>`,
-        "List redacted property metadata",
+        "List property values",
         Permission.ReadOnly,
         (c, { args, options }) =>
           c.listPluginParameters(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
@@ -63,7 +63,7 @@ export function createAdvancedAuthoringCommands(
       ),
       leaf(
         `show <job-id> <${arg}> <name>`,
-        "Check property existence",
+        "Show a property value",
         Permission.ReadOnly,
         (c, { args }) =>
           c.getPluginParameter(kind, text(args, "job-id"), text(args, arg), text(args, "name")),
@@ -154,7 +154,7 @@ export function createAdvancedAuthoringCommands(
       ),
       leaf(
         `show <job-id> <${arg}>`,
-        "Show a safe rule summary",
+        "Show a job rule",
         Permission.ReadOnly,
         (c, { args, options }) =>
           c.getRule(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
@@ -188,7 +188,7 @@ export function createAdvancedAuthoringCommands(
     bulk.replaceAll("projectFeatures"),
     leaf(
       "list <project-id>",
-      "List redacted features",
+      "List project features",
       Permission.ReadOnly,
       (c, { args, options }) =>
         c.listProjectFeatures(
@@ -201,7 +201,7 @@ export function createAdvancedAuthoringCommands(
     ),
     leaf(
       "show <project-id> <feature-id>",
-      "Show a redacted feature",
+      "Show a project feature",
       Permission.ReadOnly,
       (c, { args, options }) =>
         c.getProjectFeature(args["project-id"], args["feature-id"], fieldsFromOptions(options)),
@@ -298,7 +298,7 @@ export function createAdvancedAuthoringCommands(
       [
         leaf(
           `show <${arg}> <field>`,
-          "Read an allowed identity setting",
+          "Read a configuration setting",
           Permission.ReadOnly,
           (c, { args }) => c.getOwnerField(owner, text(args, arg), text(args, "field")),
         ),

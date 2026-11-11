@@ -1,5 +1,4 @@
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
-import { stringList, withView } from "./presentation.js";
 import {
   CliError,
   command,
@@ -290,15 +289,15 @@ export function createTriageCommands(
       ),
     ]),
     ...(["output-parameters", "resulting-properties"] as const).map((kind) =>
-      command(kind, "Inspect runtime parameter names", [
-        withView(stringList, leaf(
+      command(kind, "Inspect runtime parameters", [
+        leaf(
           "list <id>",
-          "List parameter names",
+          "List parameter values",
           Permission.ReadOnly,
           (c, { args, options }) =>
             c.listBuildRuntimeParameterNames(num(args, "id"), kind, fieldsFromOptions(options)),
           [fieldsOption],
-        )),
+        ),
         leaf(
           "exists <id> <name>",
           "Check parameter existence",
@@ -349,17 +348,14 @@ export function createTriageCommands(
       Permission.ReadOnly,
       (c, { args }) => c.getChangeField(num(args, "id"), args.field),
     ),
-    withView(
-      stringList,
-      leaf(
-        "attributes <id>",
-        "Read attribute names only",
-        Permission.ReadOnly,
-        (c, { args, options }) =>
-          c.listChangeAttributeNames(num(args, "id"), fieldsFromOptions(options)),
-        [fieldsOption],
-
-    )),
+    leaf(
+      "attributes <id>",
+      "Read attribute values",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listChangeAttributeNames(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
+    ),
   ];
   const investigations = command("investigations", "Assign job, test or problem investigations", [
     leaf(

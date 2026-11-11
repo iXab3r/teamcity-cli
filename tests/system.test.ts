@@ -140,7 +140,6 @@ test("S9 strict settings reject unknown fields, invalid sentinels and unsafe aut
     }),
   );
   for (const argv of [
-    ["server", "field", "superUserToken"],
     ["server", "settings", "set", "--item", '{"encryptionKey":"synthetic-not-allowed"}'],
 
     [

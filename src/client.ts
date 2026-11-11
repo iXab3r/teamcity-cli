@@ -39,6 +39,7 @@ import {
   rootFields,
   entryFields,
   isPlainParameter,
+  isSecretProperty,
   plainProperty,
   safeProperty,
   stepBody,
@@ -1206,7 +1207,6 @@ export class TeamCityClient {
     id: string,
     field: string,
   ) {
-    plainProperty(field, "");
     const value = await this.#requestText("GET", `${entityPath(kind, jobId, id)}/${pathSegment(field)}`);
     return { jobId: jobId, id: id, field, value };
   }
@@ -1237,7 +1237,7 @@ export class TeamCityClient {
       "GET",
       `${entityPath(kind, jobId, id)}/parameters`,
       { fields: `property(${propertyFields})` },
-      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)),
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields
     );
   }
@@ -1254,7 +1254,7 @@ export class TeamCityClient {
       "PUT",
       `${entityPath(kind, jobId, id)}/parameters`,
       { fields: `property(${propertyFields})` },
-      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)),
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
       propertiesBody(properties)
     );
@@ -1266,11 +1266,11 @@ export class TeamCityClient {
     id: string,
     name: string,
   ) {
-    await this.#requestText(
+    const value = await this.#requestText(
       "GET",
       `${entityPath(kind, jobId, id)}/parameters/${pathSegment(name)}`,
     );
-    return safeProperty({ name: name }, false);
+    return this.#projectedValue({ name, value }, undefined, raw => safeProperty(raw as RawProperty));
   }
 
   public async setPluginParameter(
@@ -1462,7 +1462,6 @@ export class TeamCityClient {
   }
 
   public async getOwnerField(owner: "projects" | "jobs", id: string, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText(
       "GET",
       `${owner === "projects" ? projectPath(id) : jobPath(id)}/${pathSegment(field)}`,
@@ -1649,7 +1648,6 @@ export class TeamCityClient {
   }
 
   public async getPoolField(id: number, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText("GET", `${poolPath(id)}/${pathSegment(field)}`);
     return { poolId: id, field, value };
   }
@@ -1857,7 +1855,6 @@ export class TeamCityClient {
   }
 
   public async getAgentField(id: number, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText("GET", `${agentPath(id)}/${pathSegment(field)}`);
     return { agentId: id, field, value };
   }
@@ -1944,7 +1941,6 @@ export class TeamCityClient {
   }
 
   public async getBuildScalar(id: number, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText("GET", `${buildPath(id)}/${pathSegment(field)}`);
     return { buildId: id, field, value };
   }
@@ -2164,18 +2160,18 @@ export class TeamCityClient {
     const metadata = await this.#requestJson<RawProperty>("GET", path, {
       fields: "name,inherited,type(rawValue)",
     });
-    if (!isPlainParameter(metadata)) {
+    if (method === "GET" ? isSecretProperty(metadata) : !isPlainParameter(metadata)) {
       if (method === "PUT")
         throw new Error("Protected parameter metadata cannot be changed with plain input.");
       return safeProperty(metadata, false);
     }
     if (part === "value") {
       const response = await this.#requestText(method, `${path}/value`, value);
-      return safeProperty({
+      return this.#projectedValue({
         name: name,
         ...(metadata.type === undefined ? {} : { type: metadata.type }),
         value: response,
-      });
+      }, undefined, raw => safeProperty(raw as RawProperty));
     }
     const type =
       part === "type"
@@ -2918,7 +2914,6 @@ export class TeamCityClient {
   }
 
   public async getChangeField(id: number, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/${pathSegment(field)}`,
@@ -3098,11 +3093,8 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       `${buildPath(id)}/${kind}`,
-      { fields: "count,property(name)" },
-      raw => {
-        const value = raw as { property?: unknown[] };
-    return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
-      },
+      { fields: `count,property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
     );
   }
@@ -3128,9 +3120,9 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/attributes`,
-      { fields: "count,entry(name)" },
+      { fields: "count,entry(name,value)" },
       raw =>
-        ((raw as { entry?: unknown[] }).entry ?? []).map((item) => triage.safeScalars(item, ["name"]).name),
+        ((raw as { entry?: RawProperty[] }).entry ?? []).map(p => safeProperty(p)),
       fields,
     );
   }
@@ -3318,11 +3310,8 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       admin.accountPath(kind, id) + "/properties",
-      { fields: "count,property(name)" },
-      raw => {
-        const value = raw as { property?: unknown[] };
-        return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
-      },
+      { fields: `count,property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
     );
   }
@@ -3493,7 +3482,6 @@ export class TeamCityClient {
   }
 
   public async getAccountUserField(id: string, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText(
       "GET",
       admin.accountPath("users", id) + "/" + pathSegment(field),
@@ -3783,8 +3771,8 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       infrastructure.vcsRootPath(id) + "/properties",
-      { fields: "count,property(name)" },
-      infrastructure.propertyNames,
+      { fields: `count,property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
     );
   }
@@ -3840,7 +3828,6 @@ export class TeamCityClient {
   }
 
   public async getVcsRootField(id: string, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText(
       "GET",
       infrastructure.vcsRootPath(id) + "/" + pathSegment(field),
@@ -3932,8 +3919,8 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       infrastructure.vcsInstancePath(id) + "/properties",
-      { fields: "count,property(name)" },
-      infrastructure.propertyNames,
+      { fields: `count,property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
     );
   }
@@ -3981,7 +3968,6 @@ export class TeamCityClient {
   }
 
   public async getVcsInstanceField(id: string, field: string) {
-    plainProperty(field, "");
     const value = await this.#requestText(
       "GET",
       infrastructure.vcsInstancePath(id) + "/" + pathSegment(field),
@@ -4085,7 +4071,6 @@ export class TeamCityClient {
   }
 
   public async getVersionedConfigField(id: string, field: string) {
-    infrastructure.versionedField(field);
     const value = await this.#requestText(
       "GET",
       infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field),
@@ -4111,8 +4096,10 @@ export class TeamCityClient {
   }
 
   public async listVersionedContext(id: string) {
-    return infrastructure.contextParameters(
+    return this.#projectedValue(
       await this.#requestJson("GET", infrastructure.versionedPath(id) + "/contextParameters"),
+      undefined,
+      value => infrastructure.contextParameters(value, true),
     );
   }
 
@@ -4327,8 +4314,8 @@ export class TeamCityClient {
     fields: F | undefined,
     project: (value: unknown) => T,
   ): Projected<T, F> {
-    if (fields === undefined) return project(value) as Projected<T, F>;
-    if (!this.#token) return value as Projected<T, F>;
+    const result = fields === undefined ? project(value) : value;
+    if (!this.#token) return result as Projected<T, F>;
     const mask = knownCredentialMask(this.#token);
     const redact = (item: unknown): unknown => {
       if (typeof item === "string") return mask(item);
@@ -4338,7 +4325,7 @@ export class TeamCityClient {
       }
       return item;
     };
-    return redact(value) as Projected<T, F>;
+    return redact(result) as Projected<T, F>;
   }
 
   /** A bounded selection of `key` items that follows TeamCity's continuation; see `readPages`. */
@@ -4761,7 +4748,11 @@ export class TeamCityClient {
     );
   }
   public async getAuthenticationSettings() {
-    return system.safeAuth(await this.#requestJson("GET", "/app/rest/server/authSettings"));
+    return this.#projectedValue(
+      await this.#requestJson("GET", "/app/rest/server/authSettings"),
+      undefined,
+      value => system.safeAuth(value, true),
+    );
   }
   public async replaceAuthenticationSettings(value: unknown, secrets: ScopedSecrets) {
     const body = await system.authBody(value, secrets);
@@ -4916,7 +4907,6 @@ export class TeamCityClient {
   }
 
   public async getServerField(field: string) {
-    plainProperty(field, "");
     return {
       field,
       value: await this.#requestText("GET", "/app/rest/server/" + pathSegment(field)),

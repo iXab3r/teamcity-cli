@@ -331,7 +331,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/users/id:12/properties",
     "query": {
-      "fields": "count,property(name)"
+      "fields": "count,property(name,value,inherited,type(rawValue))"
     },
     "body": "",
     "baselineResponse": {
@@ -347,9 +347,14 @@ export const cases: ProjectionCase[] = [
     "permission": "ReadOnly",
     "preflight": null,
     "baselineResult": [
-      "fixture.property"
+      {
+        "name": "fixture.property",
+        "type": "plain",
+        "redacted": false,
+        "value": "fixture-value"
+      }
     ],
-    "human": "fixture.property\n",
+    "human": "name              type   redacted  value\n----------------  -----  --------  -------------\nfixture.property  plain  false     fixture-value\n",
     "stderr": ""
   },
   {

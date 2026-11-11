@@ -51,10 +51,11 @@ for (const kind of ["agent-requirements", "artifact-dependencies", "projectFeatu
     type: body.type,
     ...(!isProject ? { disabled: false } : {}),
     ...(artifact ? { source: { id: "Source" } } : {}),
-    properties: body.properties.property.map(({ name }) => ({
+    properties: body.properties.property.map(({ name, value }) => ({
       name,
       type: "plain",
-      redacted: true,
+      redacted: false,
+      value,
     })),
   };
   advancedAuthoringCases.push(
@@ -136,7 +137,7 @@ for (const kind of [
   }
   if (kind !== "steps" && kind !== "features") continue;
   const property = { name: "example.setting", value: "synthetic-hidden" };
-  const expected = { name: property.name, type: "plain", redacted: true };
+  const expected = { name: property.name, type: "plain", redacted: false, value: property.value };
   advancedAuthoringCases.push(
     {
       argv: ["jobs", kind, "parameters", "list", "Example_Build", "Entity"],
@@ -188,7 +189,7 @@ for (const kind of [
       text: true,
       body: property.value,
       response: property.value,
-      expected,
+      expected: { name: property.name, type: "plain", redacted: true },
     },
   );
 }

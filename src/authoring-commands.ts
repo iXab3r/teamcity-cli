@@ -76,7 +76,7 @@ export function createAuthoringCommands(
         ),
         leaf(
           `show <${ownerArg}> <name>`,
-          "Show parameter metadata and a safe value",
+          "Show a parameter value",
           Permission.ReadOnly,
           (c, { args, options }) =>
             c.getParameter(owner, text(args, ownerArg), text(args, "name"), fields(options)),
@@ -152,7 +152,7 @@ export function createAuthoringCommands(
       ),
       leaf(
         `show <job-id> <${idArg}>`,
-        "Show a safe summary",
+        "Show an extension",
         Permission.ReadOnly,
         (c, { args, options }) =>
           c.getExtension(kind, text(args, "job-id"), text(args, idArg), fieldsFromOptions(options)),
@@ -314,7 +314,7 @@ export function createAuthoringCommands(
     ),
     leaf(
       "show <job-id> <step-id>",
-      "Show a safe step summary",
+      "Show a build step",
       Permission.ReadOnly,
       (c, { args, options }) => c.getStep(args["job-id"], args["step-id"], fieldsFromOptions(options)),
       [fieldsOption],

@@ -120,6 +120,7 @@ for (const scenario of buildProjectionCases) {
   });
 
   test(`${story}-A${scenario.parityAcceptance ?? acceptance.parity} ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
+    t.mock.method(Date, "now", () => Date.UTC(2026, 10, 10));
     const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
     const cli = rt.createCli();
     const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {

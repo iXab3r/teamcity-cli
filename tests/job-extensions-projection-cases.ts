@@ -40,12 +40,13 @@ export const cases: ProjectionCase[] = [
           {
             "name": "example.setting",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "a=b"
           }
         ]
       }
     ],
-    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -87,11 +88,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "example.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "a=b"
         }
       ]
     },
-    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -136,11 +138,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "example.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "a=b"
         }
       ]
     },
-    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -186,11 +189,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "example.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "a=b"
         }
       ]
     },
-    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: FEATURE_1\ntype: swabra\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -224,10 +228,11 @@ export const cases: ProjectionCase[] = [
       {
         "name": "example.setting",
         "type": "plain",
-        "redacted": true
+        "redacted": false,
+        "value": "synthetic-hidden"
       }
     ],
-    "human": "name             type   redacted\n---------------  -----  --------\nexample.setting  plain  true\n",
+    "human": "name             type   redacted  value\n---------------  -----  --------  ----------------\nexample.setting  plain  false     synthetic-hidden\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -263,10 +268,11 @@ export const cases: ProjectionCase[] = [
       {
         "name": "example.setting",
         "type": "plain",
-        "redacted": true
+        "redacted": false,
+        "value": "synthetic-hidden"
       }
     ],
-    "human": "name             type   redacted\n---------------  -----  --------\nexample.setting  plain  true\n",
+    "human": "name             type   redacted  value\n---------------  -----  --------  ----------------\nexample.setting  plain  false     synthetic-hidden\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -351,12 +357,13 @@ export const cases: ProjectionCase[] = [
           {
             "name": "example.setting",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "a=b"
           }
         ]
       }
     ],
-    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -398,11 +405,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "example.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "a=b"
         }
       ]
     },
-    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -447,11 +455,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "example.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "a=b"
         }
       ]
     },
-    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -497,11 +506,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "example.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "a=b"
         }
       ]
     },
-    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: TRIGGER_1\ntype: vcsTrigger\ninherited: false\nproperties:\n  -\n    name: example.setting\n    type: plain\n    redacted: false\n    value: a=b\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",

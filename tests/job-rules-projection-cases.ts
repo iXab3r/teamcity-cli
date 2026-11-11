@@ -46,7 +46,8 @@ export const cases: ProjectionCase[] = [
           {
             "name": "fixture.setting",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "fixture"
           }
         ],
         "source": {
@@ -55,7 +56,7 @@ export const cases: ProjectionCase[] = [
         }
       }
     ],
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -103,7 +104,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -111,7 +113,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -164,7 +166,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -172,7 +175,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -226,7 +229,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -234,7 +238,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -288,12 +292,13 @@ export const cases: ProjectionCase[] = [
           {
             "name": "fixture.setting",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "fixture"
           }
         ]
       }
     ],
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -384,7 +389,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -392,7 +398,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -445,7 +451,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -453,7 +460,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -507,7 +514,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -515,7 +523,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -651,7 +659,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -659,7 +668,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "ReadOnly",
@@ -708,7 +717,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -716,7 +726,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",
@@ -766,7 +776,8 @@ export const cases: ProjectionCase[] = [
         {
           "name": "fixture.setting",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "fixture"
         }
       ],
       "source": {
@@ -774,7 +785,7 @@ export const cases: ProjectionCase[] = [
         "name": "Fixture"
       }
     },
-    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: true\nsource:\n  id: Upstream\n  name: Fixture\n",
+    "human": "id: Entity\ntype: equals\ndisabled: false\ninherited: false\nproperties:\n  -\n    name: fixture.setting\n    type: plain\n    redacted: false\n    value: fixture\nsource:\n  id: Upstream\n  name: Fixture\n",
     "stderr": "",
     "collection": "",
     "permission": "Update",

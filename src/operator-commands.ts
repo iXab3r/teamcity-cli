@@ -408,7 +408,7 @@ export function createOperatorCommands(
     command("fields", "Read id, buildTypeId, state or branchName", [
       leaf(
         "show <build-id> <field>",
-        "Read an allowed build field",
+        "Read a build field",
         Permission.ReadOnly,
         (c, { args }) =>
           c.getBuildScalar(

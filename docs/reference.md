@@ -77,16 +77,16 @@ Licensed under MIT. See the [release guide](release.md).
 | `vcs roots list/show` | Discover existing roots without connection properties | `ReadOnly` |
 | `jobs vcs list/show`, `jobs vcs checkout-rules show` | Inspect root attachments/rules | `ReadOnly` |
 | `jobs vcs attach/replace/detach`, `jobs vcs checkout-rules set` | Manage attachments, not shared roots | `Update` |
-| `jobs triggers list/show`, `jobs features list/show` | Inspect redacted extension summaries | `ReadOnly` |
+| `jobs triggers list/show`, `jobs features list/show` | Inspect extension properties | `ReadOnly` |
 | `jobs triggers create/replace/delete`, `jobs features create/replace/delete` | Manage extensions using server defaults | `Update` |
 | `jobs snapshot-dependencies list/show` | Inspect upstream build dependencies | `ReadOnly` |
 | `jobs snapshot-dependencies create/replace/delete` | Manage upstream dependencies | `Update` |
 | `jobs templates list` | Inspect attached templates in priority order | `ReadOnly` |
 | `jobs templates attach/detach` | Attach/detach existing templates, not create/delete templates | `Update` |
-| `jobs agent-requirements/artifact-dependencies list/show` | Inspect redacted rule summaries | `ReadOnly` |
+| `jobs agent-requirements/artifact-dependencies list/show` | Inspect rule properties | `ReadOnly` |
 | `jobs agent-requirements/artifact-dependencies create/replace/delete` | Manage requirements and artifact dependencies | `Update` |
 | `jobs steps/features/triggers/agent-requirements/artifact-dependencies fields show/set` | Read/write scalar settings | Read: `ReadOnly`; write: `Update` |
-| `jobs steps/features parameters list/show/replace/set` | Inspect redacted metadata or change non-secret plugin properties | Read: `ReadOnly`; write: `Update` |
+| `jobs steps/features parameters list/show/replace/set` | Read plugin values or change non-secret properties | Read: `ReadOnly`; write: `Update` |
 | `jobs output-parameters list/show/create/set/delete` | Manage plain output parameters | Read: `ReadOnly`; write: `Update` |
 | `projects features list/show/create/replace/delete` | Manage project features | Read: `ReadOnly`; write: `Update` |
 | `projects templates list/create`, `projects templates default show/set/clear` | Create templates and manage the project default | Read: `ReadOnly`; write: `Update` |
@@ -180,23 +180,33 @@ forward scalar fields and string values unchanged; TeamCity validates field avai
 `jobs move <id> --project <id>`. No create command promises client-side upsert or conflict semantics.
 
 Parameters use `list <owner-id>`, `show/delete <owner-id> <name>` and
-`create/set <owner-id> <name> --value <value>`. This slice supports only non-secret values.
-Password, hidden, malformed-type and credential-named values are omitted with `redacted: true`.
-An absent/empty TeamCity type spec means a plain parameter; visible UI types are not closed to a client list. Full raw type specs are never returned. Create/set preflight only metadata
+`create/set <owner-id> <name> --value <value>`. Reads return every value TeamCity supplies.
+Only password-type parameters (`type.rawValue` starting with `password`), names starting with
+`secure:`, and entries without a server value use `redacted: true` without `value`.
+Plain values remain visible even with credential-like names, hidden display hints or unknown type
+metadata. The profile access token stays masked wherever it appears in output. Explicit `--fields`
+keeps its native projection behavior. An absent/empty type spec means a plain parameter; full raw
+type specs are not included in the default view. Create/set still accept only non-secret input, preflight metadata
 and reject protected or malformed metadata before writing; only create tolerates a 404.
 This is a safety check, not an atomic guarantee against concurrent server changes.
-Do not put credentials into plain parameters, script text or argv: name/type heuristics cannot
-identify arbitrary secrets stored under innocent names. Credential provisioning is outside S1.
+Use the secure-storage commands for credential inputs. Write validation still rejects credential-like
+names and contents; these restrictions do not filter read results.
 
 Steps accept `--name`, `--type`, and repeatable `--property <key=value>` (split on the first `=`;
 duplicate/empty keys fail). `jobs steps replace <job-id> <step-id>` fully replaces writable input:
-omitted properties are not preserved and no GET/merge runs first. Output omits raw plugin payloads
-and script content; only a small allowlist of known, non-secret setting values is exposed.
+omitted properties are not preserved and no GET/merge runs first. Reads include full script content
+and all returned step property values, subject to the secrecy rules above.
 
 `jobs vcs replace <job-id> <root-id> --checkout-rules <rules>` keeps the specified root identity.
 `jobs vcs checkout-rules set <job-id> <root-id> --rules <rules>` changes rules only; an empty string
 clears them. `jobs vcs detach` removes only the job attachment, never the shared root.
-Root discovery returns identity/type/project summaries, never connection properties.
+Root discovery returns identity/type/project summaries. Use `vcs roots properties list <id>` for
+connection property values. VCS root/instance and account property lists use the parameter output
+shape above. Versioned-settings context reads also retain `hasValue`; authentication-module reads
+include their property values. Write acknowledgements and validation remain unchanged.
+
+Read artifact rules and build options with `jobs fields show <job-id> <field>`, and agent fields
+with `agents fields show <agent-id> <field>`. These scalar reads preserve the returned text.
 
 Deletion always targets one explicit ID/name. Deleting a project/job can cascade through its
 server-owned children, settings and history according to TeamCity policy; there is no extra
@@ -358,8 +368,8 @@ Snapshot dependencies use the same list/show/create/replace/delete shape, with r
 build configuration ID. TeamCity validates dependency targets, cycles and
 plugin settings. Removing a dependency never deletes its upstream job.
 Trigger/dependency path IDs accept letters, digits, `_` and `-`, not raw locators such as `id:...`.
-Feature IDs are literal encoded path segments. All three families return metadata and redacted
-property names/types, **not property values**, even when a plugin supplies unknown fields.
+Feature IDs are literal encoded path segments. All three families return metadata and every
+server-supplied property value, including unknown plugin settings, subject to the secrecy rules above.
 
 Template attach preserves other attachments. By default it sends `optimizeSettings=false`;
 `--optimize-settings` asks TeamCity to remove redundant local settings. Detach affects only the
@@ -394,9 +404,9 @@ cycles and plugin semantics. Replace is full writable replacement, not a hidden 
 The `fields show/set` subtree forwards scalar field names and text values to the API; steps
 also support named fields such as `name`; their text is validated by TeamCity. Step/feature `parameters replace`
 replaces the complete property set; no `--property` clears it. `parameters set` changes one named
-non-secret property. These plugin reads expose metadata only, including single-property show;
-they do not return raw property/script values. Output parameters reuse ordinary plain-parameter
-validation, protected-metadata preflight and redaction.
+non-secret property. Plugin list/show reads include property and script values supplied by TeamCity.
+Output parameters use the same read secrecy rules and retain their existing write validation and
+protected-metadata preflight.
 
 Project features accept `--type` and repeatable non-secret properties, have no disabled toggle,
 and take effect immediately. Project template creation requires an ID and `--name`. Clearing the
@@ -501,7 +511,7 @@ One scope/target kind, no implicit all-problems mute. Create/create-many/show/de
 Tests/problems expose list/show/occurrence; occurrence requires `--build`. IDs stay strings.
 
 Runtime `builds output-parameters/resulting-properties list` and `changes attributes` return
-names only. Runtime parameter `exists <build-id> <name>` discards the scalar body without output,
+property values with secrecy metadata. Runtime parameter `exists <build-id> <name>` discards the scalar body without output,
 hash or file; 404 stays an error because it can mean a missing build too. Native build occurrence
 collections are unpaged and excluded from the fixed real-service proof.
 
@@ -512,7 +522,7 @@ requires **Credentials**. Both categories default off; granting Update does not 
 They are local safety gates, not remote authorization. No live administrative proof runs in CI.
 
 `users` exposes bounded list, `show <id>`, identity-only create/update/delete, direct groups, roles,
-resolved permissions, property names/existence, safe identity fields and remote session commands.
+resolved permissions, property values/existence, identity fields and remote session commands.
 `groups` exposes identities, direct parents, roles and properties. User update preserves omitted
 collections; role/group replacement is explicit and can be non-atomic. No items clears direct
 assignments; the server retains All Users membership. Role scope is exactly one `--global` or
@@ -551,7 +561,7 @@ and may interrupt running work. Acknowledgement is not proof of the final provid
 
 `vcs roots create` provisions anonymous Git with explicit URL/branch/project/name, preserving
 service strings and URL spelling. Supported Git transports are validated by TeamCity.
-Embedded passwords and HTTP token-as-user URLs are rejected; SSH account names remain literal. Property reads return names/existence only; replace/clear
+Embedded passwords and HTTP token-as-user URLs are rejected; SSH account names remain literal. Property lists return server-supplied values and secrecy metadata; `exists` checks only existence. Replace/clear
 operate on the whole native map and can break attached jobs. `vcs instances` exposes polling,
 commit-hook notifications, saved branch/revision state and server-validated scalar fields. `notify-commit`
 reports scheduling only for HTTP202, not other successful statuses.
@@ -561,7 +571,7 @@ context parameters, check/commit/load/status and secure-value mappings. Config r
 Only `storeSecureValuesOutsideVcs: true` is inserted to keep secure values outside VCS; disabling
 that protection is rejected. The server decides omitted-field and mode/root requirements. An existing-root conflict requires the caller to choose
 `importDecision`, never an automatic overwrite decision. Commit/load need confirmation.
-Context replacement removes omitted entries; values are never returned in context lists.
+Context replacement removes omitted entries; context lists return server-supplied values.
 
 Config replacement and `config fields set <project> format <value>` pass the format string
 unchanged to the server. The [optional API reference: API entity contract](https://www.jetbrains.com/help/teamcity/rest/versionedsettingsconfig.html)
@@ -613,8 +623,7 @@ types are checked, and inline encryption keys and credential-shaped data remain 
 `server cleanup configure` changes a future schedule, not immediate cleanup. `server backup start`
 schedules a timestamped config/database backup, excluding logs/personal changes/running builds/
 supplementary data; returned filename is not completion proof. License commands use input-secret
-aliases even where native REST embeds a key in the URL. Server scalar fields are encoded and server-validated; credential-shaped names such as
-superuser-token remain blocked. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
+aliases even where native REST embeds a key in the URL. Server scalar read selectors are encoded and validated by TeamCity; names alone do not hide returned values. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
 
 `pools tokens create <id> --ttl <seconds> --store-as <alias>` mints one-time registration tokens,
 not user access tokens. Repeat aliases for a batch; TTL uses the API's signed integer type in seconds; lifetime semantics are validated by TeamCity.

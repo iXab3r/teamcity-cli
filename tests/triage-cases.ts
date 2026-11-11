@@ -447,9 +447,9 @@ export const triageCases: AuthoringCase[] = [
       argv: ["builds", kind, "list", "42"],
       method: "GET",
       path: "/builds/id:42/" + kind,
-      query: { fields: "count,property(name)" },
+      query: { fields: "count,property(name,value,inherited,type(rawValue))" },
       response: { property: [{ name: "env.MODE", value: "synthetic-private-value" }] },
-      expected: ["env.MODE"],
+      expected: [{ name: "env.MODE", type: "plain", redacted: false, value: "synthetic-private-value" }],
     },
     {
       argv: ["builds", kind, "exists", "42", "env.MODE"],
@@ -464,8 +464,8 @@ export const triageCases: AuthoringCase[] = [
     argv: ["changes", "attributes", "7"],
     method: "GET",
     path: "/changes/id:7/attributes",
-    query: { fields: "count,entry(name)" },
+    query: { fields: "count,entry(name,value)" },
     response: { entry: [{ name: "example", value: "synthetic-private-value" }] },
-    expected: ["example"],
+    expected: [{ name: "example", type: "plain", redacted: false, value: "synthetic-private-value" }],
   },
 ];

@@ -217,7 +217,7 @@ test("template flags are explicit and affect only the named attachment", async (
   assert.deepEqual(methods, ["POST", "DELETE"]);
 });
 
-test("S2 results redact all plugin values and unknown nested fields, preserving inherited/source identity", async (testContext) => {
+test("S2 results return plugin values and exclude unknown nested fields, preserving inherited/source identity", async (testContext) => {
   const { cli, runtime } = await writableCli(testContext);
   server.use(
     http.all(`${base}/*`, () =>
@@ -252,17 +252,17 @@ test("S2 results redact all plugin values and unknown nested fields, preserving 
     ])) as Record<string, unknown>;
     assert.equal(result.inherited, true);
     assert.deepEqual(result.properties, [
-      { name: "ordinary", type: "plain", redacted: true },
+      { name: "ordinary", type: "plain", redacted: false, value: "synthetic-hidden" },
       { name: "password", type: "protected", redacted: true },
     ]);
     assert.equal("buildCustomization" in result, false);
     if (group === "snapshot-dependencies")
       assert.deepEqual(result.source, { id: "Source", name: "Source", projectId: "Example" });
-    assert.equal(JSON.stringify(result).includes("synthetic-hidden"), false);
+    assert.equal(JSON.stringify(result).includes("synthetic-hidden"), true);
   }
   assert.equal(await cli.run(["jobs", "features", "show", "Example_Build", "Entity"]), 0);
   assert.ok(runtime.stdout().length > 0);
-  assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
+  assert.equal(runtime.stdout().includes("synthetic-hidden"), true);
 });
 
 test("S2 empty lists, delete 404s and malformed response errors are deterministic and sanitized", async (testContext) => {

@@ -1,5 +1,4 @@
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
-import { stringList, withView } from "./presentation.js";
 import {
   command,
   Permission,
@@ -42,19 +41,16 @@ export function createAdminCommands(
   function properties(kind: AccountKind) {
     return command(
       "properties",
-      "Manage property names and assignments",
+      "Manage property values and assignments",
       [
-        withView(
-          stringList,
-          leaf(
-            "list <id>",
-            "List property names",
-            Permission.ReadOnly,
-            (c, { args, options }) =>
-              c.listAccountPropertyNames(kind, args.id, fieldsFromOptions(options)),
-            [fieldsOption],
-
-        )),
+        leaf(
+          "list <id>",
+          "List property values",
+          Permission.ReadOnly,
+          (c, { args, options }) =>
+            c.listAccountPropertyNames(kind, args.id, fieldsFromOptions(options)),
+          [fieldsOption],
+        ),
         leaf(
           "exists <id> <name>",
           "Check property existence",

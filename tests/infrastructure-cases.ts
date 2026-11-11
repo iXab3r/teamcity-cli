@@ -188,9 +188,9 @@ export const infrastructureCases: AuthoringCase[] = [
     ["vcs", "roots", "properties", "list", "Git"],
     "GET",
     rootPath + "/properties",
-    { fields: "count,property(name)" },
+    { fields: "count,property(name,value,inherited,type(rawValue))" },
     { property: [{ name: "branch", value: "synthetic-hidden" }] },
-    ["branch"],
+    [{ name: "branch", type: "plain", redacted: false, value: "synthetic-hidden" }],
   ),
   scoped(
     ["vcs", "roots", "properties", "replace", "Git", "--property", "branch=refs/heads/main"],
@@ -303,9 +303,9 @@ export const infrastructureCases: AuthoringCase[] = [
     ["vcs", "instances", "properties", "8"],
     "GET",
     instancePath + "/properties",
-    { fields: "count,property(name)" },
+    { fields: "count,property(name,value,inherited,type(rawValue))" },
     { property: [{ name: "branch", value: "synthetic-hidden" }] },
-    ["branch"],
+    [{ name: "branch", type: "plain", redacted: false, value: "synthetic-hidden" }],
   ),
   scoped(
     ["vcs", "instances", "state", "show", "8"],
@@ -493,8 +493,8 @@ export const infrastructureCases: AuthoringCase[] = [
       ],
     },
     [
-      { name: "environment", hasValue: true },
-      { name: "missing", hasValue: false },
+      { name: "environment", type: "plain", redacted: false, value: "synthetic-hidden", hasValue: true },
+      { name: "missing", type: "plain", redacted: true, hasValue: false },
     ],
   ),
   scoped(

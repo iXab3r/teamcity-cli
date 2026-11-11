@@ -50,7 +50,7 @@ for (const kind of ["steps", "features", "triggers", "agent-requirements", "arti
   const project = kind === "projectFeatures";
   const prefix = project ? ["projects", "features"] : ["jobs", kind];
   const path = project ? "/projects/id:Example/projectFeatures" : job + "/" + kind;
-  const key = kind === "steps" ? "step" : kind === "features" || project ? kind === "features" ? "feature" : "projectFeature" : kind === "triggers" ? "trigger" : kind === "agent-requirements" ? "agent-requirement" : kind.slice(0, -1);
+  const key = kind === "steps" ? "step" : kind === "features" || project ? kind === "features" ? "feature" : "projectFeature" : kind === "triggers" ? "trigger" : kind === "agent-requirements" ? "agent-requirement" : kind.replace(/ies$/, "y");
   const response = { id: "Entity", type: "synthetic", ...(kind === "steps" ? { name: "Script" } : {}), properties: { property: properties } };
   const result = { id: response.id, ...(kind === "steps" ? { name: response.name } : {}), type: response.type, properties: expected };
   const entityFields = `id,${kind === "steps" ? "name," : ""}type,disabled,inherited,properties(property(${fields}))${kind.endsWith("dependencies") ? ",source-buildType(id,name,projectId)" : ""}`;
@@ -59,6 +59,13 @@ for (const kind of ["steps", "features", "triggers", "agent-requirements", "arti
 for (const kind of ["steps", "features"]) scenarios.push({ argv: ["jobs", kind, "parameters", "list", "Example_Build", "Entity"], path: `${job}/${kind}/Entity/parameters`, fields: `property(${fields})`, response: { property: properties }, expected });
 for (const kind of ["roots", "instances"]) scenarios.push({ argv: ["vcs", kind, "properties", ...(kind === "roots" ? ["list", "Git"] : ["8"])], path: `/vcs-${kind === "roots" ? "roots/id:Git" : "root-instances/id:8"}/properties`, fields: `count,property(${fields})`, response: { property: properties }, expected });
 for (const kind of ["output-parameters", "resulting-properties"]) scenarios.push({ argv: ["builds", kind, "list", "101"], path: `/builds/id:101/${kind}`, fields: `count,property(${fields})`, response: { property: properties }, expected });
+
+
+for (const kind of ["users", "groups"]) scenarios.push({
+  argv: [kind, "properties", "list", "3"], path: `/${kind === "users" ? "users/id" : "userGroups/key"}:3/properties`,
+  fields: `count,property(${fields})`, response: { property: properties }, expected,
+});
+scenarios.push({ argv: ["changes", "attributes", "101"], path: "/changes/id:101/attributes", fields: "count,entry(name,value)", response: { entry: properties }, expected });
 
 for (const scenario of scenarios) test(`#156 ${scenario.argv.join(" ")}: return server values and retain secret/absent shapes`, async t => {
   const rt = await createTestRuntime(t);
@@ -109,4 +116,36 @@ test("#156 agent parameters and explicit fields preserve native data and profile
   server.use(http.get(base + "/agents/id:8", () => HttpResponse.json(response)));
   const result = await rt.json(rt.createCli(), ["agents", "show", "8", "--fields", "properties(*)"]);
   assert.deepEqual(result, { properties: { property: [...properties, { name: "profile-echo", value: "[redacted]" }] } });
+});
+
+
+test("#156 versioned context returns values while replacement retains its acknowledgement", async t => {
+  const rt = await createTestRuntime(t);
+  server.use(http.get(base + "/projects/id:Example/versionedSettings/contextParameters", () => HttpResponse.json({ versionedSettingsContextParameter: properties })));
+  assert.deepEqual(await rt.json(rt.createCli(), ["projects", "versioned-settings", "context", "list", "Example"]), expected.map((p, index) => ({ ...p, hasValue: index < 11 })));
+});
+
+test("#156 authentication module reads retain property values", async t => {
+  const rt = await createTestRuntime(t);
+  server.use(http.get(base + "/server/authSettings", () => HttpResponse.json({ modules: { module: [{ name: "synthetic-module", properties: { property: properties } }] } })));
+  assert.deepEqual(await rt.json(rt.createCli(), ["server", "authentication", "show"]), { modules: [{ name: "synthetic-module", properties: expected }] });
+});
+
+for (const argv of [
+  ["jobs", "steps", "parameters", "show", "Example_Build", "Entity", "profile-echo"],
+  ["jobs", "parameters", "value", "show", "Example_Build", "profile-echo"],
+  ["jobs", "parameters", "show", "Example_Build", "profile-echo"],
+]) test(`#156 ${argv.join(" ")}: profile credential mask stays active`, async t => {
+  const token = "synthetic-read-profile-credential";
+  const rt = await createTestRuntime(t, { tokens: { default: token } });
+  server.use(http.get("*", ({ request }) => {
+    const path = new URL(request.url).pathname;
+    return path.endsWith("/value") || path.includes("/steps/") ? HttpResponse.text(token) : HttpResponse.json({ name: "profile-echo", value: token });
+  }));
+  const cli = rt.createCli();
+  const result = { name: "profile-echo", type: "plain", redacted: false, value: "[redacted]" };
+  assert.deepEqual(await cli.execute(argv), result);
+  assert.deepEqual(await rt.json(cli, argv), result);
+  assert.deepEqual(await rt.rpc(cli, [argv]), [{ jsonrpc: "2.0", id: 0, result }]);
+  assert.doesNotMatch((await rt.run(cli, argv)).stdout, /synthetic-read-profile-credential/);
 });

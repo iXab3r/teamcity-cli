@@ -2989,7 +2989,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/agents-projection.test.ts"
+    "tests/agents-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:114"
@@ -3392,8 +3393,8 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/admin.test.ts:316",
-    "tests/admin.test.ts:376",
+    "tests/admin.test.ts:315",
+    "tests/admin.test.ts:375",
     "tests/response-body.test.ts:107",
     "tests/response-body.test.ts:42",
     "tests/response-body.test.ts:48",
@@ -4111,7 +4112,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4164,7 +4166,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4310,7 +4313,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4363,7 +4367,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4624,7 +4629,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4677,7 +4683,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4730,7 +4737,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4770,7 +4778,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4933,7 +4942,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5020,7 +5030,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5131,7 +5142,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5254,7 +5266,8 @@
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
-    "tests/password-parameter.test.ts"
+    "tests/password-parameter.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5377,7 +5390,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5470,7 +5484,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5523,7 +5538,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5575,7 +5591,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5628,7 +5645,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/command-support.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5681,7 +5699,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5721,7 +5740,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5920,7 +5940,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5973,7 +5994,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6585,7 +6607,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -7552,7 +7575,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/evidence-projection.test.ts",
-    "tests/presentation.test.ts"
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -7848,7 +7871,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/evidence-projection.test.ts"
+    "tests/evidence-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -8519,7 +8543,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/changes-projection.test.ts",
-    "tests/presentation.test.ts"
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10789,7 +10813,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/project-configuration-projection.test.ts"
+    "tests/project-configuration-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10902,10 +10927,11 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/project-configuration-projection.test.ts",
+    "tests/read-values.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/authoring.test.ts:416"
+    "tests/authoring.test.ts:417"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -11025,7 +11051,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11138,7 +11165,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/project-configuration-projection.test.ts"
+    "tests/project-configuration-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11191,7 +11219,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/project-configuration-projection.test.ts"
+    "tests/project-configuration-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11558,7 +11587,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -11898,6 +11928,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/read-values.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12476,7 +12507,7 @@
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/system.test.ts:331"
+    "tests/system.test.ts:330"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -12896,7 +12927,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -13342,7 +13374,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/groups-projection.test.ts"
+    "tests/groups-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -13800,7 +13833,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/presentation.test.ts",
+    "tests/read-values.test.ts",
     "tests/users-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -13844,7 +13877,7 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/admin.test.ts:377"
+    "tests/admin.test.ts:376"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -14485,6 +14518,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/read-values.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -14837,6 +14871,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/read-values.test.ts",
     "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],

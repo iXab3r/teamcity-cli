@@ -94,7 +94,7 @@ export function parameterType(property: RawProperty): string {
   if (property.type === undefined) return "plain";
   const spec = property.type?.rawValue;
   if (typeof spec !== "string") return "unknown";
-  if (protectedSpec.test(spec)) return "protected";
+  if (/^password/i.test(spec)) return "protected";
   const kind = spec.trim().split(/\s+/)[0] ?? "";
   return kind === "" ? "plain" : kind;
 }
@@ -108,12 +108,17 @@ export function isPlainParameter(property: RawProperty): boolean {
   );
 }
 
+// Read secrecy comes from TeamCity metadata, independently of argv/write validation.
+export function isSecretProperty(property: RawProperty): boolean {
+  return property.name.startsWith("secure:") || /^password/i.test(property.type?.rawValue ?? "");
+}
+
 export function safeProperty(property: RawProperty, exposeValue = true) {
   const redacted =
+    property.value === undefined ||
     property.value === null ||
     !exposeValue ||
-    !isPlainParameter(property) ||
-    (property.value !== undefined && sensitiveValue(property.value));
+    isSecretProperty(property);
   return {
     name: property.name,
     ...(property.inherited === undefined ? {} : { inherited: property.inherited }),
@@ -173,7 +178,7 @@ export function safeExtension(extension: RawExtension) {
     type: extension.type,
     ...(extension.disabled === undefined ? {} : { disabled: extension.disabled }),
     ...(extension.inherited === undefined ? {} : { inherited: extension.inherited }),
-    properties: (extension.properties?.property ?? []).map((p) => safeProperty(p, false)),
+    properties: (extension.properties?.property ?? []).map((p) => safeProperty(p)),
   };
 }
 
@@ -202,19 +207,13 @@ export function literalIdPath(id: string): string {
 }
 
 export function safeStep(step: RawStep) {
-  // Plugin properties (especially script content) are not a safe output schema.
-  const safeSetting = (p: RawProperty): boolean =>
-    (step.type === "simpleRunner" &&
-      p.name === "use.custom.script" &&
-      /^(true|false)$/.test(p.value ?? "")) ||
-    (p.name === "teamcity.step.mode" && /^(default|always|run_on_failure)$/.test(p.value ?? ""));
   return {
     id: step.id,
     name: step.name,
     type: step.type,
     ...(step.disabled === undefined ? {} : { disabled: step.disabled }),
     ...(step.inherited === undefined ? {} : { inherited: step.inherited }),
-    properties: (step.properties?.property ?? []).map((p) => safeProperty(p, safeSetting(p))),
+    properties: (step.properties?.property ?? []).map((p) => safeProperty(p)),
   };
 }
 

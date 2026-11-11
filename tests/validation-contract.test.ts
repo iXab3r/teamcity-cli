@@ -203,15 +203,15 @@ test("native filters, custom file areas and backup names are server-validated", 
   await cli.execute(["server", "files", "list", "custom.future", "--limit", "0"]);
 });
 
-test("credential fields stay blocked and remote field errors stay safe", async t => {
+test("read selectors reach TeamCity and remote field errors stay safe", async t => {
   const f = await createTestRuntime(t);
   const cli = f.createCli();
-  const requests = trackRequests(t, 1, () => HttpResponse.text("synthetic-private-response", { status: 400 }));
+  const requests = trackRequests(t, 7, () => HttpResponse.text("synthetic-private-response", { status: 400 }));
   server.use(http.all("*", ({ request }) => requests.handle(request)));
-  await assert.rejects(cli.execute(["users", "fields", "get", "7", "password"]), /non-secret/);
+  await assert.rejects(cli.execute(["users", "fields", "get", "7", "password"]), { code: "http.rejected" });
   for (const field of ["passwordHash", "encryptionKey", "credentialsJSON", "secretKey", "accessToken"])
-    await assert.rejects(cli.execute(["server", "field", field]), /non-secret/);
-  assert.equal(requests.count, 0);
+    await assert.rejects(cli.execute(["server", "field", field]), { code: "http.rejected" });
+  assert.equal(requests.count, 6);
   const result = await f.run(cli, ["users", "fields", "get", "7", "futureField", "--json"]);
   assert.equal(result.exitCode, 1);
   assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");

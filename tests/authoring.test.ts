@@ -283,16 +283,17 @@ test("parameter reads redact protected metadata while preserving future UI types
   const result = JSON.parse(runtime.stdout());
   assert.equal(result[0].value, "debug");
   assert.equal(result[3].value, "future value");
+  for (const index of [2, 4, 5, 6]) assert.equal(result[index].value, properties[index]!.value);
   assert.equal(
     result
-      .filter((_: unknown, index: number) => index !== 0 && index !== 3)
+      .filter((_: unknown, index: number) => index === 1 || index === 7)
       .every((p: { redacted: boolean; value?: string }) => p.redacted && p.value === undefined),
     true,
   );
-  assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
+  assert.equal(runtime.stdout().includes("synthetic-hidden"), true);
   runtime.resetOutput();
   assert.equal(await cli.run(["projects", "parameters", "list", "Example"]), 0);
-  assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
+  assert.equal(runtime.stdout().includes("synthetic-hidden"), true);
 });
 
 test("parameter writes preflight metadata, reject protected/malformed metadata and only tolerate create 404", async (testContext) => {
@@ -350,7 +351,7 @@ test("parameter writes preflight metadata, reject protected/malformed metadata a
   assert.equal(writes, 1);
 });
 
-test("steps replace does not read/merge, unknown properties are redacted and VCS excludes connection data", async (testContext) => {
+test("steps replace does not read/merge, unknown property values are returned", async (testContext) => {
   const runtime = await createTestRuntime(testContext);
   const cli = runtime.createCli();
   await cli.execute(["permissions", "grant", "Update"]);
@@ -395,7 +396,7 @@ test("steps replace does not read/merge, unknown properties are redacted and VCS
     "plugin",
   ]);
   assert.equal(requests, 1);
-  assert.equal(JSON.stringify(step).includes("synthetic-hidden"), false);
+  assert.deepEqual((step as { properties: unknown }).properties, [{ name: "unrecognized", type: "plain", redacted: false, value: "synthetic-hidden" }]);
   assert.deepEqual(await cli.execute(["vcs", "roots", "show", "Root"]), {
     id: "Root",
     name: "Root",

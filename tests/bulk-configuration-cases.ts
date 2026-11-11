@@ -54,7 +54,7 @@ for (const owner of ["jobs", "projects", "output"] as const) {
         expected:
           part === "value"
             ? { ...property, type: "text", redacted: false }
-            : { name: "env.MODE", type: "text", redacted: false },
+            : { name: "env.MODE", type: "text", redacted: true },
         preflight: `${path}/env.MODE`,
       });
     }

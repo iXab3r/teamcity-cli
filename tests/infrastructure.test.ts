@@ -9,7 +9,7 @@ import { plainProperty, safeProperty } from "../src/authoring-models.js";
 const base = "https://teamcity.test/app/rest";
 const service = "ai-cli-factory:teamcity-cli";
 const server = setupServer();
-test("property protection decodes credential-bearing URL keys and fragments", () => {
+test("writes reject credential-bearing URLs while reads retain server values", () => {
   for (const value of [
     "https://example.test/repo?%74oken=synthetic",
     "https://example.test/repo#access_token=synthetic",
@@ -20,7 +20,8 @@ test("property protection decodes credential-bearing URL keys and fragments", ()
     assert.deepEqual(safeProperty({ name: "url", value }), {
       name: "url",
       type: "plain",
-      redacted: true,
+      redacted: false,
+      value,
     });
   }
   assert.equal(
@@ -404,7 +405,7 @@ test("S8 secure mapping resolves every input before HTTP and remote deletion ret
   assert.equal(calls, 2);
 });
 
-test("S8 effective/status/context projections reject nested private data and malformed response text", async (testContext) => {
+test("S8 context returns values while effective/status projections reject unknown fields", async (testContext) => {
   const { cli } = await writable(testContext);
   const path = base + "/projects/id:Example/versionedSettings";
   server.use(
@@ -434,7 +435,7 @@ test("S8 effective/status/context projections reject nested private data and mal
     config: { synchronizationMode: "disabled" },
   });
   assert.deepEqual(await cli.execute([...versioned, "context", "list", "Example"]), [
-    { name: "environment", hasValue: true },
+    { name: "environment", type: "plain", redacted: false, value: "synthetic-hidden", hasValue: true },
   ]);
   assert.deepEqual(await cli.execute([...versioned, "status", "Example"]), {
     type: "warn",

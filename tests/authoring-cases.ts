@@ -55,7 +55,7 @@ const safeStep = {
   type: "simpleRunner",
   disabled: false,
   properties: [
-    { name: "script.content", redacted: true, type: "plain" },
+    { name: "script.content", redacted: false, type: "plain", value: "echo a=b" },
     { name: "use.custom.script", value: "true", redacted: false, type: "plain" },
   ],
 };

@@ -341,7 +341,7 @@ test("S5 stateful parameter replacement/value/type/clear workflow uses the exact
   assert.deepEqual(await cli.execute(["jobs", "parameters", "type", "show", "Build", "env.MODE"]), {
     name: "env.MODE",
     type: "text",
-    redacted: false,
+    redacted: true,
   });
   await cli.execute(["jobs", "parameters", "clear", "Build", "--confirm"]);
   assert.equal(writes, 3);

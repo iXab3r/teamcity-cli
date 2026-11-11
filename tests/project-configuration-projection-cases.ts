@@ -271,12 +271,13 @@ export const cases: ProjectionCase[] = [
           {
             "name": "mode",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "test"
           }
         ]
       }
     ],
-    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: true\n",
+    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: false\n    value: test\n",
     "stderr": "",
     "collection": "",
     "field": false,
@@ -330,11 +331,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "mode",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "test"
         }
       ]
     },
-    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: true\n",
+    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: false\n    value: test\n",
     "stderr": "",
     "collection": "",
     "field": false,
@@ -388,11 +390,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "mode",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "test"
         }
       ]
     },
-    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: true\n",
+    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: false\n    value: test\n",
     "stderr": "",
     "collection": "",
     "field": false,
@@ -447,11 +450,12 @@ export const cases: ProjectionCase[] = [
         {
           "name": "mode",
           "type": "plain",
-          "redacted": true
+          "redacted": false,
+          "value": "test"
         }
       ]
     },
-    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: true\n",
+    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: false\n    value: test\n",
     "stderr": "",
     "collection": "",
     "field": false,
@@ -508,12 +512,13 @@ export const cases: ProjectionCase[] = [
           {
             "name": "mode",
             "type": "plain",
-            "redacted": true
+            "redacted": false,
+            "value": "test"
           }
         ]
       }
     ],
-    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: true\n",
+    "human": "id: Demo\ntype: synthetic\nproperties:\n  -\n    name: mode\n    type: plain\n    redacted: false\n    value: test\n",
     "stderr": "",
     "collection": "",
     "field": false,
