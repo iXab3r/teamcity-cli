@@ -81,7 +81,8 @@ export async function saveDownload(
   const name = options.name;
   const maxBytes = options.maxBytes === undefined
     ? undefined
-    : integer(options.maxBytes, 1, Number.MAX_SAFE_INTEGER);
+    : integer(options.maxBytes);
+  if (maxBytes !== undefined && maxBytes < 1) throw new Error("Download byte limit must be positive.");
   let media = "application/octet-stream";
   let status: number | undefined;
   try {

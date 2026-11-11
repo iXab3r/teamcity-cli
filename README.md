@@ -24,6 +24,10 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
   <img src="docs/images/how-it-works-light.svg" alt="People, AI agents and Node.js code use one teamcity-cli command tree, which applies profiles, the secret store, a permission gate and redaction before calling the TeamCity REST API">
 </picture>
 
+Requests send what the caller supplies. TeamCity validates service values and applies omitted-field
+defaults. Native JSON DTOs work alongside compact options; permission gates, confirmations and local
+file/credential safety remain enforced. See the [request contract](docs/reference.md).
+
 ## Coverage
 
 Every documented query parameter of those operations is caller-controlled; see the [current REST coverage](docs/rest-api-coverage/current/README.md).

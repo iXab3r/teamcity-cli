@@ -23,7 +23,7 @@ import { adminCategories } from "./admin-models.js";
 import { createInfrastructureCommands } from "./infrastructure-commands.js";
 import { createSystemCommands } from "./system-commands.js";
 import { createFileCommands } from "./file-commands.js";
-import { clientLeaf, integerValue, optionalText } from "./command-support.js";
+import { clientLeaf, integerValue, optionalText, booleanOption } from "./command-support.js";
 import { projectTree, jobTable, agentTable, buildRecord, buildTable, problemTable, testTable, withView } from "./presentation.js";
 import { createBuildFlowCommands } from "./build-flow.js";
 import { fieldsFromOptions, fieldsOption } from "./projection.js";
@@ -190,12 +190,14 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               fields: fieldsFromOptions(options),
               ...(parent === undefined ? {} : { parent }),
               ...(options.includeArchived === true ? { includeArchived: true } : {}),
+              ...optionalText(options, "archived"),
               ...pageValues(options),
             });
           },
           [
             { flags: "--parent <id>", description: "Limit projects to one parent project" },
             { flags: "--include-archived", description: "Include archived projects" },
+            { flags: "--archived <value>", description: "Filter by archived state" },
             fieldsOption,
             ...pageOptions,
           ],
@@ -222,6 +224,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           (c, { options }) => {
             const project = stringOption(options, "project");
             return c.listJobs({
+              ...optionalText(options, "templateFlag"),
               ...(project === undefined ? {} : { project }),
               ...pageValues(options),
               fields: fieldsFromOptions(options),
@@ -229,6 +232,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           },
           [
             { flags: "--project <id>", description: "Limit jobs to a TeamCity project" },
+            { flags: "--template-flag <value>", description: "Filter by template state" },
             ...pageOptions,
             fieldsOption,
           ],
@@ -262,7 +266,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
         ...files.builds,
         withView(buildTable, leaf(
           "list",
-          "List queued, running and finished builds",
+          "List builds",
           Permission.ReadOnly,
           (c, { options }) => {
             const job = stringOption(options, "job");
@@ -271,6 +275,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             const state = stringOption(options, "state") as TeamCityBuildState | undefined;
             const status = stringOption(options, "status") as TeamCityBuildStatus | undefined;
             return c.listBuilds({
+              ...optionalText(options, "defaultFilter"),
               ...(job === undefined ? {} : { job }),
               ...(project === undefined ? {} : { project }),
               ...(branch === undefined ? {} : { branch }),
@@ -282,15 +287,16 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           },
           [
             { flags: "--job <id>", description: "Limit builds to one job" },
+            { flags: "--default-filter <value>", description: "Set the server default filter" },
             { flags: "--project <id>", description: "Limit builds to one affected project" },
             { flags: "--branch <name>", description: "Limit builds to one branch name" },
             {
               flags: "--state <state>",
-              description: "Select queued, running, finished or any (default)",
+              description: "Filter by build state",
             },
             {
               flags: "--status <status>",
-              description: "Select SUCCESS, FAILURE or UNKNOWN",
+              description: "Filter by build status",
             },
             fieldsOption,
             ...pageOptions,
@@ -351,9 +357,10 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             return c.cancelBuild(integerValue(args.id), {
               ...optionalText(options, "fields"),
               ...(comment === undefined ? {} : { comment }),
+              ...(options.requeue === undefined ? {} : { requeue: options.requeue === "true" }),
             });
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }, fieldsOption],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again"), fieldsOption],
         )),
       ], "Evidence"), {
         examples: [
@@ -397,9 +404,10 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             const comment = stringOption(options, "comment");
             return c.cancelQueuedBuild(integerValue(args.id), {
               ...(comment === undefined ? {} : { comment }),
+              ...(options.requeue === undefined ? {} : { requeue: options.requeue === "true" }),
             });
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again")],
         )),
       ], "Control")),
       command("agents", "Inspect TeamCity build agents", helpLayout([

@@ -60,8 +60,8 @@ test("builds list filters one branch with a locator TeamCity cannot re-parse", a
   assert.deepEqual(await cli.execute(["builds", "list", "--job", "Demo_Tests", "--branch", "main"]), empty);
   assert.deepEqual(await cli.execute(["builds", "list", "--branch", "release/1.0,hotfix"]), empty);
   assert.deepEqual(locators, [
-    "defaultFilter:false,branch:(name:main),buildType:(id:Demo_Tests),start:0,count:101",
-    "defaultFilter:false,branch:(name:(value:($base64:" +
+    "branch:(name:main),buildType:(id:Demo_Tests),start:0,count:101",
+    "branch:(name:(value:($base64:" +
       `${Buffer.from("release/1.0,hotfix").toString("base64url")}))),start:0,count:101`,
   ]);
 });

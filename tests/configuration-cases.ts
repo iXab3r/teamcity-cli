@@ -97,7 +97,7 @@ configurationCases.push(
     argv: ["jobs", "templates", "attach", "Example_Build", "--template", template.id],
     method: "POST",
     path: `${job}/templates`,
-    query: { fields: "id,name,projectId", optimizeSettings: "false" },
+    query: { fields: "id,name,projectId" },
     body: { id: template.id },
     response: template,
     expected: template,
@@ -106,7 +106,7 @@ configurationCases.push(
     argv: ["jobs", "templates", "detach", "Example_Build", template.id],
     method: "DELETE",
     path: `${job}/templates/id:Example_Template`,
-    query: { inlineSettings: "false" },
+    query: {},
     response: null,
     expected: {
       jobId: "Example_Build",

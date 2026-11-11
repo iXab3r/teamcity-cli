@@ -12,7 +12,7 @@ export const cases = [
     ],
     "path": "/app/rest/agents",
     "defaultQuery": {
-      "locator": "connected:any,enabled:any,authorized:any,start:3,count:3",
+      "locator": "start:3,count:3",
       "fields": "nextHref,agent(id,name,connected,enabled,authorized,uptodate,webUrl,build(id,buildTypeId,number,state,status))"
     },
     "method": "GET",
@@ -300,7 +300,7 @@ export const cases = [
       "fields": "policy,buildTypes(buildType(id,name,projectId))"
     },
     "method": "PUT",
-    "body": "{\"policy\":\"any\",\"buildTypes\":{\"buildType\":[]}}",
+    "body": "{\"policy\":\"any\"}",
     "baselineResponse": {
       "id": 7,
       "name": "fixture-agent",

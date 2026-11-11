@@ -13,7 +13,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/projects",
     "query": {
-      "locator": "archived:false,start:3,count:3",
+      "locator": "start:3,count:3",
       "fields": "nextHref,project(id,name,parentProjectId,archived,description,webUrl)"
     },
     "body": "",

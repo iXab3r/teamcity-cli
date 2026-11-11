@@ -61,8 +61,8 @@ export function createOperatorCommands(
       "create",
       "Create a pool",
       Permission.Update,
-      (c, { options }) => c.createPool(text(options, "name")),
-      [option("--name <name>", "Set the pool name", true)],
+      (c, { options }) => c.createPool(options.name as string | undefined),
+      [option("--name <name>", "Set the pool name")],
     ),
     leaf(
       "delete <pool-id>",
@@ -196,7 +196,7 @@ export function createOperatorCommands(
           c.setAgentPolicy(
             number(args, "agent-id"),
             args.policy,
-            (options.job ?? []) as string[],
+            options.job as string[] | undefined,
             fieldsFromOptions(options),
           ),
         [fieldsOption, repeatOption("--job <job-id>", "Select allowed jobs; repeat for more")],
@@ -236,7 +236,7 @@ export function createOperatorCommands(
     ]),
   ];
   function tags(owner: "builds" | "queue") {
-    const tagOption = repeatOption("--tag <tag>", "Select public tags; repeat for more", true);
+    const tagOption = repeatOption("--tag <tag>", "Select public tags; repeat for more");
     return command("tags", "Inspect or change public tags", [
       withView(
         stringList,
@@ -322,8 +322,8 @@ export function createOperatorCommands(
         "Move a build to a queue position",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePosition(args.position, number(options, "build"), fieldsFromOptions(options)),
-        [option("--build <build-id>", "Select a queued build", true), fieldsOption],
+          c.setQueuePosition(args.position, options.build === undefined ? undefined : number(options, "build"), fieldsFromOptions(options)),
+        [option("--build <build-id>", "Select a queued build"), fieldsOption],
       ),
     ]),
   ];
@@ -370,8 +370,8 @@ export function createOperatorCommands(
         "Replace the build comment",
         Permission.Update,
         (c, { args, options }) =>
-          c.setBuildComment(number(args, "build-id"), text(options, "text")),
-        [option("--text <text>", "Set the comment text", true)],
+          c.setBuildComment(number(args, "build-id"), options.text as string | undefined),
+        [option("--text <text>", "Set the comment text")],
       ),
       leaf("clear <build-id>", "Remove the comment", Permission.Update, (c, { args }) =>
         c.clearBuildComment(number(args, "build-id")),

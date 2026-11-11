@@ -8,16 +8,9 @@ export type DownloadFormat = "bytes" | "zip" | "png" | "svg";
 export const fileFields = "name,size,modificationTime";
 export const artifactFileFields = `${fileFields},children(href),content(href)`;
 export function remotePath(value: string) {
-  if (
-    !value ||
-    value.startsWith("/")
-  )
-    throw new Error(
-      "Expected a nonempty relative remote path without traversal.",
-    );
   const parts = value.split("/");
-  if (parts.some((p) => !p || p === "." || p === ".."))
-    throw new Error("Remote path contains empty/dot segments.");
+  if (parts.some((p) => p === "." || p === ".."))
+    throw new Error("Remote path contains dot segments.");
   return parts.map((p) => encodeURIComponent(p)).join("/");
 }
 export function treePath(kind: FileTree, id: string) {
@@ -30,19 +23,18 @@ export function treePath(kind: FileTree, id: string) {
     : "/app/rest/vcs-root-instances/" + idPath(id, "VCS instance ID") + "/files/latest";
 }
 export function fileQuery(kind: FileTree): Record<string, string> {
-  return kind === "builds"
-    ? { resolveParameters: "false", logBuildUsage: "false" }
-    : kind === "jobs"
-      ? { resolveParameters: "false" }
-      : {};
+  return {};
 }
-export const fileLocator = (count: number, browseArchives = false) =>
-  `count:${integer(count, 0, Number.MAX_SAFE_INTEGER)},recursive:false,hidden:false,browseArchives:${browseArchives}`;
+export function fileLocator(count: number, browseArchives?: boolean) {
+  integer(count);
+  if (count < 0) throw new Error("File limit must be non-negative.");
+  return `count:${count}${browseArchives === undefined ? "" : ",browseArchives:" + browseArchives}`;
+}
 export function safeFile(value: unknown) {
   const v = object(value);
   if (typeof v.name !== "string")
     throw new Error("Invalid file metadata.");
-  if (v.size !== undefined) integer(v.size, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+  if (v.size !== undefined) integer(v.size);
   return safeScalars(v, ["name", "size", "modificationTime"]);
 }
 export function safeArtifactFile(value: unknown) {

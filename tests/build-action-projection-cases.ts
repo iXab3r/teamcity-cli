@@ -9,7 +9,7 @@ export const actionCases = [
         fields:
           "id,buildTypeId,number,state,status,statusText,branchName,defaultBranch,personal,failedToStart,canceledInfo(timestamp),queuedDate,startDate,finishDate,percentageComplete,queuePosition,waitReason,webUrl,agent(id,name)",
       },
-      body: '{"comment":"Fixture","readdIntoQueue":false}',
+      body: '{"comment":"Fixture"}',
     },
     response: {
       id: 42,

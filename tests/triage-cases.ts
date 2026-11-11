@@ -131,7 +131,7 @@ export const triageCases: AuthoringCase[] = [
   },
   batch(["cancel", "--comment", "Synthetic"], "POST", "", {
     comment: "Synthetic",
-    readdIntoQueue: false,
+
   }),
   batch(["delete"], "DELETE", ""),
   batch(["comment", "set", "--text", "Synthetic"], "PUT", "/comment", "Synthetic", true),

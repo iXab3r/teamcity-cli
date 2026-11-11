@@ -16,23 +16,20 @@ for (const kind of ["agent-requirements", "artifact-dependencies", "projectFeatu
   const key = isProject ? "projectFeature" : artifact ? "artifact-dependency" : "agent-requirement";
   const fields = entityFields + (artifact ? `,source-buildType(${identityFields})` : "");
   const body = isProject
-    ? { type: "plugin", properties: { property: [] } }
+    ? { type: "plugin" }
     : artifact
       ? {
           type: "artifact_dependency",
-          disabled: false,
           "source-buildType": { id: "Source" },
           properties: {
             property: [
               { name: "pathRules", value: "*.zip=>dist" },
               { name: "revisionName", value: "lastSuccessful" },
-              { name: "cleanDestinationDirectory", value: "false" },
             ],
           },
         }
       : {
           type: "equals",
-          disabled: false,
           properties: {
             property: [
               { name: "property-name", value: "env.MODE" },
@@ -45,13 +42,13 @@ for (const kind of ["agent-requirements", "artifact-dependencies", "projectFeatu
     : artifact
       ? ["--source", "Source", "--rules", "*.zip=>dist", "--revision", "lastSuccessful"]
       : ["--type", "equals", "--parameter", "env.MODE", "--value", "debug"];
-  const response = { id: "Entity", ...body };
+  const response = { id: "Entity", ...body, ...(!isProject ? { disabled: false } : {}) };
   const expected = {
     id: "Entity",
     type: body.type,
     ...(!isProject ? { disabled: false } : {}),
     ...(artifact ? { source: { id: "Source" } } : {}),
-    properties: body.properties.property.map(({ name, value }) => ({
+    properties: (body.properties?.property ?? []).map(({ name, value }) => ({
       name,
       value,
       type: "plain",

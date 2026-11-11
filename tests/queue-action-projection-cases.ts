@@ -7,7 +7,6 @@ export const actionCases = [
       path: "/app/rest/buildQueue/id:42/approve",
       query: {
         fields: "status,canBeApprovedByCurrentUser,configurationValid,timeoutTimestamp",
-        approveAll: "false",
       },
       body: "",
     },

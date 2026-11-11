@@ -49,12 +49,8 @@ test("S2 rejects malformed syntax and self-dependencies before HTTP", async (tes
       return HttpResponse.json({});
     }),
   );
-  const invalid = [
-    ["triggers", "create", "Example_Build"],
-    ["features", "replace", "Example_Build", "F1"],
-    ["snapshot-dependencies", "create", "Example_Build"],
+  const invalid: string[][] = [
 
-    ["templates", "attach", "Example_Build"],
 
   ];
   for (const group of ["triggers", "features", "snapshot-dependencies"]) {
@@ -90,9 +86,8 @@ test("S2 replacement sends an empty property set without GET/merge and leaves ex
           ? {
               type: "snapshot_dependency",
               "source-buildType": { id: "Source" },
-              properties: { property: [] },
             }
-          : { type: "plugin", properties: { property: [] } },
+          : { type: "plugin" },
       );
       return HttpResponse.json({ id: "Entity", ...(body as object) });
     }),
@@ -120,7 +115,6 @@ test("enabling triggers and features is explicit for both create and replace", a
       assert.deepEqual(await request.json(), {
         type: "plugin",
         disabled: false,
-        properties: { property: [] },
       });
       return HttpResponse.json({ id: "Entity", type: "plugin", disabled: false });
     }),
@@ -281,7 +275,7 @@ test("S2 empty lists, delete 404s and malformed response errors are deterministi
 test("S2 JSON-RPC preserves profile URL/token/gates and continues after help and denied mutation", async (testContext) => {
   const commands = [
     ["jobs", "triggers", "replace", "--help"],
-    ["jobs", "triggers", "create", "Example_Build", "--profile", "uat"],
+    ["jobs", "triggers", "create", "Example_Build", "--unknown-flag", "--profile", "uat"],
     ["jobs", "triggers", "create", "Example_Build", "--type", "vcsTrigger"],
     ["jobs", "features", "create", "Example_Build", "--type", "swabra", "--profile", "uat"],
     ["jobs", "templates", "list", "Example_Build"],
@@ -322,7 +316,7 @@ test("S2 JSON-RPC preserves profile URL/token/gates and continues after help and
   assert.match(frames[0].result.help, /Replace an extension/);
   assert.match(frames[0].result.help, /Required permission: Update/);
   assert.match(frames[0].result.help, /--enabled/);
-  assert.match(frames[1].error.message, /required option.*--type/);
+  assert.match(frames[1].error.message, /unknown option/);
   assert.match(frames[2].error.message, /Permission 'Update'/);
   assert.equal(frames[3].result.id, "Feature");
   assert.deepEqual(frames[4].result, []);
@@ -364,7 +358,7 @@ test("offline S2 workflow configures, inspects, replaces and removes settings wi
       const body = (await request.json()) as Record<string, unknown>;
       if (family !== "templates" && request.method === "PUT") {
         assert.ok(state.has(family));
-        assert.deepEqual(body.properties, { property: [] });
+        assert.equal(body.properties, undefined);
       }
       const result = { id: family === "snapshot-dependencies" ? "Source" : "Entity", ...body };
       state.set(family, result);

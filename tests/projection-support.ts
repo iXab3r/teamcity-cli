@@ -93,9 +93,10 @@ for (const scenario of buildProjectionCases) {
           method: scenario.method, url: origin + scenario.path,
           query: { ...scenario.fixedQuery, ...scenario.nativeQuery, ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), ...(scenario.field ? {field: projection} : {fields: scenario.fields(projection)}) },
           headers: { accept: "application/json", authorization: `Bearer ${token}` },
-          body: { text: scenario.body },
+          body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
         });
-        assert.equal(await request.text(), scenario.body);
+        if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
         return HttpResponse.json(scenario.field ? scenario.baselineResponse : scenario.response(responseValue));
       });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -133,9 +134,10 @@ for (const scenario of buildProjectionCases) {
         method: scenario.method, url: origin + scenario.path,
         query: scenario.query,
         headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+        body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
       });
-      assert.equal(await request.text(), scenario.body);
+      if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
       return scenario.argv.includes("rest-plugin") ? HttpResponse.text(`<plugin name="rest"/>`, {headers: {"content-type": "application/xml"}}) : HttpResponse.json(scenario.baselineResponse);
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));

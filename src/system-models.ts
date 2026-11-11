@@ -7,10 +7,10 @@ import {
   inputIds,
   safeScalars,
 } from "./triage-models.js";
-import { allowedField } from "./advanced-authoring-models.js";
-import { pathSegment, propertiesBody, safeProperty, type RawProperty } from "./authoring-models.js";
+import { pathSegment, inputProperties, safeProperty, type RawProperty } from "./authoring-models.js";
 import { idPath, nestedId, joinLocator, integerId } from "./locator.js";
 import { open, lstat } from "node:fs/promises";
+import { basename } from "node:path";
 import { constants } from "node:fs";
 import type { ScopedSecrets } from "@eyeauras/cli-factory";
 import { requireInputSecret } from "./credential-inputs.js";
@@ -25,8 +25,6 @@ export const licenseFields =
   "valid,active,expired,obsolete,expirationDate,maintenanceEndDate,type,servers,agents,unlimitedAgents,buildTypes,unlimitedBuildTypes,pipelines,unlimitedPipelines";
 export const licenseSummaryFields =
   "serverLicenseType,maxAgents,unlimitedAgents,maxBuildTypes,unlimitedBuildTypes";
-export const muteDeleteFields =
-  "id,scope(project(id),buildTypes(buildType(id))),target(anyProblem,tests(test(id)),problems(problem(id))),resolution(type,time)";
 export function collection(value: unknown, key: string, project: (v: unknown) => unknown) {
   const raw = object(value),
     items = array(raw[key]);
@@ -74,11 +72,10 @@ export const instancePath = (dashboard: string, id: string) =>
   dashboardPath(dashboard) + "/instances/" + idPath(id, "Instance ID");
 export const rolePath = (id: string) =>
   "/app/rest/roles/id:" + pathSegment(inputText(id, "Role ID"));
-export function stateEntry(state: string, date: string, build?: string) {
-  allowedField(state, ["IN_PROGRESS", "SUCCESSFUL", "FAILED", "CANCELLED", "UNKNOWN"]);
+export function stateEntry(state: string | undefined, date: string | undefined, build?: string) {
   return {
-    state,
-    deploymentDate: inputText(date, "Deployment date"),
+    ...(state === undefined ? {} : { state: inputText(state, "State") }),
+    ...(date === undefined ? {} : { deploymentDate: inputText(date, "Deployment date") }),
     ...(build === undefined
       ? {}
       : { build: { id: Number(integerId(build, "Build ID")) } }),
@@ -120,9 +117,9 @@ export function boolean(value: unknown) {
   if (typeof value !== "boolean") throw new Error("Expected a boolean.");
   return value;
 }
-export function integer(value: unknown, min = 0, max = 2147483647) {
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < min || value > max)
-    throw new Error("Integer is outside the supported range.");
+export function integer(value: unknown) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value))
+    throw new Error("Expected a safe integer.");
   return value;
 }
 export const globalKeys = [
@@ -141,11 +138,7 @@ export function globalPatch(value: unknown) {
     result[k] =
       k === "enforceDefaultVCSCheckInterval"
         ? boolean(x)
-        : integer(
-            x,
-            k.startsWith("maxArtifact") ? Number.MIN_SAFE_INTEGER : -2147483648,
-            k.startsWith("maxArtifact") ? Number.MAX_SAFE_INTEGER : 2147483647,
-          );
+        : integer(x);
   }
   return result;
 }
@@ -155,12 +148,12 @@ export function cleanupPatch(value: unknown) {
   const v = apiInputRecord(value, ["enabled", "maxCleanupDuration", "daily", "cron"]),
     result: Record<string, unknown> = { ...v };
   if (v.enabled !== undefined) result.enabled = boolean(v.enabled);
-  if (v.maxCleanupDuration !== undefined) result.maxCleanupDuration = integer(v.maxCleanupDuration, -2147483648);
+  if (v.maxCleanupDuration !== undefined) result.maxCleanupDuration = integer(v.maxCleanupDuration);
   if (v.daily !== undefined) {
     const d = apiInputRecord(v.daily, ["hour", "minute"]);
     result.daily = { ...d,
-      ...(d.hour === undefined ? {} : { hour: integer(d.hour, 0, 23) }),
-      ...(d.minute === undefined ? {} : { minute: integer(d.minute, 0, 59) }),
+      ...(d.hour === undefined ? {} : { hour: integer(d.hour) }),
+      ...(d.minute === undefined ? {} : { minute: integer(d.minute) }),
     };
   }
   if (v.cron !== undefined) {
@@ -208,27 +201,17 @@ export async function authBody(value: unknown, secrets: ScopedSecrets) {
     result: Record<string, unknown> = { ...v };
   for (const k of authBooleans) if (v[k] !== undefined) result[k] = boolean(v[k]);
   if (v.buildAuthenticationMode !== undefined)
-    result.buildAuthenticationMode = allowedField(inputText(v.buildAuthenticationMode, "Mode"), [
-      "strict",
-      "lax",
-    ]);
+    result.buildAuthenticationMode = inputText(v.buildAuthenticationMode, "Mode");
   if (v.modules === undefined) return result;
   const moduleEnvelope = Array.isArray(v.modules) ? {} : apiInputRecord(v.modules, ["module"]);
   const modules = Array.isArray(v.modules) ? v.modules : array(moduleEnvelope.module);
+  if (!Array.isArray(v.modules) && moduleEnvelope.module === undefined) return result;
   const prepared = [];
   for (const item of modules) {
     const m = apiInputRecord(item, ["name", "properties", "secrets"]),
-      name = inputText(m.name, "Module name");
-    const properties = propertiesBody(
-      (Array.isArray(m.properties) ? m.properties : array(m.properties === undefined ? undefined : object(m.properties).property)).map((x) => {
-        const p = apiInputRecord(x, ["name", "value"]);
-        return {
-          ...p,
-          name: inputText(p.name, "Property name"),
-          value: inputText(p.value, "Property value"),
-        };
-      }),
-    ).property;
+      name = m.name === undefined ? undefined : inputText(m.name, "Module name");
+    const propertyEnvelope = m.properties === undefined ? {} : inputProperties(m.properties);
+    const properties = array(propertyEnvelope?.property).map(value => apiInputRecord(value, []));
     const directNames = new Set(properties.map((p) => p.name));
     for (const item of array(m.secrets)) {
       const s = inputRecord(item, ["name", "alias"]);
@@ -241,8 +224,8 @@ export async function authBody(value: unknown, secrets: ScopedSecrets) {
       });
     }
     const { secrets: aliases, ...native } = m;
-    prepared.push({ ...native, name,
-      ...(m.properties === undefined && m.secrets === undefined ? {} : { properties: { property: properties } }) });
+    prepared.push({ ...native, ...(name === undefined ? {} : { name }),
+      ...(m.properties === undefined && m.secrets === undefined ? {} : { properties: m.secrets === undefined ? propertyEnvelope : { ...propertyEnvelope, property: properties } }) });
   }
   return { ...result, modules: { ...moduleEnvelope, module: prepared } };
 }
@@ -310,18 +293,10 @@ export async function avatarInput(path: string) {
     form.set(
       "avatar",
       new Blob([data], { type: png ? "image/png" : jpeg ? "image/jpeg" : "application/octet-stream" }),
-      png ? "avatar.png" : jpeg ? "avatar.jpg" : "avatar.bin",
+      basename(path),
     );
     return form;
   } finally {
     await file.close();
   }
-}
-export function fullMute(value: unknown, id: number) {
-  const v = object(value);
-  if (v.id !== id) throw new Error("Mute preflight identity differs from selected ID.");
-  object(v.scope);
-  object(v.target);
-  object(v.resolution);
-  return v;
 }

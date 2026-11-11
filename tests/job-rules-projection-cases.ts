@@ -138,7 +138,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue)))"
     },
-    "body": "{\"type\":\"equals\",\"disabled\":false,\"properties\":{\"property\":[{\"name\":\"property-name\",\"value\":\"system.os\"},{\"name\":\"property-value\",\"value\":\"fixture\"}]}}",
+    "body": "{\"type\":\"equals\",\"properties\":{\"property\":[{\"name\":\"property-name\",\"value\":\"system.os\"},{\"name\":\"property-value\",\"value\":\"fixture\"}]}}",
     "baselineResponse": {
       "id": "Entity",
       "type": "equals",
@@ -201,7 +201,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue)))"
     },
-    "body": "{\"type\":\"equals\",\"disabled\":false,\"properties\":{\"property\":[{\"name\":\"property-name\",\"value\":\"system.os\"},{\"name\":\"property-value\",\"value\":\"fixture\"}]}}",
+    "body": "{\"type\":\"equals\",\"properties\":{\"property\":[{\"name\":\"property-name\",\"value\":\"system.os\"},{\"name\":\"property-value\",\"value\":\"fixture\"}]}}",
     "baselineResponse": {
       "id": "Entity",
       "type": "equals",
@@ -259,7 +259,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "agent-requirement(id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))))"
     },
-    "body": "{\"agent-requirement\":[{\"type\":\"equals\",\"disabled\":false,\"properties\":{\"property\":[{\"name\":\"property-name\",\"value\":\"system.os\"},{\"name\":\"property-value\",\"value\":\"fixture\"}]}}]}",
+    "body": "{\"agent-requirement\":[{\"type\":\"equals\",\"properties\":{\"property\":[{\"name\":\"property-name\",\"value\":\"system.os\"},{\"name\":\"property-value\",\"value\":\"fixture\"}]}}]}",
     "baselineResponse": {
       "agent-requirement": [
         {
@@ -423,7 +423,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))),source-buildType(id,name,projectId)"
     },
-    "body": "{\"type\":\"artifact_dependency\",\"disabled\":false,\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[{\"name\":\"pathRules\",\"value\":\"*.zip\"},{\"name\":\"revisionName\",\"value\":\"lastSuccessful\"},{\"name\":\"cleanDestinationDirectory\",\"value\":\"false\"}]}}",
+    "body": "{\"type\":\"artifact_dependency\",\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[{\"name\":\"pathRules\",\"value\":\"*.zip\"},{\"name\":\"revisionName\",\"value\":\"lastSuccessful\"}]}}",
     "baselineResponse": {
       "id": "Entity",
       "type": "equals",
@@ -486,7 +486,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))),source-buildType(id,name,projectId)"
     },
-    "body": "{\"type\":\"artifact_dependency\",\"disabled\":false,\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[{\"name\":\"pathRules\",\"value\":\"*.zip\"},{\"name\":\"revisionName\",\"value\":\"lastSuccessful\"},{\"name\":\"cleanDestinationDirectory\",\"value\":\"false\"}]}}",
+    "body": "{\"type\":\"artifact_dependency\",\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[{\"name\":\"pathRules\",\"value\":\"*.zip\"},{\"name\":\"revisionName\",\"value\":\"lastSuccessful\"}]}}",
     "baselineResponse": {
       "id": "Entity",
       "type": "equals",
@@ -544,7 +544,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "artifact-dependency(id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))),source-buildType(id,name,projectId))"
     },
-    "body": "{\"artifact-dependency\":[{\"type\":\"artifact_dependency\",\"disabled\":false,\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[{\"name\":\"pathRules\",\"value\":\"*.zip\"},{\"name\":\"revisionName\",\"value\":\"lastSuccessful\"},{\"name\":\"cleanDestinationDirectory\",\"value\":\"false\"}]}}]}",
+    "body": "{\"artifact-dependency\":[{\"type\":\"artifact_dependency\",\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[{\"name\":\"pathRules\",\"value\":\"*.zip\"},{\"name\":\"revisionName\",\"value\":\"lastSuccessful\"}]}}]}",
     "baselineResponse": {
       "artifact-dependencie": [
         {
@@ -689,7 +689,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))),source-buildType(id,name,projectId)"
     },
-    "body": "{\"type\":\"snapshot_dependency\",\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[]}}",
+    "body": "{\"type\":\"snapshot_dependency\",\"source-buildType\":{\"id\":\"Upstream\"}}",
     "baselineResponse": {
       "id": "Entity",
       "type": "equals",
@@ -748,7 +748,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "id,type,disabled,inherited,properties(property(name,value,inherited,type(rawValue))),source-buildType(id,name,projectId)"
     },
-    "body": "{\"type\":\"snapshot_dependency\",\"source-buildType\":{\"id\":\"Upstream\"},\"properties\":{\"property\":[]}}",
+    "body": "{\"type\":\"snapshot_dependency\",\"source-buildType\":{\"id\":\"Upstream\"}}",
     "baselineResponse": {
       "id": "Entity",
       "type": "equals",

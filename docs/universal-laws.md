@@ -17,7 +17,8 @@ The owner authorizes local instruction copies; shared runtime implementations re
    the same recursive command tree. Handlers return data; they do not render formats.
 3. **Profile credentials stay out of config and output.** Use the injected secret store for profile
    credentials. Service writes forward caller input, including credential-like names and values;
-   input-secret aliases are optional. Reads hide server-protected values and mask the profile credential.
+   input-secret aliases are optional. TeamCity validates request values and applies omitted-field defaults;
+   compact forms also accept native DTOs without discarding caller fields. Reads hide server-protected values and mask the profile credential.
    Explicit browser auth state may persist in profile AppData per DESIGN.md; never log,
    snapshot or commit credentials. Explicit user-requested videos are sensitive artifacts under
    protected profile AppData per DESIGN.md, never fixtures. There is no silent storage fallback.

@@ -88,7 +88,7 @@ export const authoringCases: AuthoringCase[] = [
     argv: ["projects", "create", "Example", "--name", "Example"],
     method: "POST",
     path: "/projects",
-    body: { id: "Example", name: "Example", parentProject: { id: "_Root" } },
+    body: { id: "Example", name: "Example" },
     query: { fields: "id,name,parentProjectId,archived,description,webUrl" },
     response: project,
     expected: project,

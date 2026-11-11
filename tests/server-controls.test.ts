@@ -2,13 +2,6 @@ import { nativeControlsAcceptance } from "./projection-support.js";
 
 const query = {
   fileName: "nightly",
-  addTimestamp: "true",
-  includeConfigs: "true",
-  includeDatabase: "true",
-  includeBuildLogs: "false",
-  includePersonalChanges: "false",
-  includeRunningBuilds: "false",
-  includeSupplimentaryData: "false",
 };
 const switches = [
   "add-timestamp", "include-configs", "include-database", "include-build-logs",
@@ -20,7 +13,7 @@ nativeControlsAcceptance("US-034", [
     permission: "ReadOnly",
     archive: action === "archive",
     query: {
-      locator: "count:100,recursive:false,hidden:false,browseArchives:false",
+      locator: "count:100",
       ...(action === "archive" ? {} : {fields: "count,file(name,size,modificationTime)"}),
     },
     controls: {

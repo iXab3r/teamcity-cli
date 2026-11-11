@@ -45,7 +45,7 @@ include `errorCount` for `batch.partial`, `errors(item)` for build set-status, a
 partial-failure claim; native `null` passes through.
 
 Fixed projections remain in `jobs run`, `jobs copy`, `builds wait`, `builds diagnose`, latest-build
-resolution, password-helper metadata preservation and bulk-unmute preflight reads, and versioned-settings token/secure-value
+resolution, password-helper metadata preservation, and versioned-settings token/secure-value
 workflows. Options affect only their direct request leaves. `jobs parameters set-password`, parameter
 value/type/raw-type leaves, scalar-setting leaves, detach/clear/delete and checkout-rule sub-resources
 retain their projection support; consult the explicit command list.
@@ -62,9 +62,14 @@ safe list item, and missing users return `http.notFound`. License keys accept di
 Default parameter, VCS and feature property projections return the values TeamCity returns; only
 password-typed, `secure:` and server-withheld values are hidden.
 REST plugin info retains XML request/parsing by default and requests JSON with explicit fields.
-Download bounds, output paths and no-overwrite publication remain unchanged. Template
-`--optimize-settings`/`--inline-settings`, VCS checkout rules, write bodies, selectors, scope filters,
-node role/state filters and responsibility setters retain their existing contracts.
+Download bounds, output paths and no-overwrite publication remain unchanged. Template optimization/inline flags and other service defaults are sent only when supplied.
+Request DTOs preserve caller fields, including native property envelopes; compact forms are optional.
+TeamCity validates service enums, ranges, mandatory payload fields and combinations. Empty collections
+are forwarded. Refusal-only preflights are absent; password metadata reads preserve type when available
+and fall back to caller input on failure. Primitive parsing, HTTP-path operands, unambiguous selectors,
+permissions, confirmations, dot-segment rejection and local-machine safety remain enforced.
+`--latest` retains finished, non-personal, all-branch selection; artifact lists retain archive recognition;
+page limits/lookahead and avatar size 64 retain their paging and HTTP-target semantics.
 
 The [command reference](reference.md#native-projections-and-controls) lists projection families
 and native controls from the shipped declaration tree.

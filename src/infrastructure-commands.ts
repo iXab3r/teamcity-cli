@@ -1,3 +1,4 @@
+import { nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
@@ -65,9 +66,7 @@ export function createInfrastructureCommands(
       [
         ...pageOptions, fieldsOption,
         option("--project <id>", "Select a project scope"),
-        ...(kind === "profiles"
-          ? []
-          : [option("--cloud-profile <id>", "Select a remote cloud profile")]),
+        option("--cloud-profile <id>", "Select a remote cloud profile"),
       ],
     );
   const cloud = command("cloud", "Manage remote cloud capacity", [
@@ -125,23 +124,25 @@ export function createInfrastructureCommands(
   const roots = [
     leaf(
       "create <id>",
-      "Create an anonymous Git root",
+      "Create a Git root",
       Permission.Update,
       (c, { args, options }) =>
         c.createAnonymousGitRoot(
           args.id,
-          text(options, "name"),
-          text(options, "project"),
-          text(options, "url"),
-          text(options, "branch"),
+          options.name as string | undefined,
+          options.project as string | undefined,
+          options.url as string | undefined,
+          options.branch as string | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
-        option("--name <text>", "Set the name", true),
-        option("--project <id>", "Select the owner project", true),
-        option("--url <url>", "Set the Git repository URL", true),
-        option("--branch <ref>", "Set the Git branch ref", true),
+        option("--name <text>", "Set the name"),
+        option("--project <id>", "Select the owner project"),
+        option("--url <url>", "Set the Git repository URL"),
+        option("--branch <ref>", "Set the Git branch ref"),
         fieldsOption,
+        jsonOption("--item <json>", "Supply a native VCS root body"),
       ],
     ),
     leaf(
@@ -372,7 +373,7 @@ export function createInfrastructureCommands(
         "replace <id>",
         "Replace versioned settings configuration",
         Permission.Update,
-        (c, { args, options }) => c.replaceVersionedConfig(args.id, options.item, fieldsFromOptions(options)),
+        (c, { args, options }) => c.replaceVersionedConfig(args.id, options.item ?? {}, fieldsFromOptions(options)),
         [jsonOption("--item <json>", "Supply versioned settings configuration"), fieldsOption],
       ),
       command("fields", "Manage versioned settings fields", [
@@ -464,7 +465,7 @@ export function createInfrastructureCommands(
         "Credentials",
         (c, { args, options }) =>
           c.deleteVersionedTokens(args.id, options.name as string[]),
-        [repeatOption("--name <name>", "Select remote mappings; repeat for more", true)],
+        [repeatOption("--name <name>", "Select remote mappings; repeat for more")],
       ),
     ]),
   ]);

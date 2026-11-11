@@ -83,9 +83,10 @@ for (const scenario of buildProjectionCases) {
         method: scenario.method, url: origin + scenario.path,
         query: { ...(scenario.locator === undefined ? {} : { locator: scenario.locator }), fields: scenario.fields(projection) },
         headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+        body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
       });
-      assert.equal(await request.text(), scenario.body);
+      if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
       return HttpResponse.json(scenario.response(native));
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -112,9 +113,10 @@ for (const scenario of buildProjectionCases) {
         method: scenario.method, url: origin + scenario.path,
         query: scenario.query,
         headers: { accept: scenario.argv.includes("rest-plugin") ? "application/xml" : "application/json", authorization: `Bearer ${token}` },
-        body: { text: scenario.body },
+        body: /^[{[]/.test(scenario.body) ? { json: JSON.parse(scenario.body) } : { text: scenario.body },
       });
-      assert.equal(await request.text(), scenario.body);
+      if (/^[{[]/.test(scenario.body)) assert.deepEqual(await request.json(), JSON.parse(scenario.body));
+      else assert.equal(await request.text(), scenario.body);
       return scenario.argv.includes("rest-plugin") ? HttpResponse.text(`<plugin name="rest"/>`, {headers: {"content-type": "application/xml"}}) : HttpResponse.json(scenario.baselineResponse);
     });
     server.use(http.all("*", ({ request }) => requests.handle(request)));
@@ -208,7 +210,7 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
       if (kind === "lost") {
         await failure(rt, cli, c.argv, surface, "request.unknownOutcome");
         await failure(rt, cli, [...c.argv, "--fields", projection], surface, "request.unknownOutcome");
-      } else if (c.preflight || c.argv.includes("start")) {
+      } else if (c.argv.includes("delete-many") || c.argv.includes("start")) {
         await success(rt, cli, c.argv, surface, c.baselineResult);
         await success(rt, cli, [...c.argv, "--fields", projection], surface, c.baselineResult);
       } else {

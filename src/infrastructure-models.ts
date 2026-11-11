@@ -1,6 +1,6 @@
 import { locatorValue, idPath, requiredText } from "./locator.js";
 import { plainProperty, propertiesBody, safeProperty, type RawProperty, type PlainProperty } from "./authoring-models.js";
-import { allowedField, booleanText } from "./advanced-authoring-models.js";
+import { booleanText } from "./advanced-authoring-models.js";
 import { apiInputRecord, array, inputText, object, safeScalars } from "./triage-models.js";
 
 export type CloudKind = "profiles" | "images" | "instances";
@@ -85,23 +85,22 @@ export const versionedPath = (id: string) =>
   "/app/rest/projects/" + idPath(id, "Project ID") + "/versionedSettings";
 export function anonymousGitRoot(
   id: string,
-  name: string,
-  project: string,
-  url: string,
-  branch: string,
+  name: string | undefined,
+  project: string | undefined,
+  url: string | undefined,
+  branch: string | undefined,
 ) {
   return {
     id: inputText(id, "Root ID"),
-    name: inputText(name, "Name"),
+    ...(name === undefined ? {} : { name: inputText(name, "Name") }),
     vcsName: "jetbrains.git",
-    project: { id: inputText(project, "Project ID") },
-    properties: {
+    ...(project === undefined ? {} : { project: { id: inputText(project, "Project ID") } }),
+    ...(branch === undefined && url === undefined ? {} : { properties: {
       property: [
-        { name: "authMethod", value: "ANONYMOUS" },
-        plainProperty("branch", requiredText(branch, "Branch")),
-        plainProperty("url", url),
+        ...(branch === undefined ? [] : [plainProperty("branch", requiredText(branch, "Branch"))]),
+        ...(url === undefined ? [] : [plainProperty("url", url)]),
       ],
-    },
+    } }),
   };
 }
 export function namedValues(values: readonly PlainProperty[], requireValue = false) {
@@ -120,10 +119,6 @@ function versionedFormat(value: unknown): string {
 export function versionedField(field: string, value?: string) {
   plainProperty(field, "");
   if (value === undefined) return field;
-  if (field === "synchronizationMode")
-    return allowedField(value, ["useParentProjectSettings", "disabled", "enabled"]);
-  if (field === "buildSettingsMode")
-    return allowedField(value, ["alwaysUseCurrent", "useCurrentByDefault", "useFromVCS"]);
   if (field === "format") return versionedFormat(value);
   if (field === "vcsRootId") return inputText(value, "Root ID");
   const result = inputText(value, "Configuration value");
@@ -142,10 +137,7 @@ export function versionedConfigBody(value: unknown) {
       continue;
     }
     if (key === "importDecision") {
-      result[key] = allowedField(inputText(field, "Import decision"), [
-        "overrideInVCS",
-        "importFromVCS",
-      ]);
+      result[key] = inputText(field, "Import decision");
       continue;
     }
     if (key === "settingsPath") {

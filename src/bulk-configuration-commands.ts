@@ -137,7 +137,7 @@ export function createBulkConfigurationCommands(
         c.replaceTemplates(
           args["job-id"],
           strings(options, "template"),
-          options.optimizeSettings === true,
+          options.optimizeSettings as boolean | undefined,
           fieldsFromOptions(options),
         ),
       [
@@ -151,7 +151,7 @@ export function createBulkConfigurationCommands(
       "Detach all templates",
       Permission.Update,
       (c, { args, options }) =>
-        c.clearTemplates(args["job-id"], options.inlineSettings === true),
+        c.clearTemplates(args["job-id"], options.inlineSettings as boolean | undefined),
       [confirm, option("--inline-settings", "Copy inherited settings locally before detaching")],
     ),
   ];
@@ -218,10 +218,10 @@ export function createBulkConfigurationCommands(
           c.createProjectJob(
             args["project-id"],
             args["job-id"],
-            text(options, "name"),
+            options.name as string | undefined,
             fieldsFromOptions(options),
           ),
-        [fieldsOption, option("--name <name>", "Set the job name", true)],
+        [fieldsOption, option("--name <name>", "Set the job name")],
       ),
     ]),
     command(
@@ -277,20 +277,20 @@ export function createBulkConfigurationCommands(
       "Delete one page of queued builds",
       Permission.Update,
       (c, { options }) =>
-        c.deleteQueuePage(text(options, "job"), {
+        c.deleteQueuePage(options.job as string | undefined, {
           limit: Number(options.limit),
           start: Number(options.start),
         },
           fieldsFromOptions(options),
         ),
-      [option("--job <job-id>", "Select one job", true), ...pageOptions, confirm, fieldsOption],
+      [option("--job <job-id>", "Select one job"), ...pageOptions, confirm, fieldsOption],
     ),
     leaf(
       "reorder",
       "Reorder selected queued builds",
       Permission.Update,
       (c, { options }) => c.reorderQueue(strings(options, "build").map(Number), fieldsFromOptions(options)),
-      [repeatOption("--build <id>", "Repeat build IDs in order", true), fieldsOption],
+      [repeatOption("--build <id>", "Repeat build IDs in order"), fieldsOption],
     ),
     leaf(
       "delete <build-id>",
@@ -304,8 +304,8 @@ export function createBulkConfigurationCommands(
         "Set queue pause status",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePaused(booleanText(args.status) === "true", text(options, "reason")),
-        [option("--reason <text>", "Set the pause reason", true)],
+          c.setQueuePaused(booleanText(args.status) === "true", options.reason as string | undefined),
+        [option("--reason <text>", "Set the pause reason")],
       ),
     ]),
     command("approval", "Inspect and approve queued builds", [

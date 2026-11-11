@@ -248,7 +248,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/projected-acknowledgement.test.ts",
-    "tests/queue-action-projection.test.ts"
+    "tests/queue-action-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -715,7 +716,7 @@
   "query": [
    {
     "name": "inlineSettings",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -764,7 +765,7 @@
   "query": [
    {
     "name": "inlineSettings",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -775,7 +776,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/configuration.test.ts"
+    "tests/configuration.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -1349,7 +1351,7 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -1361,7 +1363,7 @@
    "tests": [
     "tests/assignments-projection.test.ts",
     "tests/system.test.ts",
-    "tests/validation-contract.test.ts"
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -2940,7 +2942,8 @@
    "tests": [
     "tests/agents-projection.test.ts",
     "tests/cli.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:89"
@@ -3404,8 +3407,8 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/admin.test.ts:314",
-    "tests/admin.test.ts:374",
+    "tests/admin.test.ts:291",
+    "tests/admin.test.ts:351",
     "tests/response-body.test.ts:107",
     "tests/response-body.test.ts:42",
     "tests/response-body.test.ts:48",
@@ -3567,7 +3570,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -3986,6 +3990,7 @@
     "permission": "ReadOnly",
     "options": [
      "--project <id>",
+     "--template-flag <value>",
      "--limit <count>",
      "--start <offset>",
      "--fields <projection>"
@@ -4013,7 +4018,8 @@
    "tests": [
     "tests/cli.test.ts",
     "tests/jobs-projection.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-foundation.test.ts:172"
@@ -5205,6 +5211,7 @@
     "tests/job-parameters-projection.test.ts",
     "tests/password-parameter.test.ts",
     "tests/read-values-review.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -6188,7 +6195,7 @@
    },
    {
     "name": "resolveParameters",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -6200,7 +6207,8 @@
    "tests": [
     "tests/files.test.ts",
     "tests/job-files-controls.test.ts",
-    "tests/job-files-projection.test.ts"
+    "tests/job-files-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6263,7 +6271,7 @@
    },
    {
     "name": "resolveParameters",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -6316,7 +6324,7 @@
   "query": [
    {
     "name": "resolveParameters",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -6375,7 +6383,7 @@
    },
    {
     "name": "resolveParameters",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -6387,7 +6395,8 @@
    "tests": [
     "tests/files.test.ts",
     "tests/job-files-controls.test.ts",
-    "tests/job-files-projection.test.ts"
+    "tests/job-files-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6449,7 +6458,7 @@
    },
    {
     "name": "resolveParameters",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    }
   ],
@@ -6589,6 +6598,7 @@
     "permission": "ReadOnly",
     "options": [
      "--job <id>",
+     "--default-filter <value>",
      "--project <id>",
      "--branch <name>",
      "--state <state>",
@@ -6635,6 +6645,7 @@
     "tests/cli.test.ts",
     "tests/paging.test.ts",
     "tests/presentation.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
@@ -6836,6 +6847,7 @@
     "command": "jobs run <job-id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--move-to-top <boolean>",
      "--branch <name>",
      "--comment <text>",
@@ -7572,7 +7584,7 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/triage.test.ts:271"
+    "tests/triage.test.ts:257"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -7773,7 +7785,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/copy-job.test.ts",
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -9108,7 +9121,8 @@
      "--limit <count>",
      "--start <offset>",
      "--fields <projection>",
-     "--project <id>"
+     "--project <id>",
+     "--cloud-profile <id>"
     ],
     "clientMethod": null
    }
@@ -9132,7 +9146,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/cloud-projection.test.ts"
+    "tests/cloud-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -9890,16 +9905,6 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
-    "command": "mutes delete-many",
-    "permission": "Update",
-    "options": [
-     "--id <id>",
-     "--confirm",
-     "--fields <projection>"
-    ],
-    "clientMethod": "deleteMutes"
-   },
-   {
     "command": "mutes show <id>",
     "permission": "ReadOnly",
     "options": [
@@ -9917,17 +9922,13 @@
   ],
   "unsupportedQueryParameters": [],
   "undocumentedSentQueryParameters": [],
-  "gateDiffersFromMethod": [
-   "mutes delete-many [Update]"
-  ],
+  "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/assignments-projection.test.ts",
     "tests/authoring.test.ts",
-    "tests/system.test.ts",
-    "tests/triage.test.ts",
-    "tests/validation-contract.test.ts"
+    "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10197,6 +10198,7 @@
     "options": [
      "--parent <id>",
      "--include-archived",
+     "--archived <value>",
      "--fields <projection>",
      "--limit <count>",
      "--start <offset>"
@@ -10225,7 +10227,8 @@
     "tests/cli.test.ts",
     "tests/option-parsers.test.ts",
     "tests/presentation.test.ts",
-    "tests/projects-projection.test.ts"
+    "tests/projects-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-foundation.test.ts:116"
@@ -10840,7 +10843,7 @@
     "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/authoring.test.ts:336"
+    "tests/authoring.test.ts:326"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -11793,7 +11796,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/cli.test.ts",
-    "tests/server-projection.test.ts"
+    "tests/server-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-foundation.test.ts:281",
@@ -12419,7 +12423,7 @@
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/system.test.ts:320"
+    "tests/system.test.ts:308"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -13789,7 +13793,7 @@
     "tests/authoring.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/admin.test.ts:375"
+    "tests/admin.test.ts:352"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -14994,7 +14998,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/operator.test.ts"
+    "tests/operator.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15097,7 +15102,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15178,6 +15184,7 @@
     "command": "jobs run <job-id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--move-to-top <boolean>",
      "--branch <name>",
      "--comment <text>",
@@ -15209,7 +15216,8 @@
     "tests/build-flow.test.ts",
     "tests/cli.test.ts",
     "tests/errors.test.ts",
-    "tests/queue-action-projection.test.ts"
+    "tests/queue-action-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:134",
@@ -15246,7 +15254,8 @@
     "command": "queue cancel <id>",
     "permission": "Update",
     "options": [
-     "--comment <text>"
+     "--comment <text>",
+     "--requeue <boolean>"
     ],
     "clientMethod": "cancelQueuedBuild"
    }
@@ -15322,7 +15331,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/queue-action-projection.test.ts"
+    "tests/queue-action-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15405,7 +15415,8 @@
      "--name <name>",
      "--project <id>",
      "--description <text>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "createJob"
    }
@@ -15424,7 +15435,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/jobs-projection.test.ts"
+    "tests/jobs-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15460,6 +15472,7 @@
     "command": "jobs agent-requirements create <job-id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--disabled",
      "--type <type>",
      "--parameter <name>",
@@ -15484,7 +15497,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15520,6 +15534,7 @@
     "command": "jobs artifact-dependencies create <job-id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--disabled",
      "--source <job-id>",
      "--rules <rules>",
@@ -15548,6 +15563,7 @@
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
     "tests/job-rules-projection.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -15587,6 +15603,7 @@
      "--type <type>",
      "--enabled",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "createExtension"
@@ -15607,9 +15624,12 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
-   "nonLeafTransportTests": [],
+   "nonLeafTransportTests": [
+    "tests/thin-requests.test.ts:115"
+   ],
    "liveService": "not-run",
    "independentReview": "not-performed"
   }
@@ -15771,7 +15791,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15809,6 +15830,7 @@
     "options": [
      "--source <upstream-job-id>",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "createSnapshotDependency"
@@ -15832,7 +15854,9 @@
     "tests/job-rules-projection.test.ts",
     "tests/validation-contract.test.ts"
    ],
-   "nonLeafTransportTests": [],
+   "nonLeafTransportTests": [
+    "tests/thin-requests.test.ts:116"
+   ],
    "liveService": "not-run",
    "independentReview": "not-performed"
   }
@@ -15869,6 +15893,7 @@
      "--name <name>",
      "--type <runner-type>",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "createStep"
@@ -15888,9 +15913,12 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
-   "nonLeafTransportTests": [],
+   "nonLeafTransportTests": [
+    "tests/thin-requests.test.ts:114"
+   ],
    "liveService": "not-run",
    "independentReview": "not-performed"
   }
@@ -15935,7 +15963,7 @@
   "query": [
    {
     "name": "optimizeSettings",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    },
    {
@@ -15952,7 +15980,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-attachments-projection.test.ts"
+    "tests/job-attachments-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15991,6 +16020,7 @@
      "--type <type>",
      "--enabled",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "createExtension"
@@ -16107,6 +16137,7 @@
     "options": [
      "--build <id>",
      "--comment <text>",
+     "--requeue <boolean>",
      "--fields <projection>"
     ],
     "clientMethod": "cancelBuildBatch"
@@ -16220,6 +16251,7 @@
     "permission": "Update",
     "options": [
      "--comment <text>",
+     "--requeue <boolean>",
      "--fields <projection>"
     ],
     "clientMethod": "cancelBuild"
@@ -16241,7 +16273,8 @@
     "tests/build-action-projection.test.ts",
     "tests/cli.test.ts",
     "tests/errors.test.ts",
-    "tests/presentation.test.ts"
+    "tests/presentation.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:180",
@@ -16412,6 +16445,7 @@
     "tests/build-action-projection.test.ts",
     "tests/projected-partial.test.ts",
     "tests/projected-redaction.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -16470,7 +16504,8 @@
     "tests/authoring.test.ts",
     "tests/operator.test.ts",
     "tests/projected-acknowledgement.test.ts",
-    "tests/tag-projection.test.ts"
+    "tests/tag-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16725,7 +16760,8 @@
     "permission": "Update",
     "options": [
      "--name <text>",
-     "--project <id>"
+     "--project <id>",
+     "--item <json>"
     ],
     "clientMethod": "createDashboard"
    }
@@ -16771,6 +16807,7 @@
     "command": "deployments instances upsert <dashboard> <id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--state <state>",
      "--date <timestamp>",
      "--build <id>",
@@ -16786,7 +16823,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16820,6 +16858,7 @@
     "command": "deployments instances append-state <dashboard> <id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--state <state>",
      "--date <timestamp>",
      "--build <id>"
@@ -16834,7 +16873,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16890,7 +16930,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/assignments-projection.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16946,7 +16987,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/assignments-projection.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17003,6 +17045,7 @@
    "tests": [
     "tests/assignments-projection.test.ts",
     "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/triage.test.ts",
     "tests/validation-contract.test.ts"
    ],
@@ -17060,7 +17103,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/assignments-projection.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17096,7 +17140,8 @@
     "options": [
      "--name <name>",
      "--parent <id>",
-     "--description <text>"
+     "--description <text>",
+     "--item <json>"
     ],
     "clientMethod": "createProject"
    }
@@ -17110,7 +17155,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17193,7 +17239,8 @@
     "permission": "Credentials",
     "options": [
      "--name <name>",
-     "--project <id>"
+     "--project <id>",
+     "--item <json>"
     ],
     "clientMethod": "copyJob"
    },
@@ -17222,7 +17269,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/copy-job.test.ts",
-    "tests/project-writes-projection.test.ts"
+    "tests/project-writes-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17316,6 +17364,7 @@
     "options": [
      "--type <type>",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "createProjectFeature"
@@ -17420,7 +17469,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--name <name>"
+     "--name <name>",
+     "--item <json>"
     ],
     "clientMethod": "createProjectTemplate"
    }
@@ -17649,6 +17699,7 @@
     "options": [
      "--fields <projection>",
      "--name <text>",
+     "--item <json>",
      "--permission <id>",
      "--include <id>"
     ],
@@ -17669,7 +17720,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/roles-projection.test.ts",
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17770,6 +17822,7 @@
    "tests": [
     "tests/server-controls.test.ts",
     "tests/system.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18150,6 +18203,7 @@
     "permission": "Credentials",
     "options": [
      "--fields <projection>",
+     "--item <json>",
      "--alias <name>",
      "--expires <timestamp>",
      "--no-expiration",
@@ -18174,6 +18228,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/users-projection.test.ts",
     "tests/validation-contract.test.ts"
    ],
@@ -18224,7 +18279,7 @@
    },
    {
     "name": "requestor",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    },
    {
@@ -18339,7 +18394,8 @@
      "--project <id>",
      "--url <url>",
      "--branch <ref>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "createAnonymousGitRoot"
    }
@@ -18565,6 +18621,7 @@
     "tests/agents-projection.test.ts",
     "tests/authoring.test.ts",
     "tests/operator.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18764,7 +18821,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/system.test.ts"
+    "tests/system.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18820,7 +18878,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/queue-action-projection.test.ts"
+    "tests/queue-action-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18921,7 +18980,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -19014,6 +19074,7 @@
     "command": "jobs agent-requirements replace <job-id> <requirement-id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--disabled",
      "--type <type>",
      "--parameter <name>",
@@ -19173,6 +19234,7 @@
     "command": "jobs artifact-dependencies replace <job-id> <dependency-id>",
     "permission": "Update",
     "options": [
+     "--item <json>",
      "--disabled",
      "--source <job-id>",
      "--rules <rules>",
@@ -19339,6 +19401,7 @@
      "--type <type>",
      "--enabled",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "replaceExtension"
@@ -19782,6 +19845,7 @@
     "tests/authoring.test.ts",
     "tests/job-parameters-projection.test.ts",
     "tests/password-parameter.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -20007,6 +20071,7 @@
     "options": [
      "--source <upstream-job-id>",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "replaceSnapshotDependency"
@@ -20086,6 +20151,7 @@
     "tests/bulk-configuration.test.ts",
     "tests/job-steps-projection.test.ts",
     "tests/option-parsers.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -20125,6 +20191,7 @@
      "--name <name>",
      "--type <runner-type>",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "replaceStep"
@@ -20332,7 +20399,7 @@
   "query": [
    {
     "name": "optimizeSettings",
-    "wire": "varies",
+    "wire": "fixed",
     "callerControl": "same-named option"
    },
    {
@@ -20445,6 +20512,7 @@
      "--type <type>",
      "--enabled",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "replaceExtension"
@@ -21103,7 +21171,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/build-action-projection.test.ts"
+    "tests/build-action-projection.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21266,6 +21335,7 @@
    "tests": [
     "tests/assignments-projection.test.ts",
     "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/triage.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21885,6 +21955,7 @@
     "options": [
      "--type <type>",
      "--property <key=value>",
+     "--item <json>",
      "--fields <projection>"
     ],
     "clientMethod": "replaceProjectFeature"
@@ -21956,6 +22027,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts",
     "tests/versioned-settings-projection.test.ts"
@@ -22235,6 +22307,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/system.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts"
    ],
@@ -22283,6 +22356,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/system.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22327,6 +22401,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/system.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts",
     "tests/validation-contract.test.ts"
    ],
@@ -22554,6 +22629,7 @@
     "permission": "Admin",
     "options": [
      "--fields <projection>",
+     "--item <json>",
      "--username <text>",
      "--name <text>"
     ],
@@ -22575,6 +22651,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/users-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22721,7 +22798,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/admin.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",

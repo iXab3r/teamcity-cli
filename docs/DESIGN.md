@@ -364,18 +364,18 @@ Every other failure has the same machine form; see
 
 #### API-faithful validation
 
-The service's authoritative contract governs accepted values. Do not close a string to documentation
-examples, invent ID grammars, trim service text, impose undocumented numeric/length bounds, reject
-additional native JSON fields, or insert service defaults without a contract basis. A missing Swagger
-enum alone does not overrule an explicit enum elsewhere in the primary reference. State reference
-versions and gaps; when a service-value rule is uncertain, preserve the value and let the API validate it.
+teamcity-cli is a thin wrapper over REST. Besides permission gates, it forwards caller input;
+TeamCity validates service enums, numeric ranges, mandatory payload fields and combinations, and
+applies defaults. Omitted request options are not sent. Native DTOs are accepted alongside compact
+forms without dropping or overwriting caller fields. Refusal-only preflight reads are absent;
+metadata reads needed to construct a body fall back to caller input if unavailable.
 
 Validate JSON value types and representable numbers, encode identifiers and locator dimensions without
 changing their values, and retain explicit permissions, profile isolation, read-side secret protection
 and safe errors. Service writes forward caller input, including bearer text; aliases are optional.
 Give each separate transport/security check its concrete reason: for example, dot segments
 would change URL routing, and a download destination
-must stay under the active profile without overwriting another file. Local controls such as polling
+must preserve existing local files. Local controls such as polling
 duration and caller byte budgets are CLI behavior, not claims about service limits. Compact CLI forms
 may translate flags or selectors into service DTOs; document that translation and preserve additional
 native fields rather than silently discarding them. Output projections may omit private fields without
@@ -412,6 +412,9 @@ remains a storage API: callers using it directly own their field normalization/v
 rejects credentials, query/fragment, backslashes, embedded whitespace/controls and invalid path
 encoding, and returns a readonly `{ href, pathname }` configuration record with one trailing slash.
 Its `href` preserves an explicitly written port; it is not a WHATWG `URL` instance.
+teamcity-cli separates a supplied query before using this unchanged Core parser, preserves it in
+profile configuration, and restores it after constructing each REST path. Fragments and credentials
+remain invalid profile URL components.
 Integrations own supported deployment contexts and trailing-slash policy; never guess roots
 from resource-like path segment names.
 

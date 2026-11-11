@@ -1,3 +1,4 @@
+import { nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
@@ -23,8 +24,9 @@ export function createSystemCommands(
   const item = jsonOption("--item <json>", "Supply a configuration object");
   const project = option("--project <id>", "Select a project scope");
   const stateOptions = [
-    option("--state <state>", "Set IN_PROGRESS, SUCCESSFUL, FAILED, CANCELLED or UNKNOWN", true),
-    option("--date <timestamp>", "Set a YYYYMMDDTHHmmss+ZZZZ timestamp", true),
+    item,
+    option("--state <state>", "Set the deployment state"),
+    option("--date <timestamp>", "Set a YYYYMMDDTHHmmss+ZZZZ timestamp"),
     option("--build <id>", "Select a related build"),
   ];
   const healthOptions = [project, option("--global", "Select server-wide health scope")];
@@ -52,8 +54,8 @@ export function createSystemCommands(
         "Create a dashboard",
         U,
         (c, { args, options }) =>
-          c.createDashboard(args.id, text(options, "name"), text(options, "project")),
-        [option("--name <text>", "Set the name", true), { ...project, required: true }],
+          c.createDashboard(args.id, options.name as string | undefined, options.project as string | undefined, nativeInput(options)),
+        [option("--name <text>", "Set the name"), project, item],
       ),
       leaf(
         "show <id>",
@@ -89,9 +91,10 @@ export function createSystemCommands(
             c.upsertDeploymentInstance(
               args.dashboard,
               args.id,
-              text(options, "state"),
-              text(options, "date"),
+              options.state as string | undefined,
+              options.date as string | undefined,
               optional(options, "build"),
+              nativeInput(options),
             ),
           [...stateOptions, confirm],
         ),
@@ -112,9 +115,10 @@ export function createSystemCommands(
             c.appendDeploymentState(
               args.dashboard,
               args.id,
-              text(options, "state"),
-              text(options, "date"),
+              options.state as string | undefined,
+              options.date as string | undefined,
               optional(options, "build"),
+              nativeInput(options),
             ),
           stateOptions,
         ),
@@ -143,14 +147,16 @@ export function createSystemCommands(
       "Admin",
       (c, { options }) =>
         c.createRoleDefinition(
-          text(options, "name"),
-          (options.permission ?? []) as string[],
-          (options.include ?? []) as string[],
+          options.name as string | undefined,
+          options.permission as string[] | undefined,
+          options.include as string[] | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
         fieldsOption,
-        option("--name <text>", "Set the role name", true),
+        option("--name <text>", "Set the role name"),
+        item,
         repeatOption("--permission <id>", "Repeat permission IDs"),
         repeatOption("--include <id>", "Repeat included role IDs"),
       ],
@@ -210,7 +216,7 @@ export function createSystemCommands(
         "replace",
         "Replace authentication modules",
         async ({ options }, context) =>
-          (await clientFor(context)).replaceAuthenticationSettings(options.item, context.secrets),
+          (await clientFor(context)).replaceAuthenticationSettings(options.item ?? {}, context.secrets),
         { permission: "Admin", options: [item, confirm] },
       ),
     ]),
@@ -253,7 +259,7 @@ export function createSystemCommands(
         "configure",
         "Update cleanup settings",
         "Admin",
-        (c, { options }) => c.configureCleanup(options.item),
+        (c, { options }) => c.configureCleanup(options.item ?? {}),
         [item],
       ),
     ]),
@@ -263,7 +269,7 @@ export function createSystemCommands(
         "set",
         "Update selected global settings",
         "Admin",
-        (c, { options }) => c.setGlobalSettings(options.item),
+        (c, { options }) => c.setGlobalSettings(options.item ?? {}),
         [item],
       ),
     ]),
@@ -407,14 +413,14 @@ export function createSystemCommands(
         async ({ args, options }, context) =>
           (await clientFor(context)).createPoolTokens(
             args.id,
-            Number(options.ttl),
+            options.ttl as number | undefined,
             options.storeAs as string[],
             context.secrets,
           ),
         {
           permission: "Credentials",
           options: [
-            { ...option("--ttl <seconds>", "Set token lifetime in seconds", true), parse: integerValue },
+            { ...option("--ttl <seconds>", "Set token lifetime in seconds"), parse: integerValue },
             repeatOption(
               "--store-as <alias>",
               "Choose new token aliases; repeat for more",
@@ -430,8 +436,8 @@ export function createSystemCommands(
       "delete-many",
       "Delete selected mutes",
       U,
-      (c, { options }) => c.deleteMutes(options.id as string[], fieldsFromOptions(options)),
-      [repeatOption("--id <id>", "Select mute IDs; repeat for more", true), confirm, fieldsOption],
+      (c, { options }) => c.deleteMutes((options.id ?? []) as string[], fieldsFromOptions(options)),
+      [repeatOption("--id <id>", "Select mute IDs; repeat for more"), confirm, fieldsOption],
     ),
   ];
   const roots = [

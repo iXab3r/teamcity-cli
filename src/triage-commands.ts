@@ -9,7 +9,7 @@ import {
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { clientLeaf, option, text, repeatOption, jsonOption } from "./command-support.js";
+import { clientLeaf, option, text, repeatOption, jsonOption, booleanOption } from "./command-support.js";
 import { booleanText } from "./advanced-authoring-models.js";
 
 /** A batch that partly failed keeps every item's result and exits non-zero. */
@@ -77,8 +77,8 @@ export function createTriageCommands(
     ...fieldsOption, description: `Include ${field} for partial-failure detection`,
   });
   const batchIds = repeatOption("--build <id>", "Repeat build IDs", true);
-  const comment = option("--comment <text>", "Attach a comment", true);
-  const message = option("--text <text>", "Supply build log text", true);
+  const comment = option("--comment <text>", "Attach a comment");
+  const message = option("--text <text>", "Supply build log text");
   const item = jsonOption("--item <json>", "Supply an input object");
   const items = jsonOption("--item <json>", "Supply an item; repeat for more", true);
   const target = jsonOption("--target <json>", "Select a job, test or problem target");
@@ -103,8 +103,8 @@ export function createTriageCommands(
         "Cancel selected builds",
         Permission.Update,
         (c, { options }) =>
-          partial(c.cancelBuildBatch(ids(options), text(options, "comment"), fieldsFromOptions(options))),
-        [batchIds, comment, partialFields("errorCount")],
+          partial(c.cancelBuildBatch(ids(options), options.comment as string | undefined, fieldsFromOptions(options), options.requeue === undefined ? undefined : options.requeue === "true")),
+        [batchIds, comment, booleanOption("--requeue <boolean>", "Queue canceled builds again"), partialFields("errorCount")],
       ),
       leaf(
         "delete",
@@ -119,7 +119,7 @@ export function createTriageCommands(
           "Set comments",
           Permission.Update,
           (c, { options }) =>
-            partial(c.setBuildBatchComment(ids(options), text(options, "text"),
+            partial(c.setBuildBatchComment(ids(options), options.text as string | undefined,
               fieldsFromOptions(options),
             )),
           [batchIds, message, partialFields("errorCount")],
@@ -140,12 +140,12 @@ export function createTriageCommands(
           partial(
             c.pinBuildBatch(
               ids(options),
-              booleanText(text(options, "status")) === "true",
+              options.status === undefined ? undefined : booleanText(text(options, "status")) === "true",
               fieldsFromOptions(options),
 
             )
           ),
-        [batchIds, partialFields("errorCount"), option("--status <boolean>", "Set true or false", true)],
+        [batchIds, partialFields("errorCount"), booleanOption("--status <boolean>", "Set true or false")],
       ),
       command(
         "tags",
@@ -159,13 +159,13 @@ export function createTriageCommands(
               partial(
                 c.tagBuildBatch(
                   ids(options),
-                  options.tag as string[],
+                  (options.tag ?? []) as string[],
                   action === "remove",
                   fieldsFromOptions(options),
 
                 )
               ),
-            [batchIds, partialFields("errorCount"), repeatOption("--tag <name>", "Repeat public tags", true)],
+            [batchIds, partialFields("errorCount"), repeatOption("--tag <name>", "Repeat public tags")],
           ),
         ),
       ),
@@ -201,7 +201,7 @@ export function createTriageCommands(
         "Append build log text",
         Permission.Update,
         (c, { args, options }) =>
-          c.appendBuildLog(num(args, "id"), text(options, "text"), fieldsFromOptions(options)),
+          c.appendBuildLog(num(args, "id"), options.text as string | undefined, fieldsFromOptions(options)),
         [fieldsOption, message],
       ),
     ]),
@@ -219,7 +219,7 @@ export function createTriageCommands(
         "Report a build problem",
         Permission.Update,
         (c, { args, options }) =>
-          c.addBuildProblem(num(args, "id"), text(options, "text"), fieldsFromOptions(options)),
+          c.addBuildProblem(num(args, "id"), options.text as string | undefined, fieldsFromOptions(options)),
         [fieldsOption, message],
       ),
     ]),
@@ -235,21 +235,21 @@ export function createTriageCommands(
       "Start an agentless build",
       Permission.Update,
       (c, { args, options }) =>
-        c.startAgentlessBuild(num(args, "id"), text(options, "requestor"),
+        c.startAgentlessBuild(num(args, "id"), options.requestor as string | undefined,
           fieldsFromOptions(options),
         ),
-      [fieldsOption, option("--requestor <text>", "Set the requestor label", true)],
+      [fieldsOption, option("--requestor <text>", "Set the requestor label")],
     ),
     leaf(
       "set-status <id> <status>",
-      "Set SUCCESS or FAILURE",
+      "Set the build status",
       Permission.Update,
       (c, { args, options }) =>
         statusPartial(
           c.setBuildStatus(
             num(args, "id"),
             args.status,
-            text(options, "comment"),
+            options.comment as string | undefined,
             fieldsFromOptions(options),
           ),
           fieldsFromOptions(options)
@@ -278,14 +278,14 @@ export function createTriageCommands(
         (c, { args, options }) =>
           labelsPartial(c.addBuildVcsLabel(
             num(args, "id"),
-            text(options, "label"),
-            text(options, "rootInstance"),
+            options.label as string | undefined,
+            options.rootInstance as string | undefined,
             fieldsFromOptions(options),
           )),
         [
           partialFields("vcsLabel(status)"),
-          option("--label <text>", "Set the label", true),
-          option("--root-instance <id>", "Select a VCS root instance", true),
+          option("--label <text>", "Set the label"),
+          option("--root-instance <id>", "Select a VCS root instance"),
         ],
       ),
     ]),
@@ -373,14 +373,14 @@ export function createTriageCommands(
       "create",
       "Create an investigation",
       Permission.Update,
-      (c, { options }) => c.createInvestigation(options.item, false, fieldsFromOptions(options)),
+      (c, { options }) => c.createInvestigation(options.item ?? {}, false, fieldsFromOptions(options)),
       [item, fieldsOption],
     ),
     leaf(
       "create-many",
       "Create selected items",
       Permission.Update,
-      (c, { options }) => c.createInvestigations(options.item as unknown[], fieldsFromOptions(options)),
+      (c, { options }) => c.createInvestigations((options.item ?? []) as unknown[], fieldsFromOptions(options)),
       [items, fieldsOption],
     ),
     leaf(
@@ -394,7 +394,7 @@ export function createTriageCommands(
       "replace",
       "Replace an investigation",
       Permission.Update,
-      (c, { options }) => c.createInvestigation(options.item, true, fieldsFromOptions(options)),
+      (c, { options }) => c.createInvestigation(options.item ?? {}, true, fieldsFromOptions(options)),
       [item, fieldsOption],
     ),
     leaf(
@@ -418,14 +418,14 @@ export function createTriageCommands(
       "create",
       "Create a mute",
       Permission.Update,
-      (c, { options }) => c.createMute(options.item, fieldsFromOptions(options)),
+      (c, { options }) => c.createMute(options.item ?? {}, fieldsFromOptions(options)),
       [item, fieldsOption],
     ),
     leaf(
       "create-many",
       "Create selected items",
       Permission.Update,
-      (c, { options }) => c.createMutes(options.item as unknown[], fieldsFromOptions(options)),
+      (c, { options }) => c.createMutes((options.item ?? []) as unknown[], fieldsFromOptions(options)),
       [items, fieldsOption],
     ),
     leaf(

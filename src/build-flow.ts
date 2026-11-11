@@ -13,7 +13,7 @@ import {
   TeamCityUnknownOutcomeError,
   type TeamCityClient,
 } from "./client.js";
-import { booleanOption, pairOption, integerValue } from "./command-support.js";
+import { booleanOption, pairOption, integerValue, jsonOption } from "./command-support.js";
 import type { PlainProperty } from "./authoring-models.js";
 import type {
   TeamCityBuild,
@@ -24,6 +24,7 @@ import type {
 import { buildOutcome, type BuildOutcome } from "./outcome.js";
 import type { TeamCityPage } from "./paging.js";
 import { buildRecord, diagnosisRecord, followedRecord, withView } from "./presentation.js";
+import { nativeInput } from "./command-support.js";
 import { fieldsOption } from "./projection.js";
 
 type ClientFor = (context: CommandContext) => Promise<TeamCityClient>;
@@ -352,10 +353,10 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
         queued = await session.client.runJob(job, {
           ...(branch === undefined ? {} : { branch }),
           ...(comment === undefined ? {} : { comment }),
-          properties,
+          ...(options.param === undefined ? {} : { properties }),
           ...(typeof options.moveToTop === "string" ? { moveToTop: options.moveToTop } : {}),
           ...(options.cleanSources === true ? { cleanSources: true } : {}),
-        });
+        }, nativeInput(options));
       } catch (error) {
         if (!(error instanceof TeamCityUnknownOutcomeError)) throw error;
         // Never queue again automatically: the first request may already have been accepted.
@@ -385,6 +386,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     {
       permission: Permission.Update,
       options: [
+        jsonOption("--item <json>", "Supply a native build body"),
         booleanOption("--move-to-top <boolean>", "Queue the build at the top"),
         {
           flags: "--branch <name>",

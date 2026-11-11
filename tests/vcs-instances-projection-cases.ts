@@ -410,7 +410,6 @@ export const cases: ProjectionCase[] = [
     "path": "/app/rest/vcs-root-instances/checkingForChangesQueue",
     "query": {
       "locator": "id:8",
-      "requestor": "user",
       "fields": "count,nextHref,vcs-root-instance(id,name,vcs-root-id,vcsName,modificationCheckInterval,commitHookMode)"
     },
     "body": "",
@@ -426,7 +425,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "fixedQuery": {
       "locator": "id:8",
-      "requestor": "user"
+
     },
     "nativeQuery": {
       "requestor": " nightly + "
@@ -488,7 +487,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/vcs-root-instances/id:8/files/latest",
     "query": {
-      "locator": "count:100,recursive:false,hidden:false,browseArchives:false",
+      "locator": "count:100",
       "fields": "count,file(name,size,modificationTime)"
     },
     "body": "",
@@ -505,7 +504,7 @@ export const cases: ProjectionCase[] = [
     "human": "NAME  SIZE  MODIFIED\nsrc   7 B   313d\n",
     "stderr": "",
     "fixedQuery": {
-      "locator": "count:100,recursive:false,hidden:false,browseArchives:false"
+      "locator": "count:100"
     }
   },
   {
@@ -565,7 +564,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/vcs-root-instances/id:8/files/latest/src",
     "query": {
-      "locator": "count:100,recursive:false,hidden:false,browseArchives:false",
+      "locator": "count:100",
       "fields": "count,file(name,size,modificationTime)"
     },
     "body": "",
@@ -582,7 +581,7 @@ export const cases: ProjectionCase[] = [
     "human": "NAME  SIZE  MODIFIED\nsrc   7 B   313d\n",
     "stderr": "",
     "fixedQuery": {
-      "locator": "count:100,recursive:false,hidden:false,browseArchives:false"
+      "locator": "count:100"
     }
   },
   {

@@ -6,6 +6,7 @@ import {
   type OptionDefinition,
   type TargetCommand,
 } from "@eyeauras/cli-factory";
+import { apiInputRecord } from "./triage-models.js";
 import type { TeamCityClient } from "./client.js";
 import type { PlainProperty } from "./authoring-models.js";
 import { normalizePage, requiredText } from "./locator.js";
@@ -73,7 +74,7 @@ export function jsonOption(flags: string, description: string, repeat = false): 
   return {
     flags,
     description,
-    required: true,
+    required: false,
     parse(value, previous) {
       const item = typedJson(value);
       return repeat ? [...(Array.isArray(previous) ? previous : []), item] : item;
@@ -127,3 +128,7 @@ export const fieldOption: OptionDefinition = {
     return value;
   },
 };
+
+export function nativeInput(options: Record<string, unknown>): Record<string, unknown> {
+  return apiInputRecord(options.item ?? {}, []);
+}

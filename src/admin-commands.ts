@@ -1,3 +1,4 @@
+import { nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
@@ -170,7 +171,8 @@ export function createAdminCommands(
             ...optionalText(options, "expires"),
             noExpiration: options.expiration === false,
             samePermissions: options.samePermissions === true,
-            restrictions: (options.restriction ?? []) as unknown[],
+            ...(options.restriction === undefined ? {} : { restrictions: options.restriction as unknown[] }),
+            ...(options.item === undefined ? {} : { item: options.item as Record<string, unknown> }),
           },
           context.secrets,
           fieldsFromOptions(options),
@@ -179,6 +181,7 @@ export function createAdminCommands(
         permission: "Credentials",
         options: [
           fieldsOption,
+          jsonOption("--item <json>", "Supply a native token body"),
           option("--alias <name>", "Choose a new issued-token alias", true),
           option("--expires <timestamp>", "Set the token expiration timestamp"),
           option("--no-expiration", "Request a permanent token"),
@@ -257,10 +260,11 @@ export function createAdminCommands(
         c.updateAccountUser(args.id, {
           ...optionalText(options, "username"),
           ...optionalText(options, "name"),
+          ...nativeInput(options),
         },
           fieldsFromOptions(options)
         ),
-      [fieldsOption, option("--username <text>", "Set the username"), option("--name <text>", "Set the display name")],
+      [fieldsOption, jsonOption("--item <json>", "Supply a native user body"), option("--username <text>", "Set the username"), option("--name <text>", "Set the display name")],
     ),
     leaf("delete <id>", "Delete the remote account", "Admin", (c, { args }) =>
       c.deleteAccountUser(args.id),
@@ -340,11 +344,11 @@ export function createAdminCommands(
       (c, { args, options }) =>
         c.createAccountGroup(
           args.key,
-          text(options, "name"),
+          options.name as string | undefined,
           optional(options, "description"),
           fieldsFromOptions(options),
         ),
-      [fieldsOption, option("--name <text>", "Set the name", true), option("--description <text>", "Set the description")],
+      [fieldsOption, option("--name <text>", "Set the name"), option("--description <text>", "Set the description")],
     ),
     leaf(
       "show <key>",

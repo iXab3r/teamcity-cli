@@ -216,7 +216,7 @@ test("S8 commit-hook only reports scheduling for202 and never retries unexpected
     server.use(
       http.post(base + "/vcs-root-instances/commitHookNotification", ({ request }) => {
         calls++;
-        assert.equal(new URL(request.url).searchParams.get("okOnNothingFound"), "false");
+        assert.equal(new URL(request.url).searchParams.get("okOnNothingFound"), null);
         return HttpResponse.text("synthetic-private-diagnostics", { status });
       }),
     );

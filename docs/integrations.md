@@ -403,18 +403,17 @@ Keep acceptance and checkpoint evidence in the owning product Issue/PR.
 
 ## Test the declaration, not a parallel implementation
 
-Declare mandatory options once with `required: true` in the existing command settings:
+Use `required: true` for HTTP-path selectors, confirmations and local-machine safety, not payload fields:
 
 ```ts
 command("create <id>", "Create a resource", createResource, {
   permission: Permission.Update,
-  options: [{ flags: "--name <name>", description: "Display name", required: true }],
+  options: [{ flags: "--confirm", description: "Confirm the operation", required: true }],
 });
 ```
 
 The parser owns missing-option validation and the generated `(required)` help hint; the same
-behavior applies in JSON-RPC. A declared default satisfies the requirement. Service-specific
-validation (non-empty names, allowed fields, safe properties) remains in the integration.
+behavior applies in JSON-RPC. A declared default satisfies the requirement. Primitive parsing and transport checks remain in the integration; TeamCity owns request semantics.
 Use `targetCommands` for profile-scoped target binding and small local functions for proven service
 repetition, such as a repeated resource-property tree. Do not promote HTTP or property
 semantics into Core.
@@ -548,18 +547,17 @@ Decoding remains explicit: Buffer retains an initial BOM; TextDecoder removes it
 
 ### API-faithful validation
 
-The service's authoritative contract governs accepted values. Do not close a string to documentation
-examples, invent ID grammars, trim service text, impose undocumented numeric/length bounds, reject
-additional native JSON fields, or insert service defaults without a contract basis. A missing Swagger
-enum alone does not overrule an explicit enum elsewhere in the primary reference. State reference
-versions and gaps; when a service-value rule is uncertain, preserve the value and let the API validate it.
+teamcity-cli forwards caller input for TeamCity to validate, including closed values, numeric
+ranges and incomplete payloads. Omitted options are not sent. Native DTOs are accepted alongside
+compact conveniences, preserving supplied fields. Remove refusal-only preflight reads; if metadata
+is needed to build a body, preserve it when available and fall back to caller input on failure.
 
 Validate JSON value types and representable numbers, encode identifiers and locator dimensions without
 changing their values, and retain explicit permissions, profile isolation, read-side secret protection
 and safe errors. Service writes forward caller input, including bearer text; aliases are optional.
 Give each separate transport/security check its concrete reason: for example, dot segments
 would change URL routing, and a download destination
-must stay under the active profile without overwriting another file. Local controls such as polling
+must preserve existing local files. Local controls such as polling
 duration and caller byte budgets are CLI behavior, not claims about service limits. Compact CLI forms
 may translate flags or selectors into service DTOs; document that translation and preserve additional
 native fields rather than silently discarding them. Output projections may omit private fields without

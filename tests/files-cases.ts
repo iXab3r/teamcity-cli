@@ -23,11 +23,11 @@ export const svgBytes = new TextEncoder().encode(
 const file = { name: "example.bin", size: 6, modificationTime: "20260830T120000+0000" };
 const ff = "name,size,modificationTime",
   lf = `count,file(${ff})`;
-const locator = "count:100,recursive:false,hidden:false,browseArchives:false";
+const locator = "count:100";
 function tree(prefix: string[], path: string, query: Record<string, string> = {}): FileCase[] {
   const artifact = prefix[0] === "builds";
   const listingQuery = { ...query,
-    locator: artifact ? "count:101,recursive:false,hidden:false,browseArchives:true" : locator,
+    locator: artifact ? "count:101,browseArchives:true" : locator,
     fields: artifact ? `count,file(${ff},children(href),content(href))` : lf };
   const expectedList = { count: 1, items: [artifact ? { ...file, directory: false, archive: false } : file],
     ...(artifact ? { hasMore: false } : {}) };
@@ -170,7 +170,6 @@ export const fileCases: readonly FileCase[] = [
     expected: { serverPath: "/srv/teamcity-example/config/Build.xml" },
   },
   ...tree(["jobs", "files"], "/buildTypes/id:Build/vcs/files/latest", {
-    resolveParameters: "false",
   }),
   {
     method: "GET",
@@ -181,8 +180,6 @@ export const fileCases: readonly FileCase[] = [
     media: "image/svg+xml",
   },
   ...tree(["builds", "artifacts"], "/builds/id:7/artifacts", {
-    resolveParameters: "false",
-    logBuildUsage: "false",
   }),
   {
     method: "GET",

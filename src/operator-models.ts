@@ -14,7 +14,7 @@ export interface BooleanStatus {
   comment?: OperationComment;
 }
 export interface AgentPolicy {
-  policy: "any" | "selected";
+  policy: string;
   jobs: BuildTypeIdentity[];
 }
 export interface RawAgentPolicy {
@@ -85,7 +85,6 @@ export function queuePosition(value: string): string {
   return pathSegment(plainProperty("Queue position", value).value);
 }
 export function publicTags(tags: readonly string[], allowEmpty = false) {
-  if (!allowEmpty && tags.length === 0) throw new Error("At least one tag is required.");
   const names = tags.map((tag) => plainProperty("tag", requiredText(tag, "Tag")).value);
   return { tag: names.map((name) => ({ name })) };
 }

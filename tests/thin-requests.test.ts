@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { writeFile, readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { assertHttpRequest, trackRequests, assertPermissionDenied } from "@eyeauras/cli-factory/testing";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -32,19 +34,53 @@ const cases: Case[] = [
   { name: "3 compact mute with native fields", argv: ["mutes", "create", "--fields", "id", "--item", json({ jobs: [], tests: [], resolution: "future", assignment: { text: "caller" } })], method: "POST", path: "/mutes", query: { fields: "id" }, body: { scope: { buildTypes: { buildType: [] } }, target: { tests: { test: [] } }, resolution: { type: "future" }, assignment: { text: "caller" } } },
   { name: "3 native bulk properties", argv: ["jobs", "steps", "replace-all", "Example", "--fields", "id", "--item", json({ properties: { count: 0, property: [] }, plugin: { text: "native" } })], path: "/buildTypes/id:Example/steps", query: { fields: "id" }, body: { step: [{ properties: { count: 0, property: [] }, plugin: { text: "native" } }] } },
   { name: "3 authentication property metadata", argv: ["server", "authentication", "replace", "--confirm", "--item", json({ modules: { count: 1, module: [{ name: "Fixture", properties: { count: 0, href: "fixture", property: [] } }] } })], permission: "Admin", path: "/server/authSettings", body: { modules: { count: 1, module: [{ name: "Fixture", properties: { count: 0, href: "fixture", property: [] } }] } } },
-  { name: "4 project list", argv: ["projects", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/projects", query: { locator: "start:0,count:100", fields: "nextHref,project(id)" } },
-  { name: "4 job list", argv: ["jobs", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/buildTypes", query: { locator: "start:0,count:100", fields: "nextHref,buildType(id)" } },
-  { name: "4 build list", argv: ["builds", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/builds", query: { locator: "start:0,count:100", fields: "nextHref,build(id)" } },
-  { name: "4 agent list", argv: ["agents", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/agents", query: { locator: "start:0,count:100", fields: "nextHref,agent(id)" } },
-  { name: "4 file controls", argv: ["jobs", "files", "list", "Example", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/buildTypes/id:Example/vcs/files/latest/children", query: { locator: "count:100", fields: "count,file(id)" } },
+  { name: "4 project list", argv: ["projects", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/projects", query: { locator: "start:0,count:101", fields: "nextHref,project(id)" } },
+  { name: "4 job list", argv: ["jobs", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/buildTypes", query: { locator: "start:0,count:101", fields: "nextHref,buildType(id)" } },
+  { name: "4 build list", argv: ["builds", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/builds", query: { locator: "start:0,count:101", fields: "nextHref,build(id)" } },
+  { name: "4 agent list", argv: ["agents", "list", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/agents", query: { locator: "start:0,count:101", fields: "nextHref,agent(id)" } },
+  { name: "4 file controls", argv: ["jobs", "files", "list", "Example", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/buildTypes/id:Example/vcs/files/latest", query: { locator: "count:100", fields: "count,file(id)" } },
   { name: "4 cancellation", argv: ["builds", "cancel", "7", "--fields", "id"], method: "POST", path: "/builds/id:7", query: { fields: "id" }, body: {} },
   { name: "4 approval", argv: ["queue", "approval", "approve", "7", "--fields", "id"], method: "POST", path: "/buildQueue/id:7/approve", query: { fields: "id" } },
   { name: "4 backup", argv: ["server", "backup", "start", "fixture", "--confirm"], permission: "Admin", method: "POST", path: "/server/backup", query: { fileName: "fixture" }, text: "fixture" },
   { name: "5 bulk unmute has no GET", argv: ["mutes", "delete-many", "--id", "7", "--confirm", "--fields", "id"], method: "DELETE", path: "/mutes/multiple", query: { fields: "id" }, body: { mute: [{ id: 7 }] } },
   { name: "6 leading and empty path segments", argv: ["jobs", "files", "metadata", "Example", "/a//b", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/buildTypes/id:Example/vcs/files/latest/metadata//a//b", query: { fields: "id" } },
   { name: "6 JSON Unicode", argv: ["users", "update", "7", "--fields", "id", "--item", json({ name: "\ud800", extra: "\ud800" })], permission: "Admin", path: "/users/id:7", query: { fields: "id" }, body: { name: "\ud800", extra: "\ud800" } },
-  { name: "6 cloud profile filter", argv: ["cloud", "profiles", "list", "--cloud-profile", "Example", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/cloud/profiles", query: { locator: "profile:(id:Example),start:0,count:100", fields: "nextHref,cloudProfile(id)" } },
+  { name: "6 cloud profile filter", argv: ["cloud", "profiles", "list", "--cloud-profile", "Example", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/cloud/profiles", query: { locator: "profile:(id:Example),start:0,count:101", fields: "nextHref,cloudProfile(id)" } },
   { name: "6 queue deletion without job", argv: ["queue", "delete-page", "--confirm", "--fields", "id"], method: "DELETE", path: "/buildQueue", query: { locator: "start:0,count:100", fields: "id" } },
+  { name: "1 open deployment state", argv: ["deployments", "instances", "append-state", "Example", "Fixture", "--state", "future", "--date", "caller"], method: "POST", path: "/deploymentDashboards/id:Example/instances/id:Fixture", body: { state: "future", deploymentDate: "caller" } },
+  { name: "2 token without expiry or restrictions", argv: ["users", "tokens", "create", "Fixture", "--alias", "fixture", "--fields", "id"], permission: "Credentials", method: "POST", path: "/users/current/tokens", query: { fields: "id" }, body: { name: "Fixture" } },
+  { name: "2 absent project payload", argv: ["projects", "create", "Example"], method: "POST", path: "/projects", query: { fields: "id,name,parentProjectId,archived,description,webUrl" }, body: { id: "Example" } },
+  { name: "2 absent job payload", argv: ["jobs", "create", "Example", "--fields", "id"], method: "POST", path: "/buildTypes", query: { fields: "id" }, body: { id: "Example" } },
+  { name: "2 absent parameter value", argv: ["jobs", "parameters", "set", "Example", "env.MODE", "--fields", "id"], path: "/buildTypes/id:Example/parameters/env.MODE", query: { fields: "id" }, body: { name: "env.MODE" } },
+  { name: "2 absent pool payload", argv: ["pools", "create"], method: "POST", path: "/agentPools", body: {} },
+  { name: "2 absent role payload", argv: ["roles", "create", "--fields", "id"], permission: "Admin", method: "POST", path: "/roles", query: { fields: "id" }, body: {} },
+  { name: "2 absent rule payload", argv: ["jobs", "agent-requirements", "create", "Example", "--fields", "id"], method: "POST", path: "/buildTypes/id:Example/agent-requirements", query: { fields: "id" }, body: {} },
+  { name: "2 empty tags", argv: ["builds", "tags", "add", "7"], method: "POST", path: "/builds/id:7/tags", body: { tag: [] }, text: "accepted" },
+  { name: "2 empty unmute collection", argv: ["mutes", "delete-many", "--confirm", "--fields", "id"], method: "DELETE", path: "/mutes/multiple", query: { fields: "id" }, body: { mute: [] } },
+  { name: "3 native run DTO", argv: ["jobs", "run", "Example", "--item", json({ buildType: { id: "Native", extra: true }, comment: { text: "caller", extra: true }, triggeringOptions: { cleanSources: false, future: true }, properties: { count: 0, property: [] }, future: true })], method: "POST", path: "/buildQueue", query: { fields: "id,buildTypeId,number,state,status,statusText,branchName,defaultBranch,personal,failedToStart,canceledInfo(timestamp),queuedDate,startDate,finishDate,percentageComplete,queuePosition,waitReason,webUrl,agent(id,name)" }, body: { buildType: { id: "Native", extra: true }, comment: { text: "caller", extra: true }, triggeringOptions: { cleanSources: false, future: true }, properties: { count: 0, property: [] }, future: true }, response: { id: 7, state: "queued" } },
+  { name: "3 native copy DTO", argv: ["jobs", "copy", "Source", "Copy", "--project", "Example", "--item", json({ sourceBuildType: { id: "Native", extra: true }, copyAllAssociatedSettings: false, future: true })], permission: "Credentials", method: "POST", path: "/projects/id:Example/buildTypes", query: { fields: "id,name,projectId" }, body: { id: "Copy", sourceBuildType: { id: "Native", extra: true }, copyAllAssociatedSettings: false, future: true } },
+  { name: "3 native deployment DTO", argv: ["deployments", "instances", "upsert", "Example", "Fixture", "--confirm", "--item", json({ attributes: { caller: true }, deploymentStateEntries: { count: 0, deploymentStateEntry: [] }, future: true })], method: "POST", path: "/deploymentDashboards/id:Example/instances", body: { id: "Fixture", attributes: { caller: true }, deploymentStateEntries: { count: 0, deploymentStateEntry: [] }, future: true } },
+  { name: "3 native role DTO", argv: ["roles", "create", "--fields", "id", "--item", json({ id: "Caller", permissions: { count: 0, permission: [] }, future: true })], permission: "Admin", method: "POST", path: "/roles", query: { fields: "id" }, body: { id: "Caller", permissions: { count: 0, permission: [] }, future: true } },
+  { name: "3 native assignment DTO", argv: ["users", "roles", "replace", "7", "--item", json({ roleId: "Caller", scope: "future", future: true })], permission: "Admin", path: "/users/id:7/roles", body: { role: [{ roleId: "Caller", scope: "future", future: true }] } },
+  { name: "3 native rule overrides conveniences", argv: ["jobs", "artifact-dependencies", "create", "Example", "--source", "Compact", "--item", json({ type: "future", kind: "caller", "source-buildType": { id: "Native", extra: true }, properties: { count: 0, property: [] }, disabled: false }) , "--fields", "id"], method: "POST", path: "/buildTypes/id:Example/artifact-dependencies", query: { fields: "id" }, body: { type: "future", kind: "caller", "source-buildType": { id: "Native", extra: true }, properties: { count: 0, property: [] }, disabled: false } },
+  { name: "3 native investigation replacement", argv: ["investigations", "replace", "--fields", "id", "--item", json({ scope: { project: { id: "Example", extra: true } }, target: { tests: { test: [{ id: "Fixture" }] } }, assignment: { text: "caller" } })], path: "/investigations/assignmentProject:(id:Example),test:(id:Fixture)", query: { fields: "id" }, body: { scope: { project: { id: "Example", extra: true } }, target: { tests: { test: [{ id: "Fixture" }] } }, assignment: { text: "caller" } } },
+  { name: "4 absent template optimization", argv: ["jobs", "templates", "attach", "Example", "--template", "Fixture", "--fields", "id"], method: "POST", path: "/buildTypes/id:Example/templates", query: { fields: "id" }, body: { id: "Fixture" } },
+  { name: "4 absent template inline", argv: ["jobs", "templates", "detach", "Example", "Fixture"], method: "DELETE", path: "/buildTypes/id:Example/templates/id:Fixture", text: "accepted" },
+  { name: "4 explicit requeue false", argv: ["builds", "cancel", "7", "--requeue", "false", "--fields", "id"], method: "POST", path: "/builds/id:7", query: { fields: "id" }, body: { readdIntoQueue: false } },
+  { name: "4 explicit approval false", argv: ["queue", "approval", "approve", "7", "--approve-all", "false", "--fields", "id"], method: "POST", path: "/buildQueue/id:7/approve", query: { fields: "id", approveAll: "false" } },
+  { name: "4 explicit default filter", argv: ["builds", "list", "--default-filter", "false", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/builds", query: { locator: "defaultFilter:false,start:0,count:101", fields: "nextHref,build(id)" } },
+  { name: "4 explicit archived filter", argv: ["projects", "list", "--archived", "false", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/projects", query: { locator: "archived:false,start:0,count:101", fields: "nextHref,project(id)" } },
+  { name: "4 explicit template filter", argv: ["jobs", "list", "--template-flag", "false", "--fields", "id"], permission: "ReadOnly", method: "GET", path: "/buildTypes", query: { locator: "templateFlag:false,start:0,count:101", fields: "nextHref,buildType(id)" } },
+
+  { name: "3 native nullable properties", argv: ["jobs", "steps", "create", "Example", "--fields", "id", "--item", json({ properties: null, future: null })], method: "POST", path: "/buildTypes/id:Example/steps", query: { fields: "id" }, body: { properties: null, future: null } },
+  { name: "3 native nullable assignment", argv: ["investigations", "create", "--fields", "id", "--item", json({ scope: null, target: null, assignee: null, assignment: null })], method: "POST", path: "/investigations", query: { fields: "id" }, body: { scope: null, target: null, assignee: null, assignment: null } },
+  { name: "3 native nullable authentication properties", argv: ["server", "authentication", "replace", "--confirm", "--item", json({ modules: { module: [{ properties: null }] } })], permission: "Admin", path: "/server/authSettings", body: { modules: { module: [{ properties: null }] } } },
+
+  { name: "3 native extension keeps convenience-named extra fields", argv: ["jobs", "features", "create", "Example", "--fields", "id", "--item", json({ enabled: true, disabled: true, native: { future: true } })], method: "POST", path: "/buildTypes/id:Example/features", query: { fields: "id" }, body: { enabled: true, disabled: true, native: { future: true } } },
+  { name: "2 empty parameter payload name", argv: ["jobs", "parameters", "create", "Example", "", "--fields", "id"], method: "POST", path: "/buildTypes/id:Example/parameters", query: { fields: "id" }, body: { name: "" } },
+
+  { name: "3 native account fields take precedence", argv: ["users", "update", "7", "--name", "Compact", "--fields", "id", "--item", json({ name: "Native", future: true })], permission: "Admin", path: "/users/id:7", query: { fields: "id" }, body: { name: "Native", future: true } },
+
 ];
 for (const c of cases) test(`#381 category ${c.name}`, async t => {
   const runtime = await createTestRuntime(t, { profiles: [{ name: "default", url: "https://teamcity.test", permissions: [] }] });
@@ -86,4 +122,70 @@ for (const c of sdkCases) test(`#381 category ${c.name}`, async t => {
   });
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   await c.call(new TeamCityClient({ baseUrl: "https://teamcity.test", token: "fixture-token" }));
+});
+
+
+test("#381 category 6 profile queries stay behind the REST path", async t => {
+  const runtime = await createTestRuntime(t, { profiles: [{ name: "default", url: "https://teamcity.test:443/context/?route=fixture" }] });
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "GET", url: "https://teamcity.test/context/app/rest/server", query: { route: "fixture", fields: "id" } });
+    return HttpResponse.json({});
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await runtime.createCli().execute(["server", "status", "--fields", "id"]);
+});
+
+for (const ttl of [undefined, 2147483648, -2147483649]) test(`#381 categories 1/2 token TTL ${ttl}`, async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  await cli.execute(["permissions", "grant", "Credentials"]);
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "POST", url: base + "/agentPools/id:2/authorizationTokens", query: {},
+      body: { json: { ...(ttl === undefined ? {} : { timeToLiveSeconds: ttl }), count: 1 } } });
+    return HttpResponse.json({ item: ["synthetic-registration"] });
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute(["pools", "tokens", "create", "2", ...(ttl === undefined ? [] : ["--ttl", String(ttl)]), "--store-as", "fixture"]);
+  assert.equal(await runtime.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:fixture"), "synthetic-registration");
+});
+
+test("#381 categories 1/6 avatar size and upload filename reach TeamCity", async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  await cli.execute(["permissions", "grant", "Admin"]);
+  await cli.execute(["permissions", "grant", "Update"]);
+  const name = "portrait.fixture.png", path = join(runtime.root, name);
+  const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 0]);
+  await writeFile(path, png);
+  const requests = trackRequests(t, 2, async (request, index) => {
+    if (index === 0) {
+      assert.equal(request.method, "PUT");
+      assert.equal(request.url, base + "/avatars/id:7");
+      const form = await request.formData(), file = form.get("avatar") as File;
+      assert.equal(file.name, name);
+      assert.equal(file.type, "image/png");
+      assert.deepEqual(new Uint8Array(await file.arrayBuffer()), png);
+      return new HttpResponse(null, { status: 204 });
+    }
+    await assertHttpRequest(request, { method: "GET", url: base + "/avatars/id:7/2147483648/avatar.png", query: {} });
+    return new HttpResponse(png, { headers: { "Content-Type": "image/png" } });
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute(["users", "avatar", "replace", "7", "--file", path]);
+  const output = join(runtime.root, "download.png");
+  await cli.execute(["users", "avatar", "download", "7", "--size", "2147483648", "--output", output]);
+  assert.deepEqual(new Uint8Array(await readFile(output)), png);
+});
+
+test("#381 category 6 percent-bearing parameter names keep resolution storage", async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  await cli.execute(["permissions", "grant", "Credentials"]);
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "GET", url: base + "/builds/id:7/resolved/%25%25caller%25%25", query: {} });
+    return HttpResponse.text("synthetic-resolved");
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute(["builds", "resolve-parameter", "7", "%caller%", "--store-as", "fixture"]);
+  assert.equal(await runtime.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:fixture"), "synthetic-resolved");
 });

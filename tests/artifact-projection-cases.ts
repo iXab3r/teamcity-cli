@@ -3,13 +3,13 @@ export const artifactProjectionCases = [
     name: "artifact list",
     argv: ["builds", "artifacts", "list", "42", "--limit", "2"],
     path: "/app/rest/builds/id:42/artifacts",
-    locator: "count:3,recursive:false,hidden:false,browseArchives:true",
+    locator: "count:3,browseArchives:true",
   },
   {
     name: "artifact children",
     argv: ["builds", "artifacts", "children", "42", "logs", "--limit", "2"],
     path: "/app/rest/builds/id:42/artifacts/logs",
-    locator: "count:3,recursive:false,hidden:false,browseArchives:true",
+    locator: "count:3,browseArchives:true",
   },
   {
     name: "artifact metadata",

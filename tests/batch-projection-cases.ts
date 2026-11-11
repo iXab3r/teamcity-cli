@@ -47,7 +47,7 @@ export const actionCases = [
       query: {
         fields: "count,errorCount,operationResult(text,related(build(id)))",
       },
-      body: '{"comment":"Fixture","readdIntoQueue":false}',
+      body: '{"comment":"Fixture"}',
     },
     response: {
       count: 0,

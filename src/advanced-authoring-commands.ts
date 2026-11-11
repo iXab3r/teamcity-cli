@@ -1,8 +1,9 @@
+import { nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { fieldOption, locatorOption } from "./command-support.js";
 import { stringList, withView } from "./presentation.js";
 import { command, Permission, type OptionDefinition } from "@eyeauras/cli-factory";
-import { text, optionalText, option, propertyOption, type ClientLeaf } from "./command-support.js";
+import { text, optionalText, option, propertyOption, jsonOption, type ClientLeaf } from "./command-support.js";
 import type { PlainProperty } from "./authoring-models.js";
 import type { EntitySettingsKind, RuleInput, RuleKind } from "./advanced-authoring-models.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
@@ -101,20 +102,21 @@ export function createAdvancedAuthoringCommands(
     const requirement = kind === "agent-requirements";
     const arg = requirement ? "requirement-id" : "dependency-id";
     const options = [
+      jsonOption("--item <json>", "Supply a native rule body"),
       option("--disabled", "Disable this rule"),
       ...(requirement
         ? [
-            option("--type <type>", "Set the requirement type", true),
-            option("--parameter <name>", "Select an agent parameter", true),
+            option("--type <type>", "Set the requirement type"),
+            option("--parameter <name>", "Select an agent parameter"),
             option("--value <value>", "Set the requirement value"),
           ]
         : [
-            option("--source <job-id>", "Select an upstream job", true),
-            option("--rules <rules>", "Set artifact path rules", true),
+            option("--source <job-id>", "Select an upstream job"),
+            option("--rules <rules>", "Set artifact path rules"),
             option(
               "--revision <revision-name>",
               "Set the revision rule",
-              true,
+              false,
             ),
             option("--revision-value <value>", "Set the revision value"),
             option("--branch <branch>", "Select the source branch"),
@@ -125,20 +127,20 @@ export function createAdvancedAuthoringCommands(
       requirement
         ? {
             kind: "agent-requirements",
-            type: text(values, "type"),
-            parameter: text(values, "parameter"),
+            ...optionalText(values, "type"),
+            ...optionalText(values, "parameter"),
             ...optionalText(values, "value"),
-            disabled: values.disabled === true,
+            ...(values.disabled === undefined ? {} : { disabled: values.disabled as boolean }),
           }
         : {
             kind: "artifact-dependencies",
-            source: text(values, "source"),
-            rules: text(values, "rules"),
-            revision: text(values, "revision"),
+            ...optionalText(values, "source"),
+            ...optionalText(values, "rules"),
+            ...optionalText(values, "revision"),
             ...optionalText(values, "revisionValue"),
             ...optionalText(values, "branch"),
-            clean: values.clean === true,
-            disabled: values.disabled === true,
+            ...(values.clean === undefined ? {} : { clean: values.clean as boolean }),
+            ...(values.disabled === undefined ? {} : { disabled: values.disabled as boolean }),
           };
     return command(kind, "Manage job rules", [
       bulk.replaceAll(kind),
@@ -164,7 +166,7 @@ export function createAdvancedAuthoringCommands(
         "create <job-id>",
         "Add a rule",
         Permission.Update,
-        (c, { args, options }) => c.createRule(args["job-id"], input(options), fieldsFromOptions(options)),
+        (c, { args, options }) => c.createRule(args["job-id"], input(options), fieldsFromOptions(options), nativeInput(options)),
         [...options, fieldsOption],
       ),
       leaf(
@@ -172,7 +174,7 @@ export function createAdvancedAuthoringCommands(
         "Replace all rule settings",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceRule(text(args, "job-id"), text(args, arg), input(options), fieldsFromOptions(options)),
+          c.replaceRule(text(args, "job-id"), text(args, arg), input(options), fieldsFromOptions(options), nativeInput(options)),
         [...options, fieldsOption],
       ),
       leaf(
@@ -183,7 +185,7 @@ export function createAdvancedAuthoringCommands(
       ),
     ]);
   }
-  const featureOptions = [option("--type <type>", "Set the project feature type", true), propertyOption];
+  const featureOptions = [option("--type <type>", "Set the project feature type"), propertyOption, jsonOption("--item <json>", "Supply a native feature body")];
   const features = command("features", "Manage project features", [
     bulk.replaceAll("projectFeatures"),
     leaf(
@@ -214,9 +216,10 @@ export function createAdvancedAuthoringCommands(
       (c, { args, options }) =>
         c.createProjectFeature(
           args["project-id"],
-          text(options, "type"),
-          (options.property ?? []) as PlainProperty[],
+          options.type as string | undefined,
+          options.property as PlainProperty[] | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [...featureOptions, fieldsOption],
     ),
@@ -228,9 +231,10 @@ export function createAdvancedAuthoringCommands(
         c.replaceProjectFeature(
           args["project-id"],
           args["feature-id"],
-          text(options, "type"),
-          (options.property ?? []) as PlainProperty[],
+          options.type as string | undefined,
+          options.property as PlainProperty[] | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [...featureOptions, fieldsOption],
     ),
@@ -262,10 +266,11 @@ export function createAdvancedAuthoringCommands(
         c.createProjectTemplate(
           args["project-id"],
           args["template-id"],
-          text(options, "name"),
+          options.name as string | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
-      [fieldsOption, option("--name <name>", "Set the template name", true)],
+      [fieldsOption, option("--name <name>", "Set the template name"), jsonOption("--item <json>", "Supply a native template body")],
     ),
     command("default", "Manage the default template", [
       leaf(
@@ -281,8 +286,8 @@ export function createAdvancedAuthoringCommands(
         "Set the default template",
         Permission.Update,
         (c, { args, options }) =>
-          c.setDefaultTemplate(args["project-id"], text(options, "template"), fieldsFromOptions(options)),
-        [fieldsOption, option("--template <template-id>", "Select an existing template", true)],
+          c.setDefaultTemplate(args["project-id"], options.template as string | undefined, fieldsFromOptions(options)),
+        [fieldsOption, option("--template <template-id>", "Select an existing template")],
       ),
       leaf(
         "clear <project-id>",

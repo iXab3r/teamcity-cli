@@ -267,7 +267,7 @@ test("S10 all gates and generated help run before network, keyring input or file
     await t.cleanup();
   }
 });
-test("S10 rejects traversal and absolute paths, devices, unsafe areas and missing output before HTTP", async (testContext) => {
+test("S10 rejects traversal, output devices, unsafe areas and missing output before HTTP", async (testContext) => {
   const t = await fileRuntime(testContext);
   let calls = 0;
   try {
@@ -280,8 +280,6 @@ test("S10 rejects traversal and absolute paths, devices, unsafe areas and missin
     for (const path of [
       "../secret",
       "x/../y",
-      "/secret",
-      "x//y",
       ".",
     ]) {
       assert.throws(() => remotePath(path));
@@ -732,8 +730,8 @@ test("artifact browsing projects directory/archive flags, completeness and profi
   server.use(http.get(`${base}/builds/id:7/artifacts*`, ({ request }) => {
     const url = new URL(request.url);
     queries.push(url);
-    assert.equal(url.searchParams.get("resolveParameters"), "false");
-    assert.equal(url.searchParams.get("logBuildUsage"), "false");
+    assert.equal(url.searchParams.get("resolveParameters"), null);
+    assert.equal(url.searchParams.get("logBuildUsage"), null);
     assert.equal(url.searchParams.get("fields"), "count,file(name,size,modificationTime,children(href),content(href))");
     return HttpResponse.json({ count: entries.length, file: entries });
   }));
@@ -748,7 +746,7 @@ test("artifact browsing projects directory/archive flags, completeness and profi
   assert.match(listed.stdout, /More results: --limit 3/);
   assert.match(listed.stdout, /teamcity-cli builds artifacts children 7 dist --profile uat/);
   assert.match(listed.stdout, /teamcity-cli builds artifacts download 7 app.zip --output app.zip --profile uat/);
-  assert.equal(queries[0]?.searchParams.get("locator"), "count:3,recursive:false,hidden:false,browseArchives:true");
+  assert.equal(queries[0]?.searchParams.get("locator"), "count:3,browseArchives:true");
   assert.doesNotMatch(listed.stdout, /href|synthetic-|must-not-recurse|readme.txt/);
   const json = await runtime.json(cli, ["builds", "artifacts", "list", "7", "--profile", "uat"]);
   assert.deepEqual(json, { count: 3, hasMore: false, items: [

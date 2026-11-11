@@ -113,7 +113,7 @@ test("authoring uses gated JSON, text and empty responses through the real tree"
         method: "POST", url: base + "/projects",
         query: { fields: "id,name,parentProjectId,archived,description,webUrl" },
         headers: { authorization: "Bearer fixture-token", "content-type": "application/json" },
-        body: { json: { id: "Example", name: "Example", parentProject: { id: "_Root" } } },
+        body: { json: { id: "Example", name: "Example" } },
       });
       return HttpResponse.json({ id: "Example", name: "Example", archived: false });
     }
@@ -208,15 +208,9 @@ test("authoring validates fields, required options, paging, paths and property s
     }),
   );
   const invalid = [
-    ["projects", "create", "Example"],
 
-    ["projects", "move", "Example"],
-    ["jobs", "create", "Build", "--name", "Build"],
-    ["jobs", "move", "Build"],
-    ["jobs", "parameters", "set", "Build", "env.MODE"],
     ["projects", "parameters", "show", "Example", ".."],
     ["jobs", "steps", "show", "Build", "."],
-    ["jobs", "steps", "create", "Build", "--name", "Echo"],
     [
       "jobs",
       "steps",
@@ -229,9 +223,6 @@ test("authoring validates fields, required options, paging, paths and property s
       "--property",
       "=empty",
     ],
-    ["jobs", "vcs", "attach", "Build"],
-    ["jobs", "vcs", "replace", "Build", "Root"],
-    ["jobs", "vcs", "checkout-rules", "set", "Build", "Root"],
 
     ["vcs", "roots", "list", "--start", "-1"],
   ];
@@ -280,7 +271,6 @@ test("steps replace does not read/merge and returns plain plugin values", async 
       assert.deepEqual(await request.json(), {
         name: "Empty",
         type: "plugin",
-        properties: { property: [] },
       });
       return HttpResponse.json({
         id: "Step",
@@ -345,7 +335,7 @@ test("literal path segments and locators cannot broaden authoring targets", asyn
 test("JSON-RPC survives nested help and errors and isolates new Update commands by profile", async (testContext) => {
   const commands = [
     ["jobs", "steps", "replace", "--help"],
-    ["projects", "create", "Example", "--profile", "uat"],
+    ["projects", "create", "Example", "--unknown-flag", "--profile", "uat"],
     ["projects", "create", "Example", "--name", "Example"],
     ["projects", "create", "Example", "--name", "Example", "--profile", "uat"],
     ["vcs", "roots", "show", "Root"],
@@ -385,7 +375,7 @@ test("JSON-RPC survives nested help and errors and isolates new Update commands 
   assert.equal(frames.length, 5);
   assert.match(frames[0].result.help, /Replace a build step/);
   assert.match(frames[0].result.help, /Required permission: Update/);
-  assert.match(frames[1].error.message, /required option.*--name/);
+  assert.match(frames[1].error.message, /unknown option/);
   assert.match(frames[2].error.message, /Permission 'Update'/);
   assert.equal(frames[3].result.id, "Example");
   assert.equal(frames[4].result.id, "Root");

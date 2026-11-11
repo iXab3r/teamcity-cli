@@ -2,7 +2,9 @@ import type { ProjectionCase } from "./projection-support.js";
 export const cases: ProjectionCase[] = [
   {
     "name": "jobs parameters list Demo",
-    "nativeQuery": {"locator":" name:env.MODE "},
+    "nativeQuery": {
+      "locator": " name:env.MODE "
+    },
     "argv": [
       "jobs",
       "parameters",
@@ -209,7 +211,9 @@ export const cases: ProjectionCase[] = [
   },
   {
     "name": "jobs output-parameters list Demo",
-    "nativeQuery": {"locator":" name:env.MODE "},
+    "nativeQuery": {
+      "locator": " name:env.MODE "
+    },
     "argv": [
       "jobs",
       "output-parameters",

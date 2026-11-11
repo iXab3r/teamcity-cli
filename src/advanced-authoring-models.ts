@@ -1,26 +1,22 @@
-import { plainProperty, propertiesBody } from "./authoring-models.js";
+import { plainProperty, propertiesBody, inputProperties } from "./authoring-models.js";
 import { requiredText } from "./locator.js";
 
 export type RuleKind = "agent-requirements" | "artifact-dependencies";
 export type EntitySettingsKind = RuleKind | "steps" | "features" | "triggers";
-export type RuleInput =
-  | {
-      kind: "agent-requirements";
-      type: string;
-      parameter: string;
-      value?: string;
-      disabled?: boolean;
-    }
-  | {
-      kind: "artifact-dependencies";
-      source: string;
-      rules: string;
-      revision: string;
-      revisionValue?: string;
-      branch?: string;
-      clean?: boolean;
-      disabled?: boolean;
-    };
+export interface RuleInput {
+  [key: string]: unknown;
+  kind: RuleKind;
+  type?: string;
+  parameter?: string;
+  value?: string;
+  source?: string;
+  rules?: string;
+  revision?: string;
+  revisionValue?: string;
+  branch?: string;
+  clean?: boolean;
+  disabled?: boolean;
+}
 export function booleanText(value: string): string {
   if (value !== "true" && value !== "false") throw new Error("Expected true or false.");
   return value;
@@ -30,31 +26,26 @@ export function allowedField(field: string, allowed: readonly string[], ignoreCa
     throw new Error(`Supported fields: ${allowed.join(", ")}.`);
   return field;
 }
-export function ruleBody(jobId: string, input: RuleInput) {
-  if (input.kind === "agent-requirements") {
-    const parameter = plainProperty(input.parameter, input.value ?? "");
-    return {
-      type: requiredText(input.type, "Requirement type"),
-      disabled: input.disabled === true,
-      properties: propertiesBody([
-        { name: "property-name", value: parameter.name },
-        ...(input.value === undefined ? [] : [{ name: "property-value", value: input.value }]),
-      ]),
-    };
-  }
-  const source = requiredText(input.source, "Source job ID");
+export function ruleBody(jobId: string, input: RuleInput, extra: Record<string, unknown> = {}) {
+  const { kind, parameter, value, source, rules, revision, revisionValue, branch, clean, ...native } = input;
+  for (const flag of [clean, input.disabled]) if (flag !== undefined && typeof flag !== "boolean")
+    throw new Error("Rule flags must be booleans.");
+  const properties = kind === "agent-requirements" ? [
+    ...(parameter === undefined ? [] : [plainProperty("property-name", requiredText(parameter, "Parameter"))]),
+    ...(value === undefined ? [] : [plainProperty("property-value", value)]),
+  ] : [
+    ...(rules === undefined ? [] : [plainProperty("pathRules", rules)]),
+    ...(revision === undefined ? [] : [plainProperty("revisionName", revision)]),
+    ...(revisionValue === undefined ? [] : [plainProperty("revisionValue", revisionValue)]),
+    ...(branch === undefined ? [] : [plainProperty("revisionBranch", branch)]),
+    ...(clean === undefined ? [] : [plainProperty("cleanDestinationDirectory", String(clean))]),
+  ];
   return {
-    type: "artifact_dependency",
-    disabled: input.disabled === true,
-    "source-buildType": { id: source },
-    properties: propertiesBody([
-      { name: "pathRules", value: requiredText(input.rules, "Artifact rules") },
-      { name: "revisionName", value: requiredText(input.revision, "Revision rule") },
-      ...(input.revisionValue === undefined
-        ? []
-        : [{ name: "revisionValue", value: input.revisionValue }]),
-      ...(input.branch === undefined ? [] : [{ name: "revisionBranch", value: input.branch }]),
-      { name: "cleanDestinationDirectory", value: String(input.clean === true) },
-    ]),
+    ...(kind === "artifact-dependencies" && (source !== undefined || properties.length) ? { type: "artifact_dependency" } : {}),
+    ...(source === undefined ? {} : { "source-buildType": { id: requiredText(source, "Source job ID") } }),
+    ...(properties.length ? { properties: propertiesBody(properties) } : {}),
+    ...native,
+    ...(native.properties === undefined ? {} : { properties: inputProperties(native.properties) }),
+    ...extra,
   };
 }

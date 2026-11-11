@@ -101,8 +101,8 @@ for (const scenario of buildProjectionCases) {
         method: "GET",
         url: origin + scenario.path,
         query: {
-          resolveParameters: "false",
-          logBuildUsage: "false",
+
+
           ...(scenario.locator === undefined ? {} : { locator: scenario.locator }),
           fields: scenario.fields(projection),
         },
@@ -139,8 +139,8 @@ for (const scenario of buildProjectionCases) {
         method: "GET",
         url: origin + scenario.path,
         query: {
-          resolveParameters: "false",
-          logBuildUsage: "false",
+
+
           ...(scenario.locator === undefined ? {} : { locator: scenario.locator }),
           fields: scenario.defaultFields,
         },
@@ -388,9 +388,9 @@ test("US-004 list item projections preserve count+1 lookahead without adding vie
       method: "GET",
       url: origin + "/app/rest/builds/id:42/artifacts",
       query: {
-        resolveParameters: "false",
-        logBuildUsage: "false",
-        locator: "count:3,recursive:false,hidden:false,browseArchives:true",
+
+
+        locator: "count:3,browseArchives:true",
         fields: "count,file(custom)",
       },
     });
