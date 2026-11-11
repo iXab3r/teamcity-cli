@@ -18,6 +18,10 @@ import { locatorOption } from "./command-support.js";
 function number(args: Record<string, unknown>, key: string): number {
   return Number(requiredText(text(args, key), key));
 }
+function fieldName(value: string): string {
+  if (requiredText(value, "Field name").trim() === "") throw new Error("Field name is required.");
+  return value;
+}
 function comment(options: Record<string, unknown>): string | undefined {
   return typeof options.comment === "string" ? options.comment : undefined;
 }
@@ -416,7 +420,7 @@ export function createOperatorCommands(
         "Read a build field",
         Permission.ReadOnly,
         (c, { args }) =>
-          c.getBuildScalar(number(args, "build-id"), args.field),
+          c.getBuildScalar(number(args, "build-id"), fieldName(args.field)),
       ),
     ]),
   ];
