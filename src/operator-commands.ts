@@ -11,7 +11,7 @@ import type { TeamCityClient } from "./client.js";
 import { clientLeaf, option, text, repeatOption } from "./command-support.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
 import type { createTriageCommands } from "./triage-commands.js";
-import { booleanText, allowedField } from "./advanced-authoring-models.js";
+import { booleanText } from "./advanced-authoring-models.js";
 import { requiredText } from "./locator.js";
 import { locatorOption } from "./command-support.js";
 
@@ -405,16 +405,13 @@ export function createOperatorCommands(
         (c, { args }) => c.getBuildStatistic(number(args, "build-id"), args.name),
       ),
     ]),
-    command("fields", "Read id, buildTypeId, state or branchName", [
+    command("fields", "Read one scalar field as text", [
       leaf(
         "show <build-id> <field>",
         "Read a build field",
         Permission.ReadOnly,
         (c, { args }) =>
-          c.getBuildScalar(
-            number(args, "build-id"),
-            allowedField(args.field, ["id", "buildTypeId", "state", "branchName"]),
-          ),
+          c.getBuildScalar(number(args, "build-id"), args.field),
       ),
     ]),
   ];

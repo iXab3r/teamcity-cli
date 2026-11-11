@@ -802,7 +802,7 @@ Some commands print a compact view instead of every field:
   Test details and stack traces appear only in `--json`.
 - `builds problems` prints TYPE, FLAGS and a one-line DESCRIPTION, worded as `builds diagnose`
   words it.
-- String lists (tags, attribute names and parameter names) print one item per line.
+- String lists such as tags print one item per line; attributes and parameters print a table with their values.
 - File listings print NAME, SIZE and MODIFIED; artifact listings add directory and archive markers.
 - Downloads print the full local path, byte count and SHA-256 of the saved file.
 
