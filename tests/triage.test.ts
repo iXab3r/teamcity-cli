@@ -64,7 +64,7 @@ test("S6 validates identities, controls and body types before HTTP", async (test
 
     ["investigations", "create", "--item", "{synthetic-invalid"],
     ["investigations", "replace", ...item({ ...investigation, assignee: "wrong type" })],
-    ["investigations", "show", "--target", '{"kind":"job","jobId":"Build","projectId":"Example"}'],
+    ["investigations", "create", ...item({ ...investigation, resolution: 1 })],
     [
       "mutes",
       "create",
