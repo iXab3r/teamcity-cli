@@ -89,3 +89,30 @@ test("#376 trigger cron properties are read through the trigger, not its scalar 
   const result = await cli.execute(["jobs", "triggers", "show", "Example_Build", "Trigger"]) as { properties: unknown };
   assert.deepEqual(result.properties, [{ name: "cronExpression_dm", type: "plain", value: "*", redacted: false }]);
 });
+
+test("#156 authentication show keeps module properties and hides only protected values", async t => {
+  const rt = await createTestRuntime(t);
+  server.use(http.get(`${base}/server/authSettings`, () => HttpResponse.json({
+    allowGuest: false,
+    modules: { module: [{ name: "LDAP", properties: { property: [
+      { name: "serverUrl", value: "ldap://directory.test" },
+      { name: "bindToken", value: "synthetic-plain-name" },
+      { name: "bindPassword", value: "synthetic-protected", type: { rawValue: "password" } },
+      { name: "secure:key", value: "synthetic-secure" },
+      { name: "absent" },
+    ] } }, { name: "Default" }] },
+  })));
+  assert.deepEqual(await rt.createCli().execute(["server", "authentication", "show"]), {
+    allowGuest: false,
+    modules: [
+      { name: "LDAP", properties: [
+        { name: "serverUrl", type: "plain", redacted: false, value: "ldap://directory.test" },
+        { name: "bindToken", type: "plain", redacted: false, value: "synthetic-plain-name" },
+        { name: "bindPassword", type: "protected", redacted: true },
+        { name: "secure:key", type: "plain", redacted: true },
+        { name: "absent", type: "plain", redacted: true },
+      ] },
+      { name: "Default" },
+    ],
+  });
+});
