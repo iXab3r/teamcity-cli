@@ -33,3 +33,8 @@ for (const [owner, id, path] of [["projects", "Example", "/projects/id:Example"]
     assert.deepEqual(await rt.createCli().execute(argv), { name: "setting", type: "plain", redacted: false, value: "" });
   });
 }
+
+for (const field of ["", "   "]) test(`#156 builds fields show rejects blank field ${JSON.stringify(field)} before any request`, async t => {
+  const rt = await createTestRuntime(t);
+  await assert.rejects(rt.createCli().execute(["builds", "fields", "show", "101", field]), /Field name is required/);
+});
