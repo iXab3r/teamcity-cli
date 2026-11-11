@@ -217,7 +217,7 @@ test("template flags are explicit and affect only the named attachment", async (
   assert.deepEqual(methods, ["POST", "DELETE"]);
 });
 
-test("S2 results redact all plugin values and unknown nested fields, preserving inherited/source identity", async (testContext) => {
+test("S2 results return plain plugin values and redact password values, preserving inherited/source identity", async (testContext) => {
   const { cli, runtime } = await writableCli(testContext);
   server.use(
     http.all(`${base}/*`, () =>
@@ -228,7 +228,7 @@ test("S2 results redact all plugin values and unknown nested fields, preserving 
         disabled: false,
         properties: {
           property: [
-            { name: "ordinary", value: "synthetic-hidden" },
+            { name: "ordinary", value: "plain-plugin-value" },
             { name: "password", value: "synthetic-hidden", type: { rawValue: "password" } },
           ],
         },
@@ -252,7 +252,7 @@ test("S2 results redact all plugin values and unknown nested fields, preserving 
     ])) as Record<string, unknown>;
     assert.equal(result.inherited, true);
     assert.deepEqual(result.properties, [
-      { name: "ordinary", type: "plain", redacted: true },
+      { name: "ordinary", value: "plain-plugin-value", type: "plain", redacted: false },
       { name: "password", type: "protected", redacted: true },
     ]);
     assert.equal("buildCustomization" in result, false);

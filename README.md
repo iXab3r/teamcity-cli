@@ -16,7 +16,7 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 | **Read-only by default** | A fresh profile can only read. Writes need `permissions grant Update` for that profile; account and server administration need `Admin`, token and secret workflows need `Credentials`, each granted separately. |
 | **Made for build triage** | `builds diagnose` answers "why did it fail" in one call: up to 10 problems and 20 failed tests. `jobs run --wait` and `builds wait` exit 0 on success, 1 on failure, 124 on timeout, 130 on Ctrl+C. |
 | **Cheap for agents** | `--json` on every command, paged lists (`--limit`, `--start`) that return `hasMore` and `nextStart`, stable error codes, and a persistent `--json-rpc` session without restarting Node. |
-| **No leaked secrets** | Tokens live in the platform secret store, never in profile JSON or command arguments. Password parameters come back as `redacted: true`, and errors carry the HTTP status, never the response body. |
+| **No leaked secrets** | Tokens live in the platform secret store, never in profile JSON or command arguments. Password/secure parameters come back as `redacted: true`, and errors carry the HTTP status, never the response body. |
 | **Predictable** | No write is retried or replayed. When the answer to a queue request is lost, `jobs run` reports `run.unknownOutcome` and the command to check with, instead of posting again. |
 
 <picture>
@@ -29,10 +29,12 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 Every documented query parameter of those operations is caller-controlled; see the [current REST coverage](docs/rest-api-coverage/current/README.md).
 
 Share of the 449 published REST operations each tool can call through its own commands, by API area.
+Operation coverage remains 449/449; 0.9.0 improves the returned configuration data, including full
+scripts and plain settings that 0.8.0 hid. The matrix does not measure response-field completeness.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/coverage-matrix-dark.svg">
-  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.8.0 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands, bbox 1.1.0 reaches 9 (2%) and tctest 1.3.5 reaches 6 (1%)">
+  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.9.0 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands, bbox 1.1.0 reaches 9 (2%) and tctest 1.3.5 reaches 6 (1%)">
 </picture>
 
 The JetBrains CLI also has a raw `teamcity api` request command and features outside this API
@@ -54,6 +56,14 @@ teamcity-cli jobs run Demo_Tests --profile uat --branch main --wait --timeout 10
 teamcity-cli --help
 teamcity-cli builds --help
 ```
+
+Read commands return the configuration values TeamCity makes available to your token, including
+full scripts, Docker options, requirement operands and VCS connection settings. Only password-type
+parameters, `secure:` properties and values masked or omitted by TeamCity stay hidden.
+Use `jobs configuration show <job-id> --json` for build settings and content,
+`projects templates show <template-id> --json` for a template, and
+`agents parameters list <agent-id> --json` for system, environment and configuration parameters.
+Treat real output as private configuration when sharing it.
 
 Needs Node.js 22+. Your server's version and your account's rights still decide what a call is
 allowed to do; the local permission gate does not replace TeamCity's own authorization.

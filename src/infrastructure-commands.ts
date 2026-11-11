@@ -162,10 +162,10 @@ export function createInfrastructureCommands(
     command("properties", "Manage VCS root properties", [
       leaf(
         "list <id>",
-        "List property names",
+        "List property values",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.listVcsRootPropertyNames(args.id, fieldsFromOptions(options)),
+          c.listVcsRootProperties(args.id, fieldsFromOptions(options)),
         [fieldsOption],
 
       ),
@@ -256,10 +256,10 @@ export function createInfrastructureCommands(
     ),
     leaf(
       "properties <id>",
-      "List parameter names",
+      "List parameter values",
       Permission.ReadOnly,
       (c, { args, options }) =>
-        c.listVcsInstancePropertyNames(args.id, fieldsFromOptions(options)),
+        c.listVcsInstanceProperties(args.id, fieldsFromOptions(options)),
       [fieldsOption],
 
     ),
@@ -401,7 +401,7 @@ export function createInfrastructureCommands(
     command("context", "Manage DSL context parameters", [
       leaf(
         "list <id>",
-        "List DSL context parameter names",
+        "List DSL context parameter values",
         Permission.ReadOnly,
         (c, { args }) => c.listVersionedContext(args.id),
       ),

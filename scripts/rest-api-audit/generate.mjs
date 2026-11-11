@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const root = process.cwd();
 const capture = resolve(process.argv[2] ?? '.workspace/workstreams/rest-api-coverage-audit');
@@ -27,7 +28,7 @@ const explicitControls = {
 };
 
 // Full command paths come from the product's own exported declaration tree.
-const { teamCityDefinition } = await import(`file://${root}/dist/src/cli.js`);
+const { teamCityDefinition } = await import(pathToFileURL(resolve(root, "dist/src/cli.js")).href);
 const leaves = [];
 (function walk(nodes, prefix) {
   for (const node of nodes) {

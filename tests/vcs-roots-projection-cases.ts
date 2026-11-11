@@ -355,13 +355,18 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/vcs-roots/id:Demo/properties",
     "query": {
-      "fields": "count,property(name)"
+      "fields": "count,property(name,value,inherited,type(rawValue))"
     },
     "body": "",
     "baselineResult": [
-      "mode"
+      {
+        "name": "mode",
+        "type": "plain",
+        "redacted": false,
+        "value": "test"
+      }
     ],
-    "human": "mode\n",
+    "human": "name  type   redacted  value\n----  -----  --------  -----\nmode  plain  false     test\n",
     "stderr": ""
   },
   {

@@ -2968,6 +2968,12 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
+    "command": "agents parameters list <agent-id>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "listAgentParameters"
+   },
+   {
     "command": "agents show <id>",
     "permission": "ReadOnly",
     "options": [
@@ -2989,7 +2995,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/agents-projection.test.ts"
+    "tests/agents-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-operations.test.ts:114"
@@ -4033,12 +4040,24 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
+    "command": "jobs configuration show <job-id>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "getJobConfiguration"
+   },
+   {
     "command": "jobs show <id>",
     "permission": "ReadOnly",
     "options": [
      "--fields <projection>"
     ],
     "clientMethod": "getJob"
+   },
+   {
+    "command": "projects templates show <template-id>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "getJobConfiguration"
    }
   ],
   "query": [
@@ -4055,7 +4074,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/jobs-projection.test.ts"
+    "tests/jobs-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-foundation.test.ts:196",
@@ -4111,7 +4131,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4164,7 +4185,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4310,7 +4332,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4363,7 +4386,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4624,7 +4648,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4677,7 +4702,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4713,6 +4739,12 @@
      "--fields <projection>"
     ],
     "clientMethod": "listPluginParameters"
+   },
+   {
+    "command": "jobs features parameters show <job-id> <feature-id> <name>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "listPluginParameters"
    }
   ],
   "query": [
@@ -4730,7 +4762,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4933,7 +4966,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5131,7 +5165,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
-    "tests/job-parameters-projection.test.ts"
+    "tests/job-parameters-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5470,7 +5505,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5523,7 +5559,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-rules-projection.test.ts"
+    "tests/job-rules-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5575,7 +5612,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5628,7 +5666,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/command-support.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5664,6 +5703,12 @@
      "--fields <projection>"
     ],
     "clientMethod": "listPluginParameters"
+   },
+   {
+    "command": "jobs steps parameters show <job-id> <step-id> <name>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "listPluginParameters"
    }
   ],
   "query": [
@@ -5681,7 +5726,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5721,7 +5767,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5920,7 +5967,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5973,7 +6021,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6902,7 +6951,8 @@
     "tests/projected-escape-credential.test.ts",
     "tests/projected-long-credential.test.ts",
     "tests/projected-redaction.test.ts",
-    "tests/queue-action-projection.test.ts"
+    "tests/queue-action-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/client-builds.test.ts:86"
@@ -7534,7 +7584,7 @@
     "options": [
      "--fields <projection>"
     ],
-    "clientMethod": "listBuildRuntimeParameterNames"
+    "clientMethod": "listBuildRuntimeParameters"
    }
   ],
   "query": [
@@ -7552,7 +7602,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/evidence-projection.test.ts",
-    "tests/presentation.test.ts"
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -7831,7 +7881,7 @@
     "options": [
      "--fields <projection>"
     ],
-    "clientMethod": "listBuildRuntimeParameterNames"
+    "clientMethod": "listBuildRuntimeParameters"
    }
   ],
   "query": [
@@ -7848,7 +7898,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/evidence-projection.test.ts"
+    "tests/evidence-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10789,7 +10840,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/project-configuration-projection.test.ts"
+    "tests/project-configuration-projection.test.ts",
+    "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10905,7 +10957,7 @@
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/authoring.test.ts:416"
+    "tests/authoring.test.ts:408"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -14468,7 +14520,7 @@
     "options": [
      "--fields <projection>"
     ],
-    "clientMethod": "listVcsInstancePropertyNames"
+    "clientMethod": "listVcsInstanceProperties"
    }
   ],
   "query": [
@@ -14485,6 +14537,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/read-values.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -14820,7 +14873,7 @@
     "options": [
      "--fields <projection>"
     ],
-    "clientMethod": "listVcsRootPropertyNames"
+    "clientMethod": "listVcsRootProperties"
    }
   ],
   "query": [
@@ -14837,6 +14890,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/read-values.test.ts",
     "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],

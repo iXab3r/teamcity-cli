@@ -120,6 +120,8 @@ for (const scenario of buildProjectionCases) {
   });
 
   test(`${story}-A${scenario.parityAcceptance ?? acceptance.parity} ${scenario.name}: exact baseline request and output on all four surfaces`, async t => {
+    // Relative-age fixtures use a stable observation date across calendar days.
+    t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-10T12:00:00Z") });
     const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
     const cli = rt.createCli();
     const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {

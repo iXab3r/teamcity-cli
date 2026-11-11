@@ -290,15 +290,15 @@ export function createTriageCommands(
       ),
     ]),
     ...(["output-parameters", "resulting-properties"] as const).map((kind) =>
-      command(kind, "Inspect runtime parameter names", [
-        withView(stringList, leaf(
+      command(kind, "Inspect runtime parameters", [
+        leaf(
           "list <id>",
-          "List parameter names",
+          "List parameter values",
           Permission.ReadOnly,
-          (c, { args, options }) =>
-            c.listBuildRuntimeParameterNames(num(args, "id"), kind, fieldsFromOptions(options)),
+          (c, { args, options }) => c.listBuildRuntimeParameters(num(args, "id"), kind, fieldsFromOptions(options)),
           [fieldsOption],
-        )),
+        ),
+
         leaf(
           "exists <id> <name>",
           "Check parameter existence",

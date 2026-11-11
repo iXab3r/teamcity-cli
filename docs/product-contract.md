@@ -5,6 +5,16 @@ the 0.7 paging contract and Core output guarantees under
 [the pinned Core 0.7.1 contract](DESIGN.md).
 Historical extraction provenance remains in [migration](migration.md).
 
+## Reading configuration values
+
+Read commands return plain values supplied by TeamCity, including scripts and unknown plugin,
+requirement, trigger, dependency, VCS and agent properties. Password-type parameters, `secure:`
+properties and values masked or omitted by the server remain redacted. Read policy does not use
+credential-name or value heuristics; plain write validation and protected-metadata preflights remain.
+`jobs configuration show` and `projects templates show` preserve native configuration/type metadata,
+including build settings, while `agents parameters list` reads system/env/config parameters.
+Explicit native projections also remove values when returned property metadata marks them secret.
+
 ## Field projections
 
 Explicit option values are sent unchanged and never extended. `--fields` returns native JSON

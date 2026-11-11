@@ -257,42 +257,33 @@ test("authoring validates fields, required options, paging, paths and plain prop
   assert.equal(requests, 0);
 });
 
-test("parameter reads redact protected metadata while preserving future UI types", async (testContext) => {
+test("parameter reads use server secret metadata and preserve plain UI types and names", async (testContext) => {
   const properties = [
     { name: "plain", value: "debug" },
     { name: "password-type", value: "synthetic-hidden", type: { rawValue: "password" } },
-    { name: "masked", value: "synthetic-hidden", type: { rawValue: "text display='hidden'" } },
-    {
-      name: "plugin",
-      value: "future value",
-      type: { rawValue: "future-kind label='Future'" },
-    },
-    { name: "malformed", value: "synthetic-hidden", type: {} },
-    { name: "env.ACCESS_TOKEN", value: "synthetic-hidden" },
-    { name: "endpoint", value: "https://fixture:synthetic-hidden@example.test" },
+    { name: "secure:credential", value: "synthetic-hidden" },
     { name: "server-withheld", value: null },
+    { name: "server-masked", value: "********" },
+    { name: "server-omitted" },
+    { name: "hidden-text", value: "visible", type: { rawValue: "text display='hidden'" } },
+    { name: "future", value: "visible", type: { rawValue: "future-kind label='Future'" } },
+    { name: "malformed", value: "visible", type: {} },
+    { name: "env.ACCESS_TOKEN", value: "visible" },
+    { name: "endpoint", value: "https://fixture:visible@example.test" },
   ];
-  server.use(
-    http.get(`${base}/projects/id:Example/parameters`, () =>
-      HttpResponse.json({ property: properties }),
-    ),
-  );
+  server.use(http.get(`${base}/projects/id:Example/parameters`, () => HttpResponse.json({ property: properties })));
   const runtime = await createTestRuntime(testContext);
   const cli = runtime.createCli();
-  assert.equal(await cli.run(["projects", "parameters", "list", "Example", "--json"]), 0);
-  const result = JSON.parse(runtime.stdout());
-  assert.equal(result[0].value, "debug");
-  assert.equal(result[3].value, "future value");
-  assert.equal(
-    result
-      .filter((_: unknown, index: number) => index !== 0 && index !== 3)
-      .every((p: { redacted: boolean; value?: string }) => p.redacted && p.value === undefined),
-    true,
-  );
-  assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
-  runtime.resetOutput();
-  assert.equal(await cli.run(["projects", "parameters", "list", "Example"]), 0);
-  assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
+  const result = await cli.execute(["projects", "parameters", "list", "Example"]) as { value?: string; redacted: boolean }[];
+  assert.equal(result[0]!.value, "debug");
+  for (const item of result.slice(1, 6)) assert.deepEqual([item.redacted, item.value], [true, undefined]);
+  for (const item of result.slice(6)) assert.equal(item.redacted, false);
+  for (const format of [[], ["--json"]]) {
+    runtime.resetOutput();
+    assert.equal(await cli.run(["projects", "parameters", "list", "Example", ...format]), 0);
+    assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
+    assert.match(runtime.stdout(), /visible/);
+  }
 });
 
 test("parameter writes preflight metadata, reject protected/malformed metadata and only tolerate create 404", async (testContext) => {
@@ -350,7 +341,7 @@ test("parameter writes preflight metadata, reject protected/malformed metadata a
   assert.equal(writes, 1);
 });
 
-test("steps replace does not read/merge, unknown properties are redacted and VCS excludes connection data", async (testContext) => {
+test("steps replace does not read/merge and returns plain plugin values", async (testContext) => {
   const runtime = await createTestRuntime(testContext);
   const cli = runtime.createCli();
   await cli.execute(["permissions", "grant", "Update"]);
@@ -368,7 +359,7 @@ test("steps replace does not read/merge, unknown properties are redacted and VCS
         name: "Empty",
         type: "plugin",
         properties: {
-          property: [{ name: "unrecognized", value: "synthetic-hidden" }],
+          property: [{ name: "unrecognized", value: "plain-plugin-value" }],
         },
         shortDescription: "synthetic-hidden",
         extra: "synthetic-hidden",
@@ -396,6 +387,7 @@ test("steps replace does not read/merge, unknown properties are redacted and VCS
   ]);
   assert.equal(requests, 1);
   assert.equal(JSON.stringify(step).includes("synthetic-hidden"), false);
+  assert.match(JSON.stringify(step), /plain-plugin-value/);
   assert.deepEqual(await cli.execute(["vcs", "roots", "show", "Root"]), {
     id: "Root",
     name: "Root",

@@ -1,5 +1,5 @@
 {
-  "baselineHead": "52f0c0eebcd5c5ee13e49de6b100bb8d6c097968",
+  "baselineHead": "57b89c90b339286084554c9a8e429d35200163e2",
   "dateUTC": "2026-11-10",
   "total": 449,
   "covered": 449,
@@ -218,14 +218,14 @@
     "GET /app/rest/projects/{p1}/parameters/{p2}",
     "GET /app/rest/projects/{p1}/secure/values/{p2}"
   ],
-  "leaves": 457,
+  "leaves": 460,
   "leafPermissions": {
     "Admin": 37,
     "Credentials": 14,
-    "ReadOnly": 235,
+    "ReadOnly": 238,
     "Update": 171
   },
-  "leavesReachingTransport": 453,
+  "leavesReachingTransport": 456,
   "localLeavesWithoutRequest": [
     "projects secure forget-reference <alias>",
     "users tokens forget",

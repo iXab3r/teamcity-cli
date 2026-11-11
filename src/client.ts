@@ -41,6 +41,8 @@ import {
   isPlainParameter,
   plainProperty,
   safeProperty,
+  isSecretProperty,
+  readableConfiguration,
   stepBody,
   safeStep,
   safeRoot,
@@ -391,9 +393,33 @@ export class TeamCityClient {
     );
   }
 
+  public async getJobConfiguration(id: string) {
+    const properties = `property(${propertyFields})`;
+    const fields = [
+      "id,name,projectId,projectName,description,paused,templateFlag,type",
+      `settings(${properties}),parameters(${properties}),output-parameters(${properties})`,
+      `steps(step(${stepFields})),features(feature(${extensionFields})),triggers(trigger(${extensionFields}))`,
+      `agent-requirements(agent-requirement(${extensionFields}))`,
+      `snapshot-dependencies(snapshot-dependency(${snapshotFields}))`,
+      `artifact-dependencies(artifact-dependency(${snapshotFields}))`,
+      `vcs-root-entries(vcs-root-entry(vcs-root(${rootFields},properties(${properties})),checkout-rules))`,
+      `templates(buildType(${identityFields}))`,
+    ].join(",");
+    const value = await this.#requestJson<unknown>("GET", jobPath(id), { fields });
+    return this.#projectedValue(value, fields, readableConfiguration);
+  }
+
+  public async listAgentParameters(id: number) {
+    const result = await this.#requestJson<{ properties?: { property?: RawProperty[] } }>(
+      "GET", agentPath(id), { fields: `properties(property(${propertyFields}))` },
+    );
+    return (result.properties?.property ?? []).map((item) => safeProperty(item));
+  }
+
   public listJobs<F extends string | undefined = undefined>(
     options: ListJobsOptions<F> = {}
   ) {
+
     return this.#list(
       "/app/rest/buildTypes",
       [
@@ -1237,9 +1263,10 @@ export class TeamCityClient {
       "GET",
       `${entityPath(kind, jobId, id)}/parameters`,
       { fields: `property(${propertyFields})` },
-      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)),
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields
     );
+
   }
 
   public async replacePluginParameters<F extends string | undefined = undefined>(
@@ -1266,11 +1293,15 @@ export class TeamCityClient {
     id: string,
     name: string,
   ) {
-    await this.#requestText(
-      "GET",
-      `${entityPath(kind, jobId, id)}/parameters/${pathSegment(name)}`,
+    // The collection carries password type metadata that the scalar endpoint omits.
+    const properties = await this.listPluginParameters(kind, jobId, id);
+    const property = properties.find((item) => item.name === name);
+    if (property === undefined) throw new HttpError(404, "TeamCity property was not found.");
+    if (property.redacted) return property;
+    const value = await this.#requestText(
+      "GET", `${entityPath(kind, jobId, id)}/parameters/${pathSegment(name)}`,
     );
-    return safeProperty({ name: name }, false);
+    return { ...property, ...safeProperty({ name, value, type: { rawValue: property.type } }) };
   }
 
   public async setPluginParameter(
@@ -2164,7 +2195,7 @@ export class TeamCityClient {
     const metadata = await this.#requestJson<RawProperty>("GET", path, {
       fields: "name,inherited,type(rawValue)",
     });
-    if (!isPlainParameter(metadata)) {
+    if (method === "PUT" ? !isPlainParameter(metadata) : isSecretProperty({ ...metadata, value: "" })) {
       if (method === "PUT")
         throw new Error("Protected parameter metadata cannot be changed with plain input.");
       return safeProperty(metadata, false);
@@ -2188,7 +2219,7 @@ export class TeamCityClient {
         : {
             rawValue: await this.#requestText(method, `${path}/type/rawValue`, value),
           };
-    const result = safeProperty({ name: name, type });
+    const result = safeProperty({ name: name, type, value: "" });
     return { name: result.name, type: result.type, redacted: result.redacted };
   }
 
@@ -3090,7 +3121,7 @@ export class TeamCityClient {
     );
   }
 
-  public async listBuildRuntimeParameterNames<F extends string | undefined = undefined>(
+  public async listBuildRuntimeParameters<F extends string | undefined = undefined>(
     id: number,
     kind: "output-parameters" | "resulting-properties",
     fields?: F,
@@ -3098,12 +3129,9 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       `${buildPath(id)}/${kind}`,
-      { fields: "count,property(name)" },
-      raw => {
-        const value = raw as { property?: unknown[] };
-    return (value.property ?? []).map((item) => triage.safeScalars(item, ["name"]).name);
-      },
-      fields,
+      { fields: `count,property(${propertyFields})` },
+      raw => ((raw as { property?: RawProperty[] }).property ?? []).map((item) => safeProperty(item)), fields,
+
     );
   }
 
@@ -3776,16 +3804,17 @@ export class TeamCityClient {
     );
   }
 
-  public async listVcsRootPropertyNames<F extends string | undefined = undefined>(
+  public async listVcsRootProperties<F extends string | undefined = undefined>(
     id: string,
     fields?: F
   ) {
     return this.#projectedJson(
       "GET",
       infrastructure.vcsRootPath(id) + "/properties",
-      { fields: "count,property(name)" },
-      infrastructure.propertyNames,
+      { fields: `count,property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
+
     );
   }
 
@@ -3925,16 +3954,17 @@ export class TeamCityClient {
     );
   }
 
-  public async listVcsInstancePropertyNames<F extends string | undefined = undefined>(
+  public async listVcsInstanceProperties<F extends string | undefined = undefined>(
     id: string,
     fields?: F
   ) {
     return this.#projectedJson(
       "GET",
       infrastructure.vcsInstancePath(id) + "/properties",
-      { fields: "count,property(name)" },
-      infrastructure.propertyNames,
+      { fields: `count,property(${propertyFields})` },
+      value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
+
     );
   }
 
@@ -4112,7 +4142,7 @@ export class TeamCityClient {
 
   public async listVersionedContext(id: string) {
     return infrastructure.contextParameters(
-      await this.#requestJson("GET", infrastructure.versionedPath(id) + "/contextParameters"),
+      await this.#requestJson("GET", infrastructure.versionedPath(id) + "/contextParameters"), true,
     );
   }
 
@@ -4328,6 +4358,7 @@ export class TeamCityClient {
     project: (value: unknown) => T,
   ): Projected<T, F> {
     if (fields === undefined) return project(value) as Projected<T, F>;
+    value = readableConfiguration(value);
     if (!this.#token) return value as Projected<T, F>;
     const mask = knownCredentialMask(this.#token);
     const redact = (item: unknown): unknown => {

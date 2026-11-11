@@ -1,7 +1,7 @@
-# Current REST coverage — 0.8.0 candidate
+# Current REST coverage — 0.9.0 candidate
 
 The current mapping covers **449 of 449 operations: 449 covered, 0 partial, 0 missing**.
-This is the 0.8.0 candidate; the published product is 0.7.1.
+This is the 0.9.0 candidate; the published product is 0.8.0.
 Core remains exactly `@eyeauras/cli-factory` 0.7.1.
 
 The pinned source is public JetBrains TeamCity Swagger 2.0,
@@ -13,9 +13,11 @@ Its SHA-256 is
 
 The frozen product 0.7.1 baseline (product commit `20ba82a`, audit committed as `599b1b2`) had
 180 covered, 268 partial and 1 missing operation; 448 of 449 were reachable.
-It had 456 service commands. The candidate has 457, adding `users show <id>`:
-235 ReadOnly, 171 Update, 37 Admin and 14 Credentials.
-Of these, 453 reach transport and 4 are local credential workflows without HTTP.
+It had 456 service commands. Published 0.8.0 has 457 commands and already covers 449/449 operations.
+The candidate has 460:
+`users show <id>` remains available, with new job configuration, template and agent-parameter reads.
+238 ReadOnly, 171 Update, 37 Admin and 14 Credentials.
+Of these, 456 reach transport and 4 are local credential workflows without HTTP.
 All 449 operations are issued by a command in the passing offline suite.
 
 ## Meaning and limits
@@ -39,3 +41,7 @@ A passing gate therefore checks the committed mapping against current offline ev
 To update intentionally, follow the “Осознанная регенерация” commands in the
 [reproduction section](../README.md#воспроизведение).
 Review the regenerated mapping and retain the 449/0/0 status for this candidate.
+
+Response completeness is separate from this operation/query audit. The #156 regression suite fails
+on current 0.8.0 main (`c78863b`) and passes on the 0.9.0 candidate: scripts and ordinary
+configuration values are returned while password/secure and server-withheld values stay hidden.

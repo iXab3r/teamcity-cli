@@ -9,7 +9,7 @@ import { plainProperty, safeProperty } from "../src/authoring-models.js";
 const base = "https://teamcity.test/app/rest";
 const service = "ai-cli-factory:teamcity-cli";
 const server = setupServer();
-test("property protection decodes credential-bearing URL keys and fragments", () => {
+test("write validation rejects credential-bearing URLs while reads preserve plain values", () => {
   for (const value of [
     "https://example.test/repo?%74oken=synthetic",
     "https://example.test/repo#access_token=synthetic",
@@ -20,7 +20,8 @@ test("property protection decodes credential-bearing URL keys and fragments", ()
     assert.deepEqual(safeProperty({ name: "url", value }), {
       name: "url",
       type: "plain",
-      redacted: true,
+      value,
+      redacted: false,
     });
   }
   assert.equal(
@@ -434,7 +435,7 @@ test("S8 effective/status/context projections reject nested private data and mal
     config: { synchronizationMode: "disabled" },
   });
   assert.deepEqual(await cli.execute([...versioned, "context", "list", "Example"]), [
-    { name: "environment", hasValue: true },
+    { name: "environment", value: "synthetic-hidden", type: "plain", redacted: false, hasValue: true },
   ]);
   assert.deepEqual(await cli.execute([...versioned, "status", "Example"]), {
     type: "warn",

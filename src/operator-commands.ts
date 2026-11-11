@@ -144,6 +144,11 @@ export function createOperatorCommands(
     ]);
   }
   const agents = [
+    command("parameters", "Inspect agent parameters", [
+      leaf("list <agent-id>", "List agent parameter values", Permission.ReadOnly, (c, { args }) =>
+        c.listAgentParameters(number(args, "agent-id")),
+      ),
+    ]),
     bulk.agentTypes,
     agentStatus("enabled"),
     agentStatus("authorized"),

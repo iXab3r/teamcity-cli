@@ -4,13 +4,14 @@
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
 const root = process.cwd();
 const capture = resolve(process.argv[2] ?? '.workspace/workstreams/rest-api-coverage-audit');
-const { teamCityDefinition } = await import(`file://${root}/dist/src/cli.js`);
-const { createTestRuntime } = await import(`file://${root}/dist/tests/support.js`);
+const { teamCityDefinition } = await import(pathToFileURL(resolve(root, "dist/src/cli.js")).href);
+const { createTestRuntime } = await import(pathToFileURL(resolve(root, "dist/tests/support.js")).href);
 const leaves = [];
 (function walk(nodes, prefix) {
   for (const node of nodes) {
