@@ -151,3 +151,26 @@ test("#382 createProject keeps synchronous argument errors", () => {
   const client = new TeamCityClient({ baseUrl: "https://teamcity.test", token: profileToken });
   assert.throws(() => client.createProject(undefined as unknown as string, {}), { message: "Project ID must be text." });
 });
+
+test("#382 a complete error body keeps its text when it ends like a secret's start", async t => {
+  const rt = await runtime(t);
+  server.use(http.all("*", () => HttpResponse.text("Invalid fields", { status: 400 })));
+  await assert.rejects(rt.createCli().execute(["server", "status"]), {
+    code: "http.rejected", message: "TeamCity request failed with HTTP 400. Invalid fields",
+  });
+});
+
+test("#382 a plain password value is not masked in server error text", async t => {
+  const rt = await runtime(t);
+  server.use(
+    http.get("*", () => HttpResponse.json({ name: "color", type: { rawValue: "text" } })),
+    http.put("*", () => HttpResponse.text("Invalid setting plain-caller-value", { status: 400 })),
+  );
+  await assert.rejects(
+    rt.createCli().execute(["jobs", "parameters", "set-password", "Demo", "color", "--value", "plain-caller-value"]),
+    (error: Error) => {
+      assert.equal((error.cause as Error).message, "TeamCity request failed with HTTP 400. Invalid setting plain-caller-value");
+      return true;
+    },
+  );
+});
