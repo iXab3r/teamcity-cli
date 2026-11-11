@@ -6,7 +6,7 @@ import { pathSegment } from "./authoring-models.js";
 export type FileTree = "jobs" | "builds" | "instances" | "server";
 export type DownloadFormat = "bytes" | "zip" | "png" | "svg";
 export const fileFields = "name,size,modificationTime";
-export const artifactFileFields = `${fileFields},children($none),content($none)`;
+export const artifactFileFields = `${fileFields},children(href),content(href)`;
 export function remotePath(value: string) {
   if (
     !value ||
