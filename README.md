@@ -24,9 +24,13 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
   <img src="docs/images/how-it-works-light.svg" alt="People, AI agents and Node.js code use one teamcity-cli command tree, which applies profiles, the secret store, a permission gate and redaction before calling the TeamCity REST API">
 </picture>
 
-Requests send what the caller supplies. TeamCity validates service values and applies omitted-field
+Requests send caller values and the documented inclusive list defaults. TeamCity validates service values and applies omitted-field
 defaults. Native JSON DTOs work alongside compact options; permission gates, confirmations and local
-file/credential safety remain enforced. See the [request contract](docs/reference.md).
+file/credential safety remain enforced. Lists without filters request all items within their page
+limits: builds include all branches and states, and agents include unauthorized agents.
+Build/queue tag lists include public tags and the current user’s private tags only.
+Use `builds list --branch @default` or `--branch @this` to narrow the branch; templates remain separate
+from jobs. See [list defaults](docs/reference.md#list-defaults) for scan bounds and scoped exceptions.
 
 ## Coverage
 

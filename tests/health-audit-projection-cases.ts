@@ -13,7 +13,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/audit",
     "query": {
-      "locator": "start:3,count:3",
+      "locator": "systemAction:any,hidden:any,start:3,count:3",
       "fields": "nextHref,auditEvent(id,timestamp,action(id,name))"
     },
     "body": "",

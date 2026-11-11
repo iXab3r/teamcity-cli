@@ -72,7 +72,7 @@ export const systemCases: readonly SystemCase[] = [
     method: "GET",
     path: "/audit",
     argv: ["audit", "list"],
-    query: { locator: "start:0,count:101", fields: `nextHref,auditEvent(${af})` },
+    query: { locator: "systemAction:any,hidden:any,start:0,count:101", fields: `nextHref,auditEvent(${af})` },
     response: {
       count: 1,
       auditEvent: [

@@ -27,7 +27,7 @@ const locator = "count:100";
 function tree(prefix: string[], path: string, query: Record<string, string> = {}): FileCase[] {
   const artifact = prefix[0] === "builds";
   const listingQuery = { ...query,
-    locator: artifact ? "count:101,browseArchives:true" : locator,
+    locator: artifact ? "hidden:any,count:101,browseArchives:true" : "hidden:any," + locator,
     fields: artifact ? `count,file(${ff},children(href),content(href))` : lf };
   const expectedList = { count: 1, items: [artifact ? { ...file, directory: false, archive: false } : file],
     ...(artifact ? { hasMore: false } : {}) };

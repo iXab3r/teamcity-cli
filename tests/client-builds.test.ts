@@ -38,7 +38,7 @@ test("lists operational builds across all branches with bounded filters", async 
       const url = assertReadRequest(request);
       assert.equal(
         url.searchParams.get("locator"),
-        "buildType:(id:Example_Build)," +
+        "defaultFilter:false,branch:(default:any),buildType:(id:Example_Build)," +
           "affectedProject:(id:Example),state:running,status:FAILURE,start:10,count:6",
       );
       assert.equal(url.searchParams.get("fields"), `nextHref,build(${buildFields})`);

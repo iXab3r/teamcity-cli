@@ -743,7 +743,7 @@ test("artifact browsing projects directory/archive flags, completeness and profi
   assert.match(listed.stdout, /More results: --limit 3/);
   assert.match(listed.stdout, /teamcity-cli builds artifacts children 7 dist --profile uat/);
   assert.match(listed.stdout, /teamcity-cli builds artifacts download 7 app.zip --output app.zip --profile uat/);
-  assert.equal(queries[0]?.searchParams.get("locator"), "count:3,browseArchives:true");
+  assert.equal(queries[0]?.searchParams.get("locator"), "hidden:any,count:3,browseArchives:true");
   assert.doesNotMatch(listed.stdout, /href|synthetic-|must-not-recurse|readme.txt/);
   const json = await runtime.json(cli, ["builds", "artifacts", "list", "7", "--profile", "uat"]);
   assert.deepEqual(json, { count: 3, hasMore: false, items: [

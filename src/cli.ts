@@ -1,4 +1,7 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import {
+  CliError,
   command,
   createCli,
   helpLayout,
@@ -92,6 +95,30 @@ function pageValues(options: Record<string, unknown>): { limit?: number; start?:
   };
 }
 
+const git = promisify(execFile);
+async function listBranch(name: string | undefined, context: CommandContext): Promise<string | { name: string } | undefined> {
+  if (name !== "@this") return name;
+  try {
+    const { stdout } = await git("git", ["symbolic-ref", "--quiet", "HEAD"], {
+      cwd: context.cwd, env: context.environment, signal: context.signal,
+    });
+    const ref = stdout.trimEnd();
+    if (!ref.startsWith("refs/heads/")) throw new Error("HEAD is not a branch");
+    return { name: ref.slice("refs/heads/".length) };
+  } catch (cause) {
+    if (context.signal.aborted) throw cause;
+    throw new CliError("Cannot resolve --branch @this: the working directory is not in a Git repository with a current branch.", {
+      code: "usage", exitCode: 2, cause,
+    });
+  }
+}
+
+function buildLookupLimit(environment: Readonly<NodeJS.ProcessEnv>): number {
+  const value = environment.TEAMCITY_CLI_LOOKUP_LIMIT ?? "";
+  const limit = /^\d+$/.test(value) ? Number(value) : 0;
+  return Number.isSafeInteger(limit) && limit > 0 ? limit : 5000;
+}
+
 export function createTeamCityCli(runtime?: CliRuntime): CliApplication {
   return createCli(teamCityDefinition(runtime));
 }
@@ -118,7 +145,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
       "builds diagnose 101",
       "builds artifacts download 101 dist/app.zip --output app.zip",
     ],
-    version: "0.11.0",
+    version: "0.11.1",
     applicationId: "teamcity-cli",
     permissions: { categories: adminCategories },
     profile: {
@@ -219,7 +246,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
       ], [
         withView(jobTable, leaf(
           "list",
-          "List jobs",
+          "List jobs; templates: jobs templates / --template-flag any",
           Permission.ReadOnly,
           (c, { options }) => {
             const project = stringOption(options, "project");
@@ -266,16 +293,17 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
         ...files.builds,
         withView(buildTable, leaf(
           "list",
-          "List builds",
+          "List builds across all branches and states",
           Permission.ReadOnly,
-          (c, { options }) => {
+          async (c, { options }, context) => {
             const job = stringOption(options, "job");
             const project = stringOption(options, "project");
-            const branch = stringOption(options, "branch");
+            const branch = await listBranch(stringOption(options, "branch"), context);
             const state = stringOption(options, "state") as TeamCityBuildState | undefined;
             const status = stringOption(options, "status") as TeamCityBuildStatus | undefined;
             return c.listBuilds({
               ...optionalText(options, "defaultFilter"),
+              ...(job === undefined ? { lookupLimit: buildLookupLimit(context.environment) } : {}),
               ...(job === undefined ? {} : { job }),
               ...(project === undefined ? {} : { project }),
               ...(branch === undefined ? {} : { branch }),
@@ -287,9 +315,9 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           },
           [
             { flags: "--job <id>", description: "Limit builds to one job" },
-            { flags: "--default-filter <value>", description: "Set the server default filter" },
+            { flags: "--default-filter <value>", description: "Set defaultFilter (default: false)" },
             { flags: "--project <id>", description: "Limit builds to one affected project" },
-            { flags: "--branch <name>", description: "Limit builds to one branch name" },
+            { flags: "--branch <name>", description: "Select name, @default, or @this (Git branch)" },
             {
               flags: "--state <state>",
               description: "Filter by build state",
@@ -417,7 +445,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
         ...operators.agents,
         withView(agentTable, leaf(
           "list",
-          "List build agents",
+          "List all agents, including unauthorized agents",
           Permission.ReadOnly,
           (c, { options }) => {
             const connected = stringOption(options, "connected") as TeamCityTriState | undefined;

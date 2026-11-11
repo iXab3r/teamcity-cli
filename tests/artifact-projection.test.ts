@@ -389,7 +389,7 @@ test("US-004 list item projections preserve count+1 lookahead without adding vie
       query: {
 
 
-        locator: "count:3,browseArchives:true",
+        locator: "hidden:any,count:3,browseArchives:true",
         fields: "count,file(custom)",
       },
     });

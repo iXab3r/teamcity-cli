@@ -326,7 +326,7 @@ advancedAuthoringCases.push(
     argv: ["jobs", "branches", "Example_Build"],
     method: "GET",
     path: `${job}/branches`,
-    query: { locator: "start:0,count:101", fields: "nextHref,branch(name,default,active)" },
+    query: { locator: "policy:ALL_BRANCHES,start:0,count:101", fields: "nextHref,branch(name,default,active)" },
     response: { branch: [{ name: "main", default: true, active: true }] },
     expected: onePage([{ name: "main", default: true, active: true }]),
   },

@@ -60,7 +60,7 @@ Licensed under MIT. See the [release guide](release.md).
 | `projects list`, `projects show <id>` | Discover projects | `ReadOnly` |
 | `jobs list`, `jobs show <id>` | Discover build configurations | `ReadOnly` |
 | `jobs run <id>` | Queue one build, optionally with `--branch`, `--comment`, one-off `--param`, `--clean-sources` and `--wait` | `Update` |
-| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | List builds using TeamCity defaults or supplied filters, inspect one build, or select the latest finished build of a job | `ReadOnly` |
+| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | List builds inclusively or with supplied filters, inspect one build, or select the latest finished build of a job | `ReadOnly` |
 | `builds wait <id>`, `builds diagnose <id>` | Wait for a result; summarize problems and failed tests | `ReadOnly` |
 | `builds tests/problems/changes <id>` | Diagnose a build | `ReadOnly` |
 | `builds cancel <id>` | Cancel a running build | `Update` |
@@ -222,15 +222,46 @@ Successful empty responses return an acknowledgement; a missing entity remains a
 Mutations are not automatically retried. HTTP errors include the server's response text, masked
 and bounded to 4 KiB; malformed JSON errors contain no response excerpts.
 
-`builds list` sends only supplied filters. TeamCity chooses its defaults; `--default-filter`,
-`--state`, `--status` and `--branch` select filters. Project/job lists likewise omit archived/template
-filters unless `--archived`, `--include-archived` or `--template-flag` is supplied.
-
 Request payload options are optional; absent fields are not sent. Native JSON DTOs are accepted
 alongside compact forms. Supplied native fields take precedence over compact conveniences, including
 property-envelope metadata. Empty body collections are forwarded. Primitive integer/boolean/JSON
 parsing, HTTP-path operands, unambiguous selectors, permission gates, confirmations and local-machine
 safety remain enforced. TeamCity owns service enums, ranges, mandatory fields and defaults.
+
+## List defaults
+
+A list without filters asks for everything the entity has, within the existing page limit and
+server permissions. The CLI overrides server defaults that hide items; supplied filters narrow
+that selection. Paging, projections and envelopes keep their existing contracts.
+
+`builds list` includes all branches and states, personal, canceled and failed-to-start builds
+(`defaultFilter:false,branch:(default:any)`). `--branch <name>` selects an exact name;
+`--branch @default` selects the default branch and `--branch @this` reads the current Git branch
+from the invocation working directory. `@this` requires a Git checkout with a current branch.
+`--default-filter <value>` replaces the injected default filter; `--state` and `--status` keep
+their existing meaning. Without `--job`, the locator has `lookupLimit:5000`; set
+`TEAMCITY_CLI_LOOKUP_LIMIT` to a positive safe decimal integer to override it. Invalid values
+fall back to 5000. This is an initial request limit: paging can expand it and continue through
+history. Job-scoped initial requests omit it.
+`jobs builds` uses the same inclusive branch/build filters within its native scoped collection.
+`--latest` retains its documented newest finished, non-personal selection.
+
+`agents list` includes unauthorized, disconnected and disabled agents (`authorized:any`);
+its explicit status options narrow the selection. Archived projects remain visible.
+`jobs list` retains the server template default: templates are a separate entity, available
+through `jobs templates …` / `projects templates …`, or `jobs list --template-flag any`.
+Job/project branch lists include inactive branches. Build/queue tag lists include public tags and only the current user’s private tags
+(`private:any,owner:current`);
+an existing `--locator` replaces their default. Pool lists include orphaned pools, and audit
+lists include system and legacy events. Unfiltered health lists request root-project and global
+items; `--project` and `--global` select their documented scopes.
+
+File list/children commands include hidden entries (`hidden:any`) while retaining root/immediate
+children traversal and archive recognition. Recursive descendants and archive contents belong to
+child browsing; no implicit recursive walk is added. Native collection endpoints retain their
+server-owned scope: compatible queue agents are runnable candidates, job tags are public build
+tags, and test/problem identities require a server-supported selection (the REST finder has no
+unfiltered identity enumeration). No raw locator flags or synthetic historical enumeration are added.
 
 ## Run, wait and diagnose
 
@@ -263,7 +294,7 @@ teamcity-cli builds diagnose 101
   are not detected. For lists, the projection selects each item: the CLI wraps
   it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections are
   forwarded unchanged. Omitting `--fields` preserves the default projection, shaping and views.
-- Omitted `builds list` filters are left to TeamCity; `--latest` retains its documented selection below.
+- Omitted `builds list` filters use the inclusive defaults above; `--latest` retains its documented selection below.
 - Queued and running builds are listed with `builds list --state queued|running`. TeamCity lists
   queued builds in queue order, not newest first, so "latest" never means "next in queue".
 - Latest is resolved per call. To keep working on one build, reuse the returned ID.
@@ -681,8 +712,8 @@ The four trees are `jobs files`, `builds artifacts`, `vcs instances files` and `
 Each has list/children/metadata/download/archive. Server areas, including configured `custom.*`
 areas, are validated by TeamCity. Remote path segments are encoded once; literal percent signs,
 colons, backslashes and Unicode are preserved. Dot segments (`.`/`..`) are rejected to prevent URL traversal. Leading separators and empty segments
-are forwarded. Omitted recursion, hidden-file, usage-recording and parameter-resolution controls are
-not sent. Artifact lists enable archive recognition; no automatic href traversal occurs.
+are forwarded. List/children locators include hidden entries. Omitted recursion, usage-recording and
+parameter-resolution controls are not sent. Artifact lists enable archive recognition; no automatic href traversal occurs.
 
 Artifact lists add `directory` and `archive` booleans. NAME marks directories with `/` and archives
 with `(archive)`. These indicators come from the presence of `children` and `content` in the

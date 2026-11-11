@@ -2709,6 +2709,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/operator.test.ts",
     "tests/pools-projection.test.ts"
    ],
@@ -3038,6 +3039,7 @@
    "tests": [
     "tests/agents-projection.test.ts",
     "tests/cli.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/presentation.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -3578,6 +3580,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/health-audit-projection.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -4058,6 +4061,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/operator.test.ts",
     "tests/tag-projection.test.ts"
    ],
@@ -4612,7 +4616,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/jobs-projection.test.ts"
+    "tests/jobs-projection.test.ts",
+    "tests/list-defaults.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -4713,14 +4718,17 @@
    }
   ],
   "unsupportedQueryParameters": [],
-  "undocumentedSentQueryParameters": [],
+  "undocumentedSentQueryParameters": [
+   "locator"
+  ],
   "gateDiffersFromMethod": [],
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
-    "tests/jobs-projection.test.ts"
+    "tests/jobs-projection.test.ts",
+    "tests/list-defaults.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6362,6 +6370,7 @@
     "tests/files.test.ts",
     "tests/job-files-controls.test.ts",
     "tests/job-files-projection.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/m03-review-regressions.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -6627,6 +6636,7 @@
     "tests/files.test.ts",
     "tests/job-files-controls.test.ts",
     "tests/job-files-projection.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/m03-review-regressions.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -6802,6 +6812,7 @@
     "tests/build-flow.test.ts",
     "tests/build-projection.test.ts",
     "tests/cli.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/paging.test.ts",
     "tests/presentation.test.ts",
     "tests/thin-requests.test.ts",
@@ -7188,6 +7199,7 @@
    "tests": [
     "tests/artifact-projection.test.ts",
     "tests/files.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/m03-review-regressions.test.ts",
     "tests/presentation.test.ts"
    ],
@@ -7479,6 +7491,7 @@
    "tests": [
     "tests/artifact-projection.test.ts",
     "tests/files.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/presentation.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -8398,6 +8411,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/operator.test.ts",
     "tests/presentation.test.ts",
     "tests/tag-projection.test.ts"
@@ -9689,6 +9703,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/health-audit-projection.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/system.test.ts",
     "tests/validation-contract.test.ts"
    ],
@@ -10604,6 +10619,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/projects-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12233,6 +12249,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/server-controls.test.ts",
     "tests/server-files-projection.test.ts",
     "tests/validation-contract.test.ts"
@@ -12463,6 +12480,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/server-controls.test.ts",
     "tests/server-files-projection.test.ts"
    ],
@@ -14421,6 +14439,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/vcs-instance-controls.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
@@ -14650,6 +14669,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/list-defaults.test.ts",
     "tests/vcs-instance-controls.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
