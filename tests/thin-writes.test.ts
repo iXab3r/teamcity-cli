@@ -167,3 +167,95 @@ test("#379 direct input takes precedence over aliases and remote rejection is no
   assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
   assert.doesNotMatch(result.stderr, /synthetic-private-error/);
 });
+
+for (const existing of [false, true]) {
+  test(`#379 direct versioned mapping skips ${existing ? "existing" : "missing"} alias`, async t => {
+    const runtime = await createTestRuntime(t);
+    if (existing) await runtime.secretStore.set("ai-cli-factory:teamcity-cli", "default:input-secret:source", "synthetic-alias-value");
+    const cli = runtime.createCli();
+    await cli.execute(["permissions", "grant", "Credentials"]);
+    const requests = trackRequests(t, 1, async request => {
+      await assertHttpRequest(request, { method: "POST", url: base + "/projects/id:Example/versionedSettings/tokens", query: {},
+        body: { json: { versionedSettingsToken: [{ name: "remote", value: "synthetic-direct" }] } } });
+      return new HttpResponse(null, { status: 204 });
+    });
+    server.use(http.all("*", ({ request }) => requests.handle(request)));
+    assert.deepEqual(await cli.execute(["projects", "versioned-settings", "tokens", "set", "Example", "--property", "remote=synthetic-direct", "--mapping", "remote=source"]),
+      { names: ["remote"], updated: true });
+  });
+
+  test(`#379 direct authentication property skips ${existing ? "existing" : "missing"} alias`, async t => {
+    const runtime = await createTestRuntime(t);
+    if (existing) await runtime.secretStore.set("ai-cli-factory:teamcity-cli", "default:input-secret:source", "synthetic-alias-value");
+    const cli = runtime.createCli();
+    await cli.execute(["permissions", "grant", "Admin"]);
+    const requests = trackRequests(t, 1, async request => {
+      await assertHttpRequest(request, { method: "PUT", url: base + "/server/authSettings", query: {},
+        body: { json: { modules: { module: [{ name: "Fixture", properties: { property: [{ name: "password", value: "synthetic-direct" }] } }] } } } });
+      return HttpResponse.json({});
+    });
+    server.use(http.all("*", ({ request }) => requests.handle(request)));
+    await cli.execute(["server", "authentication", "replace", "--item", JSON.stringify({ modules: [{ name: "Fixture",
+      properties: [{ name: "password", value: "synthetic-direct" }], secrets: [{ name: "password", alias: "source" }] }] }), "--confirm"]);
+  });
+}
+
+test("#379 alias-backed authentication property forwards control characters in names", async t => {
+  const runtime = await createTestRuntime(t);
+  await runtime.secretStore.set("ai-cli-factory:teamcity-cli", "default:input-secret:source", "synthetic-alias-value");
+  const cli = runtime.createCli();
+  await cli.execute(["permissions", "grant", "Admin"]);
+  const name = "password\nfixture";
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "PUT", url: base + "/server/authSettings", query: {},
+      body: { json: { modules: { module: [{ name: "Fixture", properties: { property: [{ name, value: "synthetic-alias-value" }] } }] } } } });
+    return HttpResponse.json({});
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute(["server", "authentication", "replace", "--item", JSON.stringify({ modules: [{ name: "Fixture", secrets: [{ name, alias: "source" }] }] }), "--confirm"]);
+});
+
+test("#379 root project deletion reaches TeamCity", async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  const argv = ["projects", "delete", "_Root"];
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "DELETE", url: base + "/projects/id:_Root", query: {} });
+    return new HttpResponse(null, { status: 204 });
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await assertPermissionDenied(cli, argv, "Update", requests);
+  await cli.execute(["permissions", "grant", "Update"]);
+  assert.deepEqual(await cli.execute(argv), { id: "_Root", deleted: true });
+});
+
+for (const alias of [undefined, "missing-reference"]) {
+  test(`#379 direct secure reference ${alias ? "wins over alias" : "works without alias"}`, async t => {
+    const runtime = await createTestRuntime(t);
+    const cli = runtime.createCli();
+    const argv = ["projects", "secure", "resolve", "Example", "--reference-value", "synthetic/reference ?#%", "--store-as", "resolved",
+      ...(alias ? ["--reference", alias] : [])];
+    const requests = trackRequests(t, 1, async request => {
+      await assertHttpRequest(request, { method: "GET", url: base + "/projects/id:Example/secure/values/synthetic%2Freference%20%3F%23%25", query: {} });
+      return HttpResponse.text("synthetic-resolved-value");
+    });
+    server.use(http.all("*", ({ request }) => requests.handle(request)));
+    await assertPermissionDenied(cli, argv, "Credentials", requests);
+    await cli.execute(["permissions", "grant", "Credentials"]);
+    assert.deepEqual(await cli.execute(argv), { alias: "resolved", stored: true });
+    assert.equal(await runtime.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:resolved"), "synthetic-resolved-value");
+  });
+}
+
+test("#379 direct secure reference retains traversal rejection", async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  await cli.execute(["permissions", "grant", "Credentials"]);
+  const requests = trackRequests(t, 0, async () => HttpResponse.text("unexpected"));
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  for (const reference of [".", ".."]) {
+    const result = await runtime.run(cli, ["projects", "secure", "resolve", "Example", "--reference-value", reference, "--store-as", "resolved", "--json"]);
+    assert.equal(result.exitCode, 1);
+    assert.match(result.stderr, /Invalid secure reference/);
+  }
+});
