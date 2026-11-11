@@ -236,6 +236,7 @@ interface ResponseOptions {
   discard?: boolean;
   expectedStatus?: number;
   requireMedia?: string;
+  status?: (status: number) => void;
 }
 
 function decodeJson<T>(contents: string): T {
@@ -2201,11 +2202,13 @@ export class TeamCityClient {
       return safeProperty(metadata, false);
     }
     if (part === "value") {
-      const response = await this.#requestText(method, `${path}/value`, value);
+      const response = method === "GET"
+        ? await this.#returnedText(`${path}/value`)
+        : await this.#requestText(method, `${path}/value`, value);
       return safeProperty({
         name: name,
         ...(metadata.type === undefined ? {} : { type: metadata.type }),
-        value: response,
+        ...(response === undefined ? {} : { value: response }),
       });
     }
     const type =
@@ -5249,6 +5252,12 @@ export class TeamCityClient {
   ): Promise<string> {
     return this.#request(method, path, {}, body, "text/plain", responseOptions);
   }
+  // HTTP 204 means the server returned no value, which differs from an empty string.
+  async #returnedText(path: string): Promise<string | undefined> {
+    let status = 200;
+    const text = await this.#requestText("GET", path, undefined, { status: s => { status = s; } });
+    return status === 204 ? undefined : text;
+  }
   async #request(
     method: HttpMethod,
     path: string,
@@ -5273,6 +5282,7 @@ export class TeamCityClient {
         `TeamCity request failed with HTTP ${response.status}.`,
       );
     }
+    responseOptions.status?.(response.status);
     if (
       responseOptions.expectedStatus !== undefined &&
       response.status !== responseOptions.expectedStatus

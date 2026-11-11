@@ -11,12 +11,16 @@ import type { TeamCityClient } from "./client.js";
 import { clientLeaf, option, text, repeatOption } from "./command-support.js";
 import type { createBulkConfigurationCommands } from "./bulk-configuration-commands.js";
 import type { createTriageCommands } from "./triage-commands.js";
-import { booleanText, allowedField } from "./advanced-authoring-models.js";
+import { booleanText } from "./advanced-authoring-models.js";
 import { requiredText } from "./locator.js";
 import { locatorOption } from "./command-support.js";
 
 function number(args: Record<string, unknown>, key: string): number {
   return Number(requiredText(text(args, key), key));
+}
+function fieldName(value: string): string {
+  if (requiredText(value, "Field name").trim() === "") throw new Error("Field name is required.");
+  return value;
 }
 function comment(options: Record<string, unknown>): string | undefined {
   return typeof options.comment === "string" ? options.comment : undefined;
@@ -410,16 +414,13 @@ export function createOperatorCommands(
         (c, { args }) => c.getBuildStatistic(number(args, "build-id"), args.name),
       ),
     ]),
-    command("fields", "Read id, buildTypeId, state or branchName", [
+    command("fields", "Read one scalar field as text", [
       leaf(
         "show <build-id> <field>",
-        "Read an allowed build field",
+        "Read a build field",
         Permission.ReadOnly,
         (c, { args }) =>
-          c.getBuildScalar(
-            number(args, "build-id"),
-            allowedField(args.field, ["id", "buildTypeId", "state", "branchName"]),
-          ),
+          c.getBuildScalar(number(args, "build-id"), fieldName(args.field)),
       ),
     ]),
   ];

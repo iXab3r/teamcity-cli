@@ -5289,7 +5289,8 @@
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
-    "tests/password-parameter.test.ts"
+    "tests/password-parameter.test.ts",
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5412,7 +5413,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -7536,6 +7538,12 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
+    "command": "builds fields show <build-id> <field>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "getBuildScalar"
+   },
+   {
     "command": "builds number show <build-id>",
     "permission": "ReadOnly",
     "options": [],
@@ -7549,7 +7557,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -8104,6 +8113,12 @@
   "reason": "The core action and documented query controls are exposed. This is operation coverage, not exhaustive payload, locator-dimension or version conformance.",
   "bindings": [
    {
+    "command": "builds fields show <build-id> <field>",
+    "permission": "ReadOnly",
+    "options": [],
+    "clientMethod": "getBuildScalar"
+   },
+   {
     "command": "builds status <build-id>",
     "permission": "ReadOnly",
     "options": [],
@@ -8117,7 +8132,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -8403,7 +8419,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10954,6 +10971,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/project-configuration-projection.test.ts",
+    "tests/read-values-review.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
@@ -11077,7 +11095,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
