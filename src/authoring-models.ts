@@ -119,8 +119,10 @@ export function plainProperty(name: string, value: string): PlainProperty {
 
 export function propertiesBody(input: readonly PlainProperty[] = []) {
   const properties = input.map((p) => {
-    const plain = plainProperty(p.name, p.value);
-    return { ...p, ...plain };
+    const item = apiInputRecord(p, []);
+    if (item.name !== undefined) requiredText(item.name as string, "Property name");
+    if (item.value !== undefined) requiredText(item.value as string, "Property value");
+    return p;
   });
   return { property: properties };
 }

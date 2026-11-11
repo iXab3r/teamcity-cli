@@ -21,7 +21,7 @@ for each profile and reimport auxiliary secrets. Existing profiles and permissio
 
 ## URL and token input
 
-Copy the service base address, for example `https://teamcity.example.test/` or `https://example.test/teamcity/`. Include any context path and port; omit `/app/rest`, build/project pages and query strings. HTTP and HTTPS are supported. Context segments named `api`, `app/rest`, `admin` or `issues` are
+Copy the service base address, for example `https://teamcity.example.test/` or `https://example.test/teamcity/`. Include any context path and port; omit `/app/rest` and build/project pages. Query strings are supported. HTTP and HTTPS are supported. Context segments named `api`, `app/rest`, `admin` or `issues` are
 valid deployment contexts; the CLI appends its own service endpoints to the configured base.
 Create/copy an access token in **My Settings & Tools > Access Tokens** (the user profile).
 See the [optional API reference: TeamCity user-profile guide](https://www.jetbrains.com/help/teamcity/configuring-your-user-profile.html). Paste only its value: `FICTIONAL_TOKEN_VALUE` is a fictional example.
@@ -59,7 +59,7 @@ Licensed under MIT. See the [release guide](release.md).
 | `projects list`, `projects show <id>` | Discover projects | `ReadOnly` |
 | `jobs list`, `jobs show <id>` | Discover build configurations | `ReadOnly` |
 | `jobs run <id>` | Queue one build, optionally with `--branch`, `--comment`, one-off `--param`, `--clean-sources` and `--wait` | `Update` |
-| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | Inspect builds across all branches and states, one `--branch`, or the latest finished build of a job | `ReadOnly` |
+| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | List builds using TeamCity defaults or supplied filters, inspect one build, or select the latest finished build of a job | `ReadOnly` |
 | `builds wait <id>`, `builds diagnose <id>` | Wait for a result; summarize problems and failed tests | `ReadOnly` |
 | `builds tests/problems/changes <id>` | Diagnose a build | `ReadOnly` |
 | `builds cancel <id>` | Cancel a running build | `Update` |
@@ -71,7 +71,7 @@ Licensed under MIT. See the [release guide](release.md).
 | `jobs copy <source-id> <id> --name <name> --project <id>` | Copy settings server-side, including protected parameters, without exposing their values | `Credentials` |
 | `projects parameters list/show`, `jobs parameters list/show` | Inspect safe parameter values and metadata | `ReadOnly` |
 | `projects parameters create/set/delete`, `jobs parameters create/set/delete` | Manage parameters | `Update` |
-| `jobs parameters set-password <job-id> <name> --value <value>` (or `--value-secret <alias>`) | Replace a parameter from `--value` or the active profile's input-secret; retain its specification and return no value | `Credentials` |
+| `jobs parameters set-password <job-id> <name> --value <value>` (or `--value-secret <alias>`) | Replace a parameter from `--value` or the active profile's input-secret; retain available type metadata, default to password type, and return no value | `Credentials` |
 | `jobs steps list/show` | Inspect ordered step summaries | `ReadOnly` |
 | `jobs steps create/replace/delete` | Manage build steps | `Update` |
 | `vcs roots list/show` | Discover existing roots without connection properties | `ReadOnly` |
@@ -189,8 +189,17 @@ and values the server withholds have `redacted: true` and no value. The CLI neve
 Literal `*` and `*****` values remain readable; names and value spelling do not imply secrecy.
 An absent/empty type spec means a plain parameter. Ordinary parameter reads return the type name;
 configuration reads retain native type metadata. Create/set and collection replacement send writes
-without protected-metadata preflights. The password helper reads metadata to preserve the existing
-specification when that read succeeds, falls back to caller input when it fails, and accepts `--value` or `--value-secret`.
+without protected-metadata preflights.
+
+JSON request commands accept `--item <json>` alongside compact options; native fields take precedence.
+For configuration `replace-all`, repeat `--item` for individual settings or supply one native collection
+envelope containing its collection key (for example `{"step":[],"count":0,"future":true}`).
+Raw-text and multipart endpoints keep their text/file inputs.
+
+The password helper reads metadata to preserve the existing specification when available and otherwise
+sends `type: {rawValue: "password"}`, including when the metadata read fails. It accepts `--value` or
+`--value-secret` and always sends a type. A native `--item` can supply additional fields and override the type;
+an absent or null native type uses the available metadata or the password fallback.
 
 Steps accept `--name`, `--type`, and repeatable `--property <key=value>` (split on the first `=`;
 empty keys fail). `jobs steps replace <job-id> <step-id>` fully replaces writable input:
@@ -951,7 +960,7 @@ These families accept `--fields` (slash-separated leaves share the preceding com
 | `audit` | `audit list/show` |
 | `health` | `health list/show`; `health categories list/show` |
 
-Other native controls are not sent when omitted. Text values must be nonblank; booleans
+Other native controls are not sent when omitted. Text values, including empty and blank strings, pass through unchanged; booleans
 accept only literal `true` or `false`.
 
 | Option | Commands | Wire query parameter |

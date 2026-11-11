@@ -161,7 +161,7 @@ test("S5 typed item validation preserves false and repeated native entries", asy
     '{"type":"exists","parameter":"env.MODE","disabled":true}',
   ]);
   assert.deepEqual(bodies, [
-    { feature: [{ type: "plugin", disabled: true }] },
+    { feature: [{ type: "plugin", enabled: false, disabled: true }] },
     {
       "agent-requirement": [
         {

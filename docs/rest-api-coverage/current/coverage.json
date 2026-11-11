@@ -1001,7 +1001,8 @@
     "options": [
      "--build <id>",
      "--fields <projection>",
-     "--tag <name>"
+     "--tag <name>",
+     "--item <json>"
     ],
     "clientMethod": "tagBuildBatch"
    }
@@ -1020,7 +1021,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/batch-projection.test.ts"
+    "tests/batch-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -1343,7 +1345,8 @@
     "options": [
      "--id <id>",
      "--confirm",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "deleteMutes"
    }
@@ -1362,6 +1365,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/assignments-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -1522,7 +1526,7 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -1720,7 +1724,8 @@
     "command": "projects versioned-settings tokens delete <id>",
     "permission": "Credentials",
     "options": [
-     "--name <name>"
+     "--name <name>",
+     "--item <json>"
     ],
     "clientMethod": "deleteVersionedTokens"
    }
@@ -1733,7 +1738,9 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/native-request-bodies.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -2152,7 +2159,7 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -3938,7 +3945,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -4278,7 +4285,7 @@
   "query": [
    {
     "name": "field",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -4949,7 +4956,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -5109,7 +5116,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -5165,6 +5172,7 @@
     "command": "jobs parameters set-password <job-id> <name>",
     "permission": "Credentials",
     "options": [
+     "--item <json>",
      "--value <value>",
      "--value-secret <alias>"
     ],
@@ -5209,6 +5217,7 @@
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/password-parameter.test.ts",
     "tests/read-values-review.test.ts",
     "tests/thin-requests.test.ts",
@@ -6180,7 +6189,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -6208,6 +6217,7 @@
     "tests/files.test.ts",
     "tests/job-files-controls.test.ts",
     "tests/job-files-projection.test.ts",
+    "tests/m03-review-regressions.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -6256,7 +6266,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -6266,7 +6276,7 @@
    },
    {
     "name": "name",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "--archive-name <name>"
    },
    {
@@ -6282,7 +6292,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
-    "tests/job-files-controls.test.ts"
+    "tests/job-files-controls.test.ts",
+    "tests/m03-review-regressions.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6443,7 +6454,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -6470,7 +6481,8 @@
    "tests": [
     "tests/files.test.ts",
     "tests/job-files-controls.test.ts",
-    "tests/job-files-projection.test.ts"
+    "tests/job-files-projection.test.ts",
+    "tests/m03-review-regressions.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -6650,6 +6662,8 @@
    ],
    "nonLeafTransportTests": [
     "tests/client-builds.test.ts:206",
+    "tests/client-builds.test.ts:228",
+    "tests/client-builds.test.ts:229",
     "tests/client-builds.test.ts:64",
     "tests/client-foundation.test.ts:219",
     "tests/client-foundation.test.ts:220",
@@ -6887,6 +6901,7 @@
     "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [
+    "tests/client-builds.test.ts:227",
     "tests/client-builds.test.ts:86"
    ],
    "liveService": "not-run",
@@ -6987,7 +7002,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -7019,6 +7034,7 @@
    "tests": [
     "tests/artifact-projection.test.ts",
     "tests/files.test.ts",
+    "tests/m03-review-regressions.test.ts",
     "tests/presentation.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -7079,7 +7095,7 @@
    },
    {
     "name": "name",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "--archive-name <name>"
    },
    {
@@ -7100,7 +7116,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/artifact-projection.test.ts",
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/m03-review-regressions.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -8188,7 +8205,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -9530,7 +9547,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -9815,7 +9832,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/assignments-projection.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10752,7 +10770,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -11060,7 +11078,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -11969,7 +11987,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -12038,7 +12056,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -12048,7 +12066,7 @@
    },
    {
     "name": "name",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "--archive-name <name>"
    }
   ],
@@ -12199,7 +12217,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -12792,7 +12810,7 @@
    },
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -14132,7 +14150,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -14200,7 +14218,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -14210,7 +14228,7 @@
    },
    {
     "name": "name",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "--archive-name <name>"
    }
   ],
@@ -14361,7 +14379,7 @@
   "query": [
    {
     "name": "basePath",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -14985,7 +15003,8 @@
     "command": "pools create",
     "permission": "Update",
     "options": [
-     "--name <name>"
+     "--name <name>",
+     "--item <json>"
     ],
     "clientMethod": "createPool"
    }
@@ -14998,6 +15017,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -15035,7 +15055,8 @@
     "command": "pools agents assign <pool-id> <agent-id>",
     "permission": "Update",
     "options": [
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "assignPoolAgent"
    }
@@ -15054,6 +15075,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts",
     "tests/pools-projection.test.ts"
    ],
@@ -15089,6 +15111,7 @@
     "command": "pools tokens create <id>",
     "permission": "Credentials",
     "options": [
+     "--item <json>",
      "--ttl <seconds>",
      "--store-as <alias>"
     ],
@@ -15102,6 +15125,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-request-bodies.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -15136,7 +15160,9 @@
    {
     "command": "pools projects assign <pool-id> <project-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--item <json>"
+    ],
     "clientMethod": "assignPoolProject"
    }
   ],
@@ -15148,6 +15174,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -15363,7 +15390,8 @@
     "command": "queue tags add <build-id>",
     "permission": "Update",
     "options": [
-     "--tag <tag>"
+     "--tag <tag>",
+     "--item <json>"
     ],
     "clientMethod": "addTags"
    }
@@ -15628,7 +15656,7 @@
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/thin-requests.test.ts:115"
+    "tests/thin-requests.test.ts:132"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -15715,7 +15743,8 @@
     "permission": "Update",
     "options": [
      "--value <value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "createParameter"
    }
@@ -15772,7 +15801,8 @@
     "permission": "Update",
     "options": [
      "--value <value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "createParameter"
    }
@@ -15792,6 +15822,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/job-parameters-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -15855,7 +15886,7 @@
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/thin-requests.test.ts:116"
+    "tests/thin-requests.test.ts:133"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -15917,7 +15948,7 @@
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/thin-requests.test.ts:114"
+    "tests/thin-requests.test.ts:131"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -15955,7 +15986,8 @@
     "options": [
      "--fields <projection>",
      "--template <template-id>",
-     "--optimize-settings"
+     "--optimize-settings",
+     "--item <json>"
     ],
     "clientMethod": "attachTemplate"
    }
@@ -15981,6 +16013,7 @@
     "tests/authoring.test.ts",
     "tests/configuration.test.ts",
     "tests/job-attachments-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -16080,7 +16113,8 @@
     "options": [
      "--fields <projection>",
      "--root <root-id>",
-     "--checkout-rules <rules>"
+     "--checkout-rules <rules>",
+     "--item <json>"
     ],
     "clientMethod": "attachVcsRoot"
    }
@@ -16099,7 +16133,9 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/job-attachments-projection.test.ts"
+    "tests/job-attachments-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16138,7 +16174,8 @@
      "--build <id>",
      "--comment <text>",
      "--requeue <boolean>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "cancelBuildBatch"
    }
@@ -16157,7 +16194,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/batch-projection.test.ts"
+    "tests/batch-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16195,7 +16233,8 @@
     "options": [
      "--build <id>",
      "--fields <projection>",
-     "--tag <name>"
+     "--tag <name>",
+     "--item <json>"
     ],
     "clientMethod": "tagBuildBatch"
    }
@@ -16214,7 +16253,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/batch-projection.test.ts"
+    "tests/batch-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -16423,7 +16463,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--comment <text>"
+     "--comment <text>",
+     "--item <json>"
     ],
     "clientMethod": "setBuildStatus"
    }
@@ -16443,6 +16484,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/build-action-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/projected-partial.test.ts",
     "tests/projected-redaction.test.ts",
     "tests/thin-requests.test.ts",
@@ -16483,7 +16525,8 @@
     "permission": "Update",
     "options": [
      "--tag <tag>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "addTags"
    }
@@ -16502,6 +16545,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts",
     "tests/projected-acknowledgement.test.ts",
     "tests/tag-projection.test.ts",
@@ -16608,7 +16652,8 @@
     "options": [
      "--cloud-profile <id>",
      "--image <id>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "startCloudInstance"
    }
@@ -16616,7 +16661,7 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -16628,7 +16673,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/cloud-projection.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17189,7 +17235,9 @@
    {
     "command": "projects pools assign <project-id> <pool-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--item <json>"
+    ],
     "clientMethod": "assignProjectPool"
    }
   ],
@@ -17202,7 +17250,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17249,7 +17298,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--name <name>"
+     "--name <name>",
+     "--item <json>"
     ],
     "clientMethod": "createProjectJob"
    }
@@ -17269,6 +17319,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/copy-job.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/project-writes-projection.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -17307,7 +17358,8 @@
     "permission": "Update",
     "options": [
      "--value <value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "createParameter"
    }
@@ -17432,6 +17484,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -17646,6 +17699,7 @@
     "command": "projects versioned-settings tokens set <id>",
     "permission": "Credentials",
     "options": [
+     "--item <json>",
      "--property <key=value>",
      "--mapping <remote-name=alias>"
     ],
@@ -17661,6 +17715,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -17880,6 +17935,7 @@
    "tests": [
     "tests/server-projection.test.ts",
     "tests/system.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -17918,7 +17974,8 @@
     "options": [
      "--fields <projection>",
      "--name <text>",
-     "--description <text>"
+     "--description <text>",
+     "--item <json>"
     ],
     "clientMethod": "createAccountGroup"
    }
@@ -17937,7 +17994,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/groups-projection.test.ts"
+    "tests/groups-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -17972,7 +18030,8 @@
     "permission": "Admin",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--item <json>"
     ],
     "clientMethod": "addAccountRole"
    }
@@ -17984,7 +18043,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18065,7 +18125,8 @@
     "permission": "Admin",
     "options": [
      "--fields <projection>",
-     "--name <text>"
+     "--name <text>",
+     "--item <json>"
     ],
     "clientMethod": "createAccountUser"
    }
@@ -18084,6 +18145,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/users-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18157,7 +18219,8 @@
     "permission": "Admin",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--item <json>"
     ],
     "clientMethod": "addAccountRole"
    }
@@ -18169,7 +18232,9 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18279,7 +18344,7 @@
    },
    {
     "name": "requestor",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -18296,6 +18361,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/m04-review-regressions.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18449,7 +18515,8 @@
     "command": "pools projects replace-all <pool-id>",
     "permission": "Update",
     "options": [
-     "--project <id>"
+     "--project <id>",
+     "--item <json>"
     ],
     "clientMethod": "replacePoolProjects"
    }
@@ -18464,7 +18531,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/bulk-configuration.test.ts"
+    "tests/bulk-configuration.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -18543,7 +18611,8 @@
     "permission": "Update",
     "options": [
      "--comment <text>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setAgentStatus"
    }
@@ -18563,6 +18632,7 @@
    "tests": [
     "tests/agents-projection.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18600,7 +18670,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--job <job-id>"
+     "--job <job-id>",
+     "--item <json>"
     ],
     "clientMethod": "setAgentPolicy"
    }
@@ -18620,6 +18691,7 @@
    "tests": [
     "tests/agents-projection.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts",
     "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
@@ -18659,7 +18731,8 @@
     "permission": "Update",
     "options": [
      "--comment <text>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setAgentStatus"
    }
@@ -18679,6 +18752,7 @@
    "tests": [
     "tests/agents-projection.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18715,7 +18789,8 @@
     "command": "agents pool set <agent-id> <pool-id>",
     "permission": "Update",
     "options": [
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setAgentPool"
    }
@@ -18735,6 +18810,7 @@
    "tests": [
     "tests/agents-projection.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18859,7 +18935,8 @@
     "permission": "Update",
     "options": [
      "--build <id>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "reorderQueue"
    }
@@ -18878,6 +18955,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/queue-action-projection.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -18916,7 +18994,8 @@
     "permission": "Update",
     "options": [
      "--build <build-id>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setQueuePosition"
    }
@@ -18935,6 +19014,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts",
     "tests/queue-action-projection.test.ts",
     "tests/validation-contract.test.ts"
@@ -18968,7 +19048,8 @@
     "command": "queue paused set <status>",
     "permission": "Update",
     "options": [
-     "--reason <text>"
+     "--reason <text>",
+     "--item <json>"
     ],
     "clientMethod": "setQueuePaused"
    }
@@ -18981,6 +19062,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -19362,6 +19444,7 @@
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
     "tests/job-extensions-projection.test.ts",
+    "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -19459,7 +19542,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replacePluginParameters"
    }
@@ -19600,7 +19684,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceAllParameters"
    }
@@ -19656,7 +19741,8 @@
     "permission": "Update",
     "options": [
      "--value <value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setParameter"
    }
@@ -19755,7 +19841,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceAllParameters"
    }
@@ -19776,6 +19863,7 @@
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [
@@ -19815,7 +19903,8 @@
     "permission": "Update",
     "options": [
      "--value <value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setParameter"
    },
@@ -19823,6 +19912,7 @@
     "command": "jobs parameters set-password <job-id> <name>",
     "permission": "Credentials",
     "options": [
+     "--item <json>",
      "--value <value>",
      "--value-secret <alias>"
     ],
@@ -19844,6 +19934,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/job-parameters-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/password-parameter.test.ts",
     "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
@@ -19879,7 +19970,9 @@
    {
     "command": "jobs parameters type set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--item <json>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -19890,7 +19983,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -20248,7 +20342,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replacePluginParameters"
    }
@@ -20268,7 +20363,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-steps-projection.test.ts"
+    "tests/job-steps-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -20391,7 +20487,8 @@
     "options": [
      "--fields <projection>",
      "--template <id>",
-     "--optimize-settings"
+     "--optimize-settings",
+     "--item <json>"
     ],
     "clientMethod": "replaceTemplates"
    }
@@ -20416,7 +20513,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
-    "tests/job-attachments-projection.test.ts"
+    "tests/job-attachments-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -20669,7 +20767,8 @@
     "permission": "Update",
     "options": [
      "--checkout-rules <rules>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceVcsEntry"
    }
@@ -20688,7 +20787,9 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/job-attachments-projection.test.ts"
+    "tests/job-attachments-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
+    "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -20868,7 +20969,8 @@
     "options": [
      "--build <id>",
      "--fields <projection>",
-     "--status <boolean>"
+     "--status <boolean>",
+     "--item <json>"
     ],
     "clientMethod": "pinBuildBatch"
    }
@@ -20887,7 +20989,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/batch-projection.test.ts"
+    "tests/batch-projection.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -21096,7 +21199,8 @@
     "permission": "Update",
     "options": [
      "--comment <text>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setBuildPin"
    }
@@ -21116,6 +21220,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/build-action-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21253,7 +21358,8 @@
     "options": [
      "--tag <tag>",
      "--fields <projection>",
-     "--locator <locator>"
+     "--locator <locator>",
+     "--item <json>"
     ],
     "clientMethod": "replaceBuildTags"
    }
@@ -21261,7 +21367,7 @@
   "query": [
    {
     "name": "locator",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    },
    {
@@ -21277,6 +21383,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/operator.test.ts",
     "tests/tag-projection.test.ts"
    ],
@@ -21373,7 +21480,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--pool <id>"
+     "--pool <id>",
+     "--item <json>"
     ],
     "clientMethod": "replaceProjectPools"
    }
@@ -21393,6 +21501,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21430,7 +21539,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--template <template-id>"
+     "--template <template-id>",
+     "--item <json>"
     ],
     "clientMethod": "setDefaultTemplate"
    }
@@ -21450,6 +21560,7 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21487,7 +21598,8 @@
     "permission": "Update",
     "options": [
      "--field <name>",
-     "--id <id>"
+     "--id <id>",
+     "--item <json>"
     ],
     "clientMethod": "setProjectOrder"
    }
@@ -21507,6 +21619,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/bulk-configuration.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21544,7 +21657,8 @@
     "permission": "Update",
     "options": [
      "--field <name>",
-     "--id <id>"
+     "--id <id>",
+     "--item <json>"
     ],
     "clientMethod": "setProjectOrder"
    }
@@ -21563,6 +21677,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -21600,7 +21715,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceAllParameters"
    }
@@ -21656,7 +21772,8 @@
     "permission": "Update",
     "options": [
      "--value <value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "setParameter"
    }
@@ -21709,7 +21826,9 @@
    {
     "command": "projects parameters type set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--item <json>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -21841,7 +21960,8 @@
     "permission": "Update",
     "options": [
      "--fields <projection>",
-     "--parent <id>"
+     "--parent <id>",
+     "--item <json>"
     ],
     "clientMethod": "moveProject"
    }
@@ -21849,7 +21969,7 @@
   "query": [
    {
     "name": "fields",
-    "wire": "fixed",
+    "wire": "varies",
     "callerControl": "same-named option"
    }
   ],
@@ -21860,6 +21980,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/project-writes-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22102,7 +22223,8 @@
     "command": "projects versioned-settings context replace <id>",
     "permission": "Update",
     "options": [
-     "--property <key=value>"
+     "--property <key=value>",
+     "--item <json>"
     ],
     "clientMethod": "replaceVersionedContext"
    }
@@ -22115,7 +22237,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
-    "tests/infrastructure.test.ts"
+    "tests/infrastructure.test.ts",
+    "tests/native-request-bodies.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -22483,7 +22606,8 @@
     "permission": "Admin",
     "options": [
      "--group <key>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceAccountGroups"
    }
@@ -22504,6 +22628,7 @@
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
     "tests/groups-projection.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22689,7 +22814,8 @@
     "permission": "Admin",
     "options": [
      "--group <key>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceAccountGroups"
    }
@@ -22709,6 +22835,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/users-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22922,7 +23049,8 @@
     "permission": "Update",
     "options": [
      "--revision <branch=revision>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceVcsRepositoryState"
    }
@@ -22942,6 +23070,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/vcs-instances-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -23021,7 +23150,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--fields <projection>"
+     "--fields <projection>",
+     "--item <json>"
     ],
     "clientMethod": "replaceVcsRootProperties"
    }
@@ -23041,6 +23171,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
+    "tests/native-request-bodies.test.ts",
     "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],

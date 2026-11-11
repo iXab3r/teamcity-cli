@@ -59,8 +59,11 @@ export function createAuthoringCommands(
           async ({ args, options }, context) =>
             (await clientFor(context)).setPasswordParameter(
               args["job-id"], args.name, options.valueSecret as string | undefined, context.secrets, options.value as string | undefined,
+              nativeInput(options),
             ),
-          { permission: "Credentials", options: [option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias")] },
+          { permission: "Credentials", options: [
+            jsonOption("--item <json>", "Supply a native body"),
+            option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias")] },
         )] : []),
         leaf(
           `list <${ownerArg}>`,
@@ -94,8 +97,9 @@ export function createAuthoringCommands(
               text(args, "name"),
               options.value as string | undefined,
               fields(options),
+              nativeInput(options),
             ),
-          [valueOption, ...projections],
+          [valueOption, ...projections, jsonOption("--item <json>", "Supply a native body")],
         ),
         leaf(
           `set <${ownerArg}> <name>`,
@@ -108,8 +112,9 @@ export function createAuthoringCommands(
               text(args, "name"),
               options.value as string | undefined,
               fields(options),
+              nativeInput(options),
             ),
-          [valueOption, ...projections],
+          [valueOption, ...projections, jsonOption("--item <json>", "Supply a native body")],
         ),
         leaf(
           `delete <${ownerArg}> <name>`,
@@ -277,6 +282,7 @@ export function createAuthoringCommands(
           options.template as string | undefined,
           options.optimizeSettings as boolean | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
         fieldsOption,
@@ -285,6 +291,7 @@ export function createAuthoringCommands(
           "--optimize-settings",
           "Remove duplicated local settings",
         ),
+        jsonOption("--item <json>", "Supply a native body"),
       ],
     ),
     leaf(
@@ -348,7 +355,6 @@ export function createAuthoringCommands(
   const checkoutOption = option(
     "--checkout-rules <rules>",
     "Set checkout rules",
-    true,
   );
   const vcs = command("vcs", "Manage existing VCS root attachments", [
     bulk.replaceAll("vcs-root-entries"),
@@ -374,13 +380,15 @@ export function createAuthoringCommands(
         c.attachVcsRoot(
           args["job-id"],
           options.root as string | undefined,
-          typeof options.checkoutRules === "string" ? options.checkoutRules : "",
+          options.checkoutRules as string | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
         fieldsOption,
         option("--root <root-id>", "Select an existing VCS root"),
-        { ...checkoutOption, required: false },
+        checkoutOption,
+        jsonOption("--item <json>", "Supply a native body"),
       ],
     ),
     leaf(
@@ -391,10 +399,11 @@ export function createAuthoringCommands(
         c.replaceVcsEntry(
           args["job-id"],
           args["root-id"],
-          text(options, "checkoutRules"),
+          options.checkoutRules as string | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
-      [checkoutOption, fieldsOption],
+      [checkoutOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "detach <job-id> <root-id>",
@@ -467,8 +476,8 @@ export function createAuthoringCommands(
       "move <id>",
       "Move a project to a parent",
       Permission.Update,
-      (c, { args, options }) => c.moveProject(args.id, options.parent as string | undefined, fieldsFromOptions(options)),
-      [fieldsOption, parentOption],
+      (c, { args, options }) => c.moveProject(args.id, options.parent as string | undefined, fieldsFromOptions(options), nativeInput(options)),
+      [fieldsOption, parentOption, jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "delete <id>",

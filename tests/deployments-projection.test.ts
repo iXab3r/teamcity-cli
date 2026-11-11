@@ -146,15 +146,19 @@ for (const scenario of buildProjectionCases) {
   });
 
   for (const fields of ["", " \t\n "]) {
-    test(`US-015-A6 ${scenario.name}: rejects ${fields === "" ? "empty" : "blank"} fields locally on all surfaces`, async t => {
-      const rt = await runtime(t, [scenario.permission]);
+    test(`US-015-A6 ${scenario.name}: forwards ${fields === "" ? "empty" : "blank"} fields on all surfaces`, async t => {
+      const rt = await createTestRuntime(t, { profiles: [{ name: "default", url: origin, permissions: ["ReadOnly", "Update", "Admin", "Credentials"] }] });
       const cli = rt.createCli();
-      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      const requests = trackRequests(t, 5, request => {
+
+        const url = new URL(request.url);
+        assert.equal(url.pathname, scenario.path);
+        assert.equal(url.searchParams.get("fields"), scenario.fields(fields));
+        return HttpResponse.json(scenario.response(native));
+      });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
-      for (const surface of surfaces) {
-        const evidence = await failure(rt, cli, [...scenario.argv, "--fields", fields], surface, "usage");
-        assert.match(evidence, /non-empty.*projection/i);
-      }
+      for (const surface of surfaces)
+        await success(rt, cli, [...scenario.argv, "--fields", fields], surface, scenario.result(native));
     });
   }
 }

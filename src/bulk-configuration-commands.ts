@@ -1,4 +1,4 @@
-import { booleanOption } from "./command-support.js";
+import { nativeInput, booleanOption } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
@@ -51,8 +51,9 @@ export function createBulkConfigurationCommands(
             args["owner-id"],
             (options.property ?? []) as PlainProperty[],
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [propertyOption, fieldsOption],
+        [propertyOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "clear <owner-id>",
@@ -77,14 +78,16 @@ export function createBulkConfigurationCommands(
               "set <owner-id> <name> <value>",
               "Set a parameter value or type",
               Permission.Update,
-              (c, { args }) =>
+              (c, { args, options }) =>
                 c.setParameterPart(
                   owner,
                   args["owner-id"],
                   args.name,
                   part,
                   args.value,
+                  nativeInput(options),
                 ),
+              part === "type" ? [jsonOption("--item <json>", "Supply a native type body")] : [],
             ),
           ],
         ),
@@ -139,11 +142,13 @@ export function createBulkConfigurationCommands(
           strings(options, "template"),
           options.optimizeSettings as boolean | undefined,
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
       [
         fieldsOption,
         repeatOption("--template <id>", "Repeat template IDs in priority order"),
         option("--optimize-settings", "Remove redundant local settings"),
+        jsonOption("--item <json>", "Supply a native body"),
       ],
     ),
     leaf(
@@ -175,8 +180,8 @@ export function createBulkConfigurationCommands(
         [fieldsOption],
 
       ),
-      leaf("assign <project-id> <pool-id>", "Assign one pool", Permission.Update, (c, { args }) =>
-        c.assignProjectPool(args["project-id"], number(args, "pool-id")),
+      leaf("assign <project-id> <pool-id>", "Assign one pool", Permission.Update, (c, { args, options }) =>
+        c.assignProjectPool(args["project-id"], number(args, "pool-id"), nativeInput(options)), [jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "replace-all <project-id>",
@@ -187,8 +192,9 @@ export function createBulkConfigurationCommands(
             args["project-id"],
             strings(options, "pool").map(Number),
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [fieldsOption, repeatOption("--pool <id>", "Repeat pool IDs")],
+        [fieldsOption, repeatOption("--pool <id>", "Repeat pool IDs"), jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "unassign <project-id> <pool-id>",
@@ -220,8 +226,9 @@ export function createBulkConfigurationCommands(
             args["job-id"],
             options.name as string | undefined,
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [fieldsOption, option("--name <name>", "Set the job name")],
+        [fieldsOption, option("--name <name>", "Set the job name"), jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     command(
@@ -247,8 +254,9 @@ export function createBulkConfigurationCommands(
                 kind,
                 strings(options, "id"),
                 options.field as string | undefined,
+                nativeInput(options),
               ),
-            [fieldOption, repeatOption("--id <id>", "Repeat IDs in order")],
+            [fieldOption, repeatOption("--id <id>", "Repeat IDs in order"), jsonOption("--item <json>", "Supply a native body")],
           ),
         ]),
       ),
@@ -260,8 +268,8 @@ export function createBulkConfigurationCommands(
       "Replace all assigned projects",
       Permission.Update,
       (c, { args, options }) =>
-        c.replacePoolProjects(number(args, "pool-id"), strings(options, "project")),
-      [repeatOption("--project <id>", "Repeat project IDs")],
+        c.replacePoolProjects(number(args, "pool-id"), strings(options, "project"), nativeInput(options)),
+      [repeatOption("--project <id>", "Repeat project IDs"), jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "clear <pool-id>",
@@ -289,8 +297,8 @@ export function createBulkConfigurationCommands(
       "reorder",
       "Reorder selected queued builds",
       Permission.Update,
-      (c, { options }) => c.reorderQueue(strings(options, "build").map(Number), fieldsFromOptions(options)),
-      [repeatOption("--build <id>", "Repeat build IDs in order"), fieldsOption],
+      (c, { options }) => c.reorderQueue(strings(options, "build").map(Number), fieldsFromOptions(options), nativeInput(options)),
+      [repeatOption("--build <id>", "Repeat build IDs in order"), fieldsOption, jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "delete <build-id>",
@@ -304,8 +312,8 @@ export function createBulkConfigurationCommands(
         "Set queue pause status",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePaused(booleanText(args.status) === "true", options.reason as string | undefined),
-        [option("--reason <text>", "Set the pause reason")],
+          c.setQueuePaused(booleanText(args.status) === "true", options.reason as string | undefined, nativeInput(options)),
+        [option("--reason <text>", "Set the pause reason"), jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     command("approval", "Inspect and approve queued builds", [

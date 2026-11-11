@@ -105,8 +105,8 @@ export function createInfrastructureCommands(
         "start",
         "Start a cloud instance",
         Permission.Update,
-        (c, { options }) => c.startCloudInstance(image(options), fieldsFromOptions(options)),
-        [...imageOptions, fieldsOption],
+        (c, { options }) => c.startCloudInstance({ ...(options.cloudProfile === undefined ? {} : { profile: text(options, "cloudProfile") }), ...(options.image === undefined ? {} : { image: text(options, "image") }) }, fieldsFromOptions(options), nativeInput(options)),
+        [...imageOptions.map(option => ({ ...option, required: false })), fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
       ...(["delete", "force-stop", "stop"] as const).map((action) =>
         leaf(
@@ -179,8 +179,9 @@ export function createInfrastructureCommands(
             args.id,
             (options.property ?? []) as PlainProperty[],
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [propertyOption, fieldsOption],
+        [propertyOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "clear <id>",
@@ -283,6 +284,7 @@ export function createInfrastructureCommands(
             args.id,
             (options.revision ?? []) as PlainProperty[],
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
         [
           {
@@ -291,6 +293,7 @@ export function createInfrastructureCommands(
             description: "Supply branch and revision pairs; repeat",
           },
           fieldsOption,
+          jsonOption("--item <json>", "Supply a native body"),
         ],
       ),
       leaf(
@@ -411,8 +414,8 @@ export function createInfrastructureCommands(
         "Replace all DSL context parameters",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceVersionedContext(args.id, (options.property ?? []) as PlainProperty[]),
-        [propertyOption],
+          c.replaceVersionedContext(args.id, (options.property ?? []) as PlainProperty[], nativeInput(options)),
+        [propertyOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
     leaf(
@@ -447,10 +450,12 @@ export function createInfrastructureCommands(
             (options.mapping ?? []) as string[],
             context.secrets,
             (options.property ?? []) as PlainProperty[],
+            nativeInput(options),
           ),
         {
           permission: "Credentials",
           options: [
+            jsonOption("--item <json>", "Supply a native body"),
             propertyOption,
             repeatOption(
               "--mapping <remote-name=alias>",
@@ -464,8 +469,8 @@ export function createInfrastructureCommands(
         "Delete unused secure-value mappings",
         "Credentials",
         (c, { args, options }) =>
-          c.deleteVersionedTokens(args.id, options.name as string[]),
-        [repeatOption("--name <name>", "Select remote mappings; repeat for more")],
+          c.deleteVersionedTokens(args.id, options.name as string[], nativeInput(options)),
+        [repeatOption("--name <name>", "Select remote mappings; repeat for more"), jsonOption("--item <json>", "Supply a native body")],
       ),
     ]),
   ]);

@@ -58,11 +58,13 @@ function assignmentScope(input: { global?: unknown; project?: unknown }) {
 }
 export function roleBody(value: unknown): Record<string, unknown> {
   const { global, project, ...native } = apiInputRecord(value, []);
+  if (global !== undefined && typeof global !== "boolean") throw new Error("Global scope must be a boolean.");
+  if (global === true && project !== undefined) return { ...native, global, project };
   const scope = native.scope === undefined ? assignmentScope({ global, project }) : native.scope;
   return { ...native, ...(scope === undefined ? {} : { scope }) };
 }
 export function roleSuffix(input: RoleInput) {
-  const role = roleBody(input);
+  const role = { roleId: input.roleId, scope: input.scope ?? assignmentScope(input) };
   return { role, suffix: "/" + pathSegment(inputText(role.roleId, "Role ID")) + "/" + pathSegment(inputText(role.scope, "Scope")) };
 }
 export function roleBodies(inputs: readonly unknown[]) {

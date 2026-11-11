@@ -74,5 +74,5 @@ export async function forgetInputSecret(secrets: ScopedSecrets, alias: string) {
 export async function inputValue(secrets: ScopedSecrets, alias?: string, value?: string) {
   if (value !== undefined) return value;
   if (alias !== undefined) return requireInputSecret(secrets, alias);
-  throw new Error("Supply a value or an input-secret alias.");
+  return undefined;
 }

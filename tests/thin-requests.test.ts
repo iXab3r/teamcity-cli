@@ -86,12 +86,14 @@ const cases: Case[] = [
   {"name":"review empty versioned token deletion","argv":["projects","versioned-settings","tokens","delete","Example"],"permission":"Credentials","method":"DELETE","path":"/projects/id:Example/versionedSettings/tokens","body":{"versionedSettingsToken":[]}},
   {"name":"review bulk extension fields","argv":["jobs","features","replace-all","Example","--fields","id","--item","{\"enabled\": true, \"disabled\": true, \"future\": true}"],"path":"/buildTypes/id:Example/features","query":{"fields":"id"},"body":{"feature":[{"enabled":true,"disabled":true,"future":true}]}},
   {"name":"review native collection envelope","argv":["jobs","steps","replace-all","Example","--fields","id","--item","{\"step\": [{\"enabled\": true, \"future\": true}], \"count\": 1, \"future\": null}"],"path":"/buildTypes/id:Example/steps","query":{"fields":"id"},"body":{"step":[{"enabled":true,"future":true}],"count":1,"future":null}},
-  {"name":"review optional compact property values","argv":["jobs","steps","create","Example","--fields","id","--item","{\"properties\": [{\"name\": \"env.X\", \"type\": {\"rawValue\": \"password\"}}, {\"value\": \"fixture\"}, {}]}"],"method":"POST","path":"/buildTypes/id:Example/steps","query":{"fields":"id"},"body":{"properties":{"property":[{"name":"env.X","type":{"rawValue":"password"}},{"value":"fixture"},{}]}}},
+  {"name":"review optional compact property values","argv":["jobs","steps","replace-all","Example","--fields","id","--item","{\"properties\": [{\"name\": \"env.X\", \"type\": {\"rawValue\": \"password\"}}, {\"value\": \"fixture\"}, {}]}"],"path":"/buildTypes/id:Example/steps","query":{"fields":"id"},"body":{"step":[{"properties":{"property":[{"name":"env.X","type":{"rawValue":"password"}},{"value":"fixture"},{}]}}]}},
   {"name":"review role body conflicting compact scopes","argv":["users","roles","add","7","ROLE","--global","--project","Example"],"permission":"Admin","method":"POST","path":"/users/id:7/roles","body":{"roleId":"ROLE","global":true,"project":"Example"}},
   {"name":"review combined investigation dimensions","argv":["investigations","show","--target","{\"kind\": \"test\", \"jobId\": \"Build\", \"projectId\": \"Example\", \"testId\": \"Test\"}","--fields","id"],"permission":"ReadOnly","method":"GET","path":"/investigations/assignmentProject:(id:Example),buildType:(id:Build),test:(id:Test)","query":{"fields":"id"}},
   {"name":"review omitted license body","argv":["server","licenses","add","--fields","id"],"permission":"Admin","method":"POST","path":"/server/licensingData/licenseKeys","query":{"fields":"id"}},
-  {"name":"review blank requestor ''","argv":["vcs","instances","check-changes","8","--requestor","","--fields","id"],"method":"POST","path":"/vcs-root-instances/id:8/checkingForChanges","query":{"fields":"id","requestor":""}},
-  {"name":"review blank requestor '  '","argv":["vcs","instances","check-changes","8","--requestor","  ","--fields","id"],"method":"POST","path":"/vcs-root-instances/id:8/checkingForChanges","query":{"fields":"id","requestor":"  "}},
+  {"name":"review blank requestor ''","argv":["vcs","instances","check-changes","8","--requestor","","--fields","id"],"method":"POST","path":"/vcs-root-instances/checkingForChangesQueue","query":{"locator":"id:8","fields":"id","requestor":""}},
+  {"name":"review blank requestor '  '","argv":["vcs","instances","check-changes","8","--requestor","  ","--fields","id"],"method":"POST","path":"/vcs-root-instances/checkingForChangesQueue","query":{"locator":"id:8","fields":"id","requestor":"  "}},
+  {"name":"review native parameter type","argv":["jobs","parameters","type","set","Example","env.X","compact","--item","{\"rawValue\": null, \"future\": true}"],"path":"/buildTypes/id:Example/parameters/env.X/type","body":{"rawValue":null,"future":true}},
+  {"name":"review native cloud start","argv":["cloud","instances","start","--item","{\"image\": {\"id\": \"native\", \"future\": true}, \"future\": null}","--fields","id"],"method":"POST","path":"/cloud/instances","query":{"fields":"id"},"body":{"image":{"id":"native","future":true},"future":null}},
 ];
 for (const c of cases) test(`#381 category ${c.name}`, async t => {
   const runtime = await createTestRuntime(t, { profiles: [{ name: "default", url: "https://teamcity.test", permissions: [] }] });
@@ -107,7 +109,7 @@ for (const c of cases) test(`#381 category ${c.name}`, async t => {
   await cli.execute(c.argv);
 });
 
-for (const status of [403, 404, 500]) test(`#381 category 5 password metadata ${status} falls back to caller input`, async t => {
+for (const status of [403, 404, 500, "network", "invalid-json", "missing-type", "null-type"]) test(`#381 category 5 password metadata ${status} falls back to caller input`, async t => {
   const runtime = await createTestRuntime(t);
   const cli = runtime.createCli();
   await cli.execute(["permissions", "grant", "Credentials"]);
@@ -115,7 +117,11 @@ for (const status of [403, 404, 500]) test(`#381 category 5 password metadata ${
   const requests = trackRequests(t, 2, async (request, index) => {
     await assertHttpRequest(request, index === 0 ? { method: "GET", url: path, query: { fields: "name,inherited,type(rawValue)" } }
       : { method: "PUT", url: path, query: {}, body: { json: { name: "env.MODE", value: "synthetic-value", type: { rawValue: "password" } } } });
-    return index === 0 ? new HttpResponse(null, { status }) : new HttpResponse(null, { status: 204 });
+    return index !== 0 ? new HttpResponse(null, { status: 204 })
+      : typeof status === "number" ? new HttpResponse(null, { status })
+      : status === "network" ? HttpResponse.error()
+      : status === "invalid-json" ? HttpResponse.text("invalid JSON")
+      : HttpResponse.json(status === "null-type" ? { type: null } : {});
   });
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   assert.deepEqual(await cli.execute(["jobs", "parameters", "set-password", "Example", "env.MODE", "--value", "synthetic-value"]), { jobId: "Example", name: "env.MODE", stored: true });

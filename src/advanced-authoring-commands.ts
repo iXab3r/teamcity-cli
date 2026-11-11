@@ -80,8 +80,9 @@ export function createAdvancedAuthoringCommands(
             text(args, arg),
             (options.property ?? []) as PlainProperty[],
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
-        [propertyOption, fieldsOption],
+        [propertyOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         `set <job-id> <${arg}> <name> <value>`,
@@ -286,8 +287,8 @@ export function createAdvancedAuthoringCommands(
         "Set the default template",
         Permission.Update,
         (c, { args, options }) =>
-          c.setDefaultTemplate(args["project-id"], options.template as string | undefined, fieldsFromOptions(options)),
-        [fieldsOption, option("--template <template-id>", "Select an existing template")],
+          c.setDefaultTemplate(args["project-id"], options.template as string | undefined, fieldsFromOptions(options), nativeInput(options)),
+        [fieldsOption, option("--template <template-id>", "Select an existing template"), jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "clear <project-id>",

@@ -82,3 +82,48 @@ test("#381 review secure reference permits an omitted body and keeps storage", a
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   await cli.execute(["projects", "secure", "create-reference", "Example", "--store-as", "fixture"]);
 });
+
+for (const c of [
+  { argv: ["jobs", "templates", "attach", "Example", "--template", "Compact", "--fields", "id"], method: "POST", path: "/buildTypes/id:Example/templates", query: { fields: "id" }, native: { id: "Native", future: null }, body: { id: "Native", future: null } },
+  { argv: ["mutes", "delete-many", "--id", "7", "--confirm", "--fields", "id"], method: "DELETE", path: "/mutes/multiple", query: { fields: "id" }, native: { mute: [{ id: 8, future: true }], count: 1 }, body: { mute: [{ id: 8, future: true }], count: 1 } },
+]) test(`#381 review native body: ${c.argv.join(" ")}`, async t => {
+  const rt = await createTestRuntime(t);
+  const cli = rt.createCli();
+  await cli.execute(["permissions", "grant", "Update"]);
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: c.method, url: "https://teamcity.test/app/rest" + c.path,
+      query: c.query, body: { json: c.body } });
+    return HttpResponse.json({});
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute([...c.argv, "--item", JSON.stringify(c.native)]);
+});
+
+test("#381 review native pool token body retains alias storage safety", async t => {
+  const rt = await createTestRuntime(t);
+  const cli = rt.createCli();
+  await cli.execute(["permissions", "grant", "Credentials"]);
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "POST", url: "https://teamcity.test/app/rest/agentPools/id:2/authorizationTokens",
+      query: {}, body: { json: { count: 1, timeToLiveSeconds: null, future: true } } });
+    return HttpResponse.json({ item: ["synthetic-registration"] });
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute(["pools", "tokens", "create", "2", "--ttl", "3", "--store-as", "fixture", "--item", '{"count":1,"timeToLiveSeconds":null,"future":true}']);
+  assert.equal(await rt.secretStore.get("ai-cli-factory:teamcity-cli", "default:input-secret:fixture"), "synthetic-registration");
+});
+
+test("#381 review native password value wins without reading an unused alias", async t => {
+  const rt = await createTestRuntime(t);
+  const cli = rt.createCli();
+  await cli.execute(["permissions", "grant", "Credentials"]);
+  const path = "https://teamcity.test/app/rest/buildTypes/id:Example/parameters/env.X";
+  const requests = trackRequests(t, 2, async (request, index) => {
+    await assertHttpRequest(request, index === 0
+      ? { method: "GET", url: path, query: { fields: "name,inherited,type(rawValue)" } }
+      : { method: "PUT", url: path, query: {}, body: { json: { name: "env.X", value: "synthetic-native", type: { rawValue: "password caller" }, future: true } } });
+    return index === 0 ? HttpResponse.json({ type: { rawValue: "password metadata" } }) : new HttpResponse(null, { status: 204 });
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await cli.execute(["jobs", "parameters", "set-password", "Example", "env.X", "--value-secret", "unused", "--item", '{"value":"synthetic-native","type":{"rawValue":"password caller"},"future":true}']);
+});

@@ -25,7 +25,7 @@ locator and paging; single reads and unpaged scoped lists project the whole resp
 Omitted options preserve default projections, shaping and views. Everything an option does not
 control retains default-path parity: validation, permissions, confirmations, errors, exit status,
 empty or malformed bodies and unknown mutation outcomes. Lost mutation responses are never retried
-automatically. Blank text controls and boolean controls other than literal `true` or `false` fail locally.
+automatically. Empty and blank text controls pass through unchanged; boolean controls accept only literal `true` or `false`.
 
 Build lists compose `nextHref,build(<projection>)`; latest-build lookup keeps `build(<projection>)`.
 Artifact list/children compose `count,file(<projection>)` and retain `{count,items,hasMore}`,

@@ -177,25 +177,7 @@ export function investigationTarget(value: unknown): { locator: string } {
   if (supplied.kind === undefined) return { locator: investigationLocator(supplied) };
   const input = inputRecord(value, ["kind", "jobId", "projectId", "testId", "problemId"]);
   const kind = allowedField(inputText(input.kind, "Target kind"), ["job", "test", "problem"]);
-  if (kind === "job") {
-    if (
-      input.projectId !== undefined ||
-      input.testId !== undefined ||
-      input.problemId !== undefined
-    )
-      throw new Error("Job target cannot include a project/test/problem.");
-    const id = inputText(input.jobId, "Job ID");
-    return {
-      locator: nestedId("buildType", id, "Job ID"),
-    };
-  }
-  if (input.jobId !== undefined || input[kind === "test" ? "problemId" : "testId"] !== undefined)
-    throw new Error("Exactly one investigation target is required.");
-  const projectId = inputText(input.projectId, "Project ID");
-  const id = inputText(input[kind + "Id"], "Target ID");
-  return {
-    locator: `${nestedId("assignmentProject", projectId, "Project ID")},${nestedId(kind, id, "Target ID")}`,
-  };
+  return { locator: investigationLocator(investigationBody({ target: { ...input, kind } }).body) };
 }
 export function investigationBody(value: unknown = {}) {
   const input = apiInputRecord(value, []);
@@ -227,7 +209,7 @@ export function investigationBody(value: unknown = {}) {
       ...native,
       ...(!compact ? {} : { target }),
       ...(assignee === undefined ? {} : { assignee }),
-      ...(typeof input.resolution === "string" ? { resolution: { type: input.resolution } } : {}),
+      ...(input.resolution === undefined || typeof input.resolution === "object" ? {} : { resolution: { type: inputText(input.resolution, "Resolution") } }),
     },
   };
 }

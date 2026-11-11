@@ -42,7 +42,6 @@ export function textOption(flags: string, description: string): OptionDefinition
     flags,
     description,
     parse(value) {
-      if (!value.trim()) throw new Error(`${flags.split(" ")[0]} requires a non-empty value.`);
       return value;
     },
   };
@@ -52,7 +51,6 @@ export const locatorOption: OptionDefinition = {
   flags: "--locator <locator>",
   description: "Filter native TeamCity tags",
   parse(value) {
-    if (!value.trim()) throw new Error("Expected a non-empty locator.");
     return requiredText(value, "locator");
   },
 };
@@ -124,7 +122,6 @@ export const fieldOption: OptionDefinition = {
   flags: "--field <name>",
   description: "Select a native TeamCity field",
   parse(value) {
-    if (!value.trim()) throw new Error("Expected a non-empty field.");
     return value;
   },
 };

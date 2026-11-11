@@ -148,12 +148,18 @@ for (const c of actionCases) {
       );
   });
   for (const value of ["", "  "])
-    test(`US-006-A6 ${c.name}: invalid projection ${JSON.stringify(value)}`, async (t) => {
+    test(`US-006-A6 ${c.name}: forwards projection ${JSON.stringify(value)}`, async (t) => {
       const rt = await runtime(t, [c.name === "show" ? "ReadOnly" : "Update"]);
-      const requests = trackRequests(t, 0, () => HttpResponse.json({}));
+      const requests = trackRequests(t, 5, request => {
+        const url = new URL(request.url);
+        assert.equal(request.method, c.request.method);
+        assert.equal(url.pathname, c.request.path);
+        assert.deepEqual(Object.fromEntries(url.searchParams), { ...c.request.query, fields: value });
+        return HttpResponse.json(native);
+      });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
       for (const surface of surfaces)
-        await failure(rt, rt.createCli(), [...c.argv, "--fields", value], surface, "usage");
+        await success(rt, rt.createCli(), [...c.argv, "--fields", value], surface, native);
     });
 }
 test("US-006-A2 native partial batch result", async (t) => {

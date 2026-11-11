@@ -416,10 +416,12 @@ export function createSystemCommands(
             options.ttl as number | undefined,
             options.storeAs as string[],
             context.secrets,
+            nativeInput(options),
           ),
         {
           permission: "Credentials",
           options: [
+            jsonOption("--item <json>", "Supply a native body"),
             { ...option("--ttl <seconds>", "Set token lifetime in seconds"), parse: integerValue },
             repeatOption(
               "--store-as <alias>",
@@ -436,8 +438,8 @@ export function createSystemCommands(
       "delete-many",
       "Delete selected mutes",
       U,
-      (c, { options }) => c.deleteMutes((options.id ?? []) as string[], fieldsFromOptions(options)),
-      [repeatOption("--id <id>", "Select mute IDs; repeat for more"), confirm, fieldsOption],
+      (c, { options }) => c.deleteMutes((options.id ?? []) as string[], fieldsFromOptions(options), nativeInput(options)),
+      [repeatOption("--id <id>", "Select mute IDs; repeat for more"), confirm, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
     ),
   ];
   const roots = [

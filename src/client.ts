@@ -709,18 +709,21 @@ export class TeamCityClient {
 
   public cancelBuild<F extends string | undefined = undefined>(
     id: number,
-    options: CancelBuildOptions<F> = {}
+    options: CancelBuildOptions<F> = {},
+    native: Record<string, unknown> = {}
   ): Promise<Projected<TeamCityBuild, F>> {
-    return this.#cancel(`/app/rest/builds/id:${integerId(id, "TeamCity build ID")}`, options);
+    return this.#cancel(`/app/rest/builds/id:${integerId(id, "TeamCity build ID")}`, options, native);
   }
 
   public cancelQueuedBuild<F extends string | undefined = undefined>(
     id: number,
     options: CancelBuildOptions<F> = {},
+    native: Record<string, unknown> = {},
   ): Promise<Projected<TeamCityBuild, F>> {
     return this.#cancel(
       `/app/rest/buildQueue/id:${integerId(id, "TeamCity queued build ID")}`,
       options,
+      native,
     );
   }
 
@@ -786,14 +789,15 @@ export class TeamCityClient {
   public async moveProject<F extends string | undefined = undefined>(
     id: string,
     parent: string | undefined,
-    fields?: F
+    fields?: F,
+    native: Record<string, unknown> = {}
   ) {
     const parentProjectId = parent === undefined ? undefined : requiredText(parent, "Parent project ID");
     const contents = await this.#request(
       "PUT",
       `${projectPath(id)}/parentProject`,
       fields === undefined ? {} : { fields: fieldsProjection(fields) },
-      parentProjectId === undefined ? {} : { id: parentProjectId },
+      { ...(parentProjectId === undefined ? {} : { id: parentProjectId }), ...native },
     );
     return this.#projectedAcknowledgement(contents, fields, { id: id, parentProjectId, moved: true });
   }
@@ -850,8 +854,9 @@ export class TeamCityClient {
     name: string,
     value: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
-    return this.#writeParameter("POST", owner, id, name, value, fields);
+    return this.#writeParameter("POST", owner, id, name, value, fields, native);
   }
 
   public setParameter<F extends string | undefined = undefined>(
@@ -860,15 +865,16 @@ export class TeamCityClient {
     name: string,
     value: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
-    return this.#writeParameter("PUT", owner, id, name, value, fields);
+    return this.#writeParameter("PUT", owner, id, name, value, fields, native);
   }
 
-  public async setPasswordParameter(jobId: string, name: string, alias: string | undefined, secrets: ScopedSecrets, plainValue?: string) {
+  public async setPasswordParameter(jobId: string, name: string, alias: string | undefined, secrets: ScopedSecrets, plainValue?: string, native: Record<string, unknown> = {}) {
     const collection = parametersPath("jobs", jobId);
     pathSegment(name);
     const path = `${collection}/${pathSegment(name)}`;
-    const value = alias === undefined && plainValue === undefined ? undefined : await inputValue(secrets, alias, plainValue);
+    const value = native.value === undefined ? await inputValue(secrets, alias, plainValue) : native.value;
     let existing: RawProperty | undefined;
     try {
       existing = await this.#requestJson<RawProperty>("GET", path, { fields: "name,inherited,type(rawValue)" });
@@ -877,10 +883,10 @@ export class TeamCityClient {
     }
     try {
       // Retain the password specification and discard any server echo of its value.
-      await this.#request("PUT", path, {}, { name, value, ...(existing?.type === undefined ? {} : { type: existing.type }) },
+      await this.#request("PUT", path, {}, { name, value, ...native, type: native.type ?? existing?.type ?? { rawValue: "password" } },
         "application/json", { discard: true });
     } catch (cause) {
-      throw new Error("Password parameter update failed.", { cause: diagnosticCause(cause, value === undefined ? [] : [value]) });
+      throw new Error("Password parameter update failed.", { cause: diagnosticCause(cause, typeof value === "string" ? [value] : []) });
     }
     return { jobId: jobId, name, stored: true };
   }
@@ -892,6 +898,7 @@ export class TeamCityClient {
     name: string,
     value: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = { name: requiredText(name, "Property name"), ...(value === undefined ? {} : plainProperty(name, value)) };
     const collection = parametersPath(owner, id);
@@ -902,7 +909,7 @@ export class TeamCityClient {
       { fields: propertyFields },
       value => safeProperty(value as RawProperty),
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -1134,6 +1141,7 @@ export class TeamCityClient {
     templateId: string | undefined,
     optimizeSettings?: boolean,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "POST",
@@ -1141,7 +1149,7 @@ export class TeamCityClient {
       { fields: identityFields, ...(optimizeSettings === undefined ? {} : { optimizeSettings: String(optimizeSettings) }) },
       value => safeIdentity(value as BuildTypeIdentity),
       fields,
-      { id: templateId === undefined ? undefined : requiredText(templateId, "Template ID") },
+      { id: templateId === undefined ? undefined : requiredText(templateId, "Template ID"), ...native },
     );
   }
 
@@ -1279,6 +1287,7 @@ export class TeamCityClient {
     id: string,
     properties: readonly PlainProperty[],
     fields?: F,
+    native: Record<string, unknown> = {},
 
   ) {
     return this.#projectedJson(
@@ -1287,7 +1296,7 @@ export class TeamCityClient {
       { fields: `property(${propertyFields})` },
       value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p, false)),
       fields,
-      propertiesBody(properties)
+      { ...propertiesBody(properties), ...native }
     );
   }
 
@@ -1445,6 +1454,7 @@ export class TeamCityClient {
     projectId: string,
     id: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "PUT",
@@ -1452,7 +1462,7 @@ export class TeamCityClient {
       { fields: identityFields },
       value => safeIdentity(value as BuildTypeIdentity),
       fields,
-      { id: id === undefined ? undefined : requiredText(id, "Template ID") },
+      { id: id === undefined ? undefined : requiredText(id, "Template ID"), ...native },
     );
   }
 
@@ -1605,6 +1615,7 @@ export class TeamCityClient {
     rootId: string | undefined,
     rules: string | undefined = undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "POST",
@@ -1612,7 +1623,7 @@ export class TeamCityClient {
       { fields: entryFields },
       value => safeEntry(value as RawVcsEntry),
       fields,
-      { ...(rootId === undefined ? {} : { "vcs-root": { id: requiredText(rootId, "VCS root ID") } }), ...(rules === undefined ? {} : { "checkout-rules": rules }) },
+      { ...(rootId === undefined ? {} : { "vcs-root": { id: requiredText(rootId, "VCS root ID") } }), ...(rules === undefined ? {} : { "checkout-rules": rules }), ...native },
     );
   }
 
@@ -1621,6 +1632,7 @@ export class TeamCityClient {
     rootId: string,
     rules: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "PUT",
@@ -1628,7 +1640,7 @@ export class TeamCityClient {
       { fields: entryFields },
       value => safeEntry(value as RawVcsEntry),
       fields,
-      { "vcs-root": { id: rootId }, "checkout-rules": rules },
+      { "vcs-root": { id: rootId }, "checkout-rules": rules, ...native },
     );
   }
 
@@ -1657,13 +1669,13 @@ export class TeamCityClient {
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
 
-  public async createPool(name: string | undefined) {
+  public async createPool(name: string | undefined, native: Record<string, unknown> = {}) {
     return safeNamed(
       await this.#requestJson<AgentPoolSummary>(
         "POST",
         "/app/rest/agentPools",
         {},
-        { name: name === undefined ? undefined : requiredText(name, "Pool name") },
+        { name: name === undefined ? undefined : requiredText(name, "Pool name"), ...native },
       ),
     );
   }
@@ -1711,6 +1723,7 @@ export class TeamCityClient {
     poolId: number,
     id: number,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     integerId(id, "Agent ID");
     return this.#projectedJson(
@@ -1719,7 +1732,7 @@ export class TeamCityClient {
       { fields: "id,name" },
       value => safeNamed(value as AgentPoolSummary),
       fields,
-      { id },
+      { id, ...native },
     );
   }
 
@@ -1736,13 +1749,13 @@ export class TeamCityClient {
     );
   }
 
-  public async assignPoolProject(poolId: number, id: string) {
+  public async assignPoolProject(poolId: number, id: string, native: Record<string, unknown> = {}) {
     return safeIdentity(
       await this.#requestJson<BuildTypeIdentity>(
         "POST",
         `${poolPath(poolId)}/projects`,
         {},
-        { id: requiredText(id, "Project ID") },
+        { id: requiredText(id, "Project ID"), ...native },
       ),
     );
   }
@@ -1782,6 +1795,7 @@ export class TeamCityClient {
     status: boolean,
     comment?: string,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "PUT",
@@ -1789,7 +1803,7 @@ export class TeamCityClient {
       { fields: booleanStatusFields },
       raw => safeBooleanStatus(raw as BooleanStatus),
       fields,
-      this.#statusBody(status, comment),
+      { ...this.#statusBody(status, comment), ...native },
 
     );
   }
@@ -1814,6 +1828,7 @@ export class TeamCityClient {
     policy: string,
     jobs: readonly string[] | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     requiredText(policy, "Policy");
     const ids = jobs?.map((job) => requiredText(job, "Job ID"));
@@ -1823,7 +1838,7 @@ export class TeamCityClient {
       { fields: policyFields },
       raw => safePolicy(raw as RawAgentPolicy),
       fields,
-      { policy, ...(ids === undefined ? {} : { buildTypes: { buildType: ids.map((id) => ({ id })) } }) },
+      { policy, ...(ids === undefined ? {} : { buildTypes: { buildType: ids.map((id) => ({ id })) } }), ...native },
 
     );
   }
@@ -1880,7 +1895,8 @@ export class TeamCityClient {
   public async setAgentPool<F extends string | undefined = undefined>(
     id: number,
     poolId: number,
-    fields?: F
+    fields?: F,
+    native: Record<string, unknown> = {}
   ) {
     return this.#projectedJson(
       "PUT",
@@ -1888,7 +1904,7 @@ export class TeamCityClient {
       { fields: "id,name" },
       raw => safeNamed(raw as AgentPoolSummary),
       fields,
-      { id: poolNumber(poolId) },
+      { id: poolNumber(poolId), ...native },
 
     );
   }
@@ -1950,6 +1966,7 @@ export class TeamCityClient {
     position: string,
     id: number | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     if (id !== undefined) integerId(id, "Build ID");
     return this.#projectedValue(
@@ -1957,7 +1974,7 @@ export class TeamCityClient {
         "PUT",
         `/app/rest/buildQueue/order/${queuePosition(position)}`,
         { fields: fields === undefined ? operationBuildFields : fieldsProjection(fields) },
-        { id },
+        { id, ...native },
       ),
       fields,
       (value) => safeOperationBuild(value as OperationBuild),
@@ -2013,6 +2030,7 @@ export class TeamCityClient {
     status: boolean,
     comment?: string,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
         "PUT",
@@ -2020,7 +2038,7 @@ export class TeamCityClient {
         { fields: booleanStatusFields },
       (value) => safeBooleanStatus(value as BooleanStatus),
       fields,
-        this.#statusBody(status, comment),
+        { ...this.#statusBody(status, comment), ...native },
     );
   }
 
@@ -2044,6 +2062,7 @@ export class TeamCityClient {
     id: number,
     tags: readonly string[],
     fields?: F,
+    native: Record<string, unknown> = {},
 
   ) {
     const body = publicTags(tags);
@@ -2051,7 +2070,7 @@ export class TeamCityClient {
       "POST",
       `${buildPath(id, owner)}/tags`,
       fields === undefined ? {} : { fields: fieldsProjection(fields) },
-      body,
+      { ...body, ...native },
 
     );
     return this.#projectedAcknowledgement(
@@ -2067,6 +2086,7 @@ export class TeamCityClient {
     tags: readonly string[],
     fields?: F,
     locator?: string,
+    native: Record<string, unknown> = {},
 
   ) {
     return this.#projectedJson(
@@ -2075,7 +2095,7 @@ export class TeamCityClient {
       { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
       (value) => ((value as { tag?: { name: string }[] }).tag ?? []).map((tag) => tag.name),
       fields,
-      publicTags(tags, true),
+      { ...publicTags(tags, true), ...native },
     );
   }
 
@@ -2151,6 +2171,7 @@ export class TeamCityClient {
     id: string,
     properties: readonly PlainProperty[],
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = propertiesBody(properties);
     const path = parametersPath(owner, id);
@@ -2160,7 +2181,7 @@ export class TeamCityClient {
       { fields: `property(${propertyFields})` },
       value => ((value as { property?: RawProperty[] }).property ?? []).map(p => safeProperty(p)),
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -2179,9 +2200,10 @@ export class TeamCityClient {
     name: string,
     part: ParameterPart,
     value: string,
+    native: Record<string, unknown> = {},
   ) {
     plainProperty(name, value);
-    return this.#parameterPart("PUT", owner, id, name, part, value);
+    return this.#parameterPart("PUT", owner, id, name, part, value, native);
   }
 
   async #parameterPart(
@@ -2191,6 +2213,7 @@ export class TeamCityClient {
     name: string,
     part: ParameterPart,
     value?: string,
+    native: Record<string, unknown> = {},
   ) {
     const path = `${parametersPath(owner, id)}/${pathSegment(name)}`;
     const metadata = method === "GET"
@@ -2215,7 +2238,7 @@ export class TeamCityClient {
             method,
             `${path}/type`,
             {},
-            value === undefined ? undefined : { rawValue: value },
+            method === "PUT" ? { ...(value === undefined ? {} : { rawValue: value }), ...native } : undefined,
           )
         : {
             rawValue: await this.#requestText(method, `${path}/type/rawValue`, value),
@@ -2227,22 +2250,11 @@ export class TeamCityClient {
   public async replaceAllSettings<F extends string | undefined = undefined>(
     kind: SettingsCollection,
     id: string,
-    input: readonly unknown[],
+    input: readonly unknown[] | Record<string, unknown>,
     projection?: F,
   ) {
-    const items = settingsItems(kind, id, input);
-    const path = `${kind === "projectFeatures" ? projectPath(id) : jobPath(id)}/${kind}`;
-    if (kind === "vcs-root-entries") {
-      return this.#projectedJson(
-        "PUT",
-        path,
-        { fields: `vcs-root-entry(${entryFields})` },
-        value => ((value as { "vcs-root-entry"?: RawVcsEntry[] })["vcs-root-entry"] ?? []).map(safeEntry),
-        projection,
-        { "vcs-root-entry": items }
-      );
-    }
     const collectionKey = {
+      "vcs-root-entries": "vcs-root-entry",
       steps: "step",
       features: "feature",
       triggers: "trigger",
@@ -2251,6 +2263,22 @@ export class TeamCityClient {
       "artifact-dependencies": "artifact-dependency",
       "snapshot-dependencies": "snapshot-dependency",
     }[kind];
+    const single = Array.isArray(input) && input.length === 1 ? triage.apiInputRecord(input[0], []) : undefined;
+    const envelope = Array.isArray(input)
+      ? single !== undefined && collectionKey in single ? single : undefined
+      : triage.apiInputRecord(input, []);
+    const items = envelope === undefined ? settingsItems(kind, id, input as readonly unknown[]) : [];
+    const path = `${kind === "projectFeatures" ? projectPath(id) : jobPath(id)}/${kind}`;
+    if (kind === "vcs-root-entries") {
+      return this.#projectedJson(
+        "PUT",
+        path,
+        { fields: `vcs-root-entry(${entryFields})` },
+        value => ((value as { "vcs-root-entry"?: RawVcsEntry[] })["vcs-root-entry"] ?? []).map(safeEntry),
+        projection,
+        { "vcs-root-entry": items, ...envelope }
+      );
+    }
     const dependency = kind === "artifact-dependencies" || kind === "snapshot-dependencies";
     const fields = kind === "steps" ? stepFields : dependency ? snapshotFields : extensionFields;
     return this.#projectedJson(
@@ -2263,7 +2291,7 @@ export class TeamCityClient {
           kind === "steps" ? safeStep(item) : dependency ? safeSnapshot(item) : safeExtension(item)
       )),
       projection,
-      { [collectionKey]: items }
+      { [collectionKey]: items, ...envelope }
     );
   }
 
@@ -2272,6 +2300,7 @@ export class TeamCityClient {
     ids: readonly string[],
     optimizeSettings?: boolean,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "PUT",
@@ -2279,7 +2308,7 @@ export class TeamCityClient {
       { fields: `buildType(${identityFields})`, ...(optimizeSettings === undefined ? {} : { optimizeSettings: String(optimizeSettings) }) },
       value => ((value as { buildType?: BuildTypeIdentity[] }).buildType ?? []).map(safeIdentity),
       fields,
-      { buildType: textIds(ids).map((id) => ({ id })) },
+      { buildType: textIds(ids).map((id) => ({ id })), ...native },
     );
   }
 
@@ -2316,13 +2345,13 @@ export class TeamCityClient {
     );
   }
 
-  public async assignProjectPool(projectId: string, id: number) {
+  public async assignProjectPool(projectId: string, id: number, native: Record<string, unknown> = {}) {
     return safeNamed(
       await this.#requestJson<AgentPoolSummary>(
         "POST",
         `${projectPath(projectId)}/agentPools`,
         { fields: "id,name" },
-        { id: poolNumber(id) },
+        { id: poolNumber(id), ...native },
       ),
     );
   }
@@ -2331,6 +2360,7 @@ export class TeamCityClient {
     projectId: string,
     ids: readonly number[],
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = {
       agentPool: textIds(ids.map((id) => String(poolNumber(id)))).map((id) => ({
@@ -2343,7 +2373,7 @@ export class TeamCityClient {
       { fields: "agentPool(id,name)" },
       value => ((value as { agentPool?: AgentPoolSummary[] }).agentPool ?? []).map(safeNamed),
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -2370,6 +2400,7 @@ export class TeamCityClient {
     id: string,
     name: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     return this.#projectedJson(
       "POST",
@@ -2377,7 +2408,7 @@ export class TeamCityClient {
       { fields: identityFields },
       value => safeIdentity(value as BuildTypeIdentity),
       fields,
-      { id: requiredText(id, "Job ID"), name: name === undefined ? undefined : requiredText(name, "Job name") },
+      { id: requiredText(id, "Job ID"), name: name === undefined ? undefined : requiredText(name, "Job name"), ...native },
     );
   }
 
@@ -2393,9 +2424,10 @@ export class TeamCityClient {
     projectId: string,
     kind: "jobs" | "projects",
     ids: readonly string[],
-    field?: string
+    field?: string,
+    native: Record<string, unknown> = {}
   ) {
-    return this.#projectOrder("PUT", projectId, kind, textIds(ids), field);
+    return this.#projectOrder("PUT", projectId, kind, textIds(ids), field, native);
   }
 
   async #projectOrder(
@@ -2404,24 +2436,25 @@ export class TeamCityClient {
     kind: "jobs" | "projects",
     ids?: readonly string[],
     field?: string,
+    native: Record<string, unknown> = {},
   ) {
     const key = kind === "jobs" ? "buildType" : "project";
     const result = await this.#requestJson<Record<string, BuildTypeIdentity[]>>(
       method,
       `${projectPath(projectId)}/order/${kind === "jobs" ? "buildTypes" : "projects"}`,
       { field: field === undefined ? `${key}(id,name${kind === "jobs" ? ",projectId" : ""})` : field },
-      ids === undefined ? undefined : { [key]: ids.map((id) => ({ id })) },
+      ids === undefined ? undefined : { [key]: ids.map((id) => ({ id })), ...native },
     );
     return (result[key] ?? []).map(safeIdentity);
   }
 
-  public async replacePoolProjects(poolId: number, ids: readonly string[]) {
+  public async replacePoolProjects(poolId: number, ids: readonly string[], native: Record<string, unknown> = {}) {
     const body = { project: textIds(ids).map((id) => ({ id })) };
     const result = await this.#requestJson<{ project?: BuildTypeIdentity[] }>(
       "PUT",
       `${poolPath(poolId)}/projects`,
       { fields: "project(id,name)" },
-      body,
+      { ...body, ...native },
     );
     return (result.project ?? []).map(safeIdentity);
   }
@@ -2448,7 +2481,8 @@ export class TeamCityClient {
 
   public async reorderQueue<F extends string | undefined = undefined>(
     ids: readonly number[],
-    fields?: F
+    fields?: F,
+    native: Record<string, unknown> = {}
   ) {
     const body = {
       build: textIds(ids.map((id) => integerId(id, "Build ID"))).map((id) => ({
@@ -2461,7 +2495,7 @@ export class TeamCityClient {
       {
         fields: fields === undefined ? `build(${operationBuildFields})` : fieldsProjection(fields),
       },
-      body,
+      { ...body, ...native },
     );
     return this.#projectedValue(
       result,
@@ -2472,13 +2506,13 @@ export class TeamCityClient {
     );
   }
 
-  public async setQueuePaused(paused: boolean, reason?: string) {
+  public async setQueuePaused(paused: boolean, reason?: string, native: Record<string, unknown> = {}) {
     if (typeof paused !== "boolean") throw new Error("Paused must be a boolean.");
     await this.#request(
       "PUT",
       "/app/rest/buildQueue/pausedState",
       {},
-      { paused, ...(reason === undefined ? {} : { reason: plainProperty("reason", reason).value }) },
+      { paused, ...(reason === undefined ? {} : { reason: plainProperty("reason", reason).value }), ...native },
     );
     return { paused, updated: true };
   }
@@ -2574,11 +2608,10 @@ export class TeamCityClient {
     comment: string | undefined,
     fields?: F,
     requeue?: boolean,
+    native: Record<string, unknown> = {},
   ) {
-    return this.#buildBatch("POST", ids, "", {
-      ...(comment === undefined ? {} : { comment: triage.inputText(comment, "Comment") }),
-      ...(requeue === undefined ? {} : { readdIntoQueue: requeue }),
-    },
+    return this.#buildBatch("POST", ids, "", { ...(comment === undefined ? {} : { comment: triage.inputText(comment, "Comment") }),
+      ...(requeue === undefined ? {} : { readdIntoQueue: requeue }), ...native },
       "application/json",
       fields,
     );
@@ -2617,8 +2650,9 @@ export class TeamCityClient {
     ids: readonly number[],
     status: boolean | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
-    return this.#buildBatch("PUT", ids, "/pinInfo", this.#statusBody(status),
+    return this.#buildBatch("PUT", ids, "/pinInfo", { ...this.#statusBody(status), ...native },
       "application/json",
       fields,
     );
@@ -2629,9 +2663,10 @@ export class TeamCityClient {
     tags: readonly string[],
     remove = false,
     fields?: F,
+    native: Record<string, unknown> = {},
 
   ) {
-    return this.#buildBatch(remove ? "DELETE" : "POST", ids, "/tags", publicTags(tags),
+    return this.#buildBatch(remove ? "DELETE" : "POST", ids, "/tags", { ...publicTags(tags), ...native },
       "application/json",
       fields,
     );
@@ -2801,6 +2836,7 @@ export class TeamCityClient {
     status: string,
     comment: string | undefined,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = {
       status: plainProperty("status", status).value,
@@ -2815,7 +2851,7 @@ export class TeamCityClient {
             ? `build(${triage.evidenceBuildFields}),errors(item)`
             : fieldsProjection(fields),
       },
-      body,
+      { ...body, ...native },
     );
     return this.#projectedMutation(
       value,
@@ -3187,6 +3223,7 @@ export class TeamCityClient {
     username: string,
     name?: string,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = {
       username: triage.inputText(username, "Username"),
@@ -3198,7 +3235,7 @@ export class TeamCityClient {
       { fields: admin.accountUserFields },
       admin.safeAccountUser,
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -3263,6 +3300,7 @@ export class TeamCityClient {
     id: string,
     keys: readonly string[],
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = admin.groupKeys(keys);
     return this.#projectedJson(
@@ -3274,7 +3312,7 @@ export class TeamCityClient {
         return (value.group ?? []).map(admin.safeGroup);
       },
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -3394,13 +3432,13 @@ export class TeamCityClient {
     return (value.role ?? []).map(admin.safeRole);
   }
 
-  public async addAccountRole(kind: admin.AccountKind, id: string, input: admin.RoleInput) {
+  public async addAccountRole(kind: admin.AccountKind, id: string, input: admin.RoleInput, native: Record<string, unknown> = {}) {
     return admin.safeRole(
       await this.#requestJson(
         "POST",
         admin.accountPath(kind, id) + "/roles",
         {},
-        admin.roleBody(input),
+        { ...admin.roleBody(input), ...native },
       ),
     );
   }
@@ -3566,6 +3604,7 @@ export class TeamCityClient {
     name: string | undefined,
     description?: string,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = {
       key: triage.inputText(key, "Group key"),
@@ -3580,7 +3619,7 @@ export class TeamCityClient {
       { fields: admin.groupFields },
       admin.safeGroup,
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -3731,15 +3770,20 @@ export class TeamCityClient {
   }
 
   public async startCloudInstance<F extends string | undefined = undefined>(
-    input: infrastructure.CloudImageId,
+    input: Partial<infrastructure.CloudImageId>,
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
-    const imageId = infrastructure.cloudComposite(input);
+    const dimensions = [
+      ...(input.profile === undefined ? [] : ["profileId:" + locatorValue(input.profile, "Cloud profile ID")]),
+      ...(input.image === undefined ? [] : ["id:" + locatorValue(input.image, "Cloud image ID")]),
+    ];
+    const imageId = dimensions.length === 0 ? undefined : dimensions.join(",");
     const contents = await this.#request(
       "POST",
       "/app/rest/cloud/instances",
       fields === undefined ? {} : { fields: fieldsProjection(fields) },
-      { image: { id: imageId } },
+      { ...(imageId === undefined ? {} : { image: { id: imageId } }), ...native },
     );
     return this.#projectedAcknowledgement(contents, fields, { imageId, startRequested: true });
   }
@@ -3821,6 +3865,7 @@ export class TeamCityClient {
     id: string,
     properties: readonly PlainProperty[],
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = { property: infrastructure.namedValues(properties) };
     return this.#projectedJson(
@@ -3829,7 +3874,7 @@ export class TeamCityClient {
       { fields: "count,property(name)" },
       infrastructure.propertyNames,
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -3984,6 +4029,7 @@ export class TeamCityClient {
     id: string,
     revisions: readonly PlainProperty[],
     fields?: F,
+    native: Record<string, unknown> = {},
   ) {
     const body = { entry: infrastructure.namedValues(revisions, true) };
     return this.#projectedJson(
@@ -3992,7 +4038,7 @@ export class TeamCityClient {
       { fields: "count,entry(name,value)" },
       infrastructure.repositoryEntries,
       fields,
-      body,
+      { ...body, ...native },
     );
   }
 
@@ -4145,14 +4191,14 @@ export class TeamCityClient {
     );
   }
 
-  public async replaceVersionedContext(id: string, properties: readonly PlainProperty[]) {
+  public async replaceVersionedContext(id: string, properties: readonly PlainProperty[], native: Record<string, unknown> = {}) {
     const body = { versionedSettingsContextParameter: infrastructure.namedValues(properties) };
     return infrastructure.contextParameters(
       await this.#requestJson(
         "PUT",
         infrastructure.versionedPath(id) + "/contextParameters",
         {},
-        body,
+        { ...body, ...native },
       ),
     );
   }
@@ -4197,7 +4243,7 @@ export class TeamCityClient {
     );
   }
 
-  public async setVersionedTokens(id: string, mappings: readonly string[], secrets: ScopedSecrets, properties: readonly PlainProperty[] = []) {
+  public async setVersionedTokens(id: string, mappings: readonly string[], secrets: ScopedSecrets, properties: readonly PlainProperty[] = [], native: Record<string, unknown> = {}) {
     triage.typedItems([...mappings, ...properties]);
     const entries = mappings.map((mapping) => {
       const split = mapping.indexOf("=");
@@ -4211,7 +4257,7 @@ export class TeamCityClient {
     const versionedSettingsToken = propertiesBody(properties).property;
     const directNames = new Set(versionedSettingsToken.map((item) => item.name));
     for (const item of entries) {
-      if (directNames.has(item.name)) continue;
+      if ("versionedSettingsToken" in native || directNames.has(item.name)) continue;
       versionedSettingsToken.push({
         name: item.name,
         value: await requireInputSecret(secrets, item.alias),
@@ -4221,21 +4267,21 @@ export class TeamCityClient {
       "POST",
       infrastructure.versionedPath(id) + "/tokens",
       {},
-      { versionedSettingsToken },
+      { versionedSettingsToken, ...native },
       "application/json",
       { discard: true },
     );
     return { names: versionedSettingsToken.map((item) => item.name), updated: true };
   }
 
-  public async deleteVersionedTokens(id: string, names: readonly string[]) {
+  public async deleteVersionedTokens(id: string, names: readonly string[] = [], native: Record<string, unknown> = {}) {
     triage.typedItems(names);
     const checked = textIds(names);
     await this.#request(
       "DELETE",
       infrastructure.versionedPath(id) + "/tokens",
       {},
-      { versionedSettingsToken: checked.map((name) => ({ name })) },
+      { versionedSettingsToken: checked.map((name) => ({ name })), ...native },
       "application/json",
       { discard: true },
     );
@@ -4265,7 +4311,8 @@ export class TeamCityClient {
 
   #cancel<F extends string | undefined>(
     path: string,
-    options: CancelBuildOptions<F>
+    options: CancelBuildOptions<F>,
+    native: Record<string, unknown> = {}
   ): Promise<Projected<TeamCityBuild, F>> {
     return this.#projectedJson(
       "POST",
@@ -4273,12 +4320,10 @@ export class TeamCityClient {
       { fields: buildFields },
       value => value as TeamCityBuild,
       options.fields,
-      {
-        ...(options.comment === undefined
+      { ...(options.comment === undefined
           ? {}
           : { comment: requiredText(options.comment, "Cancellation comment") }),
-        ...(options.requeue === undefined ? {} : { readdIntoQueue: options.requeue }),
-      },
+        ...(options.requeue === undefined ? {} : { readdIntoQueue: options.requeue }), ...native },
     );
   }
 
@@ -4415,6 +4460,7 @@ export class TeamCityClient {
     ttl: number | undefined,
     aliases: readonly string[],
     secrets: ScopedSecrets,
+    native: Record<string, unknown> = {},
   ) {
     const poolId = poolNumber(Number(integerId(id, "Pool ID")));
     if (ttl !== undefined) system.integer(ttl);
@@ -4425,7 +4471,7 @@ export class TeamCityClient {
         "POST",
         `/app/rest/agentPools/id:${poolId}/authorizationTokens`,
         {},
-        { timeToLiveSeconds: ttl, count: aliases.length },
+        { timeToLiveSeconds: ttl, count: aliases.length, ...native },
       ),
     );
     await persistSecretKeys(secrets, keys, triage.array(result.item) as string[]);
@@ -4670,7 +4716,8 @@ export class TeamCityClient {
   }
   public async deleteMutes<F extends string | undefined = undefined>(
     ids: readonly string[],
-    fields?: F
+    fields?: F,
+    native: Record<string, unknown> = {}
   ) {
     const selected = triage
       .inputIds(ids)
@@ -4680,7 +4727,7 @@ export class TeamCityClient {
       "DELETE",
       "/app/rest/mutes/multiple",
       fields === undefined ? {} : { fields: fieldsProjection(fields) },
-      { mute },
+      { mute, ...native },
       "application/json",
       {
         discard: fields === undefined,
@@ -4904,6 +4951,7 @@ export class TeamCityClient {
     plainValue?: string,
   ) {
     const value = await inputValue(secrets, alias, plainValue);
+    if (value === undefined) throw new Error("Supply a license key or an input-secret alias for the URL.");
     return this.#projectedJson(
       "GET",
       "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
@@ -4915,6 +4963,7 @@ export class TeamCityClient {
 
   public async deleteLicense(alias: string | undefined, secrets: ScopedSecrets, plainValue?: string) {
     const value = await inputValue(secrets, alias, plainValue);
+    if (value === undefined) throw new Error("Supply a license key or an input-secret alias for the URL.");
     await this.#request(
       "DELETE",
       "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),

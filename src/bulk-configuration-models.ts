@@ -31,7 +31,7 @@ export function settingsItems(
     switch (kind) {
       case "steps": return stepBody(item);
       case "features":
-      case "triggers": return extensionBody(item);
+      case "triggers": return { ...extensionBody(item), ...(item.enabled === undefined ? {} : { enabled: item.enabled }) };
       case "projectFeatures": return stepBody(item);
       case "agent-requirements":
       case "artifact-dependencies": return ruleBody(ownerId, { ...item, kind }, item.kind === undefined ? {} : { kind: item.kind });

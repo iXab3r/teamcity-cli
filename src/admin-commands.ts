@@ -85,8 +85,8 @@ export function createAdminCommands(
         "Add a role assignment",
         "Admin",
         (c, { args, options }) =>
-          c.addAccountRole(kind, args.id, roleInput(args, options)),
-        scopeOptions,
+          c.addAccountRole(kind, args.id, roleInput(args, options), nativeInput(options)),
+        [...scopeOptions, jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "replace <id>",
@@ -145,8 +145,8 @@ export function createAdminCommands(
           : "Replace direct parent groups",
         "Admin",
         (c, { args, options }) =>
-          c.replaceAccountGroups(kind, args.id, (options.group ?? []) as string[], fieldsFromOptions(options)),
-        [groupOption, fieldsOption],
+          c.replaceAccountGroups(kind, args.id, (options.group ?? []) as string[], fieldsFromOptions(options), nativeInput(options)),
+        [groupOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
     ];
   }
@@ -184,8 +184,8 @@ export function createAdminCommands(
           jsonOption("--item <json>", "Supply a native token body"),
           option("--alias <name>", "Choose a new issued-token alias", true),
           option("--expires <timestamp>", "Set the token expiration timestamp"),
-          option("--no-expiration", "Request a permanent token"),
-          option("--same-permissions", "Inherit current-user permissions"),
+          option("--no-expiration", "Skip expiration unless supplied"),
+          option("--same-permissions", "Skip restrictions unless supplied"),
           {
             ...jsonOption(
               "--restriction <json>",
@@ -249,8 +249,8 @@ export function createAdminCommands(
       "Create an account identity",
       "Admin",
       (c, { args, options }) =>
-        c.createAccountUser(args.username, optional(options, "name"), fieldsFromOptions(options)),
-      [fieldsOption, option("--name <text>", "Set the display name")],
+        c.createAccountUser(args.username, optional(options, "name"), fieldsFromOptions(options), nativeInput(options)),
+      [fieldsOption, option("--name <text>", "Set the display name"), jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "update <id>",
@@ -347,8 +347,9 @@ export function createAdminCommands(
           options.name as string | undefined,
           optional(options, "description"),
           fieldsFromOptions(options),
+          nativeInput(options),
         ),
-      [fieldsOption, option("--name <text>", "Set the name"), option("--description <text>", "Set the description")],
+      [fieldsOption, option("--name <text>", "Set the name"), option("--description <text>", "Set the description"), jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "show <key>",

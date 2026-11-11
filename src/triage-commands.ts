@@ -1,3 +1,4 @@
+import { nativeInput } from "./command-support.js";
 import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import { stringList, withView } from "./presentation.js";
 import {
@@ -103,8 +104,8 @@ export function createTriageCommands(
         "Cancel selected builds",
         Permission.Update,
         (c, { options }) =>
-          partial(c.cancelBuildBatch(ids(options), options.comment as string | undefined, fieldsFromOptions(options), options.requeue === undefined ? undefined : options.requeue === "true")),
-        [batchIds, comment, booleanOption("--requeue <boolean>", "Queue canceled builds again"), partialFields("errorCount")],
+          partial(c.cancelBuildBatch(ids(options), options.comment as string | undefined, fieldsFromOptions(options), options.requeue === undefined ? undefined : options.requeue === "true", nativeInput(options))),
+        [batchIds, comment, booleanOption("--requeue <boolean>", "Queue canceled builds again"), partialFields("errorCount"), jsonOption("--item <json>", "Supply a native body")],
       ),
       leaf(
         "delete",
@@ -142,10 +143,11 @@ export function createTriageCommands(
               ids(options),
               options.status === undefined ? undefined : booleanText(text(options, "status")) === "true",
               fieldsFromOptions(options),
+              nativeInput(options),
 
             )
           ),
-        [batchIds, partialFields("errorCount"), booleanOption("--status <boolean>", "Set true or false")],
+        [batchIds, partialFields("errorCount"), booleanOption("--status <boolean>", "Set true or false"), jsonOption("--item <json>", "Supply a native body")],
       ),
       command(
         "tags",
@@ -162,10 +164,11 @@ export function createTriageCommands(
                   (options.tag ?? []) as string[],
                   action === "remove",
                   fieldsFromOptions(options),
+                  nativeInput(options),
 
                 )
               ),
-            [batchIds, partialFields("errorCount"), repeatOption("--tag <name>", "Repeat public tags")],
+            [batchIds, partialFields("errorCount"), repeatOption("--tag <name>", "Repeat public tags"), jsonOption("--item <json>", "Supply a native body")],
           ),
         ),
       ),
@@ -251,10 +254,11 @@ export function createTriageCommands(
             args.status,
             options.comment as string | undefined,
             fieldsFromOptions(options),
+            nativeInput(options),
           ),
           fieldsFromOptions(options)
         ),
-      [partialFields("errors(item)"), comment],
+      [partialFields("errors(item)"), comment, jsonOption("--item <json>", "Supply a native body")],
     ),
     leaf(
       "test-occurrences <id>",

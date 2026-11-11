@@ -216,13 +216,17 @@ test("returns empty pages and validates pagination before fetch", async () => {
   assert.equal(fetchCalls, 0);
 });
 
-test("explicit build projections validate locally even for direct client calls", async () => {
-  let requests = 0;
-  const cli = client(async () => { requests++; throw new Error("Unexpected request."); });
+test("explicit build projections forward blank values in direct client calls", async () => {
+  const observed: string[] = [];
+  const cli = client(async input => {
+    const url = new URL(String(input));
+    observed.push(url.searchParams.get("fields")!);
+    return HttpResponse.json(url.pathname.endsWith("/id:42") ? { id: 42 } : { build: [{ id: 7 }] });
+  });
   for (const fields of ["", " \t\n"]) {
-    await assert.rejects(cli.getBuild(42, fields), /non-empty fields projection/);
-    await assert.rejects(cli.getLatestFinishedBuild("Demo_Build", undefined, fields), /non-empty fields projection/);
-    await assert.rejects(cli.listBuilds({ fields, limit: 0 }), /non-empty fields projection/);
+    await cli.getBuild(42, fields);
+    await cli.getLatestFinishedBuild("Demo_Build", undefined, fields);
+    await cli.listBuilds({ fields, limit: 1 });
+    assert.deepEqual(observed.splice(0), [fields, `build(${fields})`, `nextHref,build(${fields})`]);
   }
-  assert.equal(requests, 0);
 });
