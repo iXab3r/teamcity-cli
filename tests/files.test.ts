@@ -734,7 +734,7 @@ test("artifact browsing projects directory/archive flags, completeness and profi
     queries.push(url);
     assert.equal(url.searchParams.get("resolveParameters"), "false");
     assert.equal(url.searchParams.get("logBuildUsage"), "false");
-    assert.equal(url.searchParams.get("fields"), "count,file(name,size,modificationTime,children($none),content($none))");
+    assert.equal(url.searchParams.get("fields"), "count,file(name,size,modificationTime,children(href),content(href))");
     return HttpResponse.json({ count: entries.length, file: entries });
   }));
   const runtime = await createTestRuntime(t, { profiles: [

@@ -20,7 +20,7 @@ export const artifactProjectionCases = [
 ].map((c) => ({
   ...c,
   defaultFields: c.locator
-    ? "count,file(name,size,modificationTime,children($none),content($none))"
+    ? "count,file(name,size,modificationTime,children(href),content(href))"
     : "name,size,modificationTime",
   baselineResponse: c.locator ? { file: [] } : { name: "logs", size: 0 },
   baselineResult: c.locator ? { count: 0, items: [], hasMore: false } : { name: "logs", size: 0 },
