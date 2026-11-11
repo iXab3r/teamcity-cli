@@ -1,7 +1,7 @@
 # Current REST coverage — 0.9.1 candidate
 
 The current mapping covers **449 of 449 operations: 449 covered, 0 partial, 0 missing**.
-This is the 0.9.1 candidate; the published product is 0.8.0.
+This is the 0.9.1 candidate; the published product is 0.9.0.
 Core remains exactly `@eyeauras/cli-factory` 0.7.1.
 
 The pinned source is public JetBrains TeamCity Swagger 2.0,
@@ -43,5 +43,5 @@ To update intentionally, follow the “Осознанная регенераци
 Review the regenerated mapping and retain the 449/0/0 status for this candidate.
 
 Response completeness is separate from this operation/query audit. The #156 regression suite fails
-on current 0.8.0 main (`c78863b`) and passes on the 0.9.0 candidate: scripts and ordinary
+on 0.8.0 main (`c78863b`) and passes on 0.9.0 and later: scripts and ordinary
 configuration values are returned while password/secure and server-withheld values stay hidden.
