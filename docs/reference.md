@@ -662,9 +662,9 @@ parameter resolution; job VCS reads disable parameter resolution.
 Artifact lists add `directory` and `archive` booleans. NAME marks directories with `/` and archives
 with `(archive)`. These indicators come from the presence of `children` and `content` in the
 [optional API reference: File model](https://www.jetbrains.com/help/teamcity/rest/file.html): directories have children;
-archives have both children and content. The request selects `children($none),content($none)`
-and enables archive recognition (`browseArchives:true`) while keeping `recursive:false`; it
-returns no nested children or hrefs. See JetBrains'
+archives have both children and content. The request selects `children(href),content(href)`
+and enables archive recognition (`browseArchives:true`) while keeping `recursive:false`; the
+hrefs only mark presence and are not printed (TeamCity rejects `children($none)` with HTTP 400). See JetBrains'
 [optional API reference: archive projection](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/data/finder/impl/BuildArtifactsFinder.java#L464).
 Each listing reads one extra entry to establish `hasMore` without another request; only the
 requested number is returned. A complete list has `hasMore:false` and no footer; when more exist,

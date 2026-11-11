@@ -28,7 +28,7 @@ function tree(prefix: string[], path: string, query: Record<string, string> = {}
   const artifact = prefix[0] === "builds";
   const listingQuery = { ...query,
     locator: artifact ? "count:101,recursive:false,hidden:false,browseArchives:true" : locator,
-    fields: artifact ? `count,file(${ff},children($none),content($none))` : lf };
+    fields: artifact ? `count,file(${ff},children(href),content(href))` : lf };
   const expectedList = { count: 1, items: [artifact ? { ...file, directory: false, archive: false } : file],
     ...(artifact ? { hasMore: false } : {}) };
   return [
