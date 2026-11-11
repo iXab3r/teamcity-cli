@@ -314,7 +314,7 @@ for (const owner of ["builds", "queue"] as const) {
       ],
       method,
       path: `${path}/tags`,
-      ...(method === "POST" ? {} : { query: { fields: "tag(name)", ...(method === "GET" ? { locator: "private:any" } : {}) } }),
+      ...(method === "POST" ? {} : { query: { fields: "tag(name)", ...(method === "GET" ? { locator: "private:any,owner:current" } : {}) } }),
       ...(method === "GET" ? {} : { body: { tag: [{ name: "release" }] } }),
       response: method === "POST" ? null : { tag: [{ name: "release" }] },
       expected: method === "POST" ? { buildId: 42, tags: ["release"], added: true } : ["release"],

@@ -41,7 +41,7 @@ export const tagProjectionCases = [
   },
 ].map((c) => ({
   ...c,
-  locator: c.method === "GET" ? "private:any" : undefined,
+  locator: c.method === "GET" ? "private:any,owner:current" : undefined,
   baselineResponse: { tag: [] },
   stderr: "",
   fields: (s: string) => s,

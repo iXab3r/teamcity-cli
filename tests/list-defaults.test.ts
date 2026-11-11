@@ -34,8 +34,8 @@ const cases: Case[] = [
   { name: "native scoped builds", argv: ["jobs", "builds", "Example"], path: "/buildTypes/id:Example/builds", locator: allBuilds, fields: "id" },
   { name: "inactive job branches", argv: ["jobs", "branches", "Example"], path: "/buildTypes/id:Example/branches", locator: "policy:ALL_BRANCHES,start:0,count:101" },
   { name: "inactive project branches", argv: ["projects", "branches", "Example"], path: "/projects/id:Example/branches", locator: "policy:ALL_BRANCHES,start:0,count:101" },
-  { name: "private build tags", argv: ["builds", "tags", "list", "7"], path: "/builds/id:7/tags", locator: "private:any", fields: "id" },
-  { name: "private queue tags", argv: ["queue", "tags", "list", "7"], path: "/buildQueue/id:7/tags", locator: "private:any", fields: "id" },
+  { name: "private build tags", argv: ["builds", "tags", "list", "7"], path: "/builds/id:7/tags", locator: "private:any,owner:current", fields: "id" },
+  { name: "private queue tags", argv: ["queue", "tags", "list", "7"], path: "/buildQueue/id:7/tags", locator: "private:any,owner:current", fields: "id" },
   { name: "tag locator overrides", argv: ["builds", "tags", "list", "7", "--locator", "private:false"], path: "/builds/id:7/tags", locator: "private:false", fields: "id" },
   { name: "orphaned pools", argv: ["pools", "list"], path: "/agentPools", locator: "orphanedPool:any,start:0,count:101" },
   { name: "system and legacy audit events", argv: ["audit", "list"], path: "/audit", locator: "systemAction:any,hidden:any,start:0,count:101" },
@@ -90,4 +90,23 @@ test("#385 @this outside git fails clearly without HTTP", async t => {
   const result = await runtime.run(runtime.createCli(), ["builds", "list", "--branch", "@this"], { cwd: directory });
   assert.notEqual(result.exitCode, 0);
   assert.match(result.stderr, /not.*git repository/i);
+});
+
+for (const branch of ["release", "@default"]) test(`#385 @this preserves literal ${branch} with a same-named tag`, async t => {
+  const runtime = await createTestRuntime(t);
+  const directory = await mkdtemp(join(tmpdir(), "branch-collision-385-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  execFileSync("git", ["init", `--initial-branch=${branch}`], { cwd: directory, stdio: "ignore" });
+  execFileSync("git", ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit", "--allow-empty", "-m", "fixture"], { cwd: directory, stdio: "ignore" });
+  execFileSync("git", ["tag", branch], { cwd: directory, stdio: "ignore" });
+  const name = branch === "release" ? "release" : "(value:($base64:QGRlZmF1bHQ))";
+  const requests = trackRequests(t, 1, async request => {
+    await assertHttpRequest(request, { method: "GET", url: "https://teamcity.test/app/rest/builds", query: {
+      locator: `defaultFilter:false,branch:(name:${name}),buildType:(id:Example),start:0,count:101`,
+      fields: "nextHref,build(id)",
+    } });
+    return HttpResponse.json({});
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  await runtime.json(runtime.createCli(), ["builds", "list", "--job", "Example", "--branch", "@this", "--fields", "id"], { cwd: directory });
 });

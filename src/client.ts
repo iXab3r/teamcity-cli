@@ -182,7 +182,7 @@ export interface ListBuildsOptions<F extends string | undefined = string | undef
   fields?: F;
   job?: string;
   project?: string;
-  branch?: string;
+  branch?: string | { name: string };
   state?: TeamCityBuildState;
   status?: TeamCityBuildStatus;
   defaultFilter?: string;
@@ -492,7 +492,7 @@ export class TeamCityClient {
       "/app/rest/builds",
       [
         `defaultFilter:${locatorValue(options.defaultFilter ?? "false", "Default filter")}`,
-        options.branch === "@default" ? "branch:(default:true)" : branchDimension(options.branch) ?? "branch:(default:any)",
+        options.branch === "@default" ? "branch:(default:true)" : branchDimension(typeof options.branch === "object" ? options.branch.name : options.branch) ?? "branch:(default:any)",
         options.job !== undefined ? nestedId("buildType", options.job, "TeamCity job ID") : undefined,
         options.project !== undefined
           ? nestedId("affectedProject", options.project, "TeamCity project ID")
@@ -2069,7 +2069,7 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       `${buildPath(id, owner)}/tags`,
-      { fields: "tag(name)", locator: locator ?? "private:any" },
+      { fields: "tag(name)", locator: locator ?? "private:any,owner:current" },
       (value) => ((value as { tag?: { name: string }[] }).tag ?? []).map((tag) => tag.name),
       fields,
     );

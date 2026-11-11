@@ -60,7 +60,7 @@ Licensed under MIT. See the [release guide](release.md).
 | `projects list`, `projects show <id>` | Discover projects | `ReadOnly` |
 | `jobs list`, `jobs show <id>` | Discover build configurations | `ReadOnly` |
 | `jobs run <id>` | Queue one build, optionally with `--branch`, `--comment`, one-off `--param`, `--clean-sources` and `--wait` | `Update` |
-| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | List builds using TeamCity defaults or supplied filters, inspect one build, or select the latest finished build of a job | `ReadOnly` |
+| `builds list`, `builds show <id>`, `builds show --job <id> --latest` | List builds inclusively or with supplied filters, inspect one build, or select the latest finished build of a job | `ReadOnly` |
 | `builds wait <id>`, `builds diagnose <id>` | Wait for a result; summarize problems and failed tests | `ReadOnly` |
 | `builds tests/problems/changes <id>` | Diagnose a build | `ReadOnly` |
 | `builds cancel <id>` | Cancel a running build | `Update` |
@@ -241,7 +241,8 @@ from the invocation working directory. `@this` requires a Git checkout with a cu
 `--default-filter <value>` replaces the injected default filter; `--state` and `--status` keep
 their existing meaning. Without `--job`, the locator has `lookupLimit:5000`; set
 `TEAMCITY_CLI_LOOKUP_LIMIT` to a positive safe decimal integer to override it. Invalid values
-fall back to 5000. This scan cap can bound history; use `--job` for an uncapped job-scoped scan.
+fall back to 5000. This is an initial request limit: paging can expand it and continue through
+history. Job-scoped initial requests omit it.
 `jobs builds` uses the same inclusive branch/build filters within its native scoped collection.
 `--latest` retains its documented newest finished, non-personal selection.
 
@@ -249,7 +250,8 @@ fall back to 5000. This scan cap can bound history; use `--job` for an uncapped 
 its explicit status options narrow the selection. Archived projects remain visible.
 `jobs list` retains the server template default: templates are a separate entity, available
 through `jobs templates …` / `projects templates …`, or `jobs list --template-flag any`.
-Job/project branch lists include inactive branches. Build/queue tag lists include private tags;
+Job/project branch lists include inactive branches. Build/queue tag lists include public tags and only the current user’s private tags
+(`private:any,owner:current`);
 an existing `--locator` replaces their default. Pool lists include orphaned pools, and audit
 lists include system and legacy events. Unfiltered health lists request root-project and global
 items; `--project` and `--global` select their documented scopes.
@@ -292,7 +294,7 @@ teamcity-cli builds diagnose 101
   are not detected. For lists, the projection selects each item: the CLI wraps
   it as `nextHref,build(…)` and preserves `{count,items,hasMore,nextStart}`. Blank projections are
   forwarded unchanged. Omitting `--fields` preserves the default projection, shaping and views.
-- Omitted `builds list` filters are left to TeamCity; `--latest` retains its documented selection below.
+- Omitted `builds list` filters use the inclusive defaults above; `--latest` retains its documented selection below.
 - Queued and running builds are listed with `builds list --state queued|running`. TeamCity lists
   queued builds in queue order, not newest first, so "latest" never means "next in queue".
 - Latest is resolved per call. To keep working on one build, reuse the returned ID.

@@ -96,13 +96,15 @@ function pageValues(options: Record<string, unknown>): { limit?: number; start?:
 }
 
 const git = promisify(execFile);
-async function listBranch(name: string | undefined, context: CommandContext): Promise<string | undefined> {
+async function listBranch(name: string | undefined, context: CommandContext): Promise<string | { name: string } | undefined> {
   if (name !== "@this") return name;
   try {
-    const { stdout } = await git("git", ["symbolic-ref", "--quiet", "--short", "HEAD"], {
+    const { stdout } = await git("git", ["symbolic-ref", "--quiet", "HEAD"], {
       cwd: context.cwd, env: context.environment, signal: context.signal,
     });
-    return stdout.trimEnd();
+    const ref = stdout.trimEnd();
+    if (!ref.startsWith("refs/heads/")) throw new Error("HEAD is not a branch");
+    return { name: ref.slice("refs/heads/".length) };
   } catch (cause) {
     if (context.signal.aborted) throw cause;
     throw new CliError("Cannot resolve --branch @this: the working directory is not in a Git repository with a current branch.", {
