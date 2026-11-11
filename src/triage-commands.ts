@@ -13,18 +13,23 @@ import { clientLeaf, option, text, repeatOption, jsonOption } from "./command-su
 import { booleanText } from "./advanced-authoring-models.js";
 
 /** A batch that partly failed keeps every item's result and exits non-zero. */
-async function partial<T>(result: Promise<T>): Promise<T> {
+async function partial<T>(
+  result: Promise<T>
+): Promise<T> {
   const value = await result;
   const counts = value as { count: number; errorCount: number } | null;
   if (counts && counts.errorCount > 0) {
-    throw new CliError(`${counts.errorCount} of ${counts.count} builds failed; see items.`, {
+    throw new CliError(
+      `${counts.errorCount} of ${counts.count} builds failed; see items.`,
+      {
       code: "batch.partial", result: value,
     });
   }
   return value;
 }
 
-async function statusPartial<T>(result: Promise<T>,
+async function statusPartial<T>(
+  result: Promise<T>,
   fields?: string,
 ): Promise<T> {
   const value = await result;
@@ -40,10 +45,14 @@ async function statusPartial<T>(result: Promise<T>,
 }
 
 /** HTTP success can still contain failed labels. */
-async function labelsPartial<T>(result: Promise<T>): Promise<T> {
+async function labelsPartial<T>(
+  result: Promise<T>
+): Promise<T> {
   const labels = await result;
   if (
-    (Array.isArray(labels) ? labels : ((labels as { vcsLabel?: { status?: unknown }[] } | null)?.vcsLabel ?? [])).some((label) => label.status === "FAILED")) {
+    (Array.isArray(labels) ? labels : ((labels as { vcsLabel?: { status?: unknown }[] } | null)?.vcsLabel ?? [])).some(
+      (label) => label.status === "FAILED",
+    )) {
     throw new CliError("Some VCS labels failed; see their status.", {
       code: "labels.partial", result: labels,
     });
@@ -63,7 +72,8 @@ export function createTriageCommands(
     start: Number(options.start),
   });
   const ids = (options: Record<string, unknown>) => ((options.build ?? []) as string[]).map(Number);
-  const partialFields = (field: string): OptionDefinition => ({
+  const partialFields = (field: string): OptionDefinition =>
+  ({
     ...fieldsOption, description: `Include ${field} for partial-failure detection`,
   });
   const batchIds = repeatOption("--build <id>", "Repeat build IDs", true);
@@ -92,7 +102,8 @@ export function createTriageCommands(
         "cancel",
         "Cancel selected builds",
         Permission.Update,
-        (c, { options }) => partial(c.cancelBuildBatch(ids(options), text(options, "comment"), fieldsFromOptions(options))),
+        (c, { options }) =>
+          partial(c.cancelBuildBatch(ids(options), text(options, "comment"), fieldsFromOptions(options))),
         [batchIds, comment, partialFields("errorCount")],
       ),
       leaf(
@@ -107,9 +118,10 @@ export function createTriageCommands(
           "set",
           "Set comments",
           Permission.Update,
-          (c, { options }) => partial(c.setBuildBatchComment(ids(options), text(options, "text"),
-                fieldsFromOptions(options),
-              )),
+          (c, { options }) =>
+            partial(c.setBuildBatchComment(ids(options), text(options, "text"),
+              fieldsFromOptions(options),
+            )),
           [batchIds, message, partialFields("errorCount")],
         ),
         leaf(
@@ -125,9 +137,14 @@ export function createTriageCommands(
         "Pin/unpin selected builds",
         Permission.Update,
         (c, { options }) =>
-          partial(c.pinBuildBatch(ids(options), booleanText(text(options, "status")) === "true",
+          partial(
+            c.pinBuildBatch(
+              ids(options),
+              booleanText(text(options, "status")) === "true",
               fieldsFromOptions(options),
-            )),
+
+            )
+          ),
         [batchIds, partialFields("errorCount"), option("--status <boolean>", "Set true or false", true)],
       ),
       command(
@@ -139,9 +156,15 @@ export function createTriageCommands(
             "Change public tags",
             Permission.Update,
             (c, { options }) =>
-              partial(c.tagBuildBatch(ids(options), options.tag as string[], action === "remove",
+              partial(
+                c.tagBuildBatch(
+                  ids(options),
+                  options.tag as string[],
+                  action === "remove",
                   fieldsFromOptions(options),
-                )),
+
+                )
+              ),
             [batchIds, partialFields("errorCount"), repeatOption("--tag <name>", "Repeat public tags", true)],
           ),
         ),
@@ -177,7 +200,8 @@ export function createTriageCommands(
         "append <id>",
         "Append build log text",
         Permission.Update,
-        (c, { args, options }) => c.appendBuildLog(num(args, "id"), text(options, "text"), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.appendBuildLog(num(args, "id"), text(options, "text"), fieldsFromOptions(options)),
         [fieldsOption, message],
       ),
     ]),
@@ -186,14 +210,16 @@ export function createTriageCommands(
         "list <id>",
         "List problem occurrences",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listBuildOccurrences(num(args, "id"), "problem", fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.listBuildOccurrences(num(args, "id"), "problem", fieldsFromOptions(options)),
         [fieldsOption],
       ),
       leaf(
         "add <id>",
         "Report a build problem",
         Permission.Update,
-        (c, { args, options }) => c.addBuildProblem(num(args, "id"), text(options, "text"), fieldsFromOptions(options)),
+        (c, { args, options }) =>
+          c.addBuildProblem(num(args, "id"), text(options, "text"), fieldsFromOptions(options)),
         [fieldsOption, message],
       ),
     ]),
@@ -208,7 +234,8 @@ export function createTriageCommands(
       "start-agentless <id>",
       "Start an agentless build",
       Permission.Update,
-      (c, { args, options }) => c.startAgentlessBuild(num(args, "id"), text(options, "requestor"),
+      (c, { args, options }) =>
+        c.startAgentlessBuild(num(args, "id"), text(options, "requestor"),
           fieldsFromOptions(options),
         ),
       [fieldsOption, option("--requestor <text>", "Set the requestor label", true)],
@@ -218,10 +245,15 @@ export function createTriageCommands(
       "Set SUCCESS or FAILURE",
       Permission.Update,
       (c, { args, options }) =>
-        statusPartial(c.setBuildStatus(num(args, "id"), args.status, text(options, "comment"),
+        statusPartial(
+          c.setBuildStatus(
+            num(args, "id"),
+            args.status,
+            text(options, "comment"),
             fieldsFromOptions(options),
           ),
-          fieldsFromOptions(options)),
+          fieldsFromOptions(options)
+        ),
       [partialFields("errors(item)"), comment],
     ),
     leaf(
@@ -248,7 +280,7 @@ export function createTriageCommands(
             num(args, "id"),
             text(options, "label"),
             text(options, "rootInstance"),
-              fieldsFromOptions(options),
+            fieldsFromOptions(options),
           )),
         [
           partialFields("vcsLabel(status)"),
@@ -266,6 +298,7 @@ export function createTriageCommands(
           (c, { args, options }) => c.listBuildRuntimeParameters(num(args, "id"), kind, fieldsFromOptions(options)),
           [fieldsOption],
         ),
+
         leaf(
           "exists <id> <name>",
           "Check parameter existence",
@@ -276,11 +309,23 @@ export function createTriageCommands(
     ),
   ];
   const changes = [
-    leaf("duplicates <id>", "Read duplicate change metadata", Permission.ReadOnly, (c, { args }) =>
-      c.getChangeDuplicates(num(args, "id")),
+    leaf(
+      "duplicates <id>",
+      "Read duplicate change metadata",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getChangeDuplicates(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
-    leaf("first-builds <id>", "Read first containing builds", Permission.ReadOnly, (c, { args }) =>
-      c.getChangeFirstBuilds(num(args, "id")),
+    leaf(
+      "first-builds <id>",
+      "Read first containing builds",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getChangeFirstBuilds(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     leaf("issues <id>", "Read issue IDs", Permission.ReadOnly, (c, { args }) =>
       c.getChangeIssues(num(args, "id")),
@@ -295,7 +340,8 @@ export function createTriageCommands(
       "root-instance <id>",
       "Read root instance identity",
       Permission.ReadOnly,
-      (c, { args }) => c.getChangeRootInstance(num(args, "id")),
+      (c, { args, options }) => c.getChangeRootInstance(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "field <id> <field>",
@@ -303,8 +349,16 @@ export function createTriageCommands(
       Permission.ReadOnly,
       (c, { args }) => c.getChangeField(num(args, "id"), args.field),
     ),
-    withView(stringList, leaf("attributes <id>", "Read attribute names only", Permission.ReadOnly, (c, { args }) =>
-      c.listChangeAttributeNames(num(args, "id")),
+    withView(
+      stringList,
+      leaf(
+        "attributes <id>",
+        "Read attribute names only",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listChangeAttributeNames(num(args, "id"), fieldsFromOptions(options)),
+        [fieldsOption],
+
     )),
   ];
   const investigations = command("investigations", "Assign job, test or problem investigations", [
@@ -312,36 +366,36 @@ export function createTriageCommands(
       "list",
       "List results",
       Permission.ReadOnly,
-      (c, { options }) => c.listInvestigations(page(options)),
-      pageOptions,
+      (c, { options }) => c.listInvestigations({ ...page(options), fields: fieldsFromOptions(options) }),
+      [...pageOptions, fieldsOption],
     ),
     leaf(
       "create",
       "Create an investigation",
       Permission.Update,
-      (c, { options }) => c.createInvestigation(options.item),
-      [item],
+      (c, { options }) => c.createInvestigation(options.item, false, fieldsFromOptions(options)),
+      [item, fieldsOption],
     ),
     leaf(
       "create-many",
       "Create selected items",
       Permission.Update,
-      (c, { options }) => c.createInvestigations(options.item as unknown[]),
-      [items],
+      (c, { options }) => c.createInvestigations(options.item as unknown[], fieldsFromOptions(options)),
+      [items, fieldsOption],
     ),
     leaf(
       "show",
       "Read one investigation target",
       Permission.ReadOnly,
-      (c, { options }) => c.getInvestigation(options.target),
-      [target],
+      (c, { options }) => c.getInvestigation(options.target, fieldsFromOptions(options)),
+      [target, fieldsOption],
     ),
     leaf(
       "replace",
       "Replace an investigation",
       Permission.Update,
-      (c, { options }) => c.createInvestigation(options.item, true),
-      [item],
+      (c, { options }) => c.createInvestigation(options.item, true, fieldsFromOptions(options)),
+      [item, fieldsOption],
     ),
     leaf(
       "delete",
@@ -357,25 +411,31 @@ export function createTriageCommands(
       "list",
       "List results",
       Permission.ReadOnly,
-      (c, { options }) => c.listMutes(page(options)),
-      pageOptions,
+      (c, { options }) => c.listMutes({ ...page(options), fields: fieldsFromOptions(options) }),
+      [...pageOptions, fieldsOption],
     ),
     leaf(
       "create",
       "Create a mute",
       Permission.Update,
-      (c, { options }) => c.createMute(options.item),
-      [item],
+      (c, { options }) => c.createMute(options.item, fieldsFromOptions(options)),
+      [item, fieldsOption],
     ),
     leaf(
       "create-many",
       "Create selected items",
       Permission.Update,
-      (c, { options }) => c.createMutes(options.item as unknown[]),
-      [items],
+      (c, { options }) => c.createMutes(options.item as unknown[], fieldsFromOptions(options)),
+      [items, fieldsOption],
     ),
-    leaf("show <id>", "Read one mute", Permission.ReadOnly, (c, { args }) =>
-      c.getMute(num(args, "id")),
+    leaf(
+      "show <id>",
+      "Read one mute",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getMute(num(args, "id"), fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     leaf(
       "delete <id>",
@@ -395,22 +455,24 @@ export function createTriageCommands(
         "list",
         "List results",
         Permission.ReadOnly,
-        (c, { options }) => c.listTriageEntities(kind, page(options)),
-        pageOptions,
+        (c, { options }) =>
+          c.listTriageEntities(kind, { ...page(options), fields: fieldsFromOptions(options) }),
+        [...pageOptions, fieldsOption],
       ),
       leaf(
         "show <id>",
         "Read one identity",
         Permission.ReadOnly,
-        (c, { args }) => c.getTriageEntity(kind, args.id),
+        (c, { args, options }) => c.getTriageEntity(kind, args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "occurrence <id>",
         "Read one build + test/problem occurrence",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.getTriageOccurrence(kind, args.id, num(options, "build")),
-        [option("--build <id>", "Select a build", true)],
+          c.getTriageOccurrence(kind, args.id, num(options, "build"), fieldsFromOptions(options)),
+        [fieldsOption, option("--build <id>", "Select a build", true)],
       ),
     ]),
   );

@@ -1,3 +1,5 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
+import { fieldOption, locatorOption } from "./command-support.js";
 import { stringList, withView } from "./presentation.js";
 import { command, Permission, type OptionDefinition } from "@eyeauras/cli-factory";
 import { text, optionalText, option, propertyOption, type ClientLeaf } from "./command-support.js";
@@ -55,7 +57,9 @@ export function createAdvancedAuthoringCommands(
         `list <job-id> <${arg}>`,
         "List property values",
         Permission.ReadOnly,
-        (c, { args }) => c.listPluginParameters(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) =>
+          c.listPluginParameters(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         `show <job-id> <${arg}> <name>`,
@@ -74,8 +78,9 @@ export function createAdvancedAuthoringCommands(
             text(args, "job-id"),
             text(args, arg),
             (options.property ?? []) as PlainProperty[],
+            fieldsFromOptions(options),
           ),
-        [propertyOption],
+        [propertyOption, fieldsOption],
       ),
       leaf(
         `set <job-id> <${arg}> <name> <value>`,
@@ -138,49 +143,69 @@ export function createAdvancedAuthoringCommands(
     return command(kind, "Manage job rules", [
       bulk.replaceAll(kind),
       entityFields(kind),
-      leaf("list <job-id>", "List rules in server order", Permission.ReadOnly, (c, { args }) =>
-        c.listRules(kind, args["job-id"]),
+      leaf(
+        "list <job-id>",
+        "List rules in server order",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listRules(kind, args["job-id"], fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
       leaf(
         `show <job-id> <${arg}>`,
         "Show a safe rule summary",
         Permission.ReadOnly,
-        (c, { args }) => c.getRule(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) =>
+          c.getRule(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "create <job-id>",
         "Add a rule",
         Permission.Update,
-        (c, { args, options }) => c.createRule(args["job-id"], input(options)),
-        options,
+        (c, { args, options }) => c.createRule(args["job-id"], input(options), fieldsFromOptions(options)),
+        [...options, fieldsOption],
       ),
       leaf(
         `replace <job-id> <${arg}>`,
         "Replace all rule settings",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceRule(text(args, "job-id"), text(args, arg), input(options)),
-        options,
+          c.replaceRule(text(args, "job-id"), text(args, arg), input(options), fieldsFromOptions(options)),
+        [...options, fieldsOption],
       ),
       leaf(
         `delete <job-id> <${arg}>`,
         "Remove a job rule",
         Permission.Update,
-        (c, { args }) => c.deleteRule(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) => c.deleteRule(kind, text(args, "job-id"), text(args, arg)),
       ),
     ]);
   }
   const featureOptions = [option("--type <type>", "Set the project feature type", true), propertyOption];
   const features = command("features", "Manage project features", [
     bulk.replaceAll("projectFeatures"),
-    leaf("list <project-id>", "List project features", Permission.ReadOnly, (c, { args }) =>
-      c.listProjectFeatures(args["project-id"]),
+    leaf(
+      "list <project-id>",
+      "List project features",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listProjectFeatures(
+          args["project-id"],
+          fieldsFromOptions(options),
+          options.locator as string | undefined,
+        ),
+      [fieldsOption, { ...locatorOption, description: "Filter native TeamCity project features" }],
+
     ),
     leaf(
       "show <project-id> <feature-id>",
       "Show a project feature",
       Permission.ReadOnly,
-      (c, { args }) => c.getProjectFeature(args["project-id"], args["feature-id"]),
+      (c, { args, options }) =>
+        c.getProjectFeature(args["project-id"], args["feature-id"], fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     leaf(
       "create <project-id>",
@@ -191,8 +216,9 @@ export function createAdvancedAuthoringCommands(
           args["project-id"],
           text(options, "type"),
           (options.property ?? []) as PlainProperty[],
+          fieldsFromOptions(options),
         ),
-      featureOptions,
+      [...featureOptions, fieldsOption],
     ),
     leaf(
       "replace <project-id> <feature-id>",
@@ -204,8 +230,9 @@ export function createAdvancedAuthoringCommands(
           args["feature-id"],
           text(options, "type"),
           (options.property ?? []) as PlainProperty[],
+          fieldsFromOptions(options),
         ),
-      featureOptions,
+      [...featureOptions, fieldsOption],
     ),
     leaf(
       "delete <project-id> <feature-id>",
@@ -218,8 +245,14 @@ export function createAdvancedAuthoringCommands(
     leaf("show <template-id>", "Show template configuration", Permission.ReadOnly, (c, { args }) =>
       c.getJobConfiguration(args["template-id"]),
     ),
-    leaf("list <project-id>", "List own templates", Permission.ReadOnly, (c, { args }) =>
-      c.listProjectTemplates(args["project-id"]),
+    leaf(
+      "list <project-id>",
+      "List own templates",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listProjectTemplates(args["project-id"], fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     leaf(
       "create <project-id> <template-id>",
@@ -230,29 +263,33 @@ export function createAdvancedAuthoringCommands(
           args["project-id"],
           args["template-id"],
           text(options, "name"),
+          fieldsFromOptions(options),
         ),
-      [option("--name <name>", "Set the template name", true)],
+      [fieldsOption, option("--name <name>", "Set the template name", true)],
     ),
     command("default", "Manage the default template", [
       leaf(
         "show <project-id>",
         "Show the effective default template",
         Permission.ReadOnly,
-        (c, { args }) => c.getDefaultTemplate(args["project-id"]),
+        (c, { args, options }) =>
+          c.getDefaultTemplate(args["project-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "set <project-id>",
         "Set the default template",
         Permission.Update,
         (c, { args, options }) =>
-          c.setDefaultTemplate(args["project-id"], text(options, "template")),
-        [option("--template <template-id>", "Select an existing template", true)],
+          c.setDefaultTemplate(args["project-id"], text(options, "template"), fieldsFromOptions(options)),
+        [fieldsOption, option("--template <template-id>", "Select an existing template", true)],
       ),
       leaf(
         "clear <project-id>",
         "Remove the project default template",
         Permission.Update,
-        (c, { args }) => c.clearDefaultTemplate(args["project-id"]),
+        (c, { args, options }) => c.clearDefaultTemplate(args["project-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ]),
   ]);
@@ -282,7 +319,9 @@ export function createAdvancedAuthoringCommands(
         "parent <project-id>",
         "Show parent project identity",
         Permission.ReadOnly,
-        (c, { args }) => c.getProjectParent(args["project-id"]),
+        (c, { args, options }) =>
+          c.getProjectParent(args["project-id"], fieldsFromOptions(options)),
+        [fieldsOption],
       ),
     ],
     jobs: [
@@ -294,8 +333,14 @@ export function createAdvancedAuthoringCommands(
       rules("agent-requirements"),
       rules("artifact-dependencies"),
       fields("jobs"),
-      leaf("aliases <job-id>", "List historical external IDs", Permission.ReadOnly, (c, { args }) =>
-        c.listJobAliases(args["job-id"]),
+      leaf(
+        "aliases <job-id>",
+        "List historical external IDs",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listJobAliases(args["job-id"], options.field as string | undefined),
+        [fieldOption],
+
       ),
       leaf(
         "branches <job-id>",
@@ -305,14 +350,16 @@ export function createAdvancedAuthoringCommands(
           c.listJobBranches(args["job-id"], {
             limit: Number(options.limit),
             start: Number(options.start),
+            fields: fieldsFromOptions(options),
           }),
-        pageOptions,
+        [...pageOptions, fieldsOption],
       ),
       withView(stringList, leaf(
         "tags <job-id>",
         "List tags used by this job's builds",
         Permission.ReadOnly,
-        (c, { args }) => c.listJobTags(args["job-id"]),
+        (c, { args, options }) => c.listJobTags(args["job-id"], options.field as string | undefined),
+        [fieldOption],
       )),
     ],
   };

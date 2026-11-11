@@ -1,13 +1,26 @@
 # REST coverage comparison
 
-How much of the published TeamCity REST API each tool can call. Measured 2026-11-10.
+How much of the published TeamCity REST API each tool can call. Product mapping refreshed 2026-11-11;
+competitor source measurements date from 2026-11-10.
+The latest GitHub releases were rechecked on 2026-11-11 and remain 1.6.3, 1.1.0 and 1.3.5.
 
 | Tool | Reachable operations | GET (235) | POST, PUT, DELETE (214) |
 |---|---:|---:|---:|
-| `teamcity-cli` 0.7.1 (this package) | 449 of 449 (100%) | 235 | 214 |
+| `teamcity-cli` 0.9.0 candidate (this package) | 449 of 449 (100%) | 235 | 214 |
 | `teamcity` 1.6.3 (JetBrains TeamCity CLI), dedicated commands | 75 of 449 (17%) | 41 | 34 |
 | `bbox` 1.1.0 (similarweb) | 9 of 449 (2%) | 6 | 3 |
 | `tctest` 1.3.5 (katbyte) | 6 of 449 (1%) | 4 | 2 |
+
+## What 0.9.0 changes
+
+The endpoint percentage is unchanged from published 0.8.0. This release fixes response content:
+ordinary reads return scripts, runner arguments, Docker options, requirement operands, trigger and
+dependency options, VCS properties and runtime parameter values. New configuration/template reads
+include build settings, artifact rules and checkout settings; agent parameter reads include system,
+environment and configuration values. Password-type, `secure:` and server-withheld values remain hidden.
+This improves configuration inspection and migration without claiming more REST operations.
+The #156 synthetic regression suite fails on the current 0.8.0 main and passes with this change;
+the operation/query-control audit remains a separate check.
 
 ## Tools considered
 
@@ -38,7 +51,7 @@ are taken, whatever they score.
 
 Percent of operations reachable, with the count in brackets.
 
-| API area | Operations | teamcity-cli 0.7.1 | teamcity 1.6.3 | bbox 1.1.0 | tctest 1.3.5 |
+| API area | Operations | teamcity-cli 0.9.0 candidate | teamcity 1.6.3 | bbox 1.1.0 | tctest 1.3.5 |
 |---|---:|---:|---:|---:|---:|
 | Builds | 57 | 100% (57) | 18% (10) | 2% (1) | 7% (4) |
 | Build queue | 15 | 100% (15) | 33% (5) | 13% (2) | 13% (2) |
@@ -59,7 +72,7 @@ Percent of operations reachable, with the count in brackets.
 
 Reachable operation counts. A group is the tag TeamCity gives the operation in its REST description.
 
-| Resource group | Operations | teamcity-cli 0.7.1 | teamcity 1.6.3 | bbox 1.1.0 | tctest 1.3.5 |
+| Resource group | Operations | teamcity-cli 0.9.0 candidate | teamcity 1.6.3 | bbox 1.1.0 | tctest 1.3.5 |
 |---|---:|---:|---:|---:|---:|
 | `Agent` | 15 | 15 | 6 | 0 | 0 |
 | `AgentPool` | 14 | 14 | 4 | 0 | 0 |
@@ -107,19 +120,19 @@ investigations and mutes are `Investigation` and `Mute`. Every other area is one
   ([optional API reference: published REST description](https://teamcity.jetbrains.com/app/rest/swagger.json)).
   Its method and path set is identical to the inventory frozen on 2026-08-30 for the audit that
   drove the expansion ([optional provenance: Factory audit commit](https://github.com/iXab3r/EyeAuras.CliFactory/commit/1b59539d315d4207baef38c1e8af9376fcb35c32)).
-  This repository does not track the per-operation list or a generator for it yet; the numbers
-  here are a dated measurement, not a maintained census.
+  The pinned per-operation inventory and maintained mapping live in [REST coverage](rest-api-coverage/README.md);
+  `scripts/rest-api-audit/` supplies the generator and freshness gate.
 - **Reachable** means a shipped command issues that exact method and path. It does not measure
   every query parameter, locator dimension, payload field, server version or remote permission.
   Placeholder names are ignored when matching; literal path segments are not.
-- **teamcity-cli 0.7.1** was observed, not counted from the command tree. The offline suite ran
-  with a recorder at the product's transport that logged each method, path and executing command:
-  445 operations were issued by a command there. `projects show`, `agents show` and
-  `builds changes` were then invoked against a stubbed transport and issued three more.
-  The last one, `GET /app/rest/users/{userLocator}`, is issued only by the sign-in check of
-  `auth status`, `auth login` and `profile configure`, always for the current user; no command
-  reads another user through it (`users list` and `users fields` use other operations).
-  The command tree has 456 service commands: 234 `ReadOnly`, 171 `Update`, 37 `Admin`, 14 `Credentials`.
+- **teamcity-cli 0.9.0 candidate** was observed at the product transport in the passing offline
+  suite: all 449 operations were issued by a command, including `users show <id>`.
+  Published 0.8.0 already reached and covered 449 of 449 operations; published 0.7.1 reached 448.
+  Under the stricter query-control criterion,
+  0.7.1 covered 180 of 449; both 0.8.0 and the 0.9.0 candidate cover 449 of 449
+  ([REST coverage baseline and rules](rest-api-coverage/README.md)).
+  The tree has 460 service commands: 238 `ReadOnly`, 171 `Update`, 37 `Admin`, 14 `Credentials`;
+  456 reach transport and 4 are local credential workflows without HTTP. No live server was used.
 - **teamcity 1.6.3** was measured by reading the source of the release tag `v1.6.3`
   ([optional source reference: JetBrains/teamcity-cli v1.6.3](https://github.com/JetBrains/teamcity-cli/tree/v1.6.3),
   published 2026-11-04) without building or running it. Every HTTP call in its `api` package and

@@ -1,3 +1,4 @@
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command,
   Permission,
@@ -7,6 +8,8 @@ import {
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
 import {
+  booleanOption,
+  textOption,
   clientLeaf,
   option,
   text,
@@ -55,12 +58,12 @@ export function createInfrastructureCommands(
       (c, { options }) =>
         c.listCloud(
           kind,
-          page(options),
+          { ...page(options), fields: fieldsFromOptions(options) },
           optional(options, "project"),
           optional(options, "cloudProfile"),
         ),
       [
-        ...pageOptions,
+        ...pageOptions, fieldsOption,
         option("--project <id>", "Select a project scope"),
         ...(kind === "profiles"
           ? []
@@ -70,8 +73,14 @@ export function createInfrastructureCommands(
   const cloud = command("cloud", "Manage remote cloud capacity", [
     command("profiles", "Inspect remote cloud profiles", [
       cloudLists("profiles"),
-      leaf("show <id>", "Show cloud profile metadata", Permission.ReadOnly, (c, { args }) =>
-        c.getCloudProfile(args.id),
+      leaf(
+        "show <id>",
+        "Show cloud profile metadata",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.getCloudProfile(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
     ]),
     command("images", "Inspect cloud images", [
@@ -80,8 +89,8 @@ export function createInfrastructureCommands(
         "show",
         "Show one composite cloud image",
         Permission.ReadOnly,
-        (c, { options }) => c.getCloudImage(image(options)),
-        imageOptions,
+        (c, { options }) => c.getCloudImage(image(options), fieldsFromOptions(options)),
+        [...imageOptions, fieldsOption],
       ),
     ]),
     command("instances", "Manage cloud instances", [
@@ -90,15 +99,15 @@ export function createInfrastructureCommands(
         "show",
         "Read instance state",
         Permission.ReadOnly,
-        (c, { options }) => c.getCloudInstance(instance(options)),
-        instanceOptions,
+        (c, { options }) => c.getCloudInstance(instance(options), fieldsFromOptions(options)),
+        [...instanceOptions, fieldsOption],
       ),
       leaf(
         "start",
         "Start a cloud instance",
         Permission.Update,
-        (c, { options }) => c.startCloudInstance(image(options)),
-        imageOptions,
+        (c, { options }) => c.startCloudInstance(image(options), fieldsFromOptions(options)),
+        [...imageOptions, fieldsOption],
       ),
       ...(["delete", "force-stop", "stop"] as const).map((action) =>
         leaf(
@@ -125,12 +134,14 @@ export function createInfrastructureCommands(
           text(options, "project"),
           text(options, "url"),
           text(options, "branch"),
+          fieldsFromOptions(options),
         ),
       [
         option("--name <text>", "Set the name", true),
         option("--project <id>", "Select the owner project", true),
         option("--url <url>", "Set the Git repository URL", true),
         option("--branch <ref>", "Set the Git branch ref", true),
+        fieldsOption,
       ],
     ),
     leaf(
@@ -139,20 +150,36 @@ export function createInfrastructureCommands(
       Permission.Update,
       (c, { args }) => c.deleteVcsRoot(args.id),
     ),
-    leaf("instances <id>", "List VCS root instances", Permission.ReadOnly, (c, { args }) =>
-      c.getVcsRootInstances(args.id),
+    leaf(
+      "instances <id>",
+      "List VCS root instances",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getVcsRootInstances(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     command("properties", "Manage VCS root properties", [
-      leaf("list <id>", "List property values", Permission.ReadOnly, (c, { args }) =>
-        c.listVcsRootProperties(args.id),
+      leaf(
+        "list <id>",
+        "List property values",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.listVcsRootProperties(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
       leaf(
         "replace <id>",
         "Replace all VCS root properties",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceVcsRootProperties(args.id, (options.property ?? []) as PlainProperty[]),
-        [propertyOption],
+          c.replaceVcsRootProperties(
+            args.id,
+            (options.property ?? []) as PlainProperty[],
+            fieldsFromOptions(options),
+          ),
+        [propertyOption, fieldsOption],
       ),
       leaf(
         "clear <id>",
@@ -196,30 +223,55 @@ export function createInfrastructureCommands(
       "list",
       "List results",
       Permission.ReadOnly,
-      (c, { options }) => c.listVcsInstances(page(options), optional(options, "root")),
-      [...pageOptions, option("--root <id>", "Select a VCS root")],
+      (c, { options }) =>
+        c.listVcsInstances(
+          { ...page(options), fields: fieldsFromOptions(options) },
+          optional(options, "root")
+        ),
+      [...pageOptions, option("--root <id>", "Select a VCS root"), fieldsOption],
     ),
     leaf(
       "check-changes <id>",
       "Request a VCS change check",
       Permission.Update,
-      (c, { args }) => c.checkVcsInstanceChanges(args.id),
+      (c, { args, options }) =>
+        c.checkVcsInstanceChanges(args.id, optional(options, "requestor"), fieldsFromOptions(options)),
+      [textOption("--requestor <text>", "Set the change-check requestor"), fieldsOption],
     ),
     leaf(
       "notify-commit <id>",
       "Notify a VCS root instance",
       Permission.Update,
-      (c, { args }) => c.notifyVcsCommit(args.id),
+      (c, { args, options }) => c.notifyVcsCommit(args.id, optional(options, "okOnNothingFound")),
+      [booleanOption("--ok-on-nothing-found <boolean>", "Set whether unmatched notifications succeed")],
     ),
-    leaf("show <id>", "Read identity/polling metadata", Permission.ReadOnly, (c, { args }) =>
-      c.getVcsInstance(args.id),
+    leaf(
+      "show <id>",
+      "Read identity/polling metadata",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getVcsInstance(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
-    leaf("properties <id>", "List parameter values", Permission.ReadOnly, (c, { args }) =>
-      c.listVcsInstanceProperties(args.id),
+    leaf(
+      "properties <id>",
+      "List parameter values",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.listVcsInstanceProperties(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     command("state", "Manage saved branch revisions", [
-      leaf("show <id>", "Read branch/revision entries", Permission.ReadOnly, (c, { args }) =>
-        c.getVcsRepositoryState(args.id),
+      leaf(
+        "show <id>",
+        "Read branch/revision entries",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.getVcsRepositoryState(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
       leaf(
         "replace <id>",
@@ -229,6 +281,7 @@ export function createInfrastructureCommands(
           c.replaceVcsRepositoryState(
             args.id,
             (options.revision ?? []) as PlainProperty[],
+            fieldsFromOptions(options),
           ),
         [
           {
@@ -236,6 +289,7 @@ export function createInfrastructureCommands(
             flags: "--revision <branch=revision>",
             description: "Supply branch and revision pairs; repeat",
           },
+          fieldsOption,
         ],
       ),
       leaf(
@@ -275,8 +329,14 @@ export function createInfrastructureCommands(
     ]),
   ]);
   const versioned = command("versioned-settings", "Manage versioned project settings", [
-    leaf("affected <id>", "Read affected project identities", Permission.ReadOnly, (c, { args }) =>
-      c.getVersionedAffectedProjects(args.id),
+    leaf(
+      "affected <id>",
+      "Read affected project identities",
+      Permission.ReadOnly,
+      (c, { args, options }) =>
+        c.getVersionedAffectedProjects(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
+
     ),
     leaf(
       "check-changes <id>",
@@ -292,21 +352,28 @@ export function createInfrastructureCommands(
       [confirm],
     ),
     command("config", "Manage versioned settings configuration", [
-      leaf("show <id>", "Read project configuration", Permission.ReadOnly, (c, { args }) =>
-        c.getVersionedConfig(args.id),
+      leaf(
+        "show <id>",
+        "Read project configuration",
+        Permission.ReadOnly,
+        (c, { args, options }) =>
+          c.getVersionedConfig(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
+
       ),
       leaf(
         "effective <id>",
         "Read inherited project/config pair",
         Permission.ReadOnly,
-        (c, { args }) => c.getEffectiveVersionedConfig(args.id),
+        (c, { args, options }) => c.getEffectiveVersionedConfig(args.id, fieldsFromOptions(options)),
+        [fieldsOption],
       ),
       leaf(
         "replace <id>",
         "Replace versioned settings configuration",
         Permission.Update,
-        (c, { args, options }) => c.replaceVersionedConfig(args.id, options.item),
-        [jsonOption("--item <json>", "Supply versioned settings configuration")],
+        (c, { args, options }) => c.replaceVersionedConfig(args.id, options.item, fieldsFromOptions(options)),
+        [jsonOption("--item <json>", "Supply versioned settings configuration"), fieldsOption],
       ),
       command("fields", "Manage versioned settings fields", [
         leaf(
@@ -351,14 +418,15 @@ export function createInfrastructureCommands(
       "load <id>",
       "Load current configuration from VCS",
       Permission.Update,
-      (c, { args }) => c.loadVersionedSettings(args.id),
-      [confirm],
+      (c, { args, options }) => c.loadVersionedSettings(args.id, fieldsFromOptions(options)),
+      [confirm, fieldsOption],
     ),
     leaf(
       "status <id>",
       "Read synchronization state",
       Permission.ReadOnly,
-      (c, { args }) => c.getVersionedStatus(args.id),
+      (c, { args, options }) => c.getVersionedStatus(args.id, fieldsFromOptions(options)),
+      [fieldsOption],
     ),
     command("tokens", "Manage versioned secure-value mappings", [
       leaf(

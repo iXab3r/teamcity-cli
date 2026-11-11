@@ -109,13 +109,21 @@ for (const [argv, path, nested] of [
 
 test("single plugin-property show uses password metadata and preserves ordinary values", async t => {
   const rt = await createTestRuntime(t);
+  let scalarReads = 0;
   server.use(http.get(`${base}/buildTypes/id:Build/steps/Runner/parameters`, () => HttpResponse.json({ property: properties })));
+  server.use(http.get(`${base}/buildTypes/id:Build/steps/Runner/parameters/:name`, ({ params }) => {
+    const property = plain.find((item) => item.name === params.name);
+    assert.ok(property, "Server-protected properties must not be read through the scalar endpoint");
+    scalarReads++;
+    return HttpResponse.text(property.value);
+  }));
   const cli = rt.createCli();
   for (const property of properties) {
     const result = await cli.execute(["jobs", "steps", "parameters", "show", "Build", "Runner", property.name]);
     const row = result as { value?: string };
     assert.equal(row.value, plain.includes(property as typeof plain[number]) ? property.value : undefined);
   }
+  assert.equal(scalarReads, plain.length);
 });
 
 for (const argv of [["jobs", "configuration", "show", "Build"], ["projects", "templates", "show", "Template"]]) {

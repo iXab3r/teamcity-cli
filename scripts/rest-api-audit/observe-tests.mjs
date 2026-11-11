@@ -2,7 +2,10 @@
 import { registerHooks } from 'node:module';
 import { appendFileSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
-const root = process.cwd();
+import { pathToFileURL } from 'node:url';
+const root = process.cwd().replaceAll('\\', '/');
+const clientUrl = pathToFileURL(root + '/dist/src/client.js').href;
+const cliUrl = pathToFileURL(root + '/dist/src/cli.js').href;
 const capture = process.env.TEAMCITY_AUDIT_CAPTURE ?? root + '/.workspace/workstreams/rest-api-coverage-audit';
 const leafScope = new AsyncLocalStorage();
 Error.stackTraceLimit = 40;
@@ -18,10 +21,10 @@ globalThis.__auditTree = definition => {
   return { ...definition, commands: wrap(definition.commands, []) };
 };
 globalThis.__auditRequest = (method, path, query, stack) => {
-  const frames = stack.split('\n').filter(line => line.includes(root + '/src/') || line.includes(root + '/tests/')).map(line => line.replaceAll(root + '/', ''));
+  const frames = stack.replaceAll('\\', '/').split('\n').filter(line => line.includes(root + '/src/') || line.includes(root + '/tests/')).map(line => line.replaceAll(root + '/', ''));
   appendFileSync(capture + '/' + (process.env.TEAMCITY_AUDIT_TRACE ?? 'test-requests.ndjson'), JSON.stringify({
     method, path, query, leaf: leafScope.getStore() ?? null, frames,
-    testFile: process.argv[1]?.replace(root + '/dist/', '').replace(/\.js$/, '.ts'),
+    testFile: process.argv[1]?.replaceAll('\\', '/').replace(root + '/dist/', '').replace(/\.js$/, '.ts'),
   }) + '\n');
 };
 const inject = (source, token, replacement) => {
@@ -30,11 +33,11 @@ const inject = (source, token, replacement) => {
 };
 registerHooks({ load(url, context, next) {
   const result = next(url, context);
-  if (url === `file://${root}/dist/src/client.js`) {
+  if (url === clientUrl) {
     const token = 'async #response(method, path, query = {}, body, mediaType = "application/json", accept = mediaType) {';
     return { ...result, source: inject(String(result.source), token, token + ' globalThis.__auditRequest(method, path, query, new Error().stack);') };
   }
-  if (url === `file://${root}/dist/src/cli.js`) {
+  if (url === cliUrl) {
     const token = 'return createCli(teamCityDefinition(runtime));';
     return { ...result, source: inject(String(result.source), token, 'return createCli(globalThis.__auditTree(teamCityDefinition(runtime)));') };
   }

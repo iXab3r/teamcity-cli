@@ -26,11 +26,15 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 
 ## Coverage
 
+Every documented query parameter of those operations is caller-controlled; see the [current REST coverage](docs/rest-api-coverage/current/README.md).
+
 Share of the 449 published REST operations each tool can call through its own commands, by API area.
+Operation coverage remains 449/449; 0.9.0 improves the returned configuration data, including full
+scripts and plain settings that 0.8.0 hid. The matrix does not measure response-field completeness.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/coverage-matrix-dark.svg">
-  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands, bbox 1.1.0 reaches 9 (2%) and tctest 1.3.5 reaches 6 (1%)">
+  <img src="docs/images/coverage-matrix-light.svg" alt="Coverage matrix: teamcity-cli 0.9.0 reaches 449 of 449 operations (100%); the JetBrains teamcity 1.6.3 reaches 75 (17%) through dedicated commands, bbox 1.1.0 reaches 9 (2%) and tctest 1.3.5 reaches 6 (1%)">
 </picture>
 
 The JetBrains CLI also has a raw `teamcity api` request command and features outside this API

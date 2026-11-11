@@ -2,7 +2,7 @@
   "matrix": {
     "columns": [
       {
-        "title": "teamcity-cli 0.7.1",
+        "title": "teamcity-cli 0.9.0",
         "subtitle": "this package"
       },
       {
@@ -21,7 +21,7 @@
     "rowHeader": "API area",
     "countHeader": "operations",
     "legend": "Share of published REST operations reachable",
-    "ariaLabel": "REST API coverage matrix: teamcity-cli 0.7.1 reaches 449 of 449 operations, the JetBrains teamcity 1.6.3 reaches 75 through dedicated commands, bbox 1.1.0 reaches 9 and tctest 1.3.5 reaches 6",
+    "ariaLabel": "REST API coverage matrix: teamcity-cli 0.9.0 reaches 449 of 449 operations, the JetBrains teamcity 1.6.3 reaches 75 through dedicated commands, bbox 1.1.0 reaches 9 and tctest 1.3.5 reaches 6",
     "rows": [
       {
         "name": "Builds",
@@ -183,7 +183,7 @@
     ],
     "product": {
       "title": "teamcity-cli",
-      "sub": "one command tree, 456 service commands"
+      "sub": "one command tree, 460 service commands"
     },
     "layers": [
       {

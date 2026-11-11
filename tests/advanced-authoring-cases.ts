@@ -168,9 +168,12 @@ for (const kind of [
     {
       argv: ["jobs", kind, "parameters", "show", "Example_Build", "Entity", property.name],
       method: "GET",
-      path: `${path}/parameters`,
-      query: { fields: `property(${propertyFields})` },
-      response: { property: [property] },
+      path: `${path}/parameters/${property.name}`,
+      text: true,
+      response: property.value,
+      preflight: `${path}/parameters`,
+      preflightFields: `property(${propertyFields})`,
+      preflightResponse: { property: [property] },
       expected,
     },
     {

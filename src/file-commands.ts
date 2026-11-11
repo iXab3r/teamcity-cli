@@ -1,9 +1,10 @@
 import { fieldsOption } from "./projection.js";
-import { command, Permission, type CommandContext,
+import {
+  command, Permission, type CommandContext,
   type OptionDefinition,
 } from "@eyeauras/cli-factory";
 import type { TeamCityClient } from "./client.js";
-import { booleanOption, clientLeaf, option, text, integerValue } from "./command-support.js";
+import { booleanOption, clientLeaf, option, text, textOption, integerValue } from "./command-support.js";
 import { referenceKey, type FileTree } from "./file-models.js";
 import { fileTable, savedFileRecord, withView } from "./presentation.js";
 export function createFileCommands(clientFor: (c: CommandContext) => Promise<TeamCityClient>) {
@@ -32,26 +33,29 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
   const controls = (o: Record<string, unknown>) =>
     Object.fromEntries(
       ["fields", "basePath", "archiveName", "resolveParameters", "logBuildUsage"]
-        .filter((k) => o[k] !== undefined)
-        .map((k) => [k, o[k] as string]),
+        .filter(
+          (k) => o[k] !== undefined,
+        )
+        .map(
+          (k) => [k, o[k] as string],
+        ),
     );
   const nativeOptions = (kind: FileTree, action: string): OptionDefinition[] =>
-    kind !== "builds"
-      ? []
-      : [
-          booleanOption("--resolve-parameters <boolean>", "Resolve parameters in artifact paths"),
-          booleanOption(
-            "--log-build-usage <boolean>",
-            "Set whether artifact access records build usage",
-          ),
-          ...(["list", "children", "metadata"].includes(action) ? [fieldsOption] : []),
-          ...(["list", "children", "archive"].includes(action)
-            ? [option("--base-path <path>", "Set the server artifact base path")]
-            : []),
-          ...(action === "archive"
-            ? [option("--archive-name <name>", "Set the server-side archive name")]
-            : []),
-        ];
+    [
+      ...(kind === "instances" || kind === "server"
+        ? []
+        : [booleanOption("--resolve-parameters <boolean>", "Resolve parameters in artifact paths")]),
+      ...(kind === "builds"
+        ? [booleanOption("--log-build-usage <boolean>", "Set whether artifact access records build usage")]
+        : []),
+      ...(["list", "children", "metadata"].includes(action) ? [fieldsOption] : []),
+      ...(["list", "children", "archive"].includes(action)
+        ? [textOption("--base-path <path>", "Set the server artifact base path")]
+        : []),
+      ...(action === "archive"
+        ? [textOption("--archive-name <name>", "Set the server-side archive name")]
+        : []),
+    ];
   const tree = (name: string, kind: FileTree) =>
     command(name, "Browse and save files", [
       withView(fileTable, leaf(
@@ -70,9 +74,14 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
           c.listFiles(kind, args.id, args.path, Number(options.limit), controls(options)),
         [count, ...nativeOptions(kind, "children")],
       )),
-      leaf("metadata <id> <path>", "Read file metadata", R, (c, { args, options }) =>
-        c.getFileMetadata(kind, args.id, args.path, controls(options)),
+      leaf(
+        "metadata <id> <path>",
+        "Read file metadata",
+        R,
+        (c, { args, options }) =>
+          c.getFileMetadata(kind, args.id, args.path, controls(options)),
         nativeOptions(kind, "metadata"),
+
       ),
       ...(["download", "archive"] as const).map((action) =>
         command(

@@ -5,53 +5,66 @@ the 0.7 paging contract and Core output guarantees under
 [the pinned Core 0.7.1 contract](DESIGN.md).
 Historical extraction provenance remains in [migration](migration.md).
 
+## Reading configuration values
+
+Read commands return plain values supplied by TeamCity, including scripts and unknown plugin,
+requirement, trigger, dependency, VCS and agent properties. Password-type parameters, `secure:`
+properties and values masked or omitted by the server remain redacted. Read policy does not use
+credential-name or value heuristics; plain write validation and protected-metadata preflights remain.
+`jobs configuration show` and `projects templates show` preserve native configuration/type metadata,
+including build settings, while `agents parameters list` reads system/env/config parameters.
+Explicit native projections also remove values when returned property metadata marks them secret.
+
 ## Field projections
 
-`builds list` and both `builds show` selectors accept `--fields <projection>` as native TeamCity
-item fields. An explicit projection returns native objects using the generic human view. Lists retain their
-paging envelope and compose
-`nextHref,build(<projection>)`; the latest selector keeps its single `build(<projection>)` lookup.
-Blank projections fail locally. Omission preserves the default request, shaping and views.
-`builds wait`, `builds diagnose` and `jobs run` retain their fixed projections.
-Client calls with projections return opaque `NativeJson` (unknown) values, including native
-list items; callers must validate them before accessing shaped properties. Default calls keep
-their existing result types.
+Explicit option values are sent unchanged and never extended. `--fields` returns native JSON
+and the generic human view. Paged lists project one item and retain their existing envelope,
+locator and paging; single reads and unpaged scoped lists project the whole response.
+Omitted options preserve default projections, shaping and views. Everything an option does not
+control retains default-path parity: validation, permissions, confirmations, errors, exit status,
+empty or malformed bodies and unknown mutation outcomes. Lost mutation responses are never retried
+automatically. Blank text controls and boolean controls other than literal `true` or `false` fail locally.
 
-Masking covers the literal credential and its percent-encoded (either hex case) and JSON-escaped
-forms up to three nested decoding rounds, in keys and string values on success and partial-error results.
-Literal matches are replaced in place; a decoded match redacts the whole original string.
-Other transformations (for example base64, hexadecimal dumps, hashes, or a credential split across fields)
-are not detected.
+Build lists compose `nextHref,build(<projection>)`; latest-build lookup keeps `build(<projection>)`.
+Artifact list/children compose `count,file(<projection>)` and retain `{count,items,hasMore}`,
+count+1 lookahead and hasMore rules; offset lists retain `nextStart`. Job, server and VCS-instance
+file lists retain `{count,items}` without lookahead. Explicit items gain no default-view or
+follow-up-hint fields. Project lists retain their tree view by default.
+Client projections return opaque `NativeJson` (`unknown`), including list items; callers must
+validate before accessing shaped properties. Default calls retain their result types.
 
-The build evidence reads also accept whole-response `--fields`: `builds canceled-info`,
-`builds pin show`, `builds statistics list`, `builds related-issues`, `builds artifact-changes`,
-`builds output-parameters list`, `builds resulting-properties list`,
-`builds problem-occurrences list`, `builds test-occurrences`, and `builds vcs-labels list`.
-These unpaged reads return the native response object when a projection is supplied;
-parameter values can therefore be selected explicitly. Omission keeps existing outputs.
+Credential masking covers literal, percent-encoded (either hex case) and JSON-escaped credentials
+through three nested decoding rounds, in keys and string values on success and partial errors.
+Literal matches are replaced in place; decoded matches redact the whole original string.
+Base64, hexadecimal dumps, hashes and credentials split across fields are outside this scope.
+Partial-failure detection runs before masking and retains existing error codes and native results:
+include `errorCount` for `batch.partial`, `errors(item)` for build set-status, and
+`vcsLabel(status)` for VCS labels. Without these fields the native body returns exit 0 without a
+partial-failure claim; native `null` passes through.
 
-`queue list` accepts item `--fields` and keeps its paging envelope and job/project filters.
-`queue show`, `queue position show`, `queue approval show`, and `queue compatible-agents`
-accept whole-response `--fields`. Explicit projections use native JSON and the generic view;
-omission preserves existing requests and output.
+Fixed projections remain in `jobs run`, `jobs copy`, `builds wait`, `builds diagnose`, latest-build
+resolution, parameter-write and bulk-unmute preflight reads, and versioned-settings token/secure-value
+workflows. Options affect only their direct request leaves. `jobs parameters set-password`, parameter
+value/type/raw-type leaves, scalar-setting leaves, detach/clear/delete and checkout-rule sub-resources
+retain their existing workflows and options; consult the explicit command list for projection support.
 
-Tag reads and build tag replacement accept unchanged, nonblank `--locator <locator>`.
-Build tag add/replace and build/queue tag reads accept whole-response `--fields`; omission
-keeps the public-name defaults. Explicit fields return native JSON and the generic view.
-Build tag add retains its local acknowledgement for empty or non-JSON successful bodies.
+Successful empty/non-JSON bodies keep acknowledgements on project move/default-template clear,
+cloud instance start, bulk unmute, build tag add, build log append and queue delete-page.
+Build cancel, set-status, problem-occurrences add, vcs-labels add, pin set, start-agentless,
+queue approval approve/reorder/position set, and role mutations retain JSON-decoding errors on
+empty success. Batch empty/malformed handling remains unchanged.
 
-Artifact `list` and `children` accept item `--fields`, composing `count,file(<projection>)`.
-They keep `{count,items,hasMore}`, their existing locator, count+1 lookahead and hasMore rules.
-Offset lists keep `{count,items,hasMore,nextStart}`. Explicit item projections contain no extra
-fields for default views or follow-up hints; native items use the generic view. Unpaged object
-reads and scoped lists project the whole response and return that native object.
+Token creation retains Credentials permission and stores a returned value under the requested alias;
+if fields omit it, nothing is stored. `users show <id>` defaults to `id,username,name`, matching a
+safe list item, and missing users return `http.notFound`. License keys use local aliases.
+Default parameter/VCS property projections remain names-only; feature property names exclude values.
+REST plugin info retains XML request/parsing by default and requests JSON with explicit fields.
+Download bounds, output paths and no-overwrite publication remain unchanged. Template
+`--optimize-settings`/`--inline-settings`, VCS checkout rules, write bodies, selectors, scope filters,
+node role/state filters and responsibility setters retain their existing contracts.
 
-Only `builds artifacts` enables native artifact controls: `--resolve-parameters <boolean>`
-and `--log-build-usage <boolean>` on all five leaves (exact `true` or `false`),
-`--base-path <path>` on list/children/archive, `--archive-name <name>` on archive, and
-whole-response `--fields` on metadata. Omission preserves each existing request and output.
-Archive name sets the server query `name`; output path, byte bounds and no-overwrite publication
-retain their existing contracts. Other file families retain their current options and behavior.
+The [command reference](reference.md#native-projections-and-controls) lists projection families
+and native controls from the shipped declaration tree.
 
 ## Paging
 
@@ -68,34 +81,3 @@ Each invocation keeps profile, endpoint, credentials and cancellation isolated. 
 reads must progress; cancellation remains cancellation. No automatic read-to-write target expansion
 is introduced. The 0.7.1 release requires published Core output-boundary handling: observed stdout
 EPIPE returns quiet exit 141, while original command and cleanup failures remain failures.
-
-Build actions (`builds cancel`, `set-status`, `log append`, `problem-occurrences add`,
-`vcs-labels add`, `pin set`, `start-agentless`) accept `--fields <projection>` and
-return native JSON with the generic view. Omission preserves requests and output.
-Empty successful bodies retain each command's default behavior: log append returns its
-acknowledgement; these other actions fail JSON decoding. Projections are never extended.
-For partial-failure detection include `errors(item)` for set-status or
-`vcsLabel(status)` for VCS labels. Present failures retain the existing error code and
-native error result. Detection reads the native response before credential masking; the returned
-result is masked afterwards. Absent detection fields return the native body with exit 0.
-
-Batch `show`, `cancel`, `delete`, `comment set/clear`, `tags add/remove`, and `pin`
-accept `--fields`. The native response retains its envelope. Include `errorCount`
-to retain `batch.partial` detection; absent detection fields imply no claim about
-partial failure. Empty or malformed responses retain default handling, and omitted
-options preserve the default request body, permissions and output.
-
-Queue mutations `approval approve`, `delete-page`, `reorder`, and `position set`
-accept `--fields`; native responses retain their envelopes. `delete-page` retains
-its acknowledgement for an empty success; the other three retain JSON decoding errors.
-`jobs run --move-to-top <boolean>` and `queue approval approve --approve-all <boolean>`
-require literal `true` or `false`. Omission preserves the existing query, including
-`approveAll=false`; `jobs run` keeps its fixed response projection and wait workflow.
-The wait and latest-build resolution workflows keep their required response fields;
-projection options apply to their direct request leaves.
-
-All new controls follow parity with the default path: validation, permissions,
-confirmations, empty or malformed bodies, errors, exit status and unknown mutation
-outcomes retain their existing rules. Build tag add, log append and queue delete-page keep their
-acknowledgements for non-JSON success bodies. Native `null` has no partial-detection
-fields and passes through. Lost mutation responses are never retried automatically.

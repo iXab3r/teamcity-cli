@@ -4,6 +4,7 @@
 Файлы рядом (`coverage.json`, `coverage.tsv`, `summary.json`) сохраняют исходные цифры;
 [текущее покрытие](current/summary.json) и [текущий mapping](current/coverage.json) публикуются
 отдельно и проверяются командой `npm run test:coverage`.
+Current status and scope: [0.8.0 candidate — 449/449 covered](current/README.md).
 
 Baseline: **449 операций — 180 covered, 268 partial, 1 missing**. Полное покрытие по критерию ниже —
 **40,09%**. Действие доступно хотя бы в основном варианте для **448/449 = 99,78%**. Эти проценты

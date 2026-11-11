@@ -7,7 +7,7 @@ The Cake driver is adapted from pinned nexus-cli/opensearch-cli; see [build/NOTI
 
 ## Core dependency and product approval
 
-Published product **0.7.1** pins published Core **0.7.1** at
+Published product **0.8.0** and the **0.9.0** candidate pin published Core **0.7.1** at
 [optional provenance: release revision bf79b80636bcdd790bbd6c25648842ae5213f267](https://github.com/iXab3r/EyeAuras.CliFactory/commit/bf79b80636bcdd790bbd6c25648842ae5213f267).
 The owner approved Core's exact npm stage. Core VerifyRegistry build **33314** completed with a
 `published-verified` receipt; npm's version/latest and SHA-512, installed Core behavior, and
@@ -23,8 +23,8 @@ approves that exact verified product stage with 2FA. Pre-merge branch checks use
 
 ## Next product version
 
-The #156 change prepares product **0.8.0**, still pinned to Core **0.7.1**.
-This version bump does not stage or publish a release. After merge, use 0.8.0 for all version
+The #156 change prepares product **0.9.0**, still pinned to Core **0.7.1**.
+This version bump does not stage or publish a release. After merge, use 0.9.0 for all version
 arguments and release labels below; the 0.7.1 approval record above remains historical evidence.
 
 ## Local driver
@@ -34,15 +34,17 @@ npm ci
 npm test
 npm run test:package
 dotnet run --project build -- --target Verify
-dotnet run --project build -- --target SetVersion --release-version 0.8.0
-RELEASE_REVISION=$(git rev-parse HEAD) dotnet run --project build -- --target DryRun --release-version 0.8.0 --dry-run
+dotnet run --project build -- --target SetVersion --release-version 0.9.0
+RELEASE_REVISION=$(git rev-parse HEAD) dotnet run --project build -- --target DryRun --release-version 0.9.0 --dry-run
 ```
 
-Verify runs clean dependency installation, offline mocked tests, installed-package smoke and
-release-safety tests. Pack also performs Verify, packs this product, records source/SHA-1/SHA-512
+Verify runs clean dependency installation, the offline mocked suite once through the
+[REST coverage freshness gate](rest-api-coverage/README.md) (`npm run test:coverage`),
+installed-package smoke and release-safety tests. The gate needs Node 24+ and a Git checkout;
+the installed CLI keeps its Node 22+ engine. Pack also performs Verify, packs this product, records source/SHA-1/SHA-512
 in `output/release/release-manifest.json` and tests those exact archive bytes. `npm run
 test:package -- --tarball /absolute/archive.tgz` checks an existing archive; `npm run test:registry
--- 0.8.0` checks the registry version. Installs use disposable prefixes/config/cache and synthetic
+-- 0.9.0` checks the registry version. Installs use disposable prefixes/config/cache and synthetic
 AppData/fetch/secrets, never real profiles. Core must resolve inside that prefix at the exact pin.
 Tests, source, local proof and build tools are excluded from the product archive.
 
@@ -89,10 +91,10 @@ After reviewed merge and exact-head CI, select exact main `<sha>`:
 
 ```text
 teamcity-cli jobs run EyeAuras_TeamCityCli_Verify --wait --timeout 30m
-teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--dry-run --param env.RELEASE_REVISION=<sha> --param release.build=0.8.0-dry-run
-teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--stage --param env.RELEASE_REVISION=<sha> --param release.build=0.8.0-stage
+teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--dry-run --param env.RELEASE_REVISION=<sha> --param release.build=0.9.0-dry-run
+teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--stage --param env.RELEASE_REVISION=<sha> --param release.build=0.9.0-stage
 # Only after owner npm approval:
-teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--verify-registry --param env.RELEASE_REVISION=<sha> --param release.build=0.8.0-verify
+teamcity-cli jobs run EyeAuras_TeamCityCli_NpmStage --param env.RELEASE_MODE=--verify-registry --param env.RELEASE_REVISION=<sha> --param release.build=0.9.0-verify
 ```
 
 Omit --branch. RELEASE_REVISION guards the checkout; it does not select it. If main advances,
@@ -108,7 +110,7 @@ successful run produces its durable receipt.
 
 Only the owner approves that exact verified stage in npm Staged Packages with 2FA. Never approve
 `staged-unverified`, `0.0.0-stage` or a different ID. VerifyRegistry first checks registry
-version/latest/integrity and installed behavior, then creates GitHub Release `v0.8.0` at the packed
+version/latest/integrity and installed behavior, then creates GitHub Release `v0.9.0` at the packed
 source commit with archive/manifest. Mismatching existing tags/assets fail; matching assets can be
 retained and missing ones resumed. These are provenance records, not npm OIDC attestations.
 

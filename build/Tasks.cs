@@ -9,7 +9,7 @@ public sealed class VerifyTask : AsyncFrostingTask<BuildContext>
     public override async Task RunAsync(BuildContext context)
     {
         await context.Run("npm", "ci", "--no-audit", "--no-fund");
-        Console.WriteLine(await context.Run("npm", "test"));
+        Console.WriteLine(await context.Run("npm", "run", "test:coverage"));
         Console.WriteLine(await context.Run("npm", "run", "test:package"));
         Console.WriteLine(await context.Run("node", "--test", "scripts/test-release.mjs"));
     }
@@ -24,7 +24,7 @@ public sealed class SetVersionTask : AsyncFrostingTask<BuildContext>
         var path = Path.Combine(context.Root, "package.json");
         var json = JsonNode.Parse(File.ReadAllText(path))!;
         json["version"] = version;
-        File.WriteAllText(path, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
+        File.WriteAllText(path, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n");
         await context.Run("npm", "install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund");
         var cli = Path.Combine(context.Root, "src", "cli.ts");
         File.WriteAllText(cli, System.Text.RegularExpressions.Regex.Replace(File.ReadAllText(cli), "version: \"[0-9]+\\.[0-9]+\\.[0-9]+\"", "version: \"" + version + "\""));

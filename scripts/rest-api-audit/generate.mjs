@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const root = process.cwd();
 const capture = resolve(process.argv[2] ?? '.workspace/workstreams/rest-api-coverage-audit');
@@ -18,13 +19,16 @@ const observed = [...await trace('test-requests.ndjson', false), ...await trace(
 const probed = JSON.parse(await readFile(resolve(capture, 'probe.json'), 'utf8'));
 // Query controls fed by a differently named option or argument of the bound leaf.
 const explicitControls = {
+  'GET /app/rest/server/files/{p1}/archived{p2}': { name: '--archive-name <name>' },
+  'GET /app/rest/vcs-root-instances/{p1}/files/latest/archived{p2}': { name: '--archive-name <name>' },
+  'GET /app/rest/buildTypes/{p1}/vcs/files/latest/archived{p2}': { name: '--archive-name <name>' },
   'GET /app/rest/builds/{p1}/artifacts/archived{p2}': { name: '--archive-name <name>' },
   'POST /app/rest/buildTypes/{p1}/move': { targetProjectId: '--project <id>' },
-  'POST /app/rest/server/backup': { fileName: '<name>' },
+  'POST /app/rest/server/backup': { fileName: '<name>', includeSupplimentaryData: '--include-supplementary-data <boolean>' },
 };
 
 // Full command paths come from the product's own exported declaration tree.
-const { teamCityDefinition } = await import(`file://${root}/dist/src/cli.js`);
+const { teamCityDefinition } = await import(pathToFileURL(resolve(root, "dist/src/cli.js")).href);
 const leaves = [];
 (function walk(nodes, prefix) {
   for (const node of nodes) {

@@ -26,7 +26,7 @@ import { createFileCommands } from "./file-commands.js";
 import { clientLeaf, integerValue, optionalText } from "./command-support.js";
 import { projectTree, jobTable, agentTable, buildRecord, buildTable, problemTable, testTable, withView } from "./presentation.js";
 import { createBuildFlowCommands } from "./build-flow.js";
-import { fieldsOption } from "./projection.js";
+import { fieldsFromOptions, fieldsOption } from "./projection.js";
 import type {
   TeamCityBuildState,
   TeamCityBuildStatus,
@@ -118,7 +118,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
       "builds diagnose 101",
       "builds artifacts download 101 dist/app.zip --output app.zip",
     ],
-    version: "0.8.0",
+    version: "0.9.0",
     applicationId: "teamcity-cli",
     permissions: { categories: adminCategories },
     profile: {
@@ -175,7 +175,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "status",
           "Show server version, role and clock",
           Permission.ReadOnly,
-          (c) => c.getServerStatus(),
+          (c, { options }) => c.getServerStatus(fieldsFromOptions(options)),
+          [fieldsOption],
         ),
       ]),
       command("projects", "Work with TeamCity projects", helpLayout([["Everyday", ["list", "show"]]], [
@@ -186,6 +187,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           (c, { options }) => {
             const parent = stringOption(options, "parent");
             return c.listProjects({
+              fields: fieldsFromOptions(options),
               ...(parent === undefined ? {} : { parent }),
               ...(options.includeArchived === true ? { includeArchived: true } : {}),
               ...pageValues(options),
@@ -194,6 +196,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           [
             { flags: "--parent <id>", description: "Limit projects to one parent project" },
             { flags: "--include-archived", description: "Include archived projects" },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -201,7 +204,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "show <id>",
           "Show one project",
           Permission.ReadOnly,
-          (c, { args }) => c.getProject(args.id),
+          (c, { args, options }) => c.getProject(args.id, fieldsFromOptions(options)),
+          [fieldsOption],
         ),
         ...authoring.projects,
         ...infrastructure.projects,
@@ -220,18 +224,21 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             return c.listJobs({
               ...(project === undefined ? {} : { project }),
               ...pageValues(options),
+              fields: fieldsFromOptions(options),
             });
           },
           [
             { flags: "--project <id>", description: "Limit jobs to a TeamCity project" },
             ...pageOptions,
+            fieldsOption,
           ],
         )),
         leaf(
           "show <id>",
           "Show one job",
           Permission.ReadOnly,
-          (c, { args }) => c.getJob(args.id),
+          (c, { args, options }) => c.getJob(args.id, fieldsFromOptions(options)),
+          [fieldsOption],
         ),
         flow.run,
         ...authoring.jobs,
@@ -301,6 +308,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
             return c.listBuildTests(integerValue(args.id), {
               ...(status === undefined ? {} : { status }),
               ...pageValues(options),
+              fields: fieldsFromOptions(options),
             });
           },
           [
@@ -308,6 +316,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               flags: "--status <status>",
               description: "Select failure, success, error, warning, normal or unknown",
             },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -316,16 +325,22 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "List problem occurrences for a build",
           Permission.ReadOnly,
           (c, { args, options }) =>
-            c.listBuildProblems(integerValue(args.id), pageValues(options)),
-          pageOptions,
+            c.listBuildProblems(
+              integerValue(args.id),
+              { ...pageValues(options), fields: fieldsFromOptions(options) },
+            ),
+          [...pageOptions, fieldsOption],
         )),
         leaf(
           "changes <id>",
           "List source changes associated with a build",
           Permission.ReadOnly,
           (c, { args, options }) =>
-            c.listBuildChanges(integerValue(args.id), pageValues(options)),
-          pageOptions,
+            c.listBuildChanges(
+              integerValue(args.id),
+              { ...pageValues(options), fields: fieldsFromOptions(options) },
+            ),
+          [...pageOptions, fieldsOption],
         ),
         withView(buildRecord, leaf(
           "cancel <id>",
@@ -404,6 +419,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               ...(enabled === undefined ? {} : { enabled }),
               ...(authorized === undefined ? {} : { authorized }),
               ...pageValues(options),
+              fields: fieldsFromOptions(options),
             });
           },
           [
@@ -419,6 +435,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
               flags: "--authorized <value>",
               description: "Select true, false or any",
             },
+            fieldsOption,
             ...pageOptions,
           ],
         )),
@@ -426,7 +443,8 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           "show <id>",
           "Show one build agent",
           Permission.ReadOnly,
-          (c, { args }) => c.getAgent(integerValue(args.id)),
+          (c, { args, options }) => c.getAgent(integerValue(args.id), fieldsFromOptions(options)),
+          [fieldsOption],
         ),
       ], "Control")),
       command("vcs", "Inspect and configure version control", [

@@ -45,10 +45,11 @@ no issues, labels or milestones; existing `bug` and `enhancement` labels are use
 
 ## Story prerequisites
 
-This setup does not supply or claim a generated complete service API inventory, pinned official
-inventory source/generator, or an owner-approved story/dependency/milestone plan. Existing commands,
-README and product contract are the shipped baseline, not a coverage census or new service-version
-support policy. Before an authorized story-based increment, establish the real service's official
+The pinned official inventory, generator and freshness gate now exist under
+[REST coverage](rest-api-coverage/README.md) and `scripts/rest-api-audit/`.
+The story-based program of issue #5 delivered M01 through M05. These measurements do not
+establish a new service-version support policy. New increments still need owner authorization.
+Before an authorized story-based increment, establish the real service's official
 source/version/edition evidence, reproducible inventory mechanism, fixture rules and supported
 scope in its owning issue, then satisfy the linked local planning/approval gates. Record gaps
 honestly; do not invent a generator, compatibility promise or retroactive bootstrap quota.
