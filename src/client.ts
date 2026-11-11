@@ -243,7 +243,6 @@ interface ResponseOptions {
   accept?: string;
   discard?: boolean;
   expectedStatus?: number;
-  requireMedia?: string;
   status?: (status: number) => void;
 }
 
@@ -333,6 +332,7 @@ export class TeamCityUnknownOutcomeError extends CliError {
 export class TeamCityClient {
   readonly #baseUrl: string;
   readonly #token: string | undefined;
+  readonly #knownSecrets = new Set<string>();
   readonly #guest: boolean;
   readonly #fetch: typeof globalThis.fetch;
   readonly #signal: AbortSignal | undefined;
@@ -348,6 +348,7 @@ export class TeamCityClient {
     }
     this.#baseUrl = baseUrl;
     this.#token = token;
+    if (token) this.#knownSecrets.add(token);
     this.#guest = options.guest === true;
     this.#fetch = options.fetch ?? globalThis.fetch;
     this.#signal = options.signal;
@@ -402,9 +403,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getJobConfiguration(id: string) {
+  public async getJobConfiguration<F extends string | undefined = undefined>(id: string, fields?: F) {
     const properties = `property(${propertyFields})`;
-    const fields = [
+    const defaultFields = [
       "id,name,projectId,projectName,description,paused,templateFlag,type",
       `settings(${properties}),parameters(${properties}),output-parameters(${properties})`,
       `steps(step(${stepFields})),features(feature(${extensionFields})),triggers(trigger(${extensionFields}))`,
@@ -414,15 +415,20 @@ export class TeamCityClient {
       `vcs-root-entries(vcs-root-entry(vcs-root(${rootFields},properties(${properties})),checkout-rules))`,
       `templates(buildType(${identityFields}))`,
     ].join(",");
-    const value = await this.#requestJson<unknown>("GET", jobPath(id), { fields });
-    return this.#projectedValue(value, fields, readableConfiguration);
+    const value = await this.#requestJson<unknown>("GET", jobPath(id), { fields: fields ?? defaultFields });
+    return this.#projectedValue(value, fields ?? defaultFields, readableConfiguration);
   }
 
-  public async listAgentParameters(id: number) {
-    const result = await this.#requestJson<{ properties?: { property?: RawProperty[] } }>(
-      "GET", agentPath(id), { fields: `properties(property(${propertyFields}))` },
+  public async listAgentParameters<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#requestJson<{ properties?: { property?: RawProperty[] } }>(
+      "GET",
+      agentPath(id),
+      { ...({ fields: `properties(property(${propertyFields}))` }), ...(fields === undefined ? {} : { fields }) },
     );
-    return (result.properties?.property ?? []).map((item) => safeProperty(item));
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const result = nativeResponse;
+      return (result.properties?.property ?? []).map((item) => safeProperty(item));
+    });
   }
 
   public listJobs<F extends string | undefined = undefined>(
@@ -514,23 +520,25 @@ export class TeamCityClient {
   }
 
   /** One build with its test and problem counters, for a bounded diagnosis. */
-  public getBuildSummary(id: number): Promise<TeamCityBuildSummary> {
-    return this.#requestJson<TeamCityBuildSummary>(
+  public getBuildSummary<F extends string | undefined = undefined>(id: number, fields?: F): Promise<Projected<TeamCityBuildSummary, F>> {
+    return this.#projectedJson(
       "GET",
       `/app/rest/builds/id:${integerId(id, "TeamCity build ID")}`,
       { fields: summaryFields },
+      value => value as TeamCityBuildSummary,
+      fields,
     );
   }
 
   /** Failed test identities only: no stack traces or other details. */
-  public listFailedTests(id: number, limit: number): Promise<TeamCityPage<TeamCityFailedTest>> {
+  public listFailedTests<F extends string | undefined = undefined>(id: number, limit: number, fields?: F): Promise<TeamCityPage<Projected<TeamCityFailedTest, F>>> {
     return this.#list(
       "/app/rest/testOccurrences",
       [`build:(id:${integerId(id, "TeamCity build ID")})`, "status:failure"],
       "testOccurrence",
       failedTestFields,
       (item) => item as TeamCityFailedTest,
-      { limit },
+      { limit, fields },
     );
   }
 
@@ -645,7 +653,7 @@ export class TeamCityClient {
    * Queue one build. A lost or unreadable response, or a 5xx from TeamCity or a proxy, may hide an
    * accepted build, so each of them is an unknown outcome rather than a plain failure.
    */
-  public async runJob(id: string, options: RunJobOptions = {}, body: Record<string, unknown> = {}): Promise<TeamCityBuild> {
+  public async runJob<F extends string | undefined = undefined>(id: string, options: RunJobOptions = {}, body: Record<string, unknown> = {}, fields?: F): Promise<Projected<TeamCityBuild, F>> {
     const jobId = requiredText(id, "TeamCity job ID");
     const { moveToTop, branch, comment, cleanSources, properties: compactProperties, ...native } = options;
     const input = body.properties === undefined ? compactProperties : body.properties;
@@ -660,7 +668,7 @@ export class TeamCityClient {
         "POST",
         "/app/rest/buildQueue",
         {
-          fields: `${buildFields}${requestedProperties.length ? ",properties(property(name))" : ""}`,
+          fields: fields ?? `${buildFields}${requestedProperties.length ? ",properties(property(name))" : ""}`,
           ...(options.moveToTop === undefined ? {} : { moveToTop: options.moveToTop }),
         },
         {
@@ -686,6 +694,16 @@ export class TeamCityClient {
         error,
       );
     }
+    if (fields !== undefined) {
+      let value: unknown;
+      try {
+        value = JSON.parse(contents);
+      } catch (cause) {
+        throw new TeamCityUnknownOutcomeError("TeamCity returned invalid JSON after the queue request.",
+          diagnosticCause(cause, [], "Invalid JSON syntax."));
+      }
+      return this.#projectedValue(value, fields, raw => raw as TeamCityBuild);
+    }
     const build = queuedBuild(contents);
     if (build === undefined) {
       throw new TeamCityUnknownOutcomeError(
@@ -696,7 +714,7 @@ export class TeamCityClient {
     const { properties: returnedProperties, ...summary } = build as TeamCityBuild & {
       properties?: { property?: { name?: unknown }[] };
     };
-    if (!requestedProperties.length) return summary;
+    if (!requestedProperties.length) return summary as Projected<TeamCityBuild, F>;
     const requested = new Set(requestedProperties.map((property) => property.name));
     const returned = Array.isArray(returnedProperties?.property) ? returnedProperties.property : [];
     const parameterNames = [...new Set(returned
@@ -704,7 +722,7 @@ export class TeamCityClient {
         (name): name is string => typeof name === "string" && requested.has(name),
       )
     )];
-    return { ...summary, parameterNames };
+    return { ...summary, parameterNames } as Projected<TeamCityBuild, F>;
   }
 
   public cancelBuild<F extends string | undefined = undefined>(
@@ -727,18 +745,13 @@ export class TeamCityClient {
     );
   }
 
-  public createProject(id: string, options: CreateProjectOptions): Promise<TeamCityProject> {
-    return this.#requestJson(
-      "POST",
-      "/app/rest/projects",
-      { fields: projectFields },
-      {
+  public createProject<F extends string | undefined = undefined>(id: string, options: CreateProjectOptions, fields?: F): Promise<Projected<TeamCityProject, F>> {
+    return this.#requestJson<TeamCityProject>("POST", "/app/rest/projects", { fields: projectFields }, {
         id: requiredText(id, "Project ID"),
         ...(options.name === undefined ? {} : { name: requiredText(options.name, "Project name") }),
         ...(options.parent === undefined ? {} : { parentProject: { id: requiredText(options.parent, "Parent project ID") } }),
         ...Object.fromEntries(Object.entries(options).filter(([key]) => key !== "parent")),
-      },
-    );
+      }).then(value => this.#projectedValue(value, fields, () => value));
   }
 
   public createJob<F extends string | undefined = undefined>(
@@ -760,30 +773,32 @@ export class TeamCityClient {
     );
   }
 
-  public async copyJob(source: string, id: string, options: CreateJobOptions, native: Record<string, unknown> = {}) {
-    const copied = await this.#requestJson<TeamCityJob>("POST",
-      `${projectPath(triage.inputText(options.project, "Project ID"))}/buildTypes`, { fields: "id,name,projectId" }, {
+  public async copyJob<F extends string | undefined = undefined>(source: string, id: string, options: CreateJobOptions, native: Record<string, unknown> = {}, fields?: F) {
+    const nativeResponse = await this.#requestJson<TeamCityJob>("POST", `${projectPath(triage.inputText(options.project, "Project ID"))}/buildTypes`, { fields: fields ?? "id,name,projectId" }, {
         id: requiredText(id, "Job ID"),
         sourceBuildType: { id: requiredText(source, "Source job ID") },
         ...Object.fromEntries(Object.entries(options).filter(([key]) => key !== "project")),
         ...native,
       });
-    return { id: copied.id, name: copied.name, projectId: copied.projectId };
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const copied = nativeResponse;
+      return { id: copied.id, name: copied.name, projectId: copied.projectId };
+    });
   }
 
-  public setProjectField(id: string, field: string, value: string) {
-    return this.#setField(projectPath(id), id, field, value);
+  public setProjectField<F extends string | undefined = undefined>(id: string, field: string, value: string, fields?: F) {
+    return this.#setField(projectPath(id), id, field, value, fields);
   }
 
-  public setJobField(id: string, field: string, value: string) {
-    return this.#setField(jobPath(id), id, field, value);
+  public setJobField<F extends string | undefined = undefined>(id: string, field: string, value: string, fields?: F) {
+    return this.#setField(jobPath(id), id, field, value, fields);
   }
 
-  async #setField(path: string, id: string, field: string, value: string) {
+  async #setField<F extends string | undefined>(path: string, id: string, field: string, value: string, fields?: F) {
     plainProperty(field, value);
     if (field === "name") value = requiredText(value, "Name");
-    await this.#requestText("PUT", `${path}/${pathSegment(field)}`, value);
-    return { id: id, field, value };
+    const contents = await this.#requestText("PUT", `${path}/${pathSegment(field)}`, value);
+    return this.#projectedValue(contents, fields, () => ({ id: id, field, value }));
   }
 
   public async moveProject<F extends string | undefined = undefined>(
@@ -802,20 +817,24 @@ export class TeamCityClient {
     return this.#projectedAcknowledgement(contents, fields, { id: id, parentProjectId, moved: true });
   }
 
-  public async moveJob(id: string, project: string | undefined) {
+  public async moveJob<F extends string | undefined = undefined>(id: string, project: string | undefined, fields?: F) {
     const projectId = project === undefined ? undefined : requiredText(project, "Project ID");
-    await this.#request("POST", `${jobPath(id)}/move`, projectId === undefined ? {} : { targetProjectId: projectId });
-    return { id: id, projectId, moved: true };
+    const nativeResponse = await this.#request(
+      "POST",
+      `${jobPath(id)}/move`,
+      projectId === undefined ? {} : { targetProjectId: projectId },
+    );
+    return this.#projectedAcknowledgement(nativeResponse, fields, { id: id, projectId, moved: true });
   }
 
-  public async deleteProject(id: string) {
-    await this.#request("DELETE", projectPath(id));
-    return { id: id, deleted: true };
+  public async deleteProject<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", projectPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { id: id, deleted: true });
   }
 
-  public async deleteJob(id: string) {
-    await this.#request("DELETE", jobPath(id));
-    return { id: id, deleted: true };
+  public async deleteJob<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", jobPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { id: id, deleted: true });
   }
 
   public async listParameters<F extends string | undefined = undefined>(
@@ -870,7 +889,8 @@ export class TeamCityClient {
     return this.#writeParameter("PUT", owner, id, name, value, fields, native);
   }
 
-  public async setPasswordParameter(jobId: string, name: string, alias: string | undefined, secrets: ScopedSecrets, plainValue?: string, native: Record<string, unknown> = {}) {
+  public async setPasswordParameter<F extends string | undefined = undefined>(jobId: string, name: string, alias: string | undefined, secrets: ScopedSecrets, plainValue?: string, native: Record<string, unknown> = {}, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const collection = parametersPath("jobs", jobId);
     pathSegment(name);
     const path = `${collection}/${pathSegment(name)}`;
@@ -881,14 +901,17 @@ export class TeamCityClient {
     } catch {
       this.#signal?.throwIfAborted();
     }
+    let contents: string;
     try {
-      // Retain the password specification and discard any server echo of its value.
-      await this.#request("PUT", path, {}, { name, value, ...native, type: native.type ?? existing?.type ?? { rawValue: "password" } },
-        "application/json", { discard: true });
+      // Metadata is used only to retain password type and hide a scalar echo.
+      contents = await this.#request("PUT", path, {}, { name, value, ...native, type: native.type ?? existing?.type ?? { rawValue: "password" } },
+        "application/json", { discard: fields === undefined });
     } catch (cause) {
-      throw new Error("Password parameter update failed.", { cause: diagnosticCause(cause, typeof value === "string" ? [value] : []) });
+      const fromAlias = native.value === undefined && plainValue === undefined && typeof value === "string";
+      throw new Error("Password parameter update failed.", { cause: diagnosticCause(cause, fromAlias ? [value] : []) });
     }
-    return { jobId: jobId, name, stored: true };
+    return this.#projectedAcknowledgement(contents, fields, { jobId: jobId, name, stored: true },
+      { name, type: (native.type ?? existing?.type ?? { rawValue: "password" }) as NonNullable<RawProperty["type"]> });
   }
 
   async #writeParameter<F extends string | undefined = undefined>(
@@ -913,9 +936,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteParameter(owner: ParameterOwner, id: string, name: string) {
-    await this.#request("DELETE", `${parametersPath(owner, id)}/${pathSegment(name)}`);
-    return { owner, id: id, name: name, deleted: true };
+  public async deleteParameter<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${parametersPath(owner, id)}/${pathSegment(name)}`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { owner, id: id, name: name, deleted: true });
   }
 
   public async listSteps<F extends string | undefined = undefined>(
@@ -978,9 +1001,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteStep(jobId: string, id: string) {
-    await this.#request("DELETE", `${jobPath(jobId)}/steps/${pathSegment(id)}`);
-    return { jobId: jobId, id: id, deleted: true };
+  public async deleteStep<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${jobPath(jobId)}/steps/${pathSegment(id)}`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { jobId: jobId, id: id, deleted: true });
   }
 
   public async listExtensions<F extends string | undefined = undefined>(
@@ -1050,9 +1073,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteExtension(kind: ExtensionKind, jobId: string, id: string) {
-    await this.#request("DELETE", extensionPath(kind, jobId, id));
-    return { jobId: jobId, id: id, deleted: true };
+  public async deleteExtension<F extends string | undefined = undefined>(kind: ExtensionKind, jobId: string, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", extensionPath(kind, jobId, id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { jobId: jobId, id: id, deleted: true });
   }
 
   public async listSnapshotDependencies<F extends string | undefined = undefined>(
@@ -1118,9 +1141,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteSnapshotDependency(jobId: string, id: string) {
-    await this.#request("DELETE", snapshotPath(jobId, id));
-    return { jobId: jobId, id: id, deleted: true };
+  public async deleteSnapshotDependency<F extends string | undefined = undefined>(jobId: string, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", snapshotPath(jobId, id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { jobId: jobId, id: id, deleted: true });
   }
 
   public async listTemplates<F extends string | undefined = undefined>(
@@ -1153,15 +1176,11 @@ export class TeamCityClient {
     );
   }
 
-  public async detachTemplate(jobId: string, templateId: string, inlineSettings?: boolean) {
-    await this.#request(
-      "DELETE",
-      `${jobPath(jobId)}/templates/${idPath(templateId, "Template ID")}`,
-      {
+  public async detachTemplate<F extends string | undefined = undefined>(jobId: string, templateId: string, inlineSettings?: boolean, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${jobPath(jobId)}/templates/${idPath(templateId, "Template ID")}`, {
         ...(inlineSettings === undefined ? {} : { inlineSettings: String(inlineSettings) }),
-      },
-    );
-    return { jobId: jobId, templateId: templateId, detached: true, inlineSettings: inlineSettings ?? false };
+      });
+    return this.#projectedAcknowledgement(nativeResponse, fields, { jobId: jobId, templateId: templateId, detached: true, inlineSettings: inlineSettings ?? false });
   }
 
   public async listRules<F extends string | undefined = undefined>(
@@ -1233,36 +1252,32 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteRule(kind: RuleKind, jobId: string, id: string) {
-    await this.#request("DELETE", entityPath(kind, jobId, id));
-    return { ownerId: jobId, id: id, deleted: true };
+  public async deleteRule<F extends string | undefined = undefined>(kind: RuleKind, jobId: string, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", entityPath(kind, jobId, id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { ownerId: jobId, id: id, deleted: true });
   }
 
-  public async getEntitySetting(
+  public async getEntitySetting<F extends string | undefined = undefined>(
     kind: EntitySettingsKind,
     jobId: string,
     id: string,
-    field: string,
+    field: string, fields?: F
   ) {
     requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${entityPath(kind, jobId, id)}/${pathSegment(field)}`);
-    return { jobId: jobId, id: id, field, value };
+    return this.#projectedValue(value, fields, () => ({ jobId: jobId, id: id, field, value }));
   }
 
-  public async setEntitySetting(
+  public async setEntitySetting<F extends string | undefined = undefined>(
     kind: EntitySettingsKind,
     jobId: string,
     id: string,
     field: string,
-    value: string,
+    value: string, fields?: F
   ) {
     plainProperty(field, value);
-    const result = await this.#requestText(
-      "PUT",
-      `${entityPath(kind, jobId, id)}/${pathSegment(field)}`,
-      value,
-    );
-    return { jobId: jobId, id: id, field, value: result };
+    const result = await this.#requestText("PUT", `${entityPath(kind, jobId, id)}/${pathSegment(field)}`, value);
+    return this.#projectedValue(result, fields, () => ({ jobId: jobId, id: id, field, value: result }));
   }
 
   public async listPluginParameters<F extends string | undefined = undefined>(
@@ -1300,37 +1315,38 @@ export class TeamCityClient {
     );
   }
 
-  public async getPluginParameter(
+  public async getPluginParameter<F extends string | undefined = undefined>(
     kind: "steps" | "features",
     jobId: string,
     id: string,
     name: string,
+    fields?: F,
   ) {
     // The collection carries password type metadata that the scalar endpoint omits.
     const properties = await this.listPluginParameters(kind, jobId, id);
     const property = properties.find((item) => item.name === name);
     if (property === undefined) throw new HttpError(404, "TeamCity property was not found.");
-    if (property.redacted) return property;
+    if (property.redacted) return this.#projectedValue(property, fields, () => property);
     const value = await this.#requestText(
       "GET", `${entityPath(kind, jobId, id)}/parameters/${pathSegment(name)}`,
     );
-    return { ...property, ...safeProperty({ name, value, type: { rawValue: property.type } }) };
+    return this.#projectedValue(value, fields, () => ({ ...property, ...safeProperty({ name, value, type: { rawValue: property.type } }) }));
   }
 
-  public async setPluginParameter(
+  public async setPluginParameter<F extends string | undefined = undefined>(
     kind: "steps" | "features",
     jobId: string,
     id: string,
     name: string,
-    value: string,
+    value: string, fields?: F
   ) {
     const property = plainProperty(name, value);
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       `${entityPath(kind, jobId, id)}/parameters/${pathSegment(property.name)}`,
       value,
     );
-    return safeProperty({ name: property.name }, false);
+    return this.#projectedValue(nativeResponse, fields, () => (safeProperty({ name: property.name }, false)), { name });
   }
 
   public async listProjectFeatures<F extends string | undefined = undefined>(
@@ -1399,12 +1415,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteProjectFeature(projectId: string, id: string) {
-    await this.#request(
-      "DELETE",
-      `${projectPath(projectId)}/projectFeatures/${idPath(id, "Feature ID")}`,
-    );
-    return { ownerId: projectId, id: id, deleted: true };
+  public async deleteProjectFeature<F extends string | undefined = undefined>(projectId: string, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${projectPath(projectId)}/projectFeatures/${idPath(id, "Feature ID")}`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { ownerId: projectId, id: id, deleted: true });
   }
 
   public async listProjectTemplates<F extends string | undefined = undefined>(
@@ -1509,25 +1522,25 @@ export class TeamCityClient {
     );
   }
 
-  public async getOwnerField(owner: "projects" | "jobs", id: string, field: string) {
+  public async getOwnerField<F extends string | undefined = undefined>(owner: "projects" | "jobs", id: string, field: string, fields?: F) {
     requiredText(field, "Field name");
-    const value = await this.#requestText(
-      "GET",
-      `${owner === "projects" ? projectPath(id) : jobPath(id)}/${pathSegment(field)}`,
-    );
-    return { id: id, field, value };
+    const value = await this.#requestText("GET", `${owner === "projects" ? projectPath(id) : jobPath(id)}/${pathSegment(field)}`);
+    return this.#projectedValue(value, fields, () => ({ id: id, field, value }));
   }
 
-  public async listJobAliases(
+  public async listJobAliases<F extends string | undefined = undefined>(
     jobId: string,
-    field?: string
+    field?: string, fields?: F
   ) {
-    const result = await this.#requestJson<{ item?: string[] }>(
+    const nativeResponse = await this.#requestJson<{ item?: string[] }>(
       "GET",
       `${jobPath(jobId)}/aliases`,
       field === undefined ? {} : { field },
     );
-    return result.item ?? [];
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const result = nativeResponse;
+      return result.item ?? [];
+    });
   }
 
   public listJobBranches<F extends string | undefined = undefined>(
@@ -1545,16 +1558,19 @@ export class TeamCityClient {
     }, options);
   }
 
-  public async listJobTags(
+  public async listJobTags<F extends string | undefined = undefined>(
     jobId: string,
-    field?: string
+    field?: string, fields?: F
   ) {
-    const result = await this.#requestJson<{ tag?: { name: string }[] }>(
+    const nativeResponse = await this.#requestJson<{ tag?: { name: string }[] }>(
       "GET",
       `${jobPath(jobId)}/buildTags`,
       { field: field ?? "tag(name)" },
     );
-    return (result.tag ?? []).map((tag) => tag.name);
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const result = nativeResponse;
+      return (result.tag ?? []).map((tag) => tag.name);
+    });
   }
 
   public listVcsRoots<F extends string | undefined = undefined>(
@@ -1644,22 +1660,19 @@ export class TeamCityClient {
     );
   }
 
-  public async detachVcsRoot(jobId: string, rootId: string) {
-    await this.#request("DELETE", entryPath(jobId, rootId));
-    return { jobId: jobId, rootId: rootId, detached: true };
+  public async detachVcsRoot<F extends string | undefined = undefined>(jobId: string, rootId: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", entryPath(jobId, rootId));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { jobId: jobId, rootId: rootId, detached: true });
   }
 
-  public async getCheckoutRules(jobId: string, rootId: string) {
-    const rules = await this.#requestText(
-      "GET",
-      `${entryPath(jobId, rootId)}/checkout-rules`,
-    );
-    return { jobId: jobId, rootId: rootId, rules };
+  public async getCheckoutRules<F extends string | undefined = undefined>(jobId: string, rootId: string, fields?: F) {
+    const rules = await this.#requestText("GET", `${entryPath(jobId, rootId)}/checkout-rules`);
+    return this.#projectedValue(rules, fields, () => ({ jobId: jobId, rootId: rootId, rules }));
   }
 
-  public async setCheckoutRules(jobId: string, rootId: string, rules: string | undefined) {
-    await this.#requestText("PUT", `${entryPath(jobId, rootId)}/checkout-rules`, rules);
-    return { jobId: jobId, rootId: rootId, rules };
+  public async setCheckoutRules<F extends string | undefined = undefined>(jobId: string, rootId: string, rules: string | undefined, fields?: F) {
+    const nativeResponse = await this.#requestText("PUT", `${entryPath(jobId, rootId)}/checkout-rules`, rules);
+    return this.#projectedValue(nativeResponse, fields, () => ({ jobId: jobId, rootId: rootId, rules }));
   }
 
   public listPools<F extends string | undefined = undefined>(
@@ -1669,15 +1682,18 @@ export class TeamCityClient {
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
 
-  public async createPool(name: string | undefined, native: Record<string, unknown> = {}) {
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>(
-        "POST",
-        "/app/rest/agentPools",
-        {},
-        { name: name === undefined ? undefined : requiredText(name, "Pool name"), ...native },
-      ),
+  public async createPool<F extends string | undefined = undefined>(name: string | undefined, native: Record<string, unknown> = {}, fields?: F) {
+    const nativeResponse = await this.#requestJson<AgentPoolSummary>(
+      "POST",
+      "/app/rest/agentPools",
+      {},
+      { name: name === undefined ? undefined : requiredText(name, "Pool name"), ...native },
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return safeNamed(
+        nativeResponse,
+      );
+    });
   }
 
   public async getPool<F extends string | undefined = undefined>(
@@ -1693,22 +1709,22 @@ export class TeamCityClient {
     );
   }
 
-  public async deletePool(id: number) {
-    await this.#request("DELETE", poolPath(id));
-    return { poolId: id, deleted: true };
+  public async deletePool<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", poolPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { poolId: id, deleted: true });
   }
 
-  public async getPoolField(id: number, field: string) {
+  public async getPoolField<F extends string | undefined = undefined>(id: number, field: string, fields?: F) {
     requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${poolPath(id)}/${pathSegment(field)}`);
-    return { poolId: id, field, value };
+    return this.#projectedValue(value, fields, () => ({ poolId: id, field, value }));
   }
 
-  public async setPoolField(id: number, field: string, value: string) {
+  public async setPoolField<F extends string | undefined = undefined>(id: number, field: string, value: string, fields?: F) {
     plainProperty(field, "");
     requiredText(value, "Pool name");
     const result = await this.#requestText("PUT", `${poolPath(id)}/${pathSegment(field)}`, value);
-    return { poolId: id, field, value: result };
+    return this.#projectedValue(result, fields, () => ({ poolId: id, field, value: result }));
   }
 
   public listPoolAgents<F extends string | undefined = undefined>(
@@ -1749,28 +1765,28 @@ export class TeamCityClient {
     );
   }
 
-  public async assignPoolProject(poolId: number, id: string, native: Record<string, unknown> = {}) {
-    return safeIdentity(
-      await this.#requestJson<BuildTypeIdentity>(
-        "POST",
-        `${poolPath(poolId)}/projects`,
-        {},
-        { id: requiredText(id, "Project ID"), ...native },
-      ),
+  public async assignPoolProject<F extends string | undefined = undefined>(poolId: number, id: string, native: Record<string, unknown> = {}, fields?: F) {
+    const nativeResponse = await this.#requestJson<BuildTypeIdentity>(
+      "POST",
+      `${poolPath(poolId)}/projects`,
+      {},
+      { id: requiredText(id, "Project ID"), ...native },
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return safeIdentity(
+        nativeResponse,
+      );
+    });
   }
 
-  public async unassignPoolProject(poolId: number, projectId: string) {
-    await this.#request(
-      "DELETE",
-      `${poolPath(poolId)}/projects/${idPath(projectId, "Project ID")}`,
-    );
-    return { poolId, projectId: projectId, unassigned: true };
+  public async unassignPoolProject<F extends string | undefined = undefined>(poolId: number, projectId: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${poolPath(poolId)}/projects/${idPath(projectId, "Project ID")}`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { poolId, projectId: projectId, unassigned: true });
   }
 
-  public async deleteAgent(id: number) {
-    await this.#request("DELETE", agentPath(id));
-    return { agentId: id, deleted: true };
+  public async deleteAgent<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", agentPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { agentId: id, deleted: true });
   }
 
   public async getAgentStatus<F extends string | undefined = undefined>(
@@ -1909,16 +1925,16 @@ export class TeamCityClient {
     );
   }
 
-  public async getAgentField(id: number, field: string) {
+  public async getAgentField<F extends string | undefined = undefined>(id: number, field: string, fields?: F) {
     requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${agentPath(id)}/${pathSegment(field)}`);
-    return { agentId: id, field, value };
+    return this.#projectedValue(value, fields, () => ({ agentId: id, field, value }));
   }
 
-  public async setAgentField(id: number, field: string, value: string) {
+  public async setAgentField<F extends string | undefined = undefined>(id: number, field: string, value: string, fields?: F) {
     plainProperty(field, value);
     const result = await this.#requestText("PUT", `${agentPath(id)}/${pathSegment(field)}`, value);
-    return { agentId: id, field, value: result };
+    return this.#projectedValue(result, fields, () => ({ agentId: id, field, value: result }));
   }
 
   public async getQueuedBuild<F extends string | undefined = undefined>(
@@ -1981,33 +1997,33 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteBuild(id: number) {
-    await this.#request("DELETE", buildPath(id));
-    return { buildId: id, deleted: true };
+  public async deleteBuild<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", buildPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { buildId: id, deleted: true });
   }
 
-  public async setBuildComment(id: number, text: string | undefined) {
+  public async setBuildComment<F extends string | undefined = undefined>(id: number, text: string | undefined, fields?: F) {
     if (text !== undefined) plainProperty("comment", text);
-    await this.#requestText("PUT", `${buildPath(id)}/comment`, text);
-    return { buildId: id, commentUpdated: true };
+    const nativeResponse = await this.#requestText("PUT", `${buildPath(id)}/comment`, text);
+    return this.#projectedValue(nativeResponse, fields, () => ({ buildId: id, commentUpdated: true }));
   }
 
-  public async clearBuildComment(id: number) {
-    await this.#request("DELETE", `${buildPath(id)}/comment`);
-    return { buildId: id, commentCleared: true };
+  public async clearBuildComment<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${buildPath(id)}/comment`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { buildId: id, commentCleared: true });
   }
 
-  public async getBuildScalar(id: number, field: string) {
+  public async getBuildScalar<F extends string | undefined = undefined>(id: number, field: string, fields?: F) {
     requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${buildPath(id)}/${pathSegment(field)}`);
-    return { buildId: id, field, value };
+    return this.#projectedValue(value, fields, () => ({ buildId: id, field, value }));
   }
 
-  public async setBuildScalar(id: number, field: string, value: string) {
+  public async setBuildScalar<F extends string | undefined = undefined>(id: number, field: string, value: string, fields?: F) {
     plainProperty(field, "");
     plainProperty(field, requiredText(value, "Value"));
     const result = await this.#requestText("PUT", `${buildPath(id)}/${pathSegment(field)}`, value);
-    return { buildId: id, field, value: result };
+    return this.#projectedValue(result, fields, () => ({ buildId: id, field, value: result }));
   }
 
   public async getBuildPin<F extends string | undefined = undefined>(
@@ -2069,7 +2085,7 @@ export class TeamCityClient {
     const contents = await this.#request(
       "POST",
       `${buildPath(id, owner)}/tags`,
-      fields === undefined ? {} : { fields: fieldsProjection(fields) },
+      fields === undefined || owner === "queue" ? {} : { fields: fieldsProjection(fields) },
       { ...body, ...native },
 
     );
@@ -2116,12 +2132,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getBuildStatistic(id: number, name: string) {
-    const value = await this.#requestText(
-      "GET",
-      `${buildPath(id)}/statistics/${pathSegment(name)}`,
-    );
-    return statistic(name, value);
+  public async getBuildStatistic<F extends string | undefined = undefined>(id: number, name: string, fields?: F) {
+    const value = await this.#requestText("GET", `${buildPath(id)}/statistics/${pathSegment(name)}`);
+    return this.#projectedValue(value, fields, () => (statistic(name, value)));
   }
 
   public async getBuildCanceledInfo<F extends string | undefined = undefined>(
@@ -2185,28 +2198,29 @@ export class TeamCityClient {
     );
   }
 
-  public async clearParameters(owner: ParameterOwner, id: string) {
-    await this.#request("DELETE", parametersPath(owner, id));
-    return { ownerId: id, cleared: true };
+  public async clearParameters<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", parametersPath(owner, id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { ownerId: id, cleared: true });
   }
 
-  public getParameterPart(owner: ParameterOwner, id: string, name: string, part: ParameterPart) {
-    return this.#parameterPart("GET", owner, id, name, part);
+  public getParameterPart<F extends string | undefined = undefined>(owner: ParameterOwner, id: string, name: string, part: ParameterPart, fields?: F) {
+    return this.#parameterPart("GET", owner, id, name, part, undefined, {}, fields);
   }
 
-  public setParameterPart(
+  public setParameterPart<F extends string | undefined = undefined>(
     owner: ParameterOwner,
     id: string,
     name: string,
     part: ParameterPart,
     value: string,
     native: Record<string, unknown> = {},
+    fields?: F,
   ) {
     plainProperty(name, value);
-    return this.#parameterPart("PUT", owner, id, name, part, value, native);
+    return this.#parameterPart("PUT", owner, id, name, part, value, native, fields);
   }
 
-  async #parameterPart(
+  async #parameterPart<F extends string | undefined>(
     method: "GET" | "PUT",
     owner: ParameterOwner,
     id: string,
@@ -2214,23 +2228,24 @@ export class TeamCityClient {
     part: ParameterPart,
     value?: string,
     native: Record<string, unknown> = {},
+    fields?: F,
   ) {
     const path = `${parametersPath(owner, id)}/${pathSegment(name)}`;
     const metadata = method === "GET"
       ? await this.#requestJson<RawProperty>("GET", path, { fields: "name,inherited,type(rawValue)" })
       : { name };
     if (method === "GET" && isSecretProperty({ ...metadata, value: "" })) {
-      return safeProperty(metadata, false);
+      return this.#projectedValue(safeProperty(metadata, false), fields, value => value);
     }
     if (part === "value") {
       const response = method === "GET"
         ? await this.#returnedText(`${path}/value`)
         : await this.#requestText(method, `${path}/value`, value);
-      return safeProperty({
+      return this.#projectedValue(response, fields, () => safeProperty({
         name: name,
         ...(metadata.type === undefined ? {} : { type: metadata.type }),
         ...(response === undefined ? {} : { value: response }),
-      });
+      }), metadata);
     }
     const type =
       part === "type"
@@ -2244,7 +2259,7 @@ export class TeamCityClient {
             rawValue: await this.#requestText(method, `${path}/type/rawValue`, value),
           };
     const result = safeProperty({ name: name, type, value: "" });
-    return { name: result.name, type: result.type, redacted: result.redacted };
+    return this.#projectedValue(part === "type" ? type : type.rawValue, fields, () => ({ name: result.name, type: result.type, redacted: result.redacted }));
   }
 
   public async replaceAllSettings<F extends string | undefined = undefined>(
@@ -2312,11 +2327,11 @@ export class TeamCityClient {
     );
   }
 
-  public async clearTemplates(jobId: string, inlineSettings?: boolean) {
-    await this.#request("DELETE", `${jobPath(jobId)}/templates`, {
+  public async clearTemplates<F extends string | undefined = undefined>(jobId: string, inlineSettings?: boolean, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${jobPath(jobId)}/templates`, {
       ...(inlineSettings === undefined ? {} : { inlineSettings: String(inlineSettings) }),
     });
-    return { jobId: jobId, cleared: true };
+    return this.#projectedAcknowledgement(nativeResponse, fields, { jobId: jobId, cleared: true });
   }
 
   public async listJobBuilds<F extends string | undefined = undefined>(
@@ -2345,15 +2360,18 @@ export class TeamCityClient {
     );
   }
 
-  public async assignProjectPool(projectId: string, id: number, native: Record<string, unknown> = {}) {
-    return safeNamed(
-      await this.#requestJson<AgentPoolSummary>(
-        "POST",
-        `${projectPath(projectId)}/agentPools`,
-        { fields: "id,name" },
-        { id: poolNumber(id), ...native },
-      ),
+  public async assignProjectPool<F extends string | undefined = undefined>(projectId: string, id: number, native: Record<string, unknown> = {}, fields?: F) {
+    const nativeResponse = await this.#requestJson<AgentPoolSummary>(
+      "POST",
+      `${projectPath(projectId)}/agentPools`,
+      { fields: "id,name" },
+      { id: poolNumber(id), ...native },
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return safeNamed(
+        nativeResponse,
+      );
+    });
   }
 
   public async replaceProjectPools<F extends string | undefined = undefined>(
@@ -2377,9 +2395,9 @@ export class TeamCityClient {
     );
   }
 
-  public async unassignProjectPool(projectId: string, poolId: number) {
-    await this.#request("DELETE", `${projectPath(projectId)}/agentPools/id:${poolNumber(poolId)}`);
-    return { projectId: projectId, poolId, unassigned: true };
+  public async unassignProjectPool<F extends string | undefined = undefined>(projectId: string, poolId: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${projectPath(projectId)}/agentPools/id:${poolNumber(poolId)}`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { projectId: projectId, poolId, unassigned: true });
   }
 
   public listProjectBranches<F extends string | undefined = undefined>(
@@ -2412,31 +2430,34 @@ export class TeamCityClient {
     );
   }
 
-  public getProjectOrder(
+  public getProjectOrder<F extends string | undefined = undefined>(
     projectId: string,
     kind: "jobs" | "projects",
-    field?: string
+    field?: string,
+    fields?: F
   ) {
-    return this.#projectOrder("GET", projectId, kind, undefined, field);
+    return this.#projectOrder("GET", projectId, kind, undefined, field, {}, fields);
   }
 
-  public setProjectOrder(
+  public setProjectOrder<F extends string | undefined = undefined>(
     projectId: string,
     kind: "jobs" | "projects",
     ids: readonly string[],
     field?: string,
-    native: Record<string, unknown> = {}
+    native: Record<string, unknown> = {},
+    fields?: F
   ) {
-    return this.#projectOrder("PUT", projectId, kind, textIds(ids), field, native);
+    return this.#projectOrder("PUT", projectId, kind, textIds(ids), field, native, fields);
   }
 
-  async #projectOrder(
+  async #projectOrder<F extends string | undefined>(
     method: "GET" | "PUT",
     projectId: string,
     kind: "jobs" | "projects",
     ids?: readonly string[],
     field?: string,
     native: Record<string, unknown> = {},
+    fields?: F
   ) {
     const key = kind === "jobs" ? "buildType" : "project";
     const result = await this.#requestJson<Record<string, BuildTypeIdentity[]>>(
@@ -2445,23 +2466,26 @@ export class TeamCityClient {
       { field: field === undefined ? `${key}(id,name${kind === "jobs" ? ",projectId" : ""})` : field },
       ids === undefined ? undefined : { [key]: ids.map((id) => ({ id })), ...native },
     );
-    return (result[key] ?? []).map(safeIdentity);
+    return this.#projectedValue(result, fields, () => (result[key] ?? []).map(safeIdentity));
   }
 
-  public async replacePoolProjects(poolId: number, ids: readonly string[], native: Record<string, unknown> = {}) {
+  public async replacePoolProjects<F extends string | undefined = undefined>(poolId: number, ids: readonly string[], native: Record<string, unknown> = {}, fields?: F) {
     const body = { project: textIds(ids).map((id) => ({ id })) };
-    const result = await this.#requestJson<{ project?: BuildTypeIdentity[] }>(
+    const nativeResponse = await this.#requestJson<{ project?: BuildTypeIdentity[] }>(
       "PUT",
       `${poolPath(poolId)}/projects`,
       { fields: "project(id,name)" },
       { ...body, ...native },
     );
-    return (result.project ?? []).map(safeIdentity);
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const result = nativeResponse;
+      return (result.project ?? []).map(safeIdentity);
+    });
   }
 
-  public async clearPoolProjects(poolId: number) {
-    await this.#request("DELETE", `${poolPath(poolId)}/projects`);
-    return { poolId, cleared: true };
+  public async clearPoolProjects<F extends string | undefined = undefined>(poolId: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${poolPath(poolId)}/projects`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { poolId, cleared: true });
   }
 
   public async deleteQueuePage<F extends string | undefined = undefined>(
@@ -2506,15 +2530,15 @@ export class TeamCityClient {
     );
   }
 
-  public async setQueuePaused(paused: boolean, reason?: string, native: Record<string, unknown> = {}) {
+  public async setQueuePaused<F extends string | undefined = undefined>(paused: boolean, reason?: string, native: Record<string, unknown> = {}, fields?: F) {
     if (typeof paused !== "boolean") throw new Error("Paused must be a boolean.");
-    await this.#request(
+    const nativeResponse = await this.#request(
       "PUT",
       "/app/rest/buildQueue/pausedState",
       {},
       { paused, ...(reason === undefined ? {} : { reason: plainProperty("reason", reason).value }), ...native },
     );
-    return { paused, updated: true };
+    return this.#projectedAcknowledgement(nativeResponse, fields, { paused, updated: true });
   }
 
   public async getQueueApproval<F extends string | undefined = undefined>(
@@ -2547,9 +2571,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteQueuedBuild(id: number) {
-    await this.#request("DELETE", buildPath(id, "queue"));
-    return { buildId: id, deleted: true };
+  public async deleteQueuedBuild<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", buildPath(id, "queue"));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { buildId: id, deleted: true });
   }
 
   public async getAgentType<F extends string | undefined = undefined>(
@@ -2572,12 +2596,9 @@ export class TeamCityClient {
     );
   }
 
-  public async getBuildBatchStatus(ids: readonly number[]) {
-    const status = await this.#requestText(
-      "GET",
-      `/app/rest/builds/aggregated/${triage.buildUnion(ids)}/status`,
-    );
-    return { status };
+  public async getBuildBatchStatus<F extends string | undefined = undefined>(ids: readonly number[], fields?: F) {
+    const status = await this.#requestText("GET", `/app/rest/builds/aggregated/${triage.buildUnion(ids)}/status`);
+    return this.#projectedValue(status, fields, () => ({ status }));
   }
 
   public async getBuildBatch<F extends string | undefined = undefined>(
@@ -2729,19 +2750,15 @@ export class TeamCityClient {
     );
   }
 
-  public async resetBuildFinishCache(id: number) {
-    await this.#request("DELETE", `${buildPath(id)}/caches/finishProperties`);
-    return { buildId: id, cacheReset: true };
+  public async resetBuildFinishCache<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", `${buildPath(id)}/caches/finishProperties`);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { buildId: id, cacheReset: true });
   }
 
-  public async finishBuild(id: number, timestamp?: string) {
+  public async finishBuild<F extends string | undefined = undefined>(id: number, timestamp?: string, fields?: F) {
     const body = timestamp === undefined ? undefined : triage.inputText(timestamp, "Finish time");
-    const acceptedFinishTime = await this.#requestText(
-      "PUT",
-      `${buildPath(id)}/${timestamp === undefined ? "finish" : "finishDate"}`,
-      body,
-    );
-    return { buildId: id, acceptedFinishTime };
+    const acceptedFinishTime = await this.#requestText("PUT", `${buildPath(id)}/${timestamp === undefined ? "finish" : "finishDate"}`, body);
+    return this.#projectedValue(acceptedFinishTime, fields, () => ({ buildId: id, acceptedFinishTime }));
   }
 
   public async appendBuildLog<F extends string | undefined = undefined>(
@@ -2952,22 +2969,25 @@ export class TeamCityClient {
     );
   }
 
-  public async getChangeIssues(id: number) {
-    const value = await this.#requestJson<{ issue?: unknown[] }>(
+  public async getChangeIssues<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#requestJson<{ issue?: unknown[] }>(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/issues`,
     );
-    return (value.issue ?? []).map((item) => triage.safeScalars(item, ["id"]));
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const value = nativeResponse;
+      return (value.issue ?? []).map((item) => triage.safeScalars(item, ["id"]));
+    });
   }
 
-  public async getChangeParentRevisions(id: number) {
-    const value = await this.#requestJson<{ item?: unknown[] }>(
+  public async getChangeParentRevisions<F extends string | undefined = undefined>(id: number, fields?: F) {
+    const nativeResponse = await this.#requestJson<{ item?: unknown[] }>(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/parentRevisions`,
     );
-    return (value.item ?? []).map((item) => {
-      if (typeof item !== "string") throw new Error("Invalid revision response; payload omitted.");
-      return item;
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const value = nativeResponse;
+      return value.item ?? [];
     });
   }
 
@@ -2985,13 +3005,10 @@ export class TeamCityClient {
     );
   }
 
-  public async getChangeField(id: number, field: string) {
+  public async getChangeField<F extends string | undefined = undefined>(id: number, field: string, fields?: F) {
     requiredText(field, "Field name");
-    const value = await this.#requestText(
-      "GET",
-      `/app/rest/changes/id:${integerId(id, "Change ID")}/${pathSegment(field)}`,
-    );
-    return { changeId: id, field, value };
+    const value = await this.#requestText("GET", `/app/rest/changes/id:${integerId(id, "Change ID")}/${pathSegment(field)}`);
+    return this.#projectedValue(value, fields, () => ({ changeId: id, field, value }));
   }
 
   public listInvestigations<F extends string | undefined = undefined>(
@@ -3050,12 +3067,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteInvestigation(target: unknown) {
-    await this.#request(
-      "DELETE",
-      "/app/rest/investigations/" + triage.investigationTarget(target).locator,
-    );
-    return { deleted: true };
+  public async deleteInvestigation<F extends string | undefined = undefined>(target: unknown, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", "/app/rest/investigations/" + triage.investigationTarget(target).locator);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { deleted: true });
   }
 
   public listMutes<F extends string | undefined = undefined>(
@@ -3108,10 +3122,10 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteMute(id: number, comment?: string) {
+  public async deleteMute<F extends string | undefined = undefined>(id: number, comment?: string, fields?: F) {
     const body = comment === undefined ? undefined : triage.inputText(comment, "Comment");
-    await this.#requestText("DELETE", `/app/rest/mutes/id:${integerId(id, "Mute ID")}`, body);
-    return { muteId: id, deleted: true };
+    const nativeResponse = await this.#requestText("DELETE", `/app/rest/mutes/id:${integerId(id, "Mute ID")}`, body);
+    return this.#projectedValue(nativeResponse, fields, () => ({ muteId: id, deleted: true }));
   }
 
   public listTriageEntities<F extends string | undefined = undefined>(
@@ -3172,18 +3186,18 @@ export class TeamCityClient {
     );
   }
 
-  public async checkBuildRuntimeParameter(
+  public async checkBuildRuntimeParameter<F extends string | undefined = undefined>(
     id: number,
     kind: "output-parameters" | "resulting-properties",
-    name: string,
+    name: string, fields?: F
   ) {
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "GET",
       `${buildPath(id)}/${kind}/${pathSegment(name)}`,
       undefined,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { name, exists: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ name, exists: true }), { name });
   }
 
   public async listChangeAttributeNames<F extends string | undefined = undefined>(
@@ -3263,19 +3277,19 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteAccountUser(id: string) {
-    await this.#request("DELETE", admin.accountPath("users", id));
-    return { userId: id, deleted: true };
+  public async deleteAccountUser<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", admin.accountPath("users", id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { userId: id, deleted: true });
   }
 
-  public async forgetRememberedSessions(id: string) {
-    await this.#requestText("DELETE", admin.accountPath("users", id) + "/debug/rememberMe");
-    return { userId: id, rememberedLoginsCleared: true };
+  public async forgetRememberedSessions<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#requestText("DELETE", admin.accountPath("users", id) + "/debug/rememberMe");
+    return this.#projectedValue(nativeResponse, fields, () => ({ userId: id, rememberedLoginsCleared: true }));
   }
 
-  public async terminateAccountSessions(id: string) {
-    await this.#request("POST", admin.accountPath("users", id) + "/logout");
-    return { userId: id, sessionsTerminated: true };
+  public async terminateAccountSessions<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("POST", admin.accountPath("users", id) + "/logout");
+    return this.#projectedAcknowledgement(nativeResponse, fields, { userId: id, sessionsTerminated: true });
   }
 
   public async listAccountGroups<F extends string | undefined = undefined>(
@@ -3394,92 +3408,101 @@ export class TeamCityClient {
     );
   }
 
-  public async checkAccountProperty(kind: admin.AccountKind, id: string, name: string) {
-    await this.#requestText(
+  public async checkAccountProperty<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, name: string, fields?: F) {
+    const nativeResponse = await this.#requestText(
       "GET",
       admin.accountPath(kind, id) + "/properties/" + pathSegment(name),
       undefined,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { name, exists: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ name, exists: true }), { name });
   }
 
-  public async setAccountProperty(
+  public async setAccountProperty<F extends string | undefined = undefined>(
     kind: admin.AccountKind,
     id: string,
     name: string,
-    value: string,
+    value: string, fields?: F
   ) {
     const property = plainProperty(name, value);
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       admin.accountPath(kind, id) + "/properties/" + pathSegment(property.name),
       property.value,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { name: property.name, updated: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ name: property.name, updated: true }), { name });
   }
 
-  public async deleteAccountProperty(kind: admin.AccountKind, id: string, name: string) {
-    await this.#request("DELETE", admin.accountPath(kind, id) + "/properties/" + pathSegment(name));
-    return { name, deleted: true };
+  public async deleteAccountProperty<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, name: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", admin.accountPath(kind, id) + "/properties/" + pathSegment(name));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { name, deleted: true });
   }
 
-  public async listAccountRoles(kind: admin.AccountKind, id: string) {
-    const value = await this.#requestJson<{ role?: unknown[] }>(
-      "GET",
+  public async listAccountRoles<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, fields?: F) {
+    const nativeResponse = await this.#requestJson<{ role?: unknown[] }>("GET", admin.accountPath(kind, id) + "/roles");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const value = nativeResponse;
+      return (value.role ?? []).map(admin.safeRole);
+    });
+  }
+
+  public async addAccountRole<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, input: admin.RoleInput, native: Record<string, unknown> = {}, fields?: F) {
+    const nativeResponse = await this.#requestJson(
+      "POST",
       admin.accountPath(kind, id) + "/roles",
+      {},
+      { ...admin.roleBody(input), ...native },
     );
-    return (value.role ?? []).map(admin.safeRole);
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return admin.safeRole(
+        nativeResponse,
+      );
+    });
   }
 
-  public async addAccountRole(kind: admin.AccountKind, id: string, input: admin.RoleInput, native: Record<string, unknown> = {}) {
-    return admin.safeRole(
-      await this.#requestJson(
-        "POST",
-        admin.accountPath(kind, id) + "/roles",
-        {},
-        { ...admin.roleBody(input), ...native },
-      ),
-    );
-  }
-
-  public async replaceAccountRoles(
+  public async replaceAccountRoles<F extends string | undefined = undefined>(
     kind: admin.AccountKind,
     id: string,
-    inputs: readonly unknown[],
+    inputs: readonly unknown[], fields?: F
   ) {
-    const value = await this.#requestJson<{ role?: unknown[] }>(
+    const nativeResponse = await this.#requestJson<{ role?: unknown[] }>(
       "PUT",
       admin.accountPath(kind, id) + "/roles",
       {},
       admin.roleBodies(inputs),
     );
-    return (value.role ?? []).map(admin.safeRole);
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const value = nativeResponse;
+      return (value.role ?? []).map(admin.safeRole);
+    });
   }
 
-  public async getAccountRole(kind: admin.AccountKind, id: string, input: admin.RoleInput) {
-    return admin.safeRole(
-      await this.#requestJson(
-        "GET",
-        admin.accountPath(kind, id) + "/roles" + admin.roleSuffix(input).suffix,
-      ),
+  public async getAccountRole<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, input: admin.RoleInput, fields?: F) {
+    const nativeResponse = await this.#requestJson("GET", admin.accountPath(kind, id) + "/roles" + admin.roleSuffix(input).suffix);
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return admin.safeRole(
+        nativeResponse,
+      );
+    });
+  }
+
+  public async grantAccountRole<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, input: admin.RoleInput, fields?: F) {
+    const nativeResponse = await this.#requestJson(
+      kind === "users" ? "PUT" : "POST",
+      admin.accountPath(kind, id) + "/roles" + admin.roleSuffix(input).suffix,
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return admin.safeRole(
+        nativeResponse,
+      );
+    });
   }
 
-  public async grantAccountRole(kind: admin.AccountKind, id: string, input: admin.RoleInput) {
-    return admin.safeRole(
-      await this.#requestJson(
-        kind === "users" ? "PUT" : "POST",
-        admin.accountPath(kind, id) + "/roles" + admin.roleSuffix(input).suffix,
-      ),
-    );
-  }
-
-  public async revokeAccountRole(kind: admin.AccountKind, id: string, input: admin.RoleInput) {
+  public async revokeAccountRole<F extends string | undefined = undefined>(kind: admin.AccountKind, id: string, input: admin.RoleInput, fields?: F) {
     const { role, suffix } = admin.roleSuffix(input);
-    await this.#request("DELETE", admin.accountPath(kind, id) + "/roles" + suffix);
-    return { ...role, revoked: true };
+    const nativeResponse = await this.#request("DELETE", admin.accountPath(kind, id) + "/roles" + suffix);
+    return this.#projectedAcknowledgement(nativeResponse, fields, { ...role, revoked: true });
   }
 
   public async listCurrentUserTokens<F extends string | undefined = undefined>(
@@ -3502,6 +3525,7 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     fields?: F,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const body = admin.tokenBody(input);
     const key = admin.issuedTokenKey(input.alias);
     if ((await admin.readIssuedToken(secrets, input.alias)) !== undefined)
@@ -3525,6 +3549,7 @@ export class TeamCityClient {
         "Token may have been created, but its one-time result was invalid; inspect/revoke the named remote token.",
       );
     const metadata = admin.safeToken(raw);
+    this.#knownSecrets.add(raw.value);
     try {
       await secrets.set(key, JSON.stringify({ name: body.name, value: raw.value }));
     } catch (cause) {
@@ -3536,7 +3561,8 @@ export class TeamCityClient {
     return this.#projectedValue(value, fields, () => ({ ...metadata, alias: input.alias, stored: true }));
   }
 
-  public async deleteCurrentUserToken(name: string, secrets: ScopedSecrets, alias?: string) {
+  public async deleteCurrentUserToken<F extends string | undefined = undefined>(name: string, secrets: ScopedSecrets, alias?: string, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const tokenName = requiredText(name, "Token name");
     if (alias !== undefined) {
       const contents = await admin.readIssuedToken(secrets, alias);
@@ -3545,7 +3571,7 @@ export class TeamCityClient {
           "Issued-token alias does not match the named remote token; no HTTP was attempted.",
         );
     }
-    await this.#request("DELETE", "/app/rest/users/current/tokens/" + pathSegment(tokenName));
+    const nativeResponse = await this.#request("DELETE", "/app/rest/users/current/tokens/" + pathSegment(tokenName));
     if (alias !== undefined) {
       try {
         await secrets.delete(admin.issuedTokenKey(alias));
@@ -3556,33 +3582,30 @@ export class TeamCityClient {
         );
       }
     }
-    return { name: tokenName, revoked: true };
+    return this.#projectedAcknowledgement(nativeResponse, fields, { name: tokenName, revoked: true });
   }
 
-  public async getAccountUserField(id: string, field: string) {
+  public async getAccountUserField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     requiredText(field, "Field name");
-    const value = await this.#requestText(
-      "GET",
-      admin.accountPath("users", id) + "/" + pathSegment(field),
-    );
-    return { userId: id, field, value };
+    const value = await this.#requestText("GET", admin.accountPath("users", id) + "/" + pathSegment(field));
+    return this.#projectedValue(value, fields, () => ({ userId: id, field, value }));
   }
 
-  public async setAccountUserField(id: string, field: string, value: string) {
+  public async setAccountUserField<F extends string | undefined = undefined>(id: string, field: string, value: string, fields?: F) {
     plainProperty(field, "");
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       admin.accountPath("users", id) + "/" + pathSegment(field),
       triage.inputText(value, field),
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { userId: id, field, updated: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ userId: id, field, updated: true }));
   }
 
-  public async clearAccountUserField(id: string, field: string) {
+  public async clearAccountUserField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     plainProperty(field, "");
-    await this.#request("DELETE", admin.accountPath("users", id) + "/" + pathSegment(field));
-    return { userId: id, field, cleared: true };
+    const nativeResponse = await this.#request("DELETE", admin.accountPath("users", id) + "/" + pathSegment(field));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { userId: id, field, cleared: true });
   }
 
   public async listAccountGroupsAll<F extends string | undefined = undefined>(
@@ -3637,9 +3660,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteAccountGroup(key: string) {
-    await this.#request("DELETE", admin.accountPath("groups", key));
-    return { group: key, deleted: true };
+  public async deleteAccountGroup<F extends string | undefined = undefined>(key: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", admin.accountPath("groups", key));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { group: key, deleted: true });
   }
 
   public async listServerNodes<F extends string | undefined = undefined>(
@@ -3694,22 +3717,28 @@ export class TeamCityClient {
     );
   }
 
-  public async setNodeResponsibility(id: string, name: string, enabled: string) {
+  public async setNodeResponsibility<F extends string | undefined = undefined>(id: string, name: string, enabled: string, fields?: F) {
     plainProperty(name, "");
-    return admin.responsibilities(
-      await this.#textJson(
-        "PUT",
-        "/app/rest/server/nodes/" + idPath(id, "Node ID") + "/enabledResponsibilities/" + pathSegment(name),
-        {},
-        booleanText(enabled),
-      ),
+    const nativeResponse = await this.#textJson(
+      "PUT",
+      "/app/rest/server/nodes/" + idPath(id, "Node ID") + "/enabledResponsibilities/" + pathSegment(name),
+      {},
+      booleanText(enabled),
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return admin.responsibilities(
+        nativeResponse,
+      );
+    });
   }
 
-  public async getApiVersion() {
-    return {
-      version: await this.#requestText("GET", "/app/rest/apiVersion"),
-    };
+  public async getApiVersion<F extends string | undefined = undefined>(fields?: F) {
+    const nativeResponse = await this.#requestText("GET", "/app/rest/apiVersion");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return {
+        version: nativeResponse,
+      };
+    });
   }
 
   public async listCloud<F extends string | undefined = undefined>(
@@ -3789,21 +3818,21 @@ export class TeamCityClient {
     return this.#projectedAcknowledgement(contents, fields, { imageId, startRequested: true });
   }
 
-  public async stopCloudInstance(
+  public async stopCloudInstance<F extends string | undefined = undefined>(
     input: infrastructure.CloudInstanceId,
-    action: "delete" | "force-stop" | "stop",
+    action: "delete" | "force-stop" | "stop", fields?: F
   ) {
     const instanceId = infrastructure.cloudComposite(input);
     const suffix =
       action === "delete" ? "" : action === "stop" ? "/actions/stop" : "/actions/forceStop";
-    await this.#request(
+    const nativeResponse = await this.#request(
       action === "delete" ? "DELETE" : "POST",
       "/app/rest/cloud/instances/" + idPath(instanceId, "Instance ID") + suffix,
     );
-    return {
+    return this.#projectedAcknowledgement(nativeResponse, fields, {
       instanceId,
       ...(action === "stop" ? { stopWhenFreeRequested: true } : { forcedStopRequested: true }),
-    };
+    });
   }
 
   public async createAnonymousGitRoot<F extends string | undefined = undefined>(
@@ -3826,9 +3855,9 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteVcsRoot(id: string) {
-    await this.#request("DELETE", infrastructure.vcsRootPath(id));
-    return { rootId: id, deleted: true };
+  public async deleteVcsRoot<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", infrastructure.vcsRootPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { rootId: id, deleted: true });
   }
 
   public async getVcsRootInstances<F extends string | undefined = undefined>(
@@ -3879,58 +3908,52 @@ export class TeamCityClient {
     );
   }
 
-  public async clearVcsRootProperties(id: string) {
-    await this.#request("DELETE", infrastructure.vcsRootPath(id) + "/properties");
-    return { rootId: id, cleared: true };
+  public async clearVcsRootProperties<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", infrastructure.vcsRootPath(id) + "/properties");
+    return this.#projectedAcknowledgement(nativeResponse, fields, { rootId: id, cleared: true });
   }
 
-  public async checkVcsRootProperty(id: string, name: string) {
-    await this.#requestText(
+  public async checkVcsRootProperty<F extends string | undefined = undefined>(id: string, name: string, fields?: F) {
+    const nativeResponse = await this.#requestText(
       "GET",
       infrastructure.vcsRootPath(id) + "/properties/" + pathSegment(name),
       undefined,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { name, exists: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ name, exists: true }), { name });
   }
 
-  public async setVcsRootProperty(id: string, name: string, value: string) {
+  public async setVcsRootProperty<F extends string | undefined = undefined>(id: string, name: string, value: string, fields?: F) {
     const property = plainProperty(name, value);
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       infrastructure.vcsRootPath(id) + "/properties/" + pathSegment(property.name),
       property.value,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { name: property.name, updated: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ name: property.name, updated: true }), { name });
   }
 
-  public async deleteVcsRootProperty(id: string, name: string) {
-    await this.#request(
-      "DELETE",
-      infrastructure.vcsRootPath(id) + "/properties/" + pathSegment(name),
-    );
-    return { name, deleted: true };
+  public async deleteVcsRootProperty<F extends string | undefined = undefined>(id: string, name: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", infrastructure.vcsRootPath(id) + "/properties/" + pathSegment(name));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { name, deleted: true });
   }
 
-  public async getVcsRootField(id: string, field: string) {
+  public async getVcsRootField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     requiredText(field, "Field name");
-    const value = await this.#requestText(
-      "GET",
-      infrastructure.vcsRootPath(id) + "/" + pathSegment(field),
-    );
-    return { rootId: id, field, value };
+    const value = await this.#requestText("GET", infrastructure.vcsRootPath(id) + "/" + pathSegment(field));
+    return this.#projectedValue(value, fields, () => ({ rootId: id, field, value }));
   }
 
-  public async setVcsRootField(id: string, field: string, value: string) {
+  public async setVcsRootField<F extends string | undefined = undefined>(id: string, field: string, value: string, fields?: F) {
     plainProperty(field, "");
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       infrastructure.vcsRootPath(id) + "/" + pathSegment(field),
       triage.inputText(value, "Name"),
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { rootId: id, field, updated: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ rootId: id, field, updated: true }));
   }
 
   public listVcsInstances<F extends string | undefined = undefined>(
@@ -3968,22 +3991,15 @@ export class TeamCityClient {
     );
   }
 
-  public async notifyVcsCommit(
+  public async notifyVcsCommit<F extends string | undefined = undefined>(
     id: string,
-    okOnNothingFound?: string
+    okOnNothingFound?: string, fields?: F
   ) {
-    await this.#request(
-      "POST",
-      "/app/rest/vcs-root-instances/commitHookNotification",
-      {
+    const nativeResponse = await this.#request("POST", "/app/rest/vcs-root-instances/commitHookNotification", {
         locator: idPath(id, "Instance ID"),
         ...(okOnNothingFound === undefined ? {} : { okOnNothingFound }),
-      },
-      undefined,
-      "text/plain",
-      { discard: true, expectedStatus: 202 },
-    );
-    return { instanceId: id, scheduled: true };
+      }, undefined, "text/plain", { discard: fields === undefined, expectedStatus: 202 });
+    return this.#projectedAcknowledgement(nativeResponse, fields, { instanceId: id, scheduled: true });
   }
 
   public async getVcsInstance<F extends string | undefined = undefined>(
@@ -4043,44 +4059,38 @@ export class TeamCityClient {
     );
   }
 
-  public async resetVcsRepositoryState(id: string) {
-    await this.#request("DELETE", infrastructure.vcsInstancePath(id) + "/repositoryState");
-    return { instanceId: id, stateReset: true };
+  public async resetVcsRepositoryState<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", infrastructure.vcsInstancePath(id) + "/repositoryState");
+    return this.#projectedAcknowledgement(nativeResponse, fields, { instanceId: id, stateReset: true });
   }
 
-  public async getVcsRepositoryStateCreated(id: string) {
-    const creationDate = await this.#requestText(
-      "GET",
-      infrastructure.vcsInstancePath(id) + "/repositoryState/creationDate",
-    );
-    return { instanceId: id, creationDate };
+  public async getVcsRepositoryStateCreated<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const creationDate = await this.#requestText("GET", infrastructure.vcsInstancePath(id) + "/repositoryState/creationDate");
+    return this.#projectedValue(creationDate, fields, () => ({ instanceId: id, creationDate }));
   }
 
-  public async getVcsInstanceField(id: string, field: string) {
+  public async getVcsInstanceField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     requiredText(field, "Field name");
-    const value = await this.#requestText(
-      "GET",
-      infrastructure.vcsInstancePath(id) + "/" + pathSegment(field),
-    );
-    return { instanceId: id, field, value };
+    const value = await this.#requestText("GET", infrastructure.vcsInstancePath(id) + "/" + pathSegment(field));
+    return this.#projectedValue(value, fields, () => ({ instanceId: id, field, value }));
   }
 
-  public async setVcsInstanceField(id: string, field: string, value: string) {
+  public async setVcsInstanceField<F extends string | undefined = undefined>(id: string, field: string, value: string, fields?: F) {
     plainProperty(field, "");
     const body = plainProperty(field, value).value;
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       infrastructure.vcsInstancePath(id) + "/" + pathSegment(field),
       body,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { instanceId: id, field, updated: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ instanceId: id, field, updated: true }));
   }
 
-  public async clearVcsInstanceField(id: string, field: string) {
+  public async clearVcsInstanceField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     plainProperty(field, "");
-    await this.#request("DELETE", infrastructure.vcsInstancePath(id) + "/" + pathSegment(field));
-    return { instanceId: id, field, cleared: true };
+    const nativeResponse = await this.#request("DELETE", infrastructure.vcsInstancePath(id) + "/" + pathSegment(field));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { instanceId: id, field, cleared: true });
   }
 
   public async getVersionedAffectedProjects<F extends string | undefined = undefined>(
@@ -4099,14 +4109,14 @@ export class TeamCityClient {
     );
   }
 
-  public async checkVersionedSettings(id: string) {
-    await this.#request("POST", infrastructure.versionedPath(id) + "/checkForChanges");
-    return { projectId: id, checkRequested: true };
+  public async checkVersionedSettings<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("POST", infrastructure.versionedPath(id) + "/checkForChanges");
+    return this.#projectedAcknowledgement(nativeResponse, fields, { projectId: id, checkRequested: true });
   }
 
-  public async commitVersionedSettings(id: string) {
-    await this.#request("POST", infrastructure.versionedPath(id) + "/commitCurrentSettings");
-    return { projectId: id, commitRequested: true };
+  public async commitVersionedSettings<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("POST", infrastructure.versionedPath(id) + "/commitCurrentSettings");
+    return this.#projectedAcknowledgement(nativeResponse, fields, { projectId: id, commitRequested: true });
   }
 
   public async getVersionedConfig<F extends string | undefined = undefined>(
@@ -4160,48 +4170,51 @@ export class TeamCityClient {
     );
   }
 
-  public async getVersionedConfigField(id: string, field: string) {
+  public async getVersionedConfigField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     requiredText(field, "Field name");
-    const value = await this.#requestText(
-      "GET",
-      infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field),
-    );
-    return { projectId: id, field, value };
+    const value = await this.#requestText("GET", infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field));
+    return this.#projectedValue(value, fields, () => ({ projectId: id, field, value }));
   }
 
-  public async setVersionedConfigField(id: string, field: string, value: string) {
+  public async setVersionedConfigField<F extends string | undefined = undefined>(id: string, field: string, value: string, fields?: F) {
     const body = infrastructure.versionedField(field, value);
-    await this.#requestText(
+    const nativeResponse = await this.#requestText(
       "PUT",
       infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field),
       body,
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { projectId: id, field, updated: true };
+    return this.#projectedValue(nativeResponse, fields, () => ({ projectId: id, field, updated: true }));
   }
 
-  public async resetVersionedConfigField(id: string, field: string) {
+  public async resetVersionedConfigField<F extends string | undefined = undefined>(id: string, field: string, fields?: F) {
     plainProperty(field, "");
-    await this.#request("DELETE", infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field));
-    return { projectId: id, field, resetRequested: true };
+    const nativeResponse = await this.#request("DELETE", infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { projectId: id, field, resetRequested: true });
   }
 
-  public async listVersionedContext(id: string) {
-    return infrastructure.contextParameters(
-      await this.#requestJson("GET", infrastructure.versionedPath(id) + "/contextParameters"), true,
-    );
+  public async listVersionedContext<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#requestJson("GET", infrastructure.versionedPath(id) + "/contextParameters");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return infrastructure.contextParameters(
+        nativeResponse, true,
+      );
+    });
   }
 
-  public async replaceVersionedContext(id: string, properties: readonly PlainProperty[], native: Record<string, unknown> = {}) {
+  public async replaceVersionedContext<F extends string | undefined = undefined>(id: string, properties: readonly PlainProperty[], native: Record<string, unknown> = {}, fields?: F) {
     const body = { versionedSettingsContextParameter: infrastructure.namedValues(properties) };
-    return infrastructure.contextParameters(
-      await this.#requestJson(
-        "PUT",
-        infrastructure.versionedPath(id) + "/contextParameters",
-        {},
-        { ...body, ...native },
-      ),
+    const nativeResponse = await this.#requestJson(
+      "PUT",
+      infrastructure.versionedPath(id) + "/contextParameters",
+      {},
+      { ...body, ...native },
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return infrastructure.contextParameters(
+        nativeResponse,
+      );
+    });
   }
 
   public async loadVersionedSettings<F extends string | undefined = undefined>(
@@ -4233,18 +4246,22 @@ export class TeamCityClient {
     );
   }
 
-  public async listVersionedTokenNames(id: string, status?: string) {
-    const value = await this.#requestJson<{ versionedSettingsToken?: unknown[] }>(
+  public async listVersionedTokenNames<F extends string | undefined = undefined>(id: string, status?: string, fields?: F) {
+    const nativeResponse = await this.#requestJson<{ versionedSettingsToken?: unknown[] }>(
       "GET",
       infrastructure.versionedPath(id) + "/tokens",
       status === undefined ? {} : { status: plainProperty("status", status).value },
     );
-    return (value.versionedSettingsToken ?? []).map(
-      (item) => triage.safeScalars(item, ["name"]).name,
-    );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      const value = nativeResponse;
+      return (value.versionedSettingsToken ?? []).map(
+        (item) => triage.safeScalars(item, ["name"]).name,
+      );
+    });
   }
 
-  public async setVersionedTokens(id: string, mappings: readonly string[], secrets: ScopedSecrets, properties: readonly PlainProperty[] = [], native: Record<string, unknown> = {}) {
+  public async setVersionedTokens<F extends string | undefined = undefined>(id: string, mappings: readonly string[], secrets: ScopedSecrets, properties: readonly PlainProperty[] = [], native: Record<string, unknown> = {}, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     triage.typedItems([...mappings, ...properties]);
     const entries = mappings.map((mapping) => {
       const split = mapping.indexOf("=");
@@ -4264,35 +4281,38 @@ export class TeamCityClient {
         value: await requireInputSecret(secrets, item.alias),
       });
     }
-    await this.#request(
+    const nativeResponse = await this.#request(
       "POST",
       infrastructure.versionedPath(id) + "/tokens",
       {},
       { versionedSettingsToken, ...native },
       "application/json",
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { names: versionedSettingsToken.map((item) => item.name), updated: true };
+    return this.#projectedAcknowledgement(nativeResponse, fields, { names: versionedSettingsToken.map((item) => item.name), updated: true });
   }
 
-  public async deleteVersionedTokens(id: string, names: readonly string[] = [], native: Record<string, unknown> = {}) {
+  public async deleteVersionedTokens<F extends string | undefined = undefined>(id: string, names: readonly string[] = [], native: Record<string, unknown> = {}, fields?: F) {
     triage.typedItems(names);
     const checked = textIds(names);
-    await this.#request(
+    const nativeResponse = await this.#request(
       "DELETE",
       infrastructure.versionedPath(id) + "/tokens",
       {},
       { versionedSettingsToken: checked.map((name) => ({ name })), ...native },
       "application/json",
-      { discard: true },
+      { discard: fields === undefined },
     );
-    return { names: checked, deleted: true };
+    return this.#projectedAcknowledgement(nativeResponse, fields, { names: checked, deleted: true });
   }
 
-  public async getRestVersion() {
-    return {
-      version: await this.#requestText("GET", "/app/rest/version"),
-    };
+  public async getRestVersion<F extends string | undefined = undefined>(fields?: F) {
+    const nativeResponse = await this.#requestText("GET", "/app/rest/version");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return {
+        version: nativeResponse,
+      };
+    });
   }
 
   #statusBody(status: boolean | undefined, comment?: string) {
@@ -4342,14 +4362,14 @@ export class TeamCityClient {
     contents: string,
     fields: F | undefined,
     acknowledgement: T,
-
+    property?: RawProperty,
   ): Projected<T, F> {
     const value = fields === undefined ? undefined : this.#acknowledgedJson(contents);
     return this.#projectedValue<T, F>(
       value === undefined ? acknowledgement : value,
       value === undefined ? undefined : fields,
       () => acknowledgement,
-
+      property,
     );
   }
 
@@ -4360,7 +4380,7 @@ export class TeamCityClient {
     try {
       return JSON.parse(contents);
     } catch {
-      return undefined;
+      return contents === "" ? undefined : contents;
     }
   }
 
@@ -4404,20 +4424,72 @@ export class TeamCityClient {
     value: unknown,
     fields: F | undefined,
     project: (value: unknown) => T,
+    property?: RawProperty,
   ): Projected<T, F> {
-    if (fields === undefined) return project(value) as Projected<T, F>;
-    value = readableConfiguration(value);
-    if (!this.#token) return value as Projected<T, F>;
-    const mask = knownCredentialMask(this.#token);
-    const redact = (item: unknown): unknown => {
-      if (typeof item === "string") return mask(item);
-      if (Array.isArray(item)) return item.map(redact);
-      if (item !== null && typeof item === "object") {
-        return Object.fromEntries(Object.entries(item).map(([key, nested]) => [mask(key), redact(nested)]));
+    if (fields === undefined) return this.#maskValue(project(value)) as Projected<T, F>;
+    if (property && isSecretProperty({ ...property, value: "" })) {
+      if (typeof value === "string") value = safeProperty(property, false);
+      else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        const { value: hidden, ...metadata } = value as Record<string, unknown>;
+        value = { ...metadata, redacted: true };
       }
-      return item;
+    }
+    value = readableConfiguration(value);
+    return this.#maskValue(value) as Projected<T, F>;
+  }
+
+  #maskText(text: string): string {
+    for (const secret of [...this.#knownSecrets].sort((a, b) => b.length - a.length)) {
+      text = knownCredentialMask(secret)(text);
+    }
+    return text;
+  }
+
+  #maskValue<T>(value: T): T {
+    if (typeof value === "string") return this.#maskText(value) as T;
+    if (Array.isArray(value)) return value.map(item => this.#maskValue(item)) as T;
+    if (value !== null && typeof value === "object") {
+      return Object.fromEntries(Object.entries(value).map(([key, nested]) =>
+        [this.#maskText(key), this.#maskValue(nested)])) as T;
+    }
+    return value;
+  }
+
+  /** The client belongs to one invocation; retain only values actually read or written. */
+  #rememberSecrets(secrets: ScopedSecrets): ScopedSecrets {
+    const remember = (key: string, value: string | undefined) => {
+      if (value) this.#knownSecrets.add(value);
+      if (key.startsWith("issued-token:") && value) {
+        try {
+          const token: unknown = JSON.parse(value)?.value;
+          if (typeof token === "string" && token) this.#knownSecrets.add(token);
+        } catch { /* Invalid secure records are diagnosed by their consumer. */ }
+      }
+      return value;
     };
-    return redact(value) as Projected<T, F>;
+    return {
+      get: async key => remember(key, await secrets.get(key)),
+      require: async key => remember(key, await secrets.require(key))!,
+      set: async (key, value) => {
+        remember(key, value);
+        await secrets.set(key, value);
+      },
+      delete: key => secrets.delete(key),
+    };
+  }
+
+  /** A bounded/interrupted read must not publish the beginning of a known secret. */
+  #dropSecretPrefix(text: string): string {
+    let end = text.length;
+    for (const secret of this.#knownSecrets) {
+      for (let length = Math.min(secret.length - 1, text.length); length > 0; length--) {
+        if (text.endsWith(secret.slice(0, length))) {
+          end = Math.min(end, text.length - length);
+          break;
+        }
+      }
+    }
+    return text.slice(0, end);
   }
 
   /** A bounded selection of `key` items that follows TeamCity's continuation; see `readPages`. */
@@ -4448,13 +4520,12 @@ export class TeamCityClient {
     }, this.#signal);
   }
 
-  public async getRestInfo() {
+  public async getRestInfo<F extends string | undefined = undefined>(fields?: F) {
     const value = await this.#requestText("GET", "/app/rest");
     const path = value.match(
       /(?:^|[\s'"(])(\/(?:[A-Za-z0-9._-]+\/)*app\/rest)(?:\/server)?(?=$|[\s'"),.])/,
     );
-    if (!path) throw new Error("REST landing response does not identify a relative API path.");
-    return { restPath: path[1] };
+    return this.#projectedValue(value, fields, () => path ? { restPath: path[1] } : value);
   }
   public async createPoolTokens(
     id: string,
@@ -4463,6 +4534,7 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     native: Record<string, unknown> = {},
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const poolId = poolNumber(Number(integerId(id, "Pool ID")));
     if (ttl !== undefined) system.integer(ttl);
     const keys = aliases.map(inputSecretKey);
@@ -4476,13 +4548,13 @@ export class TeamCityClient {
       ),
     );
     await persistSecretKeys(secrets, keys, triage.array(result.item) as string[]);
-    return {
+    return this.#maskValue({
       poolId,
       aliases: [...aliases],
       count: aliases.length,
       timeToLiveSeconds: ttl,
       stored: true,
-    };
+    });
   }
   public listAudit<F extends string | undefined = undefined>(
     page: TeamCityPageOptions & { fields?: F },
@@ -4510,18 +4582,18 @@ export class TeamCityClient {
     );
   }
 
-  public async replaceAvatar(id: string, path: string) {
+  public async replaceAvatar<F extends string | undefined = undefined>(id: string, path: string, fields?: F) {
     const userId = system.userId(id),
       body = await system.avatarInput(path);
-    await this.#request("PUT", "/app/rest/avatars/" + idPath(userId, "User ID"), {}, body, "application/json", {
-      discard: true,
+    const nativeResponse = await this.#request("PUT", "/app/rest/avatars/" + idPath(userId, "User ID"), {}, body, "application/json", {
+      discard: fields === undefined,
     });
-    return { userId, replaced: true };
+    return this.#projectedAcknowledgement(nativeResponse, fields, { userId, replaced: true });
   }
-  public async deleteAvatar(id: string) {
+  public async deleteAvatar<F extends string | undefined = undefined>(id: string, fields?: F) {
     const userId = system.userId(id);
-    await this.#request("DELETE", "/app/rest/avatars/" + idPath(userId, "User ID"));
-    return { userId, deleted: true };
+    const nativeResponse = await this.#request("DELETE", "/app/rest/avatars/" + idPath(userId, "User ID"));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { userId, deleted: true });
   }
   public async getJobInvestigations<F extends string | undefined = undefined>(
     id: string,
@@ -4560,20 +4632,18 @@ export class TeamCityClient {
       page,
     );
   }
-  public async createDashboard(id: string, name: string | undefined, project: string | undefined, native: Record<string, unknown> = {}) {
-    return system.safeDashboard(
-      await this.#requestJson(
-        "POST",
-        "/app/rest/deploymentDashboards",
-        {},
-        {
+  public async createDashboard<F extends string | undefined = undefined>(id: string, name: string | undefined, project: string | undefined, native: Record<string, unknown> = {}, fields?: F) {
+    const nativeResponse = await this.#requestJson("POST", "/app/rest/deploymentDashboards", {}, {
           id: triage.inputText(id, "Dashboard ID"),
           ...(name === undefined ? {} : { name: triage.inputText(name, "Name") }),
           ...(project === undefined ? {} : { project: { id: triage.inputText(project, "Project ID") } }),
           ...native,
-        },
-      ),
-    );
+        });
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeDashboard(
+        nativeResponse,
+      );
+    });
   }
   public async getDashboard<F extends string | undefined = undefined>(
     id: string,
@@ -4587,9 +4657,9 @@ export class TeamCityClient {
       fields,
     );
   }
-  public async deleteDashboard(id: string) {
-    await this.#request("DELETE", system.dashboardPath(id));
-    return { id, deleted: true };
+  public async deleteDashboard<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", system.dashboardPath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { id, deleted: true });
   }
   public listDeploymentInstances<F extends string | undefined = undefined>(
     id: string,
@@ -4598,27 +4668,25 @@ export class TeamCityClient {
     return this.#list(system.dashboardPath(id) + "/instances", [], "deploymentInstance",
       system.instanceFields, system.safeInstance, page);
   }
-  public async upsertDeploymentInstance(
+  public async upsertDeploymentInstance<F extends string | undefined = undefined>(
     dashboard: string,
     id: string,
     state: string | undefined,
     date: string | undefined,
     build?: string,
-    native: Record<string, unknown> = {},
+    native: Record<string, unknown> = {}, fields?: F
   ) {
     const entry = system.stateEntry(state, date, build);
-    return system.safeInstance(
-      await this.#requestJson(
-        "POST",
-        system.dashboardPath(dashboard) + "/instances",
-        {},
-        {
+    const nativeResponse = await this.#requestJson("POST", system.dashboardPath(dashboard) + "/instances", {}, {
           id: triage.inputText(id, "Instance ID"),
           ...(Object.keys(entry).length ? { deploymentStateEntries: { deploymentStateEntry: [entry] } } : {}),
           ...native,
-        },
-      ),
-    );
+        });
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeInstance(
+        nativeResponse,
+      );
+    });
   }
   public async getDeploymentInstance<F extends string | undefined = undefined>(
     dashboard: string,
@@ -4633,26 +4701,29 @@ export class TeamCityClient {
       fields,
     );
   }
-  public async appendDeploymentState(
+  public async appendDeploymentState<F extends string | undefined = undefined>(
     dashboard: string,
     id: string,
     state: string | undefined,
     date: string | undefined,
     build?: string,
-    native: Record<string, unknown> = {},
+    native: Record<string, unknown> = {}, fields?: F
   ) {
-    return system.safeInstance(
-      await this.#requestJson(
-        "POST",
-        system.instancePath(dashboard, id),
-        {},
-        { ...system.stateEntry(state, date, build), ...native },
-      ),
+    const nativeResponse = await this.#requestJson(
+      "POST",
+      system.instancePath(dashboard, id),
+      {},
+      { ...system.stateEntry(state, date, build), ...native },
     );
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeInstance(
+        nativeResponse,
+      );
+    });
   }
-  public async deleteDeploymentInstance(dashboard: string, id: string) {
-    await this.#request("DELETE", system.instancePath(dashboard, id));
-    return { dashboardId: dashboard, instanceId: id, deleted: true };
+  public async deleteDeploymentInstance<F extends string | undefined = undefined>(dashboard: string, id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", system.instancePath(dashboard, id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { dashboardId: dashboard, instanceId: id, deleted: true });
   }
   public listHealth<F extends string | undefined = undefined>(
     options: { project?: string; global?: boolean },
@@ -4711,7 +4782,7 @@ export class TeamCityClient {
         { fields: system.pluginFields },
         undefined,
         "application/xml",
-        { requireMedia: "application/xml" },
+        {},
     );
     return this.#projectedValue(contents, fields, value => system.pluginXml(value as string));
   }
@@ -4818,9 +4889,9 @@ export class TeamCityClient {
     return this.#projectedJson("GET", system.rolePath(id),
       { fields: system.roleFields }, system.safeRole, fields);
   }
-  public async deleteRoleDefinition(id: string) {
-    await this.#request("DELETE", system.rolePath(id));
-    return { id, deleted: true };
+  public async deleteRoleDefinition<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#request("DELETE", system.rolePath(id));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { id, deleted: true });
   }
   public async editRoleDefinition<F extends string | undefined = undefined>(
     id: string,
@@ -4837,22 +4908,32 @@ export class TeamCityClient {
       fields,
     );
   }
-  public async getAuthenticationSettings() {
-    return system.safeAuth(await this.#requestJson("GET", "/app/rest/server/authSettings"), true);
+  public async getAuthenticationSettings<F extends string | undefined = undefined>(fields?: F) {
+    const nativeResponse = await this.#requestJson("GET", "/app/rest/server/authSettings");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeAuth(nativeResponse, true);
+    });
   }
-  public async replaceAuthenticationSettings(value: unknown, secrets: ScopedSecrets) {
+  public async replaceAuthenticationSettings<F extends string | undefined = undefined>(value: unknown, secrets: ScopedSecrets, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const body = await system.authBody(value, secrets);
-    return system.safeAuth(
-      await this.#requestJson("PUT", "/app/rest/server/authSettings", {}, body),
-    );
+    const nativeResponse = await this.#requestJson("PUT", "/app/rest/server/authSettings", {}, body);
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeAuth(
+        nativeResponse,
+      );
+    });
   }
-  public async getBackupStatus() {
-    return {
-      progress: await this.#requestText("GET", "/app/rest/server/backup"),
-      completionVerified: false,
-    };
+  public async getBackupStatus<F extends string | undefined = undefined>(fields?: F) {
+    const nativeResponse = await this.#requestText("GET", "/app/rest/server/backup");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return {
+        progress: nativeResponse,
+        completionVerified: false,
+      };
+    });
   }
-  public async startBackup(
+  public async startBackup<F extends string | undefined = undefined>(
     name: string,
     controls: {
       addTimestamp?: string | undefined;
@@ -4862,13 +4943,10 @@ export class TeamCityClient {
       includePersonalChanges?: string | undefined;
       includeRunningBuilds?: string | undefined;
       includeSupplimentaryData?: string | undefined;
-    } = {},
+    } = {}, fields?: F
   ) {
     triage.inputText(name, "Backup filename");
-    const fileName = await this.#request(
-      "POST",
-      "/app/rest/server/backup",
-      {
+    const fileName = await this.#request("POST", "/app/rest/server/backup", {
         fileName: name,
         ...(controls.addTimestamp === undefined ? {} : { addTimestamp: booleanText(controls.addTimestamp) }),
         ...(controls.includeConfigs === undefined ? {} : { includeConfigs: booleanText(controls.includeConfigs) }),
@@ -4877,32 +4955,36 @@ export class TeamCityClient {
         ...(controls.includePersonalChanges === undefined ? {} : { includePersonalChanges: booleanText(controls.includePersonalChanges) }),
         ...(controls.includeRunningBuilds === undefined ? {} : { includeRunningBuilds: booleanText(controls.includeRunningBuilds) }),
         ...(controls.includeSupplimentaryData === undefined ? {} : { includeSupplimentaryData: booleanText(controls.includeSupplimentaryData) }),
-      },
-      undefined,
-      "text/plain",
-    );
-    return { fileName: fileName, scheduled: true, completionVerified: false };
+      }, undefined, "text/plain");
+    return this.#projectedAcknowledgement(fileName, fields, { fileName: fileName, scheduled: true, completionVerified: false });
   }
-  public async getCleanup() {
-    return system.safeCleanup(await this.#requestJson("GET", "/app/rest/server/cleanup"));
+  public async getCleanup<F extends string | undefined = undefined>(fields?: F) {
+    const nativeResponse = await this.#requestJson("GET", "/app/rest/server/cleanup");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeCleanup(nativeResponse);
+    });
   }
-  public async configureCleanup(value: unknown) {
-    return system.safeCleanup(
-      await this.#requestJson("PUT", "/app/rest/server/cleanup", {}, system.cleanupPatch(value)),
-    );
+  public async configureCleanup<F extends string | undefined = undefined>(value: unknown, fields?: F) {
+    const nativeResponse = await this.#requestJson("PUT", "/app/rest/server/cleanup", {}, system.cleanupPatch(value));
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeCleanup(
+        nativeResponse,
+      );
+    });
   }
-  public async getGlobalSettings() {
-    return system.safeGlobal(await this.#requestJson("GET", "/app/rest/server/globalSettings"));
+  public async getGlobalSettings<F extends string | undefined = undefined>(fields?: F) {
+    const nativeResponse = await this.#requestJson("GET", "/app/rest/server/globalSettings");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeGlobal(nativeResponse);
+    });
   }
-  public async setGlobalSettings(value: unknown) {
-    return system.safeGlobal(
-      await this.#requestJson(
-        "PUT",
-        "/app/rest/server/globalSettings",
-        {},
-        system.globalPatch(value),
-      ),
-    );
+  public async setGlobalSettings<F extends string | undefined = undefined>(value: unknown, fields?: F) {
+    const nativeResponse = await this.#requestJson("PUT", "/app/rest/server/globalSettings", {}, system.globalPatch(value));
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return system.safeGlobal(
+        nativeResponse,
+      );
+    });
   }
   public async getLicenseSummary<F extends string | undefined = undefined>(
     fields?: F
@@ -4934,6 +5016,7 @@ export class TeamCityClient {
     fields?: F,
     plainValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const value = await inputValue(secrets, alias, plainValue);
     const response = await this.#textJson(
       "POST",
@@ -4951,6 +5034,7 @@ export class TeamCityClient {
     fields?: F,
     plainValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const value = await inputValue(secrets, alias, plainValue);
     if (value === undefined) throw new Error("Supply a license key or an input-secret alias for the URL.");
     return this.#projectedJson(
@@ -4962,14 +5046,12 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteLicense(alias: string | undefined, secrets: ScopedSecrets, plainValue?: string) {
+  public async deleteLicense<F extends string | undefined = undefined>(alias: string | undefined, secrets: ScopedSecrets, plainValue?: string, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const value = await inputValue(secrets, alias, plainValue);
     if (value === undefined) throw new Error("Supply a license key or an input-secret alias for the URL.");
-    await this.#request(
-      "DELETE",
-      "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
-    );
-    return { alias, deleted: true };
+    const nativeResponse = await this.#request("DELETE", "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value));
+    return this.#projectedAcknowledgement(nativeResponse, fields, { alias, deleted: true });
   }
   public async getMetrics<F extends string | undefined = undefined>(
     fields?: F
@@ -4996,12 +5078,15 @@ export class TeamCityClient {
     );
   }
 
-  public async getServerField(field: string) {
+  public async getServerField<F extends string | undefined = undefined>(field: string, fields?: F) {
     requiredText(field, "Field name");
-    return {
-      field,
-      value: await this.#requestText("GET", "/app/rest/server/" + pathSegment(field)),
-    };
+    const nativeResponse = await this.#requestText("GET", "/app/rest/server/" + pathSegment(field));
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return {
+        field,
+        value: nativeResponse,
+      };
+    });
   }
 
   public async listFiles<F extends string | undefined = undefined>(
@@ -5140,22 +5225,22 @@ export class TeamCityClient {
       "bytes",
     );
   }
-  public async getSettingsPath(kind: "projects" | "jobs" | "roots", id: string) {
+  public async getSettingsPath<F extends string | undefined = undefined>(kind: "projects" | "jobs" | "roots", id: string, fields?: F) {
     const resource = kind === "jobs" ? "buildTypes" : kind === "roots" ? "vcs-roots" : "projects";
-    return files.serverPath(
-      await this.#requestText(
-        "GET",
-        "/app/rest/" + resource + "/" + idPath(id, "Owner ID") + "/settingsFile",
-      ),
-    );
+    const nativeResponse = await this.#requestText("GET", "/app/rest/" + resource + "/" + idPath(id, "Owner ID") + "/settingsFile");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return files.serverPath(
+        nativeResponse,
+      );
+    });
   }
-  public async getArtifactsPath(id: string) {
-    return files.serverPath(
-      await this.#requestText(
-        "GET",
-        "/app/rest/builds/id:" + integerId(id, "Build ID") + "/artifactsDirectory",
-      ),
-    );
+  public async getArtifactsPath<F extends string | undefined = undefined>(id: string, fields?: F) {
+    const nativeResponse = await this.#requestText("GET", "/app/rest/builds/id:" + integerId(id, "Build ID") + "/artifactsDirectory");
+    return this.#projectedValue(nativeResponse, fields, () => {
+      return files.serverPath(
+        nativeResponse,
+      );
+    });
   }
   public async createSecureReference(
     project: string,
@@ -5164,14 +5249,14 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     plainValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const path = "/app/rest/projects/" + idPath(project, "Project ID") + "/secure/tokens",
       key = files.referenceKey(outputAlias);
     await preflightSecretKeys(secrets, [key]);
     const value = await inputValue(secrets, inputAlias, plainValue);
     const reference = await this.#requestText("POST", path, value);
-    files.sensitiveSegment(reference);
     await persistSecretKeys(secrets, [key], [reference]);
-    return { projectId: project, referenceAlias: outputAlias, stored: true };
+    return this.#maskValue({ projectId: project, referenceAlias: outputAlias, stored: true });
   }
   public async resolveSecureReference(
     project: string,
@@ -5180,6 +5265,7 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     referenceValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const path = "/app/rest/projects/" + idPath(project, "Project ID") + "/secure/values/",
       key = inputSecretKey(outputAlias);
     await preflightSecretKeys(secrets, [key]);
@@ -5195,7 +5281,7 @@ export class TeamCityClient {
     }
     const value = await this.#requestText("GET", path + files.sensitiveSegment(reference));
     await persistSecretKeys(secrets, [key], [value]);
-    return { alias: outputAlias, stored: true };
+    return this.#maskValue({ alias: outputAlias, stored: true });
   }
   public async resolveBuildParameter(
     id: string,
@@ -5203,6 +5289,7 @@ export class TeamCityClient {
     alias: string,
     secrets: ScopedSecrets,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const buildId = integerId(id, "Build ID");
     requiredText(name, "Parameter name");
     const expression = "%" + name + "%",
@@ -5212,10 +5299,8 @@ export class TeamCityClient {
       "GET",
       `/app/rest/builds/id:${buildId}/resolved/` + encodeURIComponent(expression),
     );
-    if (value === expression)
-      throw new Error("Build parameter remained unresolved; no value stored.");
     await persistSecretKeys(secrets, [key], [value]);
-    return { alias, stored: true };
+    return this.#maskValue({ alias, stored: true });
   }
   async #download(
     path: string,
@@ -5230,7 +5315,7 @@ export class TeamCityClient {
       options,
       format,
       () => this.#response("GET", path, query, undefined, accept),
-      (status) => new HttpError(status, `TeamCity request failed with HTTP ${status}.`),
+      response => this.#httpError(response),
       this.#signal,
     );
   }
@@ -5287,7 +5372,7 @@ export class TeamCityClient {
    * unknown; a read changed nothing and can be retried, unless its own signal stopped it.
    */
   #lost(method: HttpMethod, stage: "request" | "response", cause?: unknown): Error {
-    const safeCause = cause === undefined ? undefined : diagnosticCause(cause, this.#token ? [this.#token] : []);
+    const safeCause = cause === undefined ? undefined : diagnosticCause(cause, [...this.#knownSecrets]);
     if (method !== "GET") {
       return new TeamCityUnknownOutcomeError(stage === "request"
         ? "TeamCity network request failed; remote outcome is unknown."
@@ -5330,12 +5415,7 @@ export class TeamCityClient {
       responseOptions.accept,
     );
     if (!response.ok) {
-      // Server diagnostics can echo submitted properties or credentials unrelated to our token.
-      void response.body?.cancel().catch(() => undefined);
-      throw new HttpError(
-        response.status,
-        `TeamCity request failed with HTTP ${response.status}.`,
-      );
+      throw await this.#httpError(response);
     }
     responseOptions.status?.(response.status);
     if (
@@ -5368,13 +5448,6 @@ export class TeamCityClient {
       }
       return "";
     }
-    if (
-      responseOptions.requireMedia &&
-      response.headers.get("Content-Type")?.split(";")[0]?.trim() !== responseOptions.requireMedia
-    ) {
-      void response.body?.cancel().catch(() => undefined);
-      throw new Error("Unexpected TeamCity response media type.");
-    }
     try {
       const bytes = await readResponseBody(response, {
         signal: this.#signal,
@@ -5383,6 +5456,48 @@ export class TeamCityClient {
     } catch (cause) {
       throw this.#lost(method, "response", cause);
     }
+  }
+
+  async #httpError(response: Response): Promise<HttpError> {
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
+    let text = "";
+    let complete = !reader;
+    // Three rounds of JSON escaping can expand a character sixfold per round.
+    // Look past the output bound so encoded as well as literal copies can be masked first.
+    let remaining = 4096 + Math.max(0, ...[...this.#knownSecrets].map(value => Buffer.byteLength(value) * 216));
+    if (reader) {
+      const cancel = () => { void reader.cancel().catch(() => undefined); };
+      this.#signal?.addEventListener("abort", cancel, { once: true });
+      try {
+        if (this.#signal?.aborted) cancel();
+        while (remaining > 0) {
+          const chunk = await reader.read();
+          if (chunk.done) {
+            text += decoder.decode();
+            complete = true;
+            break;
+          }
+          const bytes = chunk.value.subarray(0, remaining);
+          text += decoder.decode(bytes, { stream: true });
+          remaining -= bytes.byteLength;
+        }
+      } catch {
+        // A failed diagnostic read must retain the known HTTP status/classification.
+      } finally {
+        this.#signal?.removeEventListener("abort", cancel);
+        void reader.cancel().catch(() => undefined);
+        reader.releaseLock();
+      }
+    }
+    // Only a cut can leave a secret's start at the end; a complete body is the server's own text.
+    const masked = complete ? this.#maskText(text) : this.#dropSecretPrefix(this.#maskText(text));
+    const bounded = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+      Buffer.from(masked).subarray(0, 4096), { stream: true },
+    );
+    const explanation = Buffer.byteLength(masked) > 4096 ? this.#dropSecretPrefix(bounded) : bounded;
+    return new HttpError(response.status,
+      `TeamCity request failed with HTTP ${response.status}.${explanation === "" ? "" : " " + explanation}`);
   }
 }
 

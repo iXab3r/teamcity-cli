@@ -11,7 +11,8 @@ output, and JSON-RPC behavior is supplied by the pinned `@eyeauras/cli-factory` 
 Ordinary text, JSON and XML responses have no tool-imposed byte ceiling. Invalid Content-Length
 and incomplete or mismatched unencoded/identity transfers still fail. Compressed wire length is
 syntax-checked without comparing it with decoded size. Stream errors explain the failure and
-keep redacted native causes; stack traces appear with `--verbose`, response bodies never. UTF-8 decoding preserves an initial BOM. Specialized discard
+keep redacted native causes; stack traces appear with `--verbose`. HTTP failures include up to 4 KiB of server text,
+masked before UTF-8-safe truncation with trailing known-secret prefixes dropped; malformed JSON errors still omit response excerpts. UTF-8 decoding preserves an initial BOM. Specialized discard
 probes stop reading unwanted bytes after 64 KiB; this does not reject an operation or truncate
 returned content. No automatic retry or command replay is added.
 
@@ -218,8 +219,8 @@ Deletion always targets one explicit ID/name. Deleting a project/job can cascade
 server-owned children, settings and history according to TeamCity policy; there is no extra
 client-side sweep or undo. Project deletion, including `_Root`, is forwarded for TeamCity to validate.
 Successful empty responses return an acknowledgement; a missing entity remains an HTTP error, not a successful delete.
-Mutations are not automatically retried. HTTP errors expose status only, not remote body text;
-malformed JSON errors contain no response excerpts.
+Mutations are not automatically retried. HTTP errors include the server's response text, masked
+and bounded to 4 KiB; malformed JSON errors contain no response excerpts.
 
 `builds list` sends only supplied filters. TeamCity chooses its defaults; `--default-filter`,
 `--state`, `--status` and `--branch` select filters. Project/job lists likewise omit archived/template
@@ -468,7 +469,7 @@ Queue position strings are encoded and validated by TeamCity; set accepts option
 `1`, `first` and `last` remain useful server-supported forms, not a closed CLI enum. No auto-polling or implicit launch/cancel occurs. Tag add
 accepts repeatable `--tag`, including an empty collection, and preserves other tags. Build tag replace with no tags
 clears public tags. These operations never target private users' tags. Tag add returns a local
-acknowledgement and discards any successful response body; list/replace returns names only.
+acknowledgement by default; `--fields` exposes the returned body. List/replace summaries retain names only.
 
 Build number/status-text writes require a running build, enforced by TeamCity. Build comment set
 uses `--text`; clear removes the comment. Build delete can delete history/artifacts under server
@@ -536,8 +537,8 @@ Tests/problems expose list/show/occurrence; occurrence requires `--build`. IDs s
 
 Runtime `builds output-parameters/resulting-properties list` returns parameter names, types and
 all server-readable values; password/secure and server-withheld values remain redacted.
-`changes attributes` returns names only. Runtime parameter `exists <build-id> <name>` discards the scalar body without output,
-hash or file; 404 stays an error because it can mean a missing build too. Native build occurrence
+`changes attributes` returns names only by default. Runtime parameter `exists <build-id> <name>`
+discards the scalar body by default; `--fields` exposes native output for both families; 404 stays an error because it can mean a missing build too. Native build occurrence
 collections are unpaged and excluded from the fixed real-service proof.
 
 ## Accounts, access policy and issued tokens
@@ -610,6 +611,15 @@ Inspect configuration before retrying; the CLI does not retry or claim rollback.
 
 ## Explicit credential inputs
 
+Human, JSON, execute and RPC output and errors mask the profile credential, alias values the CLI
+reads for a request (`--value-secret`, authentication `secrets`, `--mapping`, license/reference
+aliases), and issued values it stores with `--alias` or `--store-as` (user/pool tokens, secure
+references and resolved parameters). Masking applies wherever those values occur, including
+native `--fields` results, and is scoped to the invocation. Plain-text inputs are printed as
+returned, including a license key supplied with `--key`; password/`secure:`/withheld property
+hiding remains. Literal, percent-encoded and JSON-escaped copies follow the native projection
+masking rules above.
+
 Use `credentials import <alias> --env <VARIABLE_NAME>` to import only the named environment
 variable into the current profile's platform secret store. Requires Credentials; existing aliases fail.
 Writes also accept direct values; alias lookup is an optional convenience. There is no environment
@@ -652,7 +662,8 @@ types are checked; caller-supplied names and values are forwarded.
 `server cleanup configure` changes a future schedule, not immediate cleanup. `server backup start`
 schedules a backup with only the supplied inclusion/timestamp flags; returned filename is not completion proof. License commands use input-secret
 aliases or direct `--key <value>` inputs (`add`, `show`, `delete`), including where native REST
-embeds a key in the URL. Scalar fields are encoded and server-validated. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
+embeds a key in the URL. Scalar fields are encoded and server-validated. `server rest-plugin` requests XML by default: the familiar attribute subset becomes JSON metadata,
+while other documents return as raw text without interpreting entities. With `--fields`, it requests native JSON.
 
 `pools tokens create <id> --ttl <seconds> --store-as <alias>` mints one-time registration tokens,
 not user access tokens. Repeat aliases for a batch; TTL uses the API's signed integer type in seconds; lifetime semantics are validated by TeamCity.
@@ -705,8 +716,8 @@ Core stages beside the destination in a private `.download-*` directory. Result 
 An optional `--max-bytes` sets a caller-selected budget with no tool-imposed upper ceiling. HTTP206 partial responses are
 rejected without publication or automatic retry; downloads do not support ranges/resume.
 No overwrite, symlink/junction escape, automatic opening, execution or extraction. Atomic no-clobber publication
-requires destination-filesystem hard-link support; unsupported filesystems fail closed. PNG/ZIP/SVG types
-and signatures are validated; SVG/icon success says nothing about the build's success.
+requires destination-filesystem hard-link support; unsupported filesystems fail closed. PNG/ZIP types and signatures are validated; status SVG content is saved as returned without
+regex validation or rendering. SVG/icon success says nothing about the build's success.
 The fresh staging directory and file use private POSIX modes/current-user ACLs; the published hard
 link retains the file protection. Core never changes existing destination directory ACLs and
 does not repair a user data root deliberately made public. Detectable directory/staged/destination
@@ -732,7 +743,7 @@ teamcity-cli builds resolve-parameter 12345 env.MODE --store-as resolved-mode --
 wins when both are supplied, without looking up the alias. References are encoded as one path segment;
 `.` and `..` are rejected. Returned values
 continue to use the requested `--store-as` aliases. A parameter expression
-returned unchanged is unresolved, not success. Aliases are collision-checked; no secrets in JSON,
+returned unchanged or an empty value is stored as the server returned it. Aliases are collision-checked; no secrets in JSON,
 RPC, diagnostics or files. These routes and sensitive downloads are excluded from live proof.
 
 ## Profiles and authentication
@@ -876,7 +887,7 @@ TeamCity adds these:
 
 | Code | Meaning |
 |---|---|
-| `http.unauthorized`, `http.forbidden`, `http.notFound`, `http.conflict`, `http.rejected`, `http.rateLimited`, `http.serverError` | Core's `HttpError`: TeamCity answered with that HTTP status, also for a refused download; the response body is never read or shown, and `401` suggests `auth login` |
+| `http.unauthorized`, `http.forbidden`, `http.notFound`, `http.conflict`, `http.rejected`, `http.rateLimited`, `http.serverError` | Core's `HttpError`: TeamCity answered with that HTTP status, also for a refused download; up to 4 KiB of server response text is included, masking known secrets before UTF-8-safe truncation and dropping trailing known-secret prefixes; `401` suggests `auth login` |
 | `request.failed` | A read was lost in transit; nothing was changed, so it can be retried. A lost download reports Core's download error instead |
 | `request.unknownOutcome` | A write was lost in transit; it may or may not have been applied, and is never repeated |
 | `run.unknownOutcome` | The queue request's outcome is unknown; check `builds list --job <id> --state any` |
@@ -930,36 +941,30 @@ See [release and Core adoption gates](release.md) and [migration provenance](mig
 
 ## Native projections and controls
 
-Use `--fields <projection>` to select native TeamCity JSON with the generic human view.
-Explicit values pass through unchanged; omission keeps default projections, shaping and views.
-Paged lists keep their envelope, locator and paging and project each item; single reads and
-unpaged scoped lists project the whole response. The normative [projection contract](product-contract.md#field-projections)
-covers masking, parity, fixed workflows, partial failures and per-command empty-body handling.
+Use `--fields <projection>` on every response command to select native JSON or text with the
+generic human view. Where the endpoint accepts a `fields` query parameter, it receives the projection
+unchanged. Other endpoints send no extra query parameter: the option only selects the native body.
+Omission keeps default projections, shaped summaries and human views. Paged lists keep
+`{count,items,hasMore,nextStart}` and project each item; unpaged scoped lists project the whole response.
+Password-type, `secure:` and withheld property values remain hidden, including authentication properties.
+`server authentication replace` stays names-only by default. Empty successful acknowledgements keep
+their summaries; with fields, nonempty bodies return as JSON or text. Malformed JSON from JSON
+endpoints still fails. The [projection contract](product-contract.md#field-projections) defines masking,
+partial failures and workflow behavior.
 
-These families accept `--fields` (slash-separated leaves share the preceding command path):
+The instantiated declaration tree has **460 leaves: 439 accept `--fields`**. These are the 21 exceptions:
 
-| Family | Commands |
+| Leaves | Native-output reason |
 |---|---|
-| `builds` | `builds list/show/tests/problems/changes/cancel/set-status/start-agentless/artifact-changes/related-issues/test-occurrences/canceled-info`; `builds artifacts list/children/metadata`; `builds batch show/cancel/delete/pin`; `builds batch comment set/clear`; `builds batch tags add/remove`; `builds tags list/add/replace`; `builds pin show/set`; `builds log append`; `builds problem-occurrences list/add`; `builds vcs-labels list/add`; `builds output-parameters list`; `builds resulting-properties list`; `builds statistics list` |
-| `jobs` | `jobs list/show/builds/branches/create/investigations/vcs-instances`; `jobs agent-requirements replace-all/list/show/create/replace`; `jobs artifact-dependencies replace-all/list/show/create/replace`; `jobs output-parameters replace-all/list/show/create/set`; `jobs parameters replace-all/list/show/create/set`; `jobs steps replace-all/list/show/create/replace`; `jobs steps parameters list/replace`; `jobs vcs replace-all/list/show/attach/replace`; `jobs triggers replace-all/list/show/create/replace`; `jobs features replace-all/list/show/create/replace`; `jobs features parameters list/replace`; `jobs snapshot-dependencies replace-all/list/show/create/replace`; `jobs templates replace-all/show/list/attach`; `jobs files list/children/metadata` |
-| `projects` | `projects list/show/branches/parent/move/default-value-sets`; `projects pools list/replace-all`; `projects jobs create`; `projects features replace-all/list/show/create/replace`; `projects templates list/create`; `projects templates default show/set/clear`; `projects parameters replace-all/list/show/create/set`; `projects versioned-settings affected/load/status`; `projects versioned-settings config show/effective/replace`; `projects deployments list/show` |
-| `queue` | `queue list/show/delete-page/reorder/compatible-agents`; `queue approval show/approve`; `queue tags list`; `queue position show/set` |
-| `agents` | `agents list/show/compatible-jobs/incompatible-jobs`; `agents types show`; `agents enabled show/set`; `agents authorized show/set`; `agents policy show/set`; `agents pool show/set` |
-| `changes` | `changes duplicates/first-builds/root-instance/attributes/show/parents` |
-| `investigations` | `investigations list/create/create-many/show/replace` |
-| `mutes` | `mutes delete-many/list/create/create-many/show` |
-| `tests` | `tests list/show/occurrence` |
-| `problems` | `problems list/show/occurrence` |
-| `server` | `server nodes list/show`; `server nodes responsibilities disabled/effective/enabled`; `server rest-plugin/metrics/plugins/status`; `server licenses summary/list/add/show`; `server files list/children/metadata` |
-| `vcs` | `vcs roots list/show/create/instances`; `vcs roots properties list/replace`; `vcs instances files list/children/metadata`; `vcs instances list/check-changes/show/properties`; `vcs instances state show/replace` |
-| `pools` | `pools list/show`; `pools agents list/assign`; `pools projects list` |
-| `users` | `users list/show/create/update`; `users groups list/replace/show/remove`; `users permissions list`; `users properties list`; `users tokens list/create` |
-| `groups` | `groups list/create/show`; `groups parents list/replace`; `groups properties list` |
-| `cloud` | `cloud profiles list/show`; `cloud images list/show`; `cloud instances list/show/start` |
-| `deployments` | `deployments list/show`; `deployments instances list/show` |
-| `roles` | `roles list/create/show`; `roles included add/remove`; `roles permissions add/remove` |
-| `audit` | `audit list/show` |
-| `health` | `health list/show`; `health categories list/show` |
+| `builds artifacts download/archive`; `builds source/icon/aggregate-icon`; `jobs files download/archive`; `server files download/archive`; `vcs instances files download/archive`; `users avatar download/download-hash` | 13 downloads already save the native bytes; JSON reports the saved file and no-clobber/byte-limit checks still apply. |
+| `builds resolve-parameter`; `projects secure create-reference/resolve`; `pools tokens create` | Four secret-only responses are stored under `--store-as`; printing them would violate the storage contract. |
+| `projects secure forget-reference`; `users tokens forget`; `credentials import/forget` | Four local credential operations have no HTTP response. |
+
+`jobs run --fields` returns the native queue response even when it omits an ID. With `--wait`,
+queueing and observation keep their fixed fields, followed by a native build read using the requested
+projection. `builds wait --fields` does the same final read. `builds diagnose --fields` returns native
+build data and native items within its existing problem/test sections, with the same 10/20 limits
+and partial-section status. No fields are added for outcome detection in an explicit projection.
 
 Other native controls are not sent when omitted. Text values, including empty and blank strings, pass through unchanged; booleans
 accept only literal `true` or `false`.
@@ -992,8 +997,6 @@ Server and VCS-instance files expose neither resolve-parameters nor log-build-us
 job files expose resolve-parameters on all five leaves, and build artifacts expose both.
 Backup start retains Admin and required confirmation; its seven switches are not sent when omitted.
 
-`jobs run`, `builds wait`, `builds diagnose`, `jobs copy`, parameter value/type/raw-type,
-`jobs parameters set-password` and scalar-setting leaves deliberately have no `--fields`.
 Occurrence reads still require `--build`; cloud selectors retain `--cloud-profile`, `--image`
 and, for instance reads, `--instance`. Agent setters and job creation retain Update permission.
 For mutation projections, keep `errorCount` (batch), `errors(item)` (set-status) or

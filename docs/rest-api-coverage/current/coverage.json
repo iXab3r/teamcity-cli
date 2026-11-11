@@ -19,7 +19,9 @@
    {
     "command": "pools delete <pool-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deletePool"
    }
   ],
@@ -60,7 +62,8 @@
     "command": "pools projects clear <pool-id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "clearPoolProjects"
    }
@@ -99,7 +102,9 @@
    {
     "command": "pools projects unassign <pool-id> <project-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "unassignPoolProject"
    }
   ],
@@ -138,7 +143,9 @@
    {
     "command": "agents delete <agent-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteAgent"
    }
   ],
@@ -177,7 +184,9 @@
    {
     "command": "users avatar delete <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteAvatar"
    }
   ],
@@ -276,7 +285,9 @@
    {
     "command": "queue delete <build-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteQueuedBuild"
    }
   ],
@@ -314,7 +325,9 @@
    {
     "command": "jobs delete <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteJob"
    }
   ],
@@ -325,7 +338,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -352,7 +366,9 @@
    {
     "command": "jobs agent-requirements delete <job-id> <requirement-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteRule"
    }
   ],
@@ -391,7 +407,9 @@
    {
     "command": "jobs artifact-dependencies delete <job-id> <dependency-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteRule"
    }
   ],
@@ -430,7 +448,9 @@
    {
     "command": "jobs features delete <job-id> <feature-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteExtension"
    }
   ],
@@ -470,7 +490,8 @@
     "command": "jobs output-parameters clear <owner-id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "clearParameters"
    }
@@ -509,7 +530,9 @@
    {
     "command": "jobs output-parameters delete <job-id> <name>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteParameter"
    }
   ],
@@ -549,7 +572,8 @@
     "command": "jobs parameters clear <owner-id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "clearParameters"
    }
@@ -589,7 +613,9 @@
    {
     "command": "jobs parameters delete <job-id> <name>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteParameter"
    }
   ],
@@ -627,7 +653,9 @@
    {
     "command": "jobs snapshot-dependencies delete <job-id> <dependency-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteSnapshotDependency"
    }
   ],
@@ -666,7 +694,9 @@
    {
     "command": "jobs steps delete <job-id> <step-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteStep"
    }
   ],
@@ -708,7 +738,8 @@
     "permission": "Update",
     "options": [
      "--confirm",
-     "--inline-settings"
+     "--inline-settings",
+     "--fields <projection>"
     ],
     "clientMethod": "clearTemplates"
    }
@@ -757,7 +788,8 @@
     "command": "jobs templates detach <job-id> <template-id>",
     "permission": "Update",
     "options": [
-     "--inline-settings"
+     "--inline-settings",
+     "--fields <projection>"
     ],
     "clientMethod": "detachTemplate"
    }
@@ -804,7 +836,9 @@
    {
     "command": "jobs triggers delete <job-id> <trigger-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteExtension"
    }
   ],
@@ -843,7 +877,9 @@
    {
     "command": "jobs vcs detach <job-id> <root-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "detachVcsRoot"
    }
   ],
@@ -1049,7 +1085,9 @@
    {
     "command": "builds delete <build-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteBuild"
    }
   ],
@@ -1091,7 +1129,9 @@
    {
     "command": "builds reset-finish-cache <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "resetBuildFinishCache"
    }
   ],
@@ -1129,7 +1169,9 @@
    {
     "command": "builds comment clear <build-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "clearBuildComment"
    }
   ],
@@ -1172,7 +1214,8 @@
      "--cloud-profile <id>",
      "--image <id>",
      "--instance <id>",
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "stopCloudInstance"
    }
@@ -1212,7 +1255,8 @@
     "command": "deployments delete <id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteDashboard"
    }
@@ -1252,7 +1296,8 @@
     "command": "deployments instances delete <dashboard> <id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteDeploymentInstance"
    }
@@ -1295,7 +1340,8 @@
     "command": "investigations delete",
     "permission": "Update",
     "options": [
-     "--target <json>"
+     "--target <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteInvestigation"
    }
@@ -1398,7 +1444,8 @@
     "command": "mutes delete <id>",
     "permission": "Update",
     "options": [
-     "--comment <text>"
+     "--comment <text>",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteMute"
    }
@@ -1438,7 +1485,9 @@
    {
     "command": "projects delete <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteProject"
    }
   ],
@@ -1477,7 +1526,9 @@
    {
     "command": "projects pools unassign <project-id> <pool-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "unassignProjectPool"
    }
   ],
@@ -1566,7 +1617,8 @@
     "command": "projects parameters clear <owner-id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "clearParameters"
    }
@@ -1605,7 +1657,9 @@
    {
     "command": "projects parameters delete <project-id> <name>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteParameter"
    }
   ],
@@ -1643,7 +1697,9 @@
    {
     "command": "projects features delete <project-id> <feature-id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteProjectFeature"
    }
   ],
@@ -1683,7 +1739,8 @@
     "command": "projects versioned-settings config fields reset <id> <field>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "resetVersionedConfigField"
    }
@@ -1725,7 +1782,8 @@
     "permission": "Credentials",
     "options": [
      "--name <name>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteVersionedTokens"
    }
@@ -1768,7 +1826,8 @@
     "command": "roles delete <id>",
     "permission": "Admin",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteRoleDefinition"
    }
@@ -1913,7 +1972,8 @@
     "permission": "Admin",
     "options": [
      "--confirm",
-     "--key <value>"
+     "--key <value>",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteLicense"
    }
@@ -1925,6 +1985,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-secret-masking.test.ts",
     "tests/system.test.ts",
     "tests/thin-writes.test.ts"
    ],
@@ -1953,7 +2014,9 @@
    {
     "command": "groups delete <key>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteAccountGroup"
    }
   ],
@@ -1991,7 +2054,9 @@
    {
     "command": "groups properties delete <id> <name>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteAccountProperty"
    }
   ],
@@ -2031,7 +2096,8 @@
     "permission": "Admin",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "revokeAccountRole"
    }
@@ -2070,7 +2136,9 @@
    {
     "command": "users delete <id>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteAccountUser"
    }
   ],
@@ -2110,7 +2178,9 @@
    {
     "command": "users sessions forget-remembered <id>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "forgetRememberedSessions"
    }
   ],
@@ -2197,7 +2267,9 @@
    {
     "command": "users properties delete <id> <name>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteAccountProperty"
    }
   ],
@@ -2237,7 +2309,8 @@
     "permission": "Admin",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "revokeAccountRole"
    }
@@ -2277,7 +2350,8 @@
     "command": "users tokens delete <name>",
     "permission": "Credentials",
     "options": [
-     "--alias <name>"
+     "--alias <name>",
+     "--fields <projection>"
     ],
     "clientMethod": "deleteCurrentUserToken"
    }
@@ -2317,7 +2391,9 @@
    {
     "command": "users fields clear <id> <field>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "clearAccountUserField"
    }
   ],
@@ -2356,7 +2432,8 @@
     "command": "vcs instances state reset <id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "resetVcsRepositoryState"
    }
@@ -2395,7 +2472,9 @@
    {
     "command": "vcs instances fields clear <id> <field>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "clearVcsInstanceField"
    }
   ],
@@ -2433,7 +2512,9 @@
    {
     "command": "vcs roots delete <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteVcsRoot"
    }
   ],
@@ -2472,7 +2553,8 @@
     "command": "vcs roots properties clear <id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "clearVcsRootProperties"
    }
@@ -2511,7 +2593,9 @@
    {
     "command": "vcs roots properties delete <id> <name>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "deleteVcsRootProperty"
    }
   ],
@@ -2551,7 +2635,9 @@
    {
     "command": "server rest-info",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getRestInfo"
    }
   ],
@@ -2562,6 +2648,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -2820,7 +2907,9 @@
    {
     "command": "pools fields show <pool-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getPoolField"
    }
   ],
@@ -2984,7 +3073,9 @@
    {
     "command": "agents parameters list <agent-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listAgentParameters"
    },
    {
@@ -3010,6 +3101,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/agents-projection.test.ts",
+    "tests/native-responses.test.ts",
     "tests/read-values.test.ts"
    ],
    "nonLeafTransportTests": [
@@ -3359,7 +3451,9 @@
    {
     "command": "agents fields show <agent-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getAgentField"
    }
   ],
@@ -3400,7 +3494,9 @@
    {
     "command": "server api-version",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getApiVersion"
    }
   ],
@@ -3416,12 +3512,13 @@
    "nonLeafTransportTests": [
     "tests/admin.test.ts:291",
     "tests/admin.test.ts:351",
-    "tests/response-body.test.ts:107",
+    "tests/response-body.test.ts:102",
+    "tests/response-body.test.ts:122",
     "tests/response-body.test.ts:42",
     "tests/response-body.test.ts:48",
     "tests/response-body.test.ts:61",
     "tests/response-body.test.ts:74",
-    "tests/response-body.test.ts:89"
+    "tests/response-body.test.ts:90"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -4060,7 +4157,9 @@
    {
     "command": "jobs configuration show <job-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getJobConfiguration"
    },
    {
@@ -4074,7 +4173,9 @@
    {
     "command": "projects templates show <template-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getJobConfiguration"
    }
   ],
@@ -4233,7 +4334,9 @@
    {
     "command": "jobs agent-requirements fields show <job-id> <requirement-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getEntitySetting"
    }
   ],
@@ -4277,7 +4380,8 @@
     "command": "jobs aliases <job-id>",
     "permission": "ReadOnly",
     "options": [
-     "--field <name>"
+     "--field <name>",
+     "--fields <projection>"
     ],
     "clientMethod": "listJobAliases"
    }
@@ -4434,7 +4538,9 @@
    {
     "command": "jobs artifact-dependencies fields show <job-id> <dependency-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getEntitySetting"
    }
   ],
@@ -4539,7 +4645,8 @@
     "command": "jobs tags <job-id>",
     "permission": "ReadOnly",
     "options": [
-     "--field <name>"
+     "--field <name>",
+     "--fields <projection>"
     ],
     "clientMethod": "listJobTags"
    }
@@ -4761,7 +4868,9 @@
    {
     "command": "jobs features parameters show <job-id> <feature-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listPluginParameters"
    }
   ],
@@ -4810,7 +4919,9 @@
    {
     "command": "jobs features parameters show <job-id> <feature-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getPluginParameter"
    }
   ],
@@ -4850,7 +4961,9 @@
    {
     "command": "jobs features fields show <job-id> <feature-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getEntitySetting"
    }
   ],
@@ -5014,7 +5127,9 @@
    {
     "command": "jobs output-parameters value show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    }
   ],
@@ -5062,7 +5177,9 @@
    {
     "command": "jobs output-parameters value show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -5165,7 +5282,9 @@
    {
     "command": "jobs parameters raw-type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    },
    {
@@ -5174,7 +5293,8 @@
     "options": [
      "--item <json>",
      "--value <value>",
-     "--value-secret <alias>"
+     "--value-secret <alias>",
+     "--fields <projection>"
     ],
     "clientMethod": "setPasswordParameter"
    },
@@ -5189,13 +5309,17 @@
    {
     "command": "jobs parameters type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    },
    {
     "command": "jobs parameters value show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    }
   ],
@@ -5218,6 +5342,8 @@
     "tests/bulk-configuration.test.ts",
     "tests/job-parameters-projection.test.ts",
     "tests/native-request-bodies.test.ts",
+    "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/password-parameter.test.ts",
     "tests/read-values-review.test.ts",
     "tests/thin-requests.test.ts",
@@ -5251,7 +5377,9 @@
    {
     "command": "jobs parameters type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -5292,7 +5420,9 @@
    {
     "command": "jobs parameters raw-type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -5332,7 +5462,9 @@
    {
     "command": "jobs parameters value show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -5374,7 +5506,9 @@
    {
     "command": "jobs settings-path <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getSettingsPath"
    }
   ],
@@ -5385,7 +5519,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -5640,7 +5775,9 @@
    {
     "command": "jobs steps parameters show <job-id> <step-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listPluginParameters"
    }
   ],
@@ -5689,7 +5826,9 @@
    {
     "command": "jobs steps parameters show <job-id> <step-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getPluginParameter"
    }
   ],
@@ -5730,7 +5869,9 @@
    {
     "command": "jobs steps fields show <job-id> <step-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getEntitySetting"
    }
   ],
@@ -5985,7 +6126,9 @@
    {
     "command": "jobs triggers fields show <job-id> <trigger-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getEntitySetting"
    }
   ],
@@ -6131,7 +6274,9 @@
    {
     "command": "jobs vcs checkout-rules show <job-id> <root-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getCheckoutRules"
    }
   ],
@@ -6563,7 +6708,9 @@
    {
     "command": "jobs fields show <job-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getOwnerField"
    }
   ],
@@ -6694,7 +6841,8 @@
     "command": "builds batch status",
     "permission": "ReadOnly",
     "options": [
-     "--build <id>"
+     "--build <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "getBuildBatchStatus"
    }
@@ -6707,6 +6855,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-responses.test.ts",
     "tests/option-parsers.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -6834,7 +6983,9 @@
    {
     "command": "builds diagnose <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildSummary"
    },
    {
@@ -6853,7 +7004,8 @@
     "permission": "ReadOnly",
     "options": [
      "--timeout <duration>",
-     "--interval <duration>"
+     "--interval <duration>",
+     "--fields <projection>"
     ],
     "clientMethod": "getBuild"
    },
@@ -6861,6 +7013,7 @@
     "command": "jobs run <job-id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--item <json>",
      "--move-to-top <boolean>",
      "--branch <name>",
@@ -6892,6 +7045,7 @@
     "tests/build-flow.test.ts",
     "tests/build-projection.test.ts",
     "tests/errors.test.ts",
+    "tests/native-responses.test.ts",
     "tests/option-parsers.test.ts",
     "tests/presentation.test.ts",
     "tests/projected-escape-credential.test.ts",
@@ -7354,7 +7508,9 @@
    {
     "command": "builds artifacts-path <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getArtifactsPath"
    }
   ],
@@ -7447,7 +7603,9 @@
    {
     "command": "builds finish-date <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    }
   ],
@@ -7487,13 +7645,17 @@
    {
     "command": "builds fields show <build-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    },
    {
     "command": "builds number show <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    }
   ],
@@ -7587,7 +7749,9 @@
    {
     "command": "builds output-parameters exists <id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "checkBuildRuntimeParameter"
    }
   ],
@@ -7803,6 +7967,8 @@
    "tests": [
     "tests/copy-job.test.ts",
     "tests/files.test.ts",
+    "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -7885,7 +8051,9 @@
    {
     "command": "builds resulting-properties exists <id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "checkBuildRuntimeParameter"
    }
   ],
@@ -8022,7 +8190,9 @@
    {
     "command": "builds statistics show <build-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildStatistic"
    }
   ],
@@ -8063,13 +8233,17 @@
    {
     "command": "builds fields show <build-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    },
    {
     "command": "builds status <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    }
   ],
@@ -8122,7 +8296,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -8151,7 +8326,9 @@
    {
     "command": "builds status-text show <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    }
   ],
@@ -8356,7 +8533,9 @@
    {
     "command": "builds fields show <build-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBuildScalar"
    }
   ],
@@ -8535,6 +8714,7 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/changes-projection.test.ts",
+    "tests/native-responses.test.ts",
     "tests/presentation.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -8669,7 +8849,9 @@
    {
     "command": "changes issues <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getChangeIssues"
    }
   ],
@@ -8763,7 +8945,9 @@
    {
     "command": "changes parent-revisions <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getChangeParentRevisions"
    }
   ],
@@ -8855,7 +9039,9 @@
    {
     "command": "changes field <id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getChangeField"
    }
   ],
@@ -9719,6 +9905,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/deployments-projection.test.ts",
+    "tests/native-responses.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -9979,7 +10166,9 @@
    {
     "command": "builds diagnose <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    },
    {
@@ -10012,6 +10201,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/build-flow.test.ts",
+    "tests/native-responses.test.ts",
     "tests/presentation.test.ts",
     "tests/triage-projection.test.ts"
    ],
@@ -10656,7 +10846,8 @@
     "command": "projects order jobs show <project-id>",
     "permission": "ReadOnly",
     "options": [
-     "--field <name>"
+     "--field <name>",
+     "--fields <projection>"
     ],
     "clientMethod": "getProjectOrder"
    }
@@ -10708,7 +10899,8 @@
     "command": "projects order projects show <project-id>",
     "permission": "ReadOnly",
     "options": [
-     "--field <name>"
+     "--field <name>",
+     "--fields <projection>"
     ],
     "clientMethod": "getProjectOrder"
    }
@@ -10819,7 +11011,9 @@
    {
     "command": "projects parameters raw-type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    },
    {
@@ -10833,13 +11027,17 @@
    {
     "command": "projects parameters type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    },
    {
     "command": "projects parameters value show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getParameterPart"
    }
   ],
@@ -10890,7 +11088,9 @@
    {
     "command": "projects parameters type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -10930,7 +11130,9 @@
    {
     "command": "projects parameters raw-type show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -10970,7 +11172,9 @@
    {
     "command": "projects parameters value show <owner-id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    }
   ],
@@ -11197,6 +11401,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -11226,7 +11431,9 @@
    {
     "command": "projects settings-path <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getSettingsPath"
    }
   ],
@@ -11467,7 +11674,9 @@
    {
     "command": "projects versioned-settings config fields get <id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVersionedConfigField"
    }
   ],
@@ -11506,7 +11715,9 @@
    {
     "command": "projects versioned-settings context list <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listVersionedContext"
    }
   ],
@@ -11598,7 +11809,8 @@
     "command": "projects versioned-settings tokens list <id>",
     "permission": "ReadOnly",
     "options": [
-     "--status <status>"
+     "--status <status>",
+     "--fields <projection>"
     ],
     "clientMethod": "listVersionedTokenNames"
    }
@@ -11617,6 +11829,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-responses.test.ts",
     "tests/validation-contract.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -11646,7 +11859,9 @@
    {
     "command": "projects fields show <project-id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getOwnerField"
    }
   ],
@@ -11814,6 +12029,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/cli.test.ts",
+    "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/server-projection.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -11849,7 +12066,9 @@
    {
     "command": "server authentication show",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getAuthenticationSettings"
    }
   ],
@@ -11860,6 +12079,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/read-values-review.test.ts",
     "tests/system.test.ts"
    ],
@@ -11890,7 +12110,9 @@
    {
     "command": "server backup status",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getBackupStatus"
    }
   ],
@@ -11931,7 +12153,9 @@
    {
     "command": "server cleanup show",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getCleanup"
    }
   ],
@@ -11942,6 +12166,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12269,7 +12494,9 @@
    {
     "command": "server settings show",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getGlobalSettings"
    }
   ],
@@ -12280,6 +12507,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12436,6 +12664,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-secret-masking.test.ts",
     "tests/server-projection.test.ts",
     "tests/system.test.ts",
     "tests/thin-writes.test.ts"
@@ -12491,6 +12720,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/server-projection.test.ts",
     "tests/system.test.ts"
    ],
@@ -12850,7 +13080,9 @@
    {
     "command": "server field <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getServerField"
    }
   ],
@@ -12896,7 +13128,9 @@
    {
     "command": "builds diagnose <build-id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": null
    },
    {
@@ -12930,6 +13164,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/build-flow.test.ts",
+    "tests/native-responses.test.ts",
     "tests/presentation.test.ts",
     "tests/triage-projection.test.ts"
    ],
@@ -13338,7 +13573,9 @@
    {
     "command": "groups properties exists <id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "checkAccountProperty"
    }
   ],
@@ -13379,7 +13616,9 @@
    {
     "command": "groups roles list <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listAccountRoles"
    }
   ],
@@ -13422,7 +13661,8 @@
     "permission": "ReadOnly",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "getAccountRole"
    }
@@ -13767,6 +14007,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/authoring.test.ts",
+    "tests/native-responses.test.ts",
     "tests/presentation.test.ts",
     "tests/users-projection.test.ts"
    ],
@@ -13797,7 +14038,9 @@
    {
     "command": "users properties exists <id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "checkAccountProperty"
    }
   ],
@@ -13808,7 +14051,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [
     "tests/admin.test.ts:352"
@@ -13840,7 +14084,9 @@
    {
     "command": "users roles list <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "listAccountRoles"
    }
   ],
@@ -13852,7 +14098,8 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/admin.test.ts",
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -13884,7 +14131,8 @@
     "permission": "ReadOnly",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "getAccountRole"
    }
@@ -13979,7 +14227,9 @@
    {
     "command": "users fields get <id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getAccountUserField"
    }
   ],
@@ -14537,7 +14787,9 @@
    {
     "command": "vcs instances state created <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsRepositoryStateCreated"
    }
   ],
@@ -14577,7 +14829,9 @@
    {
     "command": "vcs instances fields get <id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsInstanceField"
    }
   ],
@@ -14837,7 +15091,9 @@
    {
     "command": "vcs roots properties exists <id> <name>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "checkVcsRootProperty"
    }
   ],
@@ -14877,7 +15133,9 @@
    {
     "command": "vcs roots settings-path <id>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getSettingsPath"
    }
   ],
@@ -14917,7 +15175,9 @@
    {
     "command": "vcs roots fields get <id> <field>",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getVcsRootField"
    }
   ],
@@ -14958,7 +15218,9 @@
    {
     "command": "server rest-version",
     "permission": "ReadOnly",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "getRestVersion"
    }
   ],
@@ -14969,7 +15231,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -15004,7 +15267,8 @@
     "permission": "Update",
     "options": [
      "--name <name>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "createPool"
    }
@@ -15126,6 +15390,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/native-request-bodies.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -15161,7 +15426,8 @@
     "command": "pools projects assign <pool-id> <project-id>",
     "permission": "Update",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "assignPoolProject"
    }
@@ -15211,6 +15477,7 @@
     "command": "jobs run <job-id>",
     "permission": "Update",
     "options": [
+     "--fields <projection>",
      "--item <json>",
      "--move-to-top <boolean>",
      "--branch <name>",
@@ -15243,6 +15510,7 @@
     "tests/build-flow.test.ts",
     "tests/cli.test.ts",
     "tests/errors.test.ts",
+    "tests/native-responses.test.ts",
     "tests/queue-action-projection.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -15283,6 +15551,7 @@
     "options": [
      "--comment <text>",
      "--requeue <boolean>",
+     "--fields <projection>",
      "--item <json>"
     ],
     "clientMethod": "cancelQueuedBuild"
@@ -15393,6 +15662,7 @@
     "permission": "Update",
     "options": [
      "--tag <tag>",
+     "--fields <projection>",
      "--item <json>"
     ],
     "clientMethod": "addTags"
@@ -15690,7 +15960,8 @@
     "command": "jobs move <id>",
     "permission": "Update",
     "options": [
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "moveJob"
    }
@@ -16714,7 +16985,8 @@
      "--cloud-profile <id>",
      "--image <id>",
      "--instance <id>",
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "stopCloudInstance"
    }
@@ -16762,7 +17034,8 @@
     "options": [
      "--cloud-profile <id>",
      "--image <id>",
-     "--instance <id>"
+     "--instance <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "stopCloudInstance"
    }
@@ -16810,7 +17083,8 @@
     "options": [
      "--name <text>",
      "--project <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "createDashboard"
    }
@@ -16860,7 +17134,8 @@
      "--state <state>",
      "--date <timestamp>",
      "--build <id>",
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "upsertDeploymentInstance"
    }
@@ -16910,7 +17185,8 @@
      "--item <json>",
      "--state <state>",
      "--date <timestamp>",
-     "--build <id>"
+     "--build <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "appendDeploymentState"
    }
@@ -17190,7 +17466,8 @@
      "--name <name>",
      "--parent <id>",
      "--description <text>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "createProject"
    }
@@ -17239,7 +17516,8 @@
     "command": "projects pools assign <project-id> <pool-id>",
     "permission": "Update",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "assignProjectPool"
    }
@@ -17292,7 +17570,8 @@
     "options": [
      "--name <name>",
      "--project <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "copyJob"
    },
@@ -17488,6 +17767,8 @@
    "tests": [
     "tests/files.test.ts",
     "tests/native-request-bodies.test.ts",
+    "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -17573,7 +17854,9 @@
    {
     "command": "projects versioned-settings check-changes <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "checkVersionedSettings"
    }
   ],
@@ -17612,7 +17895,8 @@
     "command": "projects versioned-settings commit <id>",
     "permission": "Update",
     "options": [
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "commitVersionedSettings"
    }
@@ -17704,7 +17988,8 @@
     "options": [
      "--item <json>",
      "--property <key=value>",
-     "--mapping <remote-name=alias>"
+     "--mapping <remote-name=alias>",
+     "--fields <projection>"
     ],
     "clientMethod": "setVersionedTokens"
    }
@@ -17719,6 +18004,7 @@
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
     "tests/native-request-bodies.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -17825,7 +18111,8 @@
      "--include-build-logs <boolean>",
      "--include-personal-changes <boolean>",
      "--include-running-builds <boolean>",
-     "--include-supplementary-data <boolean>"
+     "--include-supplementary-data <boolean>",
+     "--fields <projection>"
     ],
     "clientMethod": "startBackup"
    }
@@ -17936,6 +18223,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-secret-masking.test.ts",
     "tests/server-projection.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts",
@@ -18034,7 +18322,8 @@
     "options": [
      "--global",
      "--project <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "addAccountRole"
    }
@@ -18079,7 +18368,8 @@
     "permission": "Admin",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "grantAccountRole"
    }
@@ -18176,7 +18466,9 @@
    {
     "command": "users sessions logout <id>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "terminateAccountSessions"
    }
   ],
@@ -18223,7 +18515,8 @@
     "options": [
      "--global",
      "--project <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "addAccountRole"
    }
@@ -18296,6 +18589,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-requests.test.ts",
     "tests/users-projection.test.ts",
     "tests/validation-contract.test.ts"
@@ -18398,7 +18692,8 @@
     "command": "vcs instances notify-commit <id>",
     "permission": "Update",
     "options": [
-     "--ok-on-nothing-found <boolean>"
+     "--ok-on-nothing-found <boolean>",
+     "--fields <projection>"
     ],
     "clientMethod": "notifyVcsCommit"
    }
@@ -18519,7 +18814,8 @@
     "permission": "Update",
     "options": [
      "--project <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "replacePoolProjects"
    }
@@ -18566,7 +18862,9 @@
    {
     "command": "pools fields set <pool-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setPoolField"
    }
   ],
@@ -18845,7 +19143,9 @@
    {
     "command": "agents fields set <agent-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setAgentField"
    }
   ],
@@ -18888,7 +19188,8 @@
     "command": "users avatar replace <id>",
     "permission": "Update",
     "options": [
-     "--file <path>"
+     "--file <path>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAvatar"
    }
@@ -19052,7 +19353,8 @@
     "permission": "Update",
     "options": [
      "--reason <text>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "setQueuePaused"
    }
@@ -19215,7 +19517,9 @@
    {
     "command": "jobs agent-requirements fields set <job-id> <requirement-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setEntitySetting"
    }
   ],
@@ -19378,7 +19682,9 @@
    {
     "command": "jobs artifact-dependencies fields set <job-id> <dependency-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setEntitySetting"
    }
   ],
@@ -19566,7 +19872,8 @@
    "tests": [
     "tests/advanced-authoring.test.ts",
     "tests/authoring.test.ts",
-    "tests/job-extensions-projection.test.ts"
+    "tests/job-extensions-projection.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -19597,7 +19904,9 @@
    {
     "command": "jobs features parameters set <job-id> <feature-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setPluginParameter"
    }
   ],
@@ -19639,7 +19948,9 @@
    {
     "command": "jobs features fields set <job-id> <feature-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setEntitySetting"
    }
   ],
@@ -19796,7 +20107,9 @@
    {
     "command": "jobs output-parameters value set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -19917,7 +20230,8 @@
     "options": [
      "--item <json>",
      "--value <value>",
-     "--value-secret <alias>"
+     "--value-secret <alias>",
+     "--fields <projection>"
     ],
     "clientMethod": "setPasswordParameter"
    }
@@ -19938,6 +20252,8 @@
     "tests/authoring.test.ts",
     "tests/job-parameters-projection.test.ts",
     "tests/native-request-bodies.test.ts",
+    "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/password-parameter.test.ts",
     "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
@@ -19974,7 +20290,8 @@
     "command": "jobs parameters type set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "setParameterPart"
    }
@@ -20018,7 +20335,9 @@
    {
     "command": "jobs parameters raw-type set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -20060,7 +20379,9 @@
    {
     "command": "jobs parameters value set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -20398,7 +20719,9 @@
    {
     "command": "jobs steps parameters set <job-id> <step-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setPluginParameter"
    }
   ],
@@ -20440,7 +20763,9 @@
    {
     "command": "jobs steps fields set <job-id> <step-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setEntitySetting"
    }
   ],
@@ -20665,7 +20990,9 @@
    {
     "command": "jobs triggers fields set <job-id> <trigger-id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setEntitySetting"
    }
   ],
@@ -20824,7 +21151,8 @@
     "command": "jobs vcs checkout-rules set <job-id> <root-id>",
     "permission": "Update",
     "options": [
-     "--rules <rules>"
+     "--rules <rules>",
+     "--fields <projection>"
     ],
     "clientMethod": "setCheckoutRules"
    }
@@ -20867,7 +21195,9 @@
    {
     "command": "jobs set <id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setJobField"
    }
   ],
@@ -21023,7 +21353,8 @@
     "command": "builds comment set <build-id>",
     "permission": "Update",
     "options": [
-     "--text <text>"
+     "--text <text>",
+     "--fields <projection>"
     ],
     "clientMethod": "setBuildComment"
    }
@@ -21067,7 +21398,9 @@
    {
     "command": "builds finish <id>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "finishBuild"
    }
   ],
@@ -21109,7 +21442,9 @@
    {
     "command": "builds finish-at <id> <timestamp>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "finishBuild"
    }
   ],
@@ -21152,7 +21487,9 @@
    {
     "command": "builds number set <build-id> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setBuildScalar"
    }
   ],
@@ -21311,7 +21648,9 @@
    {
     "command": "builds status-text set <build-id> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setBuildScalar"
    }
   ],
@@ -21602,7 +21941,8 @@
     "options": [
      "--field <name>",
      "--id <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "setProjectOrder"
    }
@@ -21661,7 +22001,8 @@
     "options": [
      "--field <name>",
      "--id <id>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "setProjectOrder"
    }
@@ -21830,7 +22171,8 @@
     "command": "projects parameters type set <owner-id> <name> <value>",
     "permission": "Update",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "setParameterPart"
    }
@@ -21873,7 +22215,9 @@
    {
     "command": "projects parameters raw-type set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -21915,7 +22259,9 @@
    {
     "command": "projects parameters value set <owner-id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setParameterPart"
    }
   ],
@@ -22185,7 +22531,9 @@
    {
     "command": "projects versioned-settings config fields set <id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setVersionedConfigField"
    }
   ],
@@ -22227,7 +22575,8 @@
     "permission": "Update",
     "options": [
      "--property <key=value>",
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceVersionedContext"
    }
@@ -22241,7 +22590,8 @@
    "tests": [
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
-    "tests/native-request-bodies.test.ts"
+    "tests/native-request-bodies.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -22272,7 +22622,9 @@
    {
     "command": "projects set <id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setProjectField"
    }
   ],
@@ -22420,7 +22772,8 @@
     "permission": "Admin",
     "options": [
      "--item <json>",
-     "--confirm"
+     "--confirm",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAuthenticationSettings"
    }
@@ -22432,6 +22785,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts",
@@ -22469,7 +22824,8 @@
     "command": "server cleanup configure",
     "permission": "Admin",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "configureCleanup"
    }
@@ -22481,6 +22837,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts",
     "tests/validation-contract.test.ts"
@@ -22514,7 +22871,8 @@
     "command": "server settings set",
     "permission": "Admin",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "setGlobalSettings"
    }
@@ -22526,6 +22884,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-responses.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts",
@@ -22561,7 +22920,9 @@
    {
     "command": "server nodes responsibilities set <id> <name> <enabled>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setNodeResponsibility"
    }
   ],
@@ -22663,7 +23024,9 @@
    {
     "command": "groups properties set <id> <name> <value>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setAccountProperty"
    }
   ],
@@ -22708,7 +23071,8 @@
     "command": "groups roles replace <id>",
     "permission": "Admin",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAccountRoles"
    }
@@ -22871,7 +23235,9 @@
    {
     "command": "users properties set <id> <name> <value>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setAccountProperty"
    }
   ],
@@ -22882,7 +23248,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/native-responses.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -22916,7 +23283,8 @@
     "command": "users roles replace <id>",
     "permission": "Admin",
     "options": [
-     "--item <json>"
+     "--item <json>",
+     "--fields <projection>"
     ],
     "clientMethod": "replaceAccountRoles"
    }
@@ -22930,6 +23298,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-responses.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -22962,7 +23331,8 @@
     "permission": "Admin",
     "options": [
      "--global",
-     "--project <id>"
+     "--project <id>",
+     "--fields <projection>"
     ],
     "clientMethod": "grantAccountRole"
    }
@@ -23005,7 +23375,9 @@
    {
     "command": "users fields set <id> <field> <value>",
     "permission": "Admin",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setAccountUserField"
    }
   ],
@@ -23108,7 +23480,9 @@
    {
     "command": "vcs instances fields set <id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setVcsInstanceField"
    }
   ],
@@ -23178,6 +23552,7 @@
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
     "tests/native-request-bodies.test.ts",
+    "tests/native-responses.test.ts",
     "tests/vcs-roots-projection.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -23209,7 +23584,9 @@
    {
     "command": "vcs roots properties set <id> <name> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setVcsRootProperty"
    }
   ],
@@ -23251,7 +23628,9 @@
    {
     "command": "vcs roots fields set <id> <field> <value>",
     "permission": "Update",
-    "options": [],
+    "options": [
+     "--fields <projection>"
+    ],
     "clientMethod": "setVcsRootField"
    }
   ],

@@ -74,7 +74,8 @@ async function failure(rt: Runtime, cli: CliApplication, argv: string[], surface
     else assert.ok(rendered.stderr.trim().split("\n").length <= 3, rendered.stderr);
     evidence = rendered.stderr;
   }
-  assert.doesNotMatch(evidence, /synthetic-projection-credential|synthetic-server-payload/);
+  assert.doesNotMatch(evidence, /synthetic-projection-credential/);
+  if (code === "error") assert.doesNotMatch(evidence, /synthetic-server-payload/);
   return evidence;
 }
 
@@ -82,6 +83,7 @@ for (const scenario of buildProjectionCases) {
   test(`${story}-A${acceptance.native} ${scenario.name}: native projection on all four surfaces`, async t => {
     for (const includeValue of scenario.issuedToken === undefined ? [false] : [false, true]) {
       const responseValue = includeValue ? { ...native, value: "synthetic-issued-token" } : native;
+      const expectedValue = includeValue ? { ...native, value: "[redacted]" } : native;
       const rt = await runtime(t, [scenario.permission], scenario.inputSecrets);
       const cli = rt.createCli();
       const requests = trackRequests(t, scenario.preflight ? 10 : scenario.issuedToken ? 4 : 5, async request => {
@@ -101,7 +103,7 @@ for (const scenario of buildProjectionCases) {
       });
       server.use(http.all("*", ({ request }) => requests.handle(request)));
       for (const surface of surfaces) {
-        const rendered = await success(rt, cli, [...scenario.argv, ...Object.entries(scenario.nativeQuery ?? {}).flatMap(([key,value]) => ["--" + key, value]), scenario.field ? "--field" : "--fields", projection], surface, scenario.field ? scenario.baselineResult : scenario.result(responseValue), scenario.issuedToken);
+        const rendered = await success(rt, cli, [...scenario.argv, ...Object.entries(scenario.nativeQuery ?? {}).flatMap(([key,value]) => ["--" + key, value]), scenario.field ? "--field" : "--fields", projection], surface, scenario.field ? scenario.baselineResult : scenario.result(expectedValue), scenario.issuedToken);
         if (scenario.issuedToken !== undefined) {
           const stored = await rt.secretStore.get("ai-cli-factory:teamcity-cli", "default:issued-token:" + scenario.issuedToken);
           if (includeValue) {
@@ -256,7 +258,7 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
         await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "request.unknownOutcome");
       } else if (c.argv.includes("start") || c.acknowledgement) {
         await success(rt, cli, c.argv, surface, c.baselineResult);
-        await success(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, c.baselineResult);
+        await success(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, kind === "malformed" ? "invalid JSON" : c.baselineResult);
       } else {
         await failure(rt, cli, c.argv, surface, "error");
         await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "error");

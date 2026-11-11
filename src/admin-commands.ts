@@ -60,70 +60,69 @@ export function createAdminCommands(
           "exists <id> <name>",
           "Check property existence",
           Permission.ReadOnly,
-          (c, { args }) => c.checkAccountProperty(kind, args.id, args.name),
+          (c, { args, options }) => c.checkAccountProperty(kind, args.id, args.name, fieldsFromOptions(options)), [fieldsOption]
         ),
         leaf(
           "set <id> <name> <value>",
           "Set a property",
           "Admin",
-          (c, { args }) =>
-            c.setAccountProperty(kind, args.id, args.name, args.value),
+          (c, { args, options }) =>
+            c.setAccountProperty(kind, args.id, args.name, args.value, fieldsFromOptions(options)), [fieldsOption]
         ),
-        leaf("delete <id> <name>", "Delete one property", "Admin", (c, { args }) =>
-          c.deleteAccountProperty(kind, args.id, args.name),
+        leaf("delete <id> <name>", "Delete one property", "Admin", (c, { args, options }) =>
+          c.deleteAccountProperty(kind, args.id, args.name, fieldsFromOptions(options)), [fieldsOption]
         ),
       ],
     );
   }
   function roles(kind: AccountKind) {
     return command("roles", "Manage direct role assignments", [
-      leaf("list <id>", "List direct roles", Permission.ReadOnly, (c, { args }) =>
-        c.listAccountRoles(kind, args.id),
+      leaf("list <id>", "List direct roles", Permission.ReadOnly, (c, { args, options }) =>
+        c.listAccountRoles(kind, args.id, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "add <id> <role-id>",
         "Add a role assignment",
         "Admin",
         (c, { args, options }) =>
-          c.addAccountRole(kind, args.id, roleInput(args, options), nativeInput(options)),
-        [...scopeOptions, jsonOption("--item <json>", "Supply a native body")],
+          c.addAccountRole(kind, args.id, roleInput(args, options), nativeInput(options), fieldsFromOptions(options)),
+        [...scopeOptions, jsonOption("--item <json>", "Supply a native body"), fieldsOption],
       ),
       leaf(
         "replace <id>",
         "Replace direct role assignments",
         "Admin",
         (c, { args, options }) =>
-          c.replaceAccountRoles(kind, args.id, (options.item ?? []) as unknown[]),
+          c.replaceAccountRoles(kind, args.id, (options.item ?? []) as unknown[], fieldsFromOptions(options)),
         [
           {
             ...jsonOption("--item <json>", "Supply roleId and global or project; repeat", true),
             required: false,
-          },
-        ],
+          }, fieldsOption],
       ),
       leaf(
         "show <id> <role-id>",
         "Read one scoped assignment",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.getAccountRole(kind, args.id, roleInput(args, options)),
-        scopeOptions,
+          c.getAccountRole(kind, args.id, roleInput(args, options), fieldsFromOptions(options)),
+        [...scopeOptions, fieldsOption],
       ),
       leaf(
         "grant <id> <role-id>",
         "Grant a scoped role",
         "Admin",
         (c, { args, options }) =>
-          c.grantAccountRole(kind, args.id, roleInput(args, options)),
-        scopeOptions,
+          c.grantAccountRole(kind, args.id, roleInput(args, options), fieldsFromOptions(options)),
+        [...scopeOptions, fieldsOption],
       ),
       leaf(
         "revoke <id> <role-id>",
         "Revoke one scoped assignment",
         "Admin",
         (c, { args, options }) =>
-          c.revokeAccountRole(kind, args.id, roleInput(args, options)),
-        scopeOptions,
+          c.revokeAccountRole(kind, args.id, roleInput(args, options), fieldsFromOptions(options)),
+        [...scopeOptions, fieldsOption],
       ),
     ]);
   }
@@ -204,13 +203,12 @@ export function createAdminCommands(
         (await clientFor(context)).deleteCurrentUserToken(
           args.name,
           context.secrets,
-          optional(options, "alias"),
+          optional(options, "alias"), fieldsFromOptions(options)
         ),
       {
         permission: "Credentials",
         options: [
-          option("--alias <name>", "Remove the matching alias after revocation"),
-        ],
+          option("--alias <name>", "Remove the matching alias after revocation"), fieldsOption],
       },
     ),
     command(
@@ -266,21 +264,21 @@ export function createAdminCommands(
         ),
       [fieldsOption, jsonOption("--item <json>", "Supply a native user body"), option("--username <text>", "Set the username"), option("--name <text>", "Set the display name")],
     ),
-    leaf("delete <id>", "Delete the remote account", "Admin", (c, { args }) =>
-      c.deleteAccountUser(args.id),
+    leaf("delete <id>", "Delete the remote account", "Admin", (c, { args, options }) =>
+      c.deleteAccountUser(args.id, fieldsFromOptions(options)), [fieldsOption]
     ),
     command("sessions", "Manage remote sessions", [
       leaf(
         "forget-remembered <id>",
         "Clear remembered logins",
         "Admin",
-        (c, { args }) => c.forgetRememberedSessions(args.id),
+        (c, { args, options }) => c.forgetRememberedSessions(args.id, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "logout <id>",
         "Terminate remote sessions",
         "Admin",
-        (c, { args }) => c.terminateAccountSessions(args.id),
+        (c, { args, options }) => c.terminateAccountSessions(args.id, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     command("groups", "Manage direct memberships", [
@@ -316,14 +314,14 @@ export function createAdminCommands(
     roles("users"),
     tokens,
     command("fields", "Read and write user fields", [
-      leaf("get <id> <field>", "Read a user field", Permission.ReadOnly, (c, { args }) =>
-        c.getAccountUserField(args.id, args.field),
+      leaf("get <id> <field>", "Read a user field", Permission.ReadOnly, (c, { args, options }) =>
+        c.getAccountUserField(args.id, args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
-      leaf("set <id> <field> <value>", "Set a user field", "Admin", (c, { args }) =>
-        c.setAccountUserField(args.id, args.field, args.value),
+      leaf("set <id> <field> <value>", "Set a user field", "Admin", (c, { args, options }) =>
+        c.setAccountUserField(args.id, args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
-      leaf("clear <id> <field>", "Clear a user field", "Admin", (c, { args }) =>
-        c.clearAccountUserField(args.id, args.field),
+      leaf("clear <id> <field>", "Clear a user field", "Admin", (c, { args, options }) =>
+        c.clearAccountUserField(args.id, args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
   ]);
@@ -360,8 +358,8 @@ export function createAdminCommands(
       [fieldsOption],
 
     ),
-    leaf("delete <key>", "Delete one remote group", "Admin", (c, { args }) =>
-      c.deleteAccountGroup(args.key),
+    leaf("delete <key>", "Delete one remote group", "Admin", (c, { args, options }) =>
+      c.deleteAccountGroup(args.key, fieldsFromOptions(options)), [fieldsOption]
     ),
     command(
       "parents",
@@ -372,8 +370,8 @@ export function createAdminCommands(
     roles("groups"),
   ]);
   const server = [
-    leaf("api-version", "Read REST API version text", Permission.ReadOnly, (c) =>
-      c.getApiVersion(),
+    leaf("api-version", "Read REST API version text", Permission.ReadOnly, (c, { options }) =>
+      c.getApiVersion(fieldsFromOptions(options)), [fieldsOption]
     ),
     command("nodes", "Inspect cluster nodes", [
       leaf(
@@ -413,8 +411,8 @@ export function createAdminCommands(
           "set <id> <name> <enabled>",
           "Set build-message processing",
           "Admin",
-          (c, { args }) =>
-            c.setNodeResponsibility(args.id, args.name, args.enabled),
+          (c, { args, options }) =>
+            c.setNodeResponsibility(args.id, args.name, args.enabled, fieldsFromOptions(options)), [fieldsOption]
         ),
       ]),
     ]),

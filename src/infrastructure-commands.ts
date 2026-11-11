@@ -115,8 +115,8 @@ export function createInfrastructureCommands(
             ? "Schedule stop when free"
             : "Force instance termination",
           Permission.Update,
-          (c, { options }) => c.stopCloudInstance(instance(options), action),
-          [...instanceOptions, ...(action === "stop" ? [] : [confirm])],
+          (c, { options }) => c.stopCloudInstance(instance(options), action, fieldsFromOptions(options)),
+          [...instanceOptions, ...(action === "stop" ? [] : [confirm]), fieldsOption],
         ),
       ),
     ]),
@@ -149,7 +149,7 @@ export function createInfrastructureCommands(
       "delete <id>",
       "Delete a VCS root configuration",
       Permission.Update,
-      (c, { args }) => c.deleteVcsRoot(args.id),
+      (c, { args, options }) => c.deleteVcsRoot(args.id, fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "instances <id>",
@@ -187,24 +187,24 @@ export function createInfrastructureCommands(
         "clear <id>",
         "Delete all VCS root properties",
         Permission.Update,
-        (c, { args }) => c.clearVcsRootProperties(args.id),
-        [confirm],
+        (c, { args, options }) => c.clearVcsRootProperties(args.id, fieldsFromOptions(options)),
+        [confirm, fieldsOption],
       ),
       leaf(
         "exists <id> <name>",
         "Check property existence",
         Permission.ReadOnly,
-        (c, { args }) => c.checkVcsRootProperty(args.id, args.name),
+        (c, { args, options }) => c.checkVcsRootProperty(args.id, args.name, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "set <id> <name> <value>",
         "Set a VCS root property",
         Permission.Update,
-        (c, { args }) =>
-          c.setVcsRootProperty(args.id, args.name, args.value),
+        (c, { args, options }) =>
+          c.setVcsRootProperty(args.id, args.name, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
-      leaf("delete <id> <name>", "Delete one property", Permission.Update, (c, { args }) =>
-        c.deleteVcsRootProperty(args.id, args.name),
+      leaf("delete <id> <name>", "Delete one property", Permission.Update, (c, { args, options }) =>
+        c.deleteVcsRootProperty(args.id, args.name, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     command("fields", "Read and write root fields", [
@@ -212,10 +212,10 @@ export function createInfrastructureCommands(
         "get <id> <field>",
         "Read a root field",
         Permission.ReadOnly,
-        (c, { args }) => c.getVcsRootField(args.id, args.field),
+        (c, { args, options }) => c.getVcsRootField(args.id, args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
-      leaf("set <id> <field> <value>", "Set a root field", Permission.Update, (c, { args }) =>
-        c.setVcsRootField(args.id, args.field, args.value),
+      leaf("set <id> <field> <value>", "Set a root field", Permission.Update, (c, { args, options }) =>
+        c.setVcsRootField(args.id, args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
   ];
@@ -244,8 +244,8 @@ export function createInfrastructureCommands(
       "notify-commit <id>",
       "Notify a VCS root instance",
       Permission.Update,
-      (c, { args, options }) => c.notifyVcsCommit(args.id, optional(options, "okOnNothingFound")),
-      [booleanOption("--ok-on-nothing-found <boolean>", "Set whether unmatched notifications succeed")],
+      (c, { args, options }) => c.notifyVcsCommit(args.id, optional(options, "okOnNothingFound"), fieldsFromOptions(options)),
+      [booleanOption("--ok-on-nothing-found <boolean>", "Set whether unmatched notifications succeed"), fieldsOption],
     ),
     leaf(
       "show <id>",
@@ -300,14 +300,14 @@ export function createInfrastructureCommands(
         "reset <id>",
         "Reset saved detection state",
         Permission.Update,
-        (c, { args }) => c.resetVcsRepositoryState(args.id),
-        [confirm],
+        (c, { args, options }) => c.resetVcsRepositoryState(args.id, fieldsFromOptions(options)),
+        [confirm, fieldsOption],
       ),
       leaf(
         "created <id>",
         "Read saved-state creation timestamp",
         Permission.ReadOnly,
-        (c, { args }) => c.getVcsRepositoryStateCreated(args.id),
+        (c, { args, options }) => c.getVcsRepositoryStateCreated(args.id, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     command("fields", "Read and write instance fields", [
@@ -315,20 +315,20 @@ export function createInfrastructureCommands(
         "get <id> <field>",
         "Read an instance field",
         Permission.ReadOnly,
-        (c, { args }) => c.getVcsInstanceField(args.id, args.field),
+        (c, { args, options }) => c.getVcsInstanceField(args.id, args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "set <id> <field> <value>",
         "Set a VCS instance field",
         Permission.Update,
-        (c, { args }) =>
-          c.setVcsInstanceField(args.id, args.field, args.value),
+        (c, { args, options }) =>
+          c.setVcsInstanceField(args.id, args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "clear <id> <field>",
         "Clear a VCS instance field",
         Permission.Update,
-        (c, { args }) => c.clearVcsInstanceField(args.id, args.field),
+        (c, { args, options }) => c.clearVcsInstanceField(args.id, args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
   ]);
@@ -346,14 +346,14 @@ export function createInfrastructureCommands(
       "check-changes <id>",
       "Request a settings check",
       Permission.Update,
-      (c, { args }) => c.checkVersionedSettings(args.id),
+      (c, { args, options }) => c.checkVersionedSettings(args.id, fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "commit <id>",
       "Commit current settings to external VCS",
       Permission.Update,
-      (c, { args }) => c.commitVersionedSettings(args.id),
-      [confirm],
+      (c, { args, options }) => c.commitVersionedSettings(args.id, fieldsFromOptions(options)),
+      [confirm, fieldsOption],
     ),
     command("config", "Manage versioned settings configuration", [
       leaf(
@@ -384,21 +384,21 @@ export function createInfrastructureCommands(
           "get <id> <field>",
           "Read a configuration field",
           Permission.ReadOnly,
-          (c, { args }) => c.getVersionedConfigField(args.id, args.field),
+          (c, { args, options }) => c.getVersionedConfigField(args.id, args.field, fieldsFromOptions(options)), [fieldsOption]
         ),
         leaf(
           "set <id> <field> <value>",
           "Set a configuration field",
           Permission.Update,
-          (c, { args }) =>
-            c.setVersionedConfigField(args.id, args.field, args.value),
+          (c, { args, options }) =>
+            c.setVersionedConfigField(args.id, args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
         ),
         leaf(
           "reset <id> <field>",
           "Reset the versioned VCS root",
           Permission.Update,
-          (c, { args }) => c.resetVersionedConfigField(args.id, args.field),
-          [confirm],
+          (c, { args, options }) => c.resetVersionedConfigField(args.id, args.field, fieldsFromOptions(options)),
+          [confirm, fieldsOption],
         ),
       ]),
     ]),
@@ -407,15 +407,15 @@ export function createInfrastructureCommands(
         "list <id>",
         "List DSL context parameter values",
         Permission.ReadOnly,
-        (c, { args }) => c.listVersionedContext(args.id),
+        (c, { args, options }) => c.listVersionedContext(args.id, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "replace <id>",
         "Replace all DSL context parameters",
         Permission.Update,
         (c, { args, options }) =>
-          c.replaceVersionedContext(args.id, (options.property ?? []) as PlainProperty[], nativeInput(options)),
-        [propertyOption, jsonOption("--item <json>", "Supply a native body")],
+          c.replaceVersionedContext(args.id, (options.property ?? []) as PlainProperty[], nativeInput(options), fieldsFromOptions(options)),
+        [propertyOption, jsonOption("--item <json>", "Supply a native body"), fieldsOption],
       ),
     ]),
     leaf(
@@ -438,8 +438,8 @@ export function createInfrastructureCommands(
         "List secure-value mapping names",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.listVersionedTokenNames(args.id, optional(options, "status")),
-        [option("--status <status>", "Filter the token status")],
+          c.listVersionedTokenNames(args.id, optional(options, "status"), fieldsFromOptions(options)),
+        [option("--status <status>", "Filter the token status"), fieldsOption],
       ),
       command(
         "set <id>",
@@ -450,7 +450,7 @@ export function createInfrastructureCommands(
             (options.mapping ?? []) as string[],
             context.secrets,
             (options.property ?? []) as PlainProperty[],
-            nativeInput(options),
+            nativeInput(options), fieldsFromOptions(options)
           ),
         {
           permission: "Credentials",
@@ -460,8 +460,7 @@ export function createInfrastructureCommands(
             repeatOption(
               "--mapping <remote-name=alias>",
               "Supply alias mappings; direct properties take precedence",
-            ),
-          ],
+            ), fieldsOption],
         },
       ),
       leaf(
@@ -469,8 +468,8 @@ export function createInfrastructureCommands(
         "Delete unused secure-value mappings",
         "Credentials",
         (c, { args, options }) =>
-          c.deleteVersionedTokens(args.id, options.name as string[], nativeInput(options)),
-        [repeatOption("--name <name>", "Select remote mappings; repeat for more"), jsonOption("--item <json>", "Supply a native body")],
+          c.deleteVersionedTokens(args.id, options.name as string[], nativeInput(options), fieldsFromOptions(options)),
+        [repeatOption("--name <name>", "Select remote mappings; repeat for more"), jsonOption("--item <json>", "Supply a native body"), fieldsOption],
       ),
     ]),
   ]);
@@ -479,7 +478,7 @@ export function createInfrastructureCommands(
       "rest-version",
       "Read the REST plugin version",
       Permission.ReadOnly,
-      (c) => c.getRestVersion(),
+      (c, { options }) => c.getRestVersion(fieldsFromOptions(options)), [fieldsOption]
     ),
   ];
   const credentials = command(

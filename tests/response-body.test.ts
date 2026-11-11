@@ -80,15 +80,30 @@ test("TeamCity stream failure and pending abort are private and release the read
   }
 });
 
-test("TeamCity cancels non-success bodies without inspecting diagnostics", async () => {
+test("TeamCity bounds diagnostic lookahead and cancels non-success bodies", { timeout: 5000 }, async () => {
   let cancelled = 0;
   const input = new Response(new ReadableStream<Uint8Array>({
+    start(controller) { controller.enqueue(Buffer.from("x".repeat(65536) + "omitted")); },
     cancel() { cancelled++; },
   }), { status: 503 });
   const client = new TeamCityClient({ ...connection, fetch: async () => input });
   await assert.rejects(client.getApiVersion(), /TeamCity request failed with HTTP 503/);
   assert.equal(cancelled, 1);
   assert.equal(input.body?.locked, false);
+});
+
+test("TeamCity diagnostic abort/read failures retain the known HTTP status", async () => {
+  for (const stopped of [false, true]) {
+    const controller = new AbortController();
+    const input = new Response(new ReadableStream<Uint8Array>({
+      start(stream) { if (!stopped) stream.error(new Error("synthetic-diagnostic-failure")); },
+    }), { status: 503 });
+    const client = new TeamCityClient({ ...connection, signal: controller.signal, fetch: async () => input });
+    const pending = client.getApiVersion();
+    if (stopped) controller.abort();
+    await assert.rejects(pending, { code: "http.serverError", message: "TeamCity request failed with HTTP 503." });
+    assert.equal(input.body?.locked, false);
+  }
 });
 
 test("TeamCity MSW response clone does not block reading a large body", { timeout: 5000 }, async () => {

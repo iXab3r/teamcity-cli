@@ -436,13 +436,13 @@ test("operator list/detail/create contracts have one request in each human and J
   }
 });
 
-test("operator JSON failure output excludes the remote payload", async t => {
+test("operator JSON failure output includes the masked server explanation", async t => {
   const f = await createTestRuntime(t);
   const requests = trackRequests(t, 1, () =>
     HttpResponse.text("fixture-token synthetic-private-response", { status: 403 }));
   server.use(http.all("*", ({ request }) => requests.handle(request)));
   await assertSafeCliFailure(f, f.createCli(), ["pools", "show", "1", "--json"],
-    /TeamCity request failed with HTTP 403/, /fixture-token|synthetic-private/);
+    /TeamCity request failed with HTTP 403.*synthetic-private-response/, /fixture-token/);
 });
 
 test("MSW resolver assertion failures remain visible after the CLI sanitizes the HTTP error", async t => {

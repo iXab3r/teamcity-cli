@@ -59,11 +59,11 @@ export function createAuthoringCommands(
           async ({ args, options }, context) =>
             (await clientFor(context)).setPasswordParameter(
               args["job-id"], args.name, options.valueSecret as string | undefined, context.secrets, options.value as string | undefined,
-              nativeInput(options),
+              nativeInput(options), fieldsFromOptions(options)
             ),
           { permission: "Credentials", options: [
             jsonOption("--item <json>", "Supply a native body"),
-            option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias")] },
+            option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias"), fieldsOption] },
         )] : []),
         leaf(
           `list <${ownerArg}>`,
@@ -120,7 +120,7 @@ export function createAuthoringCommands(
           `delete <${ownerArg}> <name>`,
           "Delete one named parameter",
           Permission.Update,
-          (c, { args }) => c.deleteParameter(owner, text(args, ownerArg), text(args, "name")),
+          (c, { args, options }) => c.deleteParameter(owner, text(args, ownerArg), text(args, "name"), fieldsFromOptions(options)), [fieldsOption]
         ),
       ],
     );
@@ -190,8 +190,8 @@ export function createAuthoringCommands(
           ),
         [...extensionOptions, fieldsOption],
       ),
-      leaf(`delete <job-id> <${idArg}>`, "Delete one extension", Permission.Update, (c, { args }) =>
-        c.deleteExtension(kind, text(args, "job-id"), text(args, idArg)),
+      leaf(`delete <job-id> <${idArg}>`, "Delete one extension", Permission.Update, (c, { args, options }) =>
+        c.deleteExtension(kind, text(args, "job-id"), text(args, idArg), fieldsFromOptions(options)), [fieldsOption]
       ),
     ]);
   }
@@ -250,8 +250,8 @@ export function createAuthoringCommands(
         "delete <job-id> <dependency-id>",
         "Remove an upstream dependency",
         Permission.Update,
-        (c, { args }) =>
-          c.deleteSnapshotDependency(args["job-id"], args["dependency-id"]),
+        (c, { args, options }) =>
+          c.deleteSnapshotDependency(args["job-id"], args["dependency-id"], fieldsFromOptions(options)), [fieldsOption]
       ),
     ],
   );
@@ -302,14 +302,13 @@ export function createAuthoringCommands(
         c.detachTemplate(
           args["job-id"],
           args["template-id"],
-          options.inlineSettings as boolean | undefined,
+          options.inlineSettings as boolean | undefined, fieldsFromOptions(options)
         ),
       [
         option(
           "--inline-settings",
           "Copy inherited settings before detaching",
-        ),
-      ],
+        ), fieldsOption],
     ),
   ]);
   const steps = command("steps", "Manage ordered build steps", [
@@ -347,8 +346,8 @@ export function createAuthoringCommands(
         c.replaceStep(args["job-id"], args["step-id"], stepInput(options), fieldsFromOptions(options), nativeInput(options)),
       [...stepOptions, fieldsOption],
     ),
-    leaf("delete <job-id> <step-id>", "Delete one build step", Permission.Update, (c, { args }) =>
-      c.deleteStep(args["job-id"], args["step-id"]),
+    leaf("delete <job-id> <step-id>", "Delete one build step", Permission.Update, (c, { args, options }) =>
+      c.deleteStep(args["job-id"], args["step-id"], fieldsFromOptions(options)), [fieldsOption]
     ),
   ]);
 
@@ -409,19 +408,19 @@ export function createAuthoringCommands(
       "detach <job-id> <root-id>",
       "Detach a VCS root",
       Permission.Update,
-      (c, { args }) => c.detachVcsRoot(args["job-id"], args["root-id"]),
+      (c, { args, options }) => c.detachVcsRoot(args["job-id"], args["root-id"], fieldsFromOptions(options)), [fieldsOption]
     ),
     command("checkout-rules", "Inspect or update checkout rules", [
-      leaf("show <job-id> <root-id>", "Show checkout rules", Permission.ReadOnly, (c, { args }) =>
-        c.getCheckoutRules(args["job-id"], args["root-id"]),
+      leaf("show <job-id> <root-id>", "Show checkout rules", Permission.ReadOnly, (c, { args, options }) =>
+        c.getCheckoutRules(args["job-id"], args["root-id"], fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "set <job-id> <root-id>",
         "Replace checkout rules",
         Permission.Update,
         (c, { args, options }) =>
-          c.setCheckoutRules(args["job-id"], args["root-id"], options.rules as string | undefined),
-        [option("--rules <rules>", "Set checkout rules")],
+          c.setCheckoutRules(args["job-id"], args["root-id"], options.rules as string | undefined, fieldsFromOptions(options)),
+        [option("--rules <rules>", "Set checkout rules"), fieldsOption],
       ),
     ]),
   ]);
@@ -462,15 +461,15 @@ export function createAuthoringCommands(
           ...optionalText(options, "parent"),
           ...optionalText(options, "description"),
           ...nativeInput(options),
-        }),
-      [nameOption, { ...parentOption, required: false }, descriptionOption, jsonOption("--item <json>", "Supply a native project body")],
+        }, fieldsFromOptions(options)),
+      [nameOption, { ...parentOption, required: false }, descriptionOption, jsonOption("--item <json>", "Supply a native project body"), fieldsOption],
     ),
     leaf(
       "set <id> <field> <value>",
       "Set project identity fields",
       Permission.Update,
-      (c, { args }) =>
-        c.setProjectField(args.id, args.field, args.value),
+      (c, { args, options }) =>
+        c.setProjectField(args.id, args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "move <id>",
@@ -483,14 +482,14 @@ export function createAuthoringCommands(
       "delete <id>",
       "Delete a project and its contents",
       Permission.Update,
-      (c, { args }) => c.deleteProject(args.id),
+      (c, { args, options }) => c.deleteProject(args.id, fieldsFromOptions(options)), [fieldsOption]
     ),
   ];
   const jobs = [
     leaf("copy <source-id> <id>", "Copy a build configuration", "Credentials",
       (c, { args, options }) => c.copyJob(args["source-id"], args.id, {
         ...optionalText(options, "name"), project: text(options, "project"),
-      }, nativeInput(options)), [nameOption, projectOption, jsonOption("--item <json>", "Supply a native copy body")]),
+      }, nativeInput(options), fieldsFromOptions(options)), [nameOption, projectOption, jsonOption("--item <json>", "Supply a native copy body"), fieldsOption]),
     ...bulk.jobs,
     ...advanced.jobs,
     parameters("output"),
@@ -520,20 +519,20 @@ export function createAuthoringCommands(
       "set <id> <field> <value>",
       "Set job identity fields",
       Permission.Update,
-      (c, { args }) => c.setJobField(args.id, args.field, args.value),
+      (c, { args, options }) => c.setJobField(args.id, args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "move <id>",
       "Move a job to a project",
       Permission.Update,
-      (c, { args, options }) => c.moveJob(args.id, options.project as string | undefined),
-      [{ ...projectOption, required: false }],
+      (c, { args, options }) => c.moveJob(args.id, options.project as string | undefined, fieldsFromOptions(options)),
+      [{ ...projectOption, required: false }, fieldsOption],
     ),
     leaf(
       "delete <id>",
       "Delete a job and its history",
       Permission.Update,
-      (c, { args }) => c.deleteJob(args.id),
+      (c, { args, options }) => c.deleteJob(args.id, fieldsFromOptions(options)), [fieldsOption]
     ),
   ];
   return { projects, jobs, roots };

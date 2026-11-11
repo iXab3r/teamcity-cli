@@ -89,8 +89,8 @@ export function createTriageCommands(
         "status",
         "Read aggregate status",
         Permission.ReadOnly,
-        (c, { options }) => c.getBuildBatchStatus(ids(options)),
-        [batchIds],
+        (c, { options }) => c.getBuildBatchStatus(ids(options), fieldsFromOptions(options)),
+        [batchIds, fieldsOption],
       ),
       leaf(
         "show",
@@ -184,19 +184,19 @@ export function createTriageCommands(
       "reset-finish-cache <id>",
       "Reset the final-parameter cache",
       Permission.Update,
-      (c, { args }) => c.resetBuildFinishCache(num(args, "id")),
+      (c, { args, options }) => c.resetBuildFinishCache(num(args, "id"), fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "finish <id>",
       "Request build completion",
       Permission.Update,
-      (c, { args }) => c.finishBuild(num(args, "id")),
+      (c, { args, options }) => c.finishBuild(num(args, "id"), undefined, fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "finish-at <id> <timestamp>",
       "Set finish time on a running build",
       Permission.Update,
-      (c, { args }) => c.finishBuild(num(args, "id"), args.timestamp),
+      (c, { args, options }) => c.finishBuild(num(args, "id"), args.timestamp, fieldsFromOptions(options)), [fieldsOption]
     ),
     command("log", "Append plain build log text", [
       leaf(
@@ -307,7 +307,7 @@ export function createTriageCommands(
           "exists <id> <name>",
           "Check parameter existence",
           Permission.ReadOnly,
-          (c, { args }) => c.checkBuildRuntimeParameter(num(args, "id"), kind, args.name),
+          (c, { args, options }) => c.checkBuildRuntimeParameter(num(args, "id"), kind, args.name, fieldsFromOptions(options)), [fieldsOption]
         ),
       ]),
     ),
@@ -331,14 +331,14 @@ export function createTriageCommands(
       [fieldsOption],
 
     ),
-    leaf("issues <id>", "Read issue IDs", Permission.ReadOnly, (c, { args }) =>
-      c.getChangeIssues(num(args, "id")),
+    leaf("issues <id>", "Read issue IDs", Permission.ReadOnly, (c, { args, options }) =>
+      c.getChangeIssues(num(args, "id"), fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "parent-revisions <id>",
       "Read parent revision strings",
       Permission.ReadOnly,
-      (c, { args }) => c.getChangeParentRevisions(num(args, "id")),
+      (c, { args, options }) => c.getChangeParentRevisions(num(args, "id"), fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "root-instance <id>",
@@ -351,7 +351,7 @@ export function createTriageCommands(
       "field <id> <field>",
       "Read id/version/date/personal/comment",
       Permission.ReadOnly,
-      (c, { args }) => c.getChangeField(num(args, "id"), args.field),
+      (c, { args, options }) => c.getChangeField(num(args, "id"), args.field, fieldsFromOptions(options)), [fieldsOption]
     ),
     withView(
       stringList,
@@ -405,8 +405,8 @@ export function createTriageCommands(
       "delete",
       "Delete an investigation",
       Permission.Update,
-      (c, { options }) => c.deleteInvestigation(options.target),
-      [target],
+      (c, { options }) => c.deleteInvestigation(options.target, fieldsFromOptions(options)),
+      [target, fieldsOption],
     ),
   ]);
   const mutes = command("mutes", "Mute tests or problems within a scope", [
@@ -448,9 +448,9 @@ export function createTriageCommands(
       (c, { args, options }) =>
         c.deleteMute(
           num(args, "id"),
-          typeof options.comment === "string" ? options.comment : undefined,
+          typeof options.comment === "string" ? options.comment : undefined, fieldsFromOptions(options)
         ),
-      [{ ...comment, required: false }],
+      [{ ...comment, required: false }, fieldsOption],
     ),
   ]);
   const entities = (["test", "problem"] as const).map((kind) =>

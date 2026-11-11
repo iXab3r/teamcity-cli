@@ -62,21 +62,21 @@ export function createOperatorCommands(
       "create",
       "Create a pool",
       Permission.Update,
-      (c, { options }) => c.createPool(options.name as string | undefined, nativeInput(options)),
-      [option("--name <name>", "Set the pool name"), jsonOption("--item <json>", "Supply a native body")],
+      (c, { options }) => c.createPool(options.name as string | undefined, nativeInput(options), fieldsFromOptions(options)),
+      [option("--name <name>", "Set the pool name"), jsonOption("--item <json>", "Supply a native body"), fieldsOption],
     ),
     leaf(
       "delete <pool-id>",
       "Delete an agent pool",
       Permission.Update,
-      (c, { args }) => c.deletePool(number(args, "pool-id")),
+      (c, { args, options }) => c.deletePool(number(args, "pool-id"), fieldsFromOptions(options)), [fieldsOption]
     ),
     command("fields", "Manage the pool name", [
-      leaf("show <pool-id> <field>", "Read name", Permission.ReadOnly, (c, { args }) =>
-        c.getPoolField(number(args, "pool-id"), args.field),
+      leaf("show <pool-id> <field>", "Read name", Permission.ReadOnly, (c, { args, options }) =>
+        c.getPoolField(number(args, "pool-id"), args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
-      leaf("set <pool-id> <field> <value>", "Set name", Permission.Update, (c, { args }) =>
-        c.setPoolField(number(args, "pool-id"), args.field, args.value),
+      leaf("set <pool-id> <field> <value>", "Set name", Permission.Update, (c, { args, options }) =>
+        c.setPoolField(number(args, "pool-id"), args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     command("agents", "Manage agents assigned to a pool", [
@@ -113,14 +113,14 @@ export function createOperatorCommands(
         "assign <pool-id> <project-id>",
         "Assign a project to the pool",
         Permission.Update,
-        (c, { args, options }) => c.assignPoolProject(number(args, "pool-id"), args["project-id"], nativeInput(options)),
-        [jsonOption("--item <json>", "Supply a native body")],
+        (c, { args, options }) => c.assignPoolProject(number(args, "pool-id"), args["project-id"], nativeInput(options), fieldsFromOptions(options)),
+        [jsonOption("--item <json>", "Supply a native body"), fieldsOption],
       ),
       leaf(
         "unassign <pool-id> <project-id>",
         "Remove a project membership",
         Permission.Update,
-        (c, { args }) => c.unassignPoolProject(number(args, "pool-id"), args["project-id"]),
+        (c, { args, options }) => c.unassignPoolProject(number(args, "pool-id"), args["project-id"], fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
   ]);
@@ -152,8 +152,8 @@ export function createOperatorCommands(
   }
   const agents = [
     command("parameters", "Inspect agent parameters", [
-      leaf("list <agent-id>", "List agent parameter values", Permission.ReadOnly, (c, { args }) =>
-        c.listAgentParameters(number(args, "agent-id")),
+      leaf("list <agent-id>", "List agent parameter values", Permission.ReadOnly, (c, { args, options }) =>
+        c.listAgentParameters(number(args, "agent-id"), fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     bulk.agentTypes,
@@ -163,7 +163,7 @@ export function createOperatorCommands(
       "delete <agent-id>",
       "Delete an inactive agent",
       Permission.Update,
-      (c, { args }) => c.deleteAgent(number(args, "agent-id")),
+      (c, { args, options }) => c.deleteAgent(number(args, "agent-id"), fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "compatible-jobs <agent-id>",
@@ -228,14 +228,14 @@ export function createOperatorCommands(
         "show <agent-id> <field>",
         "Read id, name, connected, enabled or authorized",
         Permission.ReadOnly,
-        (c, { args }) => c.getAgentField(number(args, "agent-id"), args.field),
+        (c, { args, options }) => c.getAgentField(number(args, "agent-id"), args.field, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "set <agent-id> <field> <value>",
         "Set enabled or authorized to true/false",
         Permission.Update,
-        (c, { args }) =>
-          c.setAgentField(number(args, "agent-id"), args.field, args.value),
+        (c, { args, options }) =>
+          c.setAgentField(number(args, "agent-id"), args.field, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
   ];
@@ -272,7 +272,7 @@ export function createOperatorCommands(
             nativeInput(options),
 
           ),
-        [tagOption, ...(owner === "builds" ? [fieldsOption] : []), jsonOption("--item <json>", "Supply a native body")],
+        [tagOption, fieldsOption, jsonOption("--item <json>", "Supply a native body")],
       ),
       ...(owner === "builds"
         ? [
@@ -335,14 +335,14 @@ export function createOperatorCommands(
   ];
   function buildScalar(field: "number" | "statusText", group: string) {
     return command(group, "Inspect or change a running build's display metadata", [
-      leaf("show <build-id>", "Read the value", Permission.ReadOnly, (c, { args }) =>
-        c.getBuildScalar(number(args, "build-id"), field),
+      leaf("show <build-id>", "Read the value", Permission.ReadOnly, (c, { args, options }) =>
+        c.getBuildScalar(number(args, "build-id"), field, fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "set <build-id> <value>",
         "Set the running build value",
         Permission.Update,
-        (c, { args }) => c.setBuildScalar(number(args, "build-id"), field, args.value),
+        (c, { args, options }) => c.setBuildScalar(number(args, "build-id"), field, args.value, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]);
   }
@@ -355,13 +355,13 @@ export function createOperatorCommands(
       "delete <build-id>",
       "Delete a build and its history",
       Permission.Update,
-      (c, { args }) => c.deleteBuild(number(args, "build-id")),
+      (c, { args, options }) => c.deleteBuild(number(args, "build-id"), fieldsFromOptions(options)), [fieldsOption]
     ),
-    leaf("status <build-id>", "Read build status", Permission.ReadOnly, (c, { args }) =>
-      c.getBuildScalar(number(args, "build-id"), "status"),
+    leaf("status <build-id>", "Read build status", Permission.ReadOnly, (c, { args, options }) =>
+      c.getBuildScalar(number(args, "build-id"), "status", fieldsFromOptions(options)), [fieldsOption]
     ),
-    leaf("finish-date <build-id>", "Read finish date", Permission.ReadOnly, (c, { args }) =>
-      c.getBuildScalar(number(args, "build-id"), "finishDate"),
+    leaf("finish-date <build-id>", "Read finish date", Permission.ReadOnly, (c, { args, options }) =>
+      c.getBuildScalar(number(args, "build-id"), "finishDate", fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "canceled-info <build-id>",
@@ -376,11 +376,11 @@ export function createOperatorCommands(
         "Replace the build comment",
         Permission.Update,
         (c, { args, options }) =>
-          c.setBuildComment(number(args, "build-id"), options.text as string | undefined),
-        [option("--text <text>", "Set the comment text")],
+          c.setBuildComment(number(args, "build-id"), options.text as string | undefined, fieldsFromOptions(options)),
+        [option("--text <text>", "Set the comment text"), fieldsOption],
       ),
-      leaf("clear <build-id>", "Remove the comment", Permission.Update, (c, { args }) =>
-        c.clearBuildComment(number(args, "build-id")),
+      leaf("clear <build-id>", "Remove the comment", Permission.Update, (c, { args, options }) =>
+        c.clearBuildComment(number(args, "build-id"), fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     command("pin", "Inspect or change pinned status", [
@@ -418,7 +418,7 @@ export function createOperatorCommands(
         "show <build-id> <name>",
         "Read one statistic as numeric text",
         Permission.ReadOnly,
-        (c, { args }) => c.getBuildStatistic(number(args, "build-id"), args.name),
+        (c, { args, options }) => c.getBuildStatistic(number(args, "build-id"), args.name, fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     command("fields", "Read one scalar field as text", [
@@ -426,8 +426,8 @@ export function createOperatorCommands(
         "show <build-id> <field>",
         "Read a build field",
         Permission.ReadOnly,
-        (c, { args }) =>
-          c.getBuildScalar(number(args, "build-id"), fieldName(args.field)),
+        (c, { args, options }) =>
+          c.getBuildScalar(number(args, "build-id"), fieldName(args.field), fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
   ];

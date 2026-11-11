@@ -25,7 +25,7 @@ import { buildOutcome, type BuildOutcome } from "./outcome.js";
 import type { TeamCityPage } from "./paging.js";
 import { buildRecord, diagnosisRecord, followedRecord, withView } from "./presentation.js";
 import { nativeInput } from "./command-support.js";
-import { fieldsOption } from "./projection.js";
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 
 type ClientFor = (context: CommandContext) => Promise<TeamCityClient>;
 
@@ -130,16 +130,31 @@ async function follow(
   timing: { timeout: number; interval: number },
   shape: (build: TeamCityBuild, outcome?: FollowedBuild["outcome"]) => FollowedBuild,
   known?: TeamCityBuild,
-): Promise<FollowedBuild> {
+  fields?: string,
+): Promise<unknown> {
   const deadline = AbortSignal.timeout(timing.timeout);
   const expire = () => stop.abort();
   deadline.addEventListener("abort", expire, { once: true });
+  let result: FollowedBuild;
   try {
-    return await observe(client, deadline, context, id, timing, shape, known);
+    result = await observe(client, deadline, context, id, timing, shape, known);
+  } catch (error) {
+    if (fields === undefined || !(error instanceof CliError) ||
+        !["build.failed", "build.canceled", "build.unknown"].includes(error.code)) throw error;
+    let native: unknown;
+    try {
+      native = await client.getBuild(id, fields);
+    } catch {
+      // A projection read cannot erase an already observed build outcome.
+      throw error;
+    }
+    throw new CliError(error.message, { code: error.code, exitCode: error.exitCode,
+      next: error.next, result: native, cause: error.cause });
   } finally {
     // An unfired timeout with a listener stays alive until it fires, which can take hours.
     deadline.removeEventListener("abort", expire);
   }
+  return fields === undefined ? result : client.getBuild(id, fields);
 }
 
 async function observe(
@@ -302,18 +317,34 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
     "Wait for a build to finish",
     async ({ args, options }, context) => {
       const id = integerValue(args["build-id"]);
-      return follow(await commandClient(clientFor, context), context, id, pause(options),
-        (build, outcome) => ({ build, ...(outcome === undefined ? {} : { outcome }) }));
+      const session = await commandClient(clientFor, context);
+      return follow(session, context, id, pause(options),
+        (build, outcome) => ({ build, ...(outcome === undefined ? {} : { outcome }) }),
+        undefined, fieldsFromOptions(options));
     },
-    { permission: Permission.ReadOnly, options: waitOptions },
+    { permission: Permission.ReadOnly, options: [...waitOptions, fieldsOption] },
   ));
 
   const diagnose = withView(diagnosisRecord, command(
     "diagnose <build-id>",
     "Summarize build problems and failed tests",
-    async ({ args }, context) => {
+    async ({ args, options }, context) => {
       const id = integerValue(args["build-id"]);
       const client = await clientFor(context);
+      const fields = fieldsFromOptions(options);
+      if (fields !== undefined) {
+        const build = await client.getBuildSummary(id, fields);
+        const [problems, failedTests] = await Promise.all([
+          section(context, () => client.listBuildProblems(id, { limit: problemLimit, fields }), item => item),
+          section(context, () => client.listFailedTests(id, testLimit, fields), item => item),
+        ]);
+        const diagnosis = { build, problems, failedTests,
+          partial: problems.status === "unavailable" || failedTests.status === "unavailable" };
+        if (diagnosis.partial) throw new CliError("Some diagnostics could not be read; the summary is partial.", {
+          code: "diagnose.partial", result: diagnosis,
+        });
+        return diagnosis;
+      }
       const build = await client.getBuildSummary(id);
       const [problems, failedTests] = await Promise.all([
         section(context, () => client.listBuildProblems(id, { limit: problemLimit }), problem),
@@ -334,7 +365,7 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
       }
       return diagnosis;
     },
-    { permission: Permission.ReadOnly },
+    { permission: Permission.ReadOnly, options: [fieldsOption] },
   ));
 
   const run = withView(followedRecord, command(
@@ -347,16 +378,21 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
         throw new Error("--timeout and --interval apply only with --wait.");
       const branch = optionalString(options, "branch");
       const comment = optionalString(options, "comment");
+      const fields = fieldsFromOptions(options);
       const session = await commandClient(clientFor, context);
       let queued: TeamCityBuild;
       try {
-        queued = await session.client.runJob(job, {
+        const input = {
           ...(branch === undefined ? {} : { branch }),
           ...(comment === undefined ? {} : { comment }),
           ...(options.param === undefined ? {} : { properties }),
           ...(typeof options.moveToTop === "string" ? { moveToTop: options.moveToTop } : {}),
           ...(options.cleanSources === true ? { cleanSources: true } : {}),
-        }, nativeInput(options));
+        };
+        if (fields !== undefined && options.wait !== true) {
+          return await session.client.runJob(job, input, nativeInput(options), fields);
+        }
+        queued = await session.client.runJob(job, input, nativeInput(options));
       } catch (error) {
         if (!(error instanceof TeamCityUnknownOutcomeError)) throw error;
         // Never queue again automatically: the first request may already have been accepted.
@@ -381,11 +417,12 @@ export function createBuildFlowCommands(clientFor: ClientFor) {
         accepted: true,
         build: { ...build, ...(queued.parameterNames === undefined ? {} : { parameterNames: queued.parameterNames }) },
         ...(outcome === undefined ? {} : { outcome }),
-      }), queued);
+      }), queued, fields);
     },
     {
       permission: Permission.Update,
       options: [
+        fieldsOption,
         jsonOption("--item <json>", "Supply a native build body"),
         booleanOption("--move-to-top <boolean>", "Queue the build at the top"),
         {

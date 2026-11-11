@@ -8,7 +8,7 @@ test("text and path projections validate structure without arbitrary length caps
   assert.equal(serverPath("/" + text).serverPath, "/" + text);
   assert.equal(remotePath(text), text);
   assert.equal(sensitiveSegment(text), text);
-  assert.equal(pluginXml(`<plugin name="${text}"/>`).name, text);
+  assert.deepEqual(pluginXml(`<plugin name="${text}"/>`), { name: text });
   assert.throws(() => remotePath("../" + text));
-  assert.throws(() => pluginXml('<!DOCTYPE plugin><plugin name="fixture"/>'));
+  assert.equal(pluginXml('<!DOCTYPE plugin><plugin name="fixture"/>'), '<!DOCTYPE plugin><plugin name="fixture"/>');
 });

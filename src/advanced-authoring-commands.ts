@@ -32,21 +32,21 @@ export function createAdvancedAuthoringCommands(
           `show <job-id> <${arg}> <field>`,
           "Read a scalar entity setting",
           Permission.ReadOnly,
-          (c, { args }) =>
-            c.getEntitySetting(kind, text(args, "job-id"), text(args, arg), text(args, "field")),
+          (c, { args, options }) =>
+            c.getEntitySetting(kind, text(args, "job-id"), text(args, arg), text(args, "field"), fieldsFromOptions(options)), [fieldsOption]
         ),
         leaf(
           `set <job-id> <${arg}> <field> <value>`,
           "Set a rule setting",
           Permission.Update,
-          (c, { args }) =>
+          (c, { args, options }) =>
             c.setEntitySetting(
               kind,
               text(args, "job-id"),
               text(args, arg),
               text(args, "field"),
-              text(args, "value"),
-            ),
+              text(args, "value"), fieldsFromOptions(options)
+            ), [fieldsOption]
         ),
       ],
     );
@@ -66,8 +66,8 @@ export function createAdvancedAuthoringCommands(
         `show <job-id> <${arg}> <name>`,
         "Show a property value",
         Permission.ReadOnly,
-        (c, { args }) =>
-          c.getPluginParameter(kind, text(args, "job-id"), text(args, arg), text(args, "name")),
+        (c, { args, options }) =>
+          c.getPluginParameter(kind, text(args, "job-id"), text(args, arg), text(args, "name"), fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         `replace <job-id> <${arg}>`,
@@ -88,14 +88,14 @@ export function createAdvancedAuthoringCommands(
         `set <job-id> <${arg}> <name> <value>`,
         "Set a plugin property",
         Permission.Update,
-        (c, { args }) =>
+        (c, { args, options }) =>
           c.setPluginParameter(
             kind,
             text(args, "job-id"),
             text(args, arg),
             text(args, "name"),
-            text(args, "value"),
-          ),
+            text(args, "value"), fieldsFromOptions(options)
+          ), [fieldsOption]
       ),
     ]);
   }
@@ -182,7 +182,7 @@ export function createAdvancedAuthoringCommands(
         `delete <job-id> <${arg}>`,
         "Remove a job rule",
         Permission.Update,
-        (c, { args, options }) => c.deleteRule(kind, text(args, "job-id"), text(args, arg)),
+        (c, { args, options }) => c.deleteRule(kind, text(args, "job-id"), text(args, arg), fieldsFromOptions(options)), [fieldsOption]
       ),
     ]);
   }
@@ -243,12 +243,12 @@ export function createAdvancedAuthoringCommands(
       "delete <project-id> <feature-id>",
       "Delete one project feature",
       Permission.Update,
-      (c, { args }) => c.deleteProjectFeature(args["project-id"], args["feature-id"]),
+      (c, { args, options }) => c.deleteProjectFeature(args["project-id"], args["feature-id"], fieldsFromOptions(options)), [fieldsOption]
     ),
   ]);
   const templates = command("templates", "Create templates and manage the project default", [
-    leaf("show <template-id>", "Show template configuration", Permission.ReadOnly, (c, { args }) =>
-      c.getJobConfiguration(args["template-id"]),
+    leaf("show <template-id>", "Show template configuration", Permission.ReadOnly, (c, { args, options }) =>
+      c.getJobConfiguration(args["template-id"], fieldsFromOptions(options)), [fieldsOption]
     ),
     leaf(
       "list <project-id>",
@@ -309,7 +309,7 @@ export function createAdvancedAuthoringCommands(
           `show <${arg}> <field>`,
           "Read a configuration field",
           Permission.ReadOnly,
-          (c, { args }) => c.getOwnerField(owner, text(args, arg), text(args, "field")),
+          (c, { args, options }) => c.getOwnerField(owner, text(args, arg), text(args, "field"), fieldsFromOptions(options)), [fieldsOption]
         ),
       ],
     );
@@ -332,8 +332,8 @@ export function createAdvancedAuthoringCommands(
     ],
     jobs: [
       command("configuration", "Inspect complete build configuration", [
-        leaf("show <job-id>", "Show build configuration content", Permission.ReadOnly, (c, { args }) =>
-          c.getJobConfiguration(args["job-id"]),
+        leaf("show <job-id>", "Show build configuration content", Permission.ReadOnly, (c, { args, options }) =>
+          c.getJobConfiguration(args["job-id"], fieldsFromOptions(options)), [fieldsOption]
         ),
       ]),
       rules("agent-requirements"),
@@ -344,8 +344,8 @@ export function createAdvancedAuthoringCommands(
         "List historical external IDs",
         Permission.ReadOnly,
         (c, { args, options }) =>
-          c.listJobAliases(args["job-id"], options.field as string | undefined),
-        [fieldOption],
+          c.listJobAliases(args["job-id"], options.field as string | undefined, fieldsFromOptions(options)),
+        [fieldOption, fieldsOption],
 
       ),
       leaf(
@@ -364,8 +364,8 @@ export function createAdvancedAuthoringCommands(
         "tags <job-id>",
         "List tags used by this job's builds",
         Permission.ReadOnly,
-        (c, { args, options }) => c.listJobTags(args["job-id"], options.field as string | undefined),
-        [fieldOption],
+        (c, { args, options }) => c.listJobTags(args["job-id"], options.field as string | undefined, fieldsFromOptions(options)),
+        [fieldOption, fieldsOption],
       )),
     ],
   };

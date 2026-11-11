@@ -59,8 +59,8 @@ export function createBulkConfigurationCommands(
         "clear <owner-id>",
         "Delete all own parameters",
         Permission.Update,
-        (c, { args }) => c.clearParameters(owner, args["owner-id"]),
-        [confirm],
+        (c, { args, options }) => c.clearParameters(owner, args["owner-id"], fieldsFromOptions(options)),
+        [confirm, fieldsOption],
       ),
       ...parts.map((part) =>
         command(
@@ -71,8 +71,8 @@ export function createBulkConfigurationCommands(
               "show <owner-id> <name>",
               "Read parameter metadata",
               Permission.ReadOnly,
-              (c, { args }) =>
-                c.getParameterPart(owner, args["owner-id"], args.name, part),
+              (c, { args, options }) =>
+                c.getParameterPart(owner, args["owner-id"], args.name, part, fieldsFromOptions(options)), [fieldsOption]
             ),
             leaf(
               "set <owner-id> <name> <value>",
@@ -85,9 +85,9 @@ export function createBulkConfigurationCommands(
                   args.name,
                   part,
                   args.value,
-                  nativeInput(options),
+                  nativeInput(options), fieldsFromOptions(options)
                 ),
-              part === "type" ? [jsonOption("--item <json>", "Supply a native type body")] : [],
+              [...part === "type" ? [jsonOption("--item <json>", "Supply a native type body")] : [], fieldsOption],
             ),
           ],
         ),
@@ -156,8 +156,8 @@ export function createBulkConfigurationCommands(
       "Detach all templates",
       Permission.Update,
       (c, { args, options }) =>
-        c.clearTemplates(args["job-id"], options.inlineSettings as boolean | undefined),
-      [confirm, option("--inline-settings", "Copy inherited settings locally before detaching")],
+        c.clearTemplates(args["job-id"], options.inlineSettings as boolean | undefined, fieldsFromOptions(options)),
+      [confirm, option("--inline-settings", "Copy inherited settings locally before detaching"), fieldsOption],
     ),
   ];
   const jobs = [
@@ -181,7 +181,7 @@ export function createBulkConfigurationCommands(
 
       ),
       leaf("assign <project-id> <pool-id>", "Assign one pool", Permission.Update, (c, { args, options }) =>
-        c.assignProjectPool(args["project-id"], number(args, "pool-id"), nativeInput(options)), [jsonOption("--item <json>", "Supply a native body")],
+        c.assignProjectPool(args["project-id"], number(args, "pool-id"), nativeInput(options), fieldsFromOptions(options)), [jsonOption("--item <json>", "Supply a native body"), fieldsOption],
       ),
       leaf(
         "replace-all <project-id>",
@@ -200,7 +200,7 @@ export function createBulkConfigurationCommands(
         "unassign <project-id> <pool-id>",
         "Remove one pool assignment",
         Permission.Update,
-        (c, { args }) => c.unassignProjectPool(args["project-id"], number(args, "pool-id")),
+        (c, { args, options }) => c.unassignProjectPool(args["project-id"], number(args, "pool-id"), fieldsFromOptions(options)), [fieldsOption]
       ),
     ]),
     leaf(
@@ -241,8 +241,8 @@ export function createBulkConfigurationCommands(
             "Read custom child order",
             Permission.ReadOnly,
             (c, { args, options }) =>
-              c.getProjectOrder(args["project-id"], kind, options.field as string | undefined),
-            [fieldOption],
+              c.getProjectOrder(args["project-id"], kind, options.field as string | undefined, fieldsFromOptions(options)),
+            [fieldOption, fieldsOption],
           ),
           leaf(
             "set <project-id>",
@@ -254,9 +254,9 @@ export function createBulkConfigurationCommands(
                 kind,
                 strings(options, "id"),
                 options.field as string | undefined,
-                nativeInput(options),
+                nativeInput(options), fieldsFromOptions(options)
               ),
-            [fieldOption, repeatOption("--id <id>", "Repeat IDs in order"), jsonOption("--item <json>", "Supply a native body")],
+            [fieldOption, repeatOption("--id <id>", "Repeat IDs in order"), jsonOption("--item <json>", "Supply a native body"), fieldsOption],
           ),
         ]),
       ),
@@ -268,15 +268,15 @@ export function createBulkConfigurationCommands(
       "Replace all assigned projects",
       Permission.Update,
       (c, { args, options }) =>
-        c.replacePoolProjects(number(args, "pool-id"), strings(options, "project"), nativeInput(options)),
-      [repeatOption("--project <id>", "Repeat project IDs"), jsonOption("--item <json>", "Supply a native body")],
+        c.replacePoolProjects(number(args, "pool-id"), strings(options, "project"), nativeInput(options), fieldsFromOptions(options)),
+      [repeatOption("--project <id>", "Repeat project IDs"), jsonOption("--item <json>", "Supply a native body"), fieldsOption],
     ),
     leaf(
       "clear <pool-id>",
       "Remove all project assignments",
       Permission.Update,
-      (c, { args }) => c.clearPoolProjects(number(args, "pool-id")),
-      [confirm],
+      (c, { args, options }) => c.clearPoolProjects(number(args, "pool-id"), fieldsFromOptions(options)),
+      [confirm, fieldsOption],
     ),
   ];
   const queue = [
@@ -304,7 +304,7 @@ export function createBulkConfigurationCommands(
       "delete <build-id>",
       "Delete a queued build and cancellation history",
       Permission.Update,
-      (c, { args }) => c.deleteQueuedBuild(number(args, "build-id")),
+      (c, { args, options }) => c.deleteQueuedBuild(number(args, "build-id"), fieldsFromOptions(options)), [fieldsOption]
     ),
     command("paused", "Change global queue pause state", [
       leaf(
@@ -312,8 +312,8 @@ export function createBulkConfigurationCommands(
         "Set queue pause status",
         Permission.Update,
         (c, { args, options }) =>
-          c.setQueuePaused(booleanText(args.status) === "true", options.reason as string | undefined, nativeInput(options)),
-        [option("--reason <text>", "Set the pause reason"), jsonOption("--item <json>", "Supply a native body")],
+          c.setQueuePaused(booleanText(args.status) === "true", options.reason as string | undefined, nativeInput(options), fieldsFromOptions(options)),
+        [option("--reason <text>", "Set the pause reason"), jsonOption("--item <json>", "Supply a native body"), fieldsOption],
       ),
     ]),
     command("approval", "Inspect and approve queued builds", [

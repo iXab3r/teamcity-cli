@@ -54,8 +54,8 @@ export function createSystemCommands(
         "Create a dashboard",
         U,
         (c, { args, options }) =>
-          c.createDashboard(args.id, options.name as string | undefined, options.project as string | undefined, nativeInput(options)),
-        [option("--name <text>", "Set the name"), project, item],
+          c.createDashboard(args.id, options.name as string | undefined, options.project as string | undefined, nativeInput(options), fieldsFromOptions(options)),
+        [option("--name <text>", "Set the name"), project, item, fieldsOption],
       ),
       leaf(
         "show <id>",
@@ -68,8 +68,8 @@ export function createSystemCommands(
         "delete <id>",
         "Delete dashboard",
         U,
-        (c, { args }) => c.deleteDashboard(args.id),
-        [confirm],
+        (c, { args, options }) => c.deleteDashboard(args.id, fieldsFromOptions(options)),
+        [confirm, fieldsOption],
       ),
       command("instances", "Manage dashboard instances", [
         leaf(
@@ -94,9 +94,9 @@ export function createSystemCommands(
               options.state as string | undefined,
               options.date as string | undefined,
               optional(options, "build"),
-              nativeInput(options),
+              nativeInput(options), fieldsFromOptions(options)
             ),
-          [...stateOptions, confirm],
+          [...stateOptions, confirm, fieldsOption],
         ),
         leaf(
           "show <dashboard> <id>",
@@ -118,16 +118,16 @@ export function createSystemCommands(
               options.state as string | undefined,
               options.date as string | undefined,
               optional(options, "build"),
-              nativeInput(options),
+              nativeInput(options), fieldsFromOptions(options)
             ),
-          stateOptions,
+          [...stateOptions, fieldsOption],
         ),
         leaf(
           "delete <dashboard> <id>",
           "Remove selected instance",
           U,
-          (c, { args }) => c.deleteDeploymentInstance(args.dashboard, args.id),
-          [confirm],
+          (c, { args, options }) => c.deleteDeploymentInstance(args.dashboard, args.id, fieldsFromOptions(options)),
+          [confirm, fieldsOption],
         ),
       ]),
     ],
@@ -174,8 +174,8 @@ export function createSystemCommands(
       "delete <id>",
       "Delete role definition",
       "Admin",
-      (c, { args }) => c.deleteRoleDefinition(args.id),
-      [confirm],
+      (c, { args, options }) => c.deleteRoleDefinition(args.id, fieldsFromOptions(options)),
+      [confirm, fieldsOption],
     ),
     ...(["included", "permissions"] as const).map((kind) =>
       command(
@@ -202,7 +202,7 @@ export function createSystemCommands(
     ),
   ]);
   const server = [
-    leaf("rest-info", "Read REST landing metadata", R, (c) => c.getRestInfo()),
+    leaf("rest-info", "Read REST landing metadata", R, (c, { options }) => c.getRestInfo(fieldsFromOptions(options)), [fieldsOption]),
     leaf(
       "rest-plugin",
       "Read REST plugin metadata",
@@ -211,18 +211,18 @@ export function createSystemCommands(
       [fieldsOption],
     ),
     command("authentication", "Manage authentication modules", [
-      leaf("show", "Read authentication module settings", R, (c) => c.getAuthenticationSettings()),
+      leaf("show", "Read authentication module settings", R, (c, { options }) => c.getAuthenticationSettings(fieldsFromOptions(options)), [fieldsOption]),
       command(
         "replace",
         "Replace authentication modules",
         async ({ options }, context) =>
-          (await clientFor(context)).replaceAuthenticationSettings(options.item ?? {}, context.secrets),
-        { permission: "Admin", options: [item, confirm] },
+          (await clientFor(context)).replaceAuthenticationSettings(options.item ?? {}, context.secrets, fieldsFromOptions(options)),
+        { permission: "Admin", options: [item, confirm, fieldsOption] },
       ),
     ]),
     command("backup", "Inspect and schedule server backups", [
-      leaf("status", "Read backup progress", R, (c) =>
-        c.getBackupStatus(),
+      leaf("status", "Read backup progress", R, (c, { options }) =>
+        c.getBackupStatus(fieldsFromOptions(options)), [fieldsOption]
       ),
       leaf(
         "start <name>",
@@ -239,7 +239,7 @@ export function createSystemCommands(
               includePersonalChanges: optional(options, "includePersonalChanges"),
               includeRunningBuilds: optional(options, "includeRunningBuilds"),
               includeSupplimentaryData: optional(options, "includeSupplementaryData"),
-            },
+            }, fieldsFromOptions(options)
           ),
         [
           confirm,
@@ -249,28 +249,27 @@ export function createSystemCommands(
           booleanOption("--include-build-logs <boolean>", "Include build logs"),
           booleanOption("--include-personal-changes <boolean>", "Include personal changes"),
           booleanOption("--include-running-builds <boolean>", "Include running builds"),
-          booleanOption("--include-supplementary-data <boolean>", "Include supplementary data"),
-        ],
+          booleanOption("--include-supplementary-data <boolean>", "Include supplementary data"), fieldsOption],
       ),
     ]),
     command("cleanup", "Configure scheduled cleanup", [
-      leaf("show", "Read cleanup schedule", R, (c) => c.getCleanup()),
+      leaf("show", "Read cleanup schedule", R, (c, { options }) => c.getCleanup(fieldsFromOptions(options)), [fieldsOption]),
       leaf(
         "configure",
         "Update cleanup settings",
         "Admin",
-        (c, { options }) => c.configureCleanup(options.item ?? {}),
-        [item],
+        (c, { options }) => c.configureCleanup(options.item ?? {}, fieldsFromOptions(options)),
+        [item, fieldsOption],
       ),
     ]),
     command("settings", "Manage global settings", [
-      leaf("show", "Read safe settings", R, (c) => c.getGlobalSettings()),
+      leaf("show", "Read safe settings", R, (c, { options }) => c.getGlobalSettings(fieldsFromOptions(options)), [fieldsOption]),
       leaf(
         "set",
         "Update selected global settings",
         "Admin",
-        (c, { options }) => c.setGlobalSettings(options.item ?? {}),
-        [item],
+        (c, { options }) => c.setGlobalSettings(options.item ?? {}, fieldsFromOptions(options)),
+        [item, fieldsOption],
       ),
     ]),
     command("licenses", "Inspect and manage licenses", [
@@ -314,8 +313,8 @@ export function createSystemCommands(
         "delete [alias]",
         "Remove a license",
         async ({ args, options }, context) =>
-          (await clientFor(context)).deleteLicense(args.alias as string | undefined, context.secrets, options.key as string | undefined),
-        { permission: "Admin", options: [confirm, option("--key <value>", "Supply a license key")] },
+          (await clientFor(context)).deleteLicense(args.alias as string | undefined, context.secrets, options.key as string | undefined, fieldsFromOptions(options)),
+        { permission: "Admin", options: [confirm, option("--key <value>", "Supply a license key"), fieldsOption] },
       ),
     ]),
     leaf(
@@ -338,7 +337,7 @@ export function createSystemCommands(
       "field <field>",
       "Read a server field",
       R,
-      (c, { args }) => c.getServerField(args.field),
+      (c, { args, options }) => c.getServerField(args.field, fieldsFromOptions(options)), [fieldsOption]
     ),
   ];
   const projects = [
@@ -399,10 +398,10 @@ export function createSystemCommands(
         "replace <id>",
         "Upload a selected avatar file",
         U,
-        (c, { args, options }) => c.replaceAvatar(args.id, text(options, "file")),
-        [option("--file <path>", "Select a local image path", true)],
+        (c, { args, options }) => c.replaceAvatar(args.id, text(options, "file"), fieldsFromOptions(options)),
+        [option("--file <path>", "Select a local image path", true), fieldsOption],
       ),
-      leaf("delete <id>", "Remove avatar", U, (c, { args }) => c.deleteAvatar(args.id)),
+      leaf("delete <id>", "Remove avatar", U, (c, { args, options }) => c.deleteAvatar(args.id, fieldsFromOptions(options)), [fieldsOption]),
     ]),
   ];
   const pools = [

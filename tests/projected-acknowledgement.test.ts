@@ -23,13 +23,15 @@ for (const scenario of cases) for (const body of ["", " \n", "not JSON", undefin
       server.use(http.all("*", () => body === undefined ? new HttpResponse(null, { status: 204 }) : HttpResponse.text(body)));
       const cli = rt.createCli();
       for (const argv of [scenario.argv, [...scenario.argv, "--fields", "tag(name)"]]) {
-        if (surface === "execute") assert.deepEqual(await cli.execute(argv), scenario.expected);
-        else if (surface === "rpc") assert.deepEqual(await rt.rpc(cli, [argv, argv]), [0, 1].map(id => ({ jsonrpc: "2.0", id, result: scenario.expected })));
+        const expected = argv.includes("--fields") && body !== undefined && body !== "" ? body : scenario.expected;
+        if (surface === "execute") assert.deepEqual(await cli.execute(argv), expected);
+        else if (surface === "rpc") assert.deepEqual(await rt.rpc(cli, [argv, argv]), [0, 1].map(id => ({ jsonrpc: "2.0", id, result: expected })));
         else {
           const rendered = await rt.run(cli, [...argv, ...(surface === "json" ? ["--json"] : [])]);
           assert.equal(rendered.exitCode, 0, rendered.stderr);
           assert.equal(rendered.stderr, "");
-          if (surface === "json") assert.deepEqual(JSON.parse(rendered.stdout), scenario.expected);
+          if (surface === "json") assert.deepEqual(JSON.parse(rendered.stdout), expected);
+          else if (typeof expected === "string") assert.equal(rendered.stdout, expected + "\n");
           else assert.match(rendered.stdout, /(?:added|appended|pageDeleted): true/);
         }
       }
