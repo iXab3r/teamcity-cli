@@ -13,7 +13,7 @@ nativeControlsAcceptance("US-034", [
     permission: "ReadOnly",
     archive: action === "archive",
     query: {
-      locator: "count:100",
+      locator: action === "archive" ? "count:100" : "hidden:any,count:100",
       ...(action === "archive" ? {} : {fields: "count,file(name,size,modificationTime)"}),
     },
     controls: {

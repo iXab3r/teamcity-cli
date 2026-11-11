@@ -246,7 +246,7 @@ export function createOperatorCommands(
         stringList,
         leaf(
           "list <build-id>",
-          "List public tags",
+          "List public and private tags",
           Permission.ReadOnly,
           (c, { args, options }) =>
             c.listTags(

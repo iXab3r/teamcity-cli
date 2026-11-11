@@ -187,7 +187,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/buildTypes/id:Demo/branches",
     "query": {
-      "locator": "start:3,count:3",
+      "locator": "policy:ALL_BRANCHES,start:3,count:3",
       "fields": "nextHref,branch(name,default,active)"
     },
     "body": "",
@@ -253,6 +253,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/buildTypes/id:Demo/builds",
     "query": {
+      "locator": "defaultFilter:false,branch:(default:any)",
       "fields": "build(id,buildTypeId,number,state,status,queuePosition)"
     },
     "body": "",

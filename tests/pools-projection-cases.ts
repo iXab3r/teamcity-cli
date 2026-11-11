@@ -15,7 +15,7 @@ export const cases: Case[] = [
     "method": "GET",
     "path": "/app/rest/agentPools",
     "query": {
-      "locator": "start:3,count:3",
+      "locator": "orphanedPool:any,start:3,count:3",
       "fields": "nextHref,agentPool(id,name)"
     },
     "body": "",

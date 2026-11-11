@@ -95,6 +95,26 @@ and Core 0.7.1 diagnostics remain unchanged. Malformed JSON still fails.
 The [command reference](reference.md#native-projections-and-controls) lists projection families
 and native controls from the shipped declaration tree.
 
+## List defaults
+
+A list without filters shows everything the entity has, subject to server permissions and the
+existing page/scan bounds. Override TeamCity defaults that hide items; explicit flags narrow.
+Build lists use `defaultFilter:false,branch:(default:any)`; `--branch` accepts exact names,
+`@default` and `@this` (the invocation directory’s current Git branch). Explicit `--default-filter`
+replaces the injected value. Unscoped build lists use `lookupLimit:5000`, overridable by a positive
+safe decimal integer in `TEAMCITY_CLI_LOOKUP_LIMIT`; invalid values use 5000. Job-scoped lists
+omit this cap. Latest-build selection remains finished and non-personal as documented.
+
+Agent lists request `authorized:any`; disconnected/disabled agents are already included by the
+server. Archived projects stay visible. Templates remain separate from jobs (`jobs templates …`,
+`projects templates …`, or `jobs list --template-flag any`). Branch lists include inactive branches;
+build/queue tags include private tags; pools include orphaned pools; audit includes system and legacy
+events; unfiltered health includes root-project and global scopes. File browsing includes hidden
+entries while preserving root/immediate children and archive traversal semantics.
+Native server collections keep their defined scope and API limitations; see
+[the reference exceptions](reference.md#list-defaults). No raw locator flags, automatic history
+walks or permission bypasses are introduced. All paging/envelope, fields and error contracts remain.
+
 ## Paging
 
 TeamCity retains `--limit 100 --start 0`: limit bounds retained rows across wire requests.

@@ -3,6 +3,7 @@ import test from "node:test";
 import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { assertHttpRequest, trackRequests } from "@eyeauras/cli-factory/testing";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -64,7 +65,7 @@ for (const c of cases) test(`#385 ${c.name}`, async t => {
 
 test("#385 @this uses the invocation working directory, including nested paths", async t => {
   const runtime = await createTestRuntime(t);
-  const directory = await mkdtemp(join(process.env.TMPDIR!, "branch-385-"));
+  const directory = await mkdtemp(join(tmpdir(), "branch-385-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   execFileSync("git", ["init", "--initial-branch=feature/fixture"], { cwd: directory, stdio: "ignore" });
   const cwd = join(directory, "nested");
@@ -82,7 +83,7 @@ test("#385 @this uses the invocation working directory, including nested paths",
 
 test("#385 @this outside git fails clearly without HTTP", async t => {
   const runtime = await createTestRuntime(t);
-  const directory = await mkdtemp(join(process.env.TMPDIR!, "not-git-385-"));
+  const directory = await mkdtemp(join(tmpdir(), "not-git-385-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const requests = trackRequests(t, 0, async () => HttpResponse.json({}));
   server.use(http.all("*", ({ request }) => requests.handle(request)));

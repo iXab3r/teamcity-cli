@@ -487,7 +487,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/vcs-root-instances/id:8/files/latest",
     "query": {
-      "locator": "count:100",
+      "locator": "hidden:any,count:100",
       "fields": "count,file(name,size,modificationTime)"
     },
     "body": "",
@@ -564,7 +564,7 @@ export const cases: ProjectionCase[] = [
     "method": "GET",
     "path": "/app/rest/vcs-root-instances/id:8/files/latest/src",
     "query": {
-      "locator": "count:100",
+      "locator": "hidden:any,count:100",
       "fields": "count,file(name,size,modificationTime)"
     },
     "body": "",

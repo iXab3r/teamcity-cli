@@ -186,6 +186,7 @@ export interface ListBuildsOptions<F extends string | undefined = string | undef
   state?: TeamCityBuildState;
   status?: TeamCityBuildStatus;
   defaultFilter?: string;
+  lookupLimit?: number;
 }
 
 export interface ListBuildTestsOptions<F extends string | undefined = string | undefined> extends TeamCityPageOptions {
@@ -490,8 +491,8 @@ export class TeamCityClient {
     return this.#list(
       "/app/rest/builds",
       [
-        options.defaultFilter === undefined ? undefined : `defaultFilter:${locatorValue(options.defaultFilter, "Default filter")}`,
-        branchDimension(options.branch),
+        `defaultFilter:${locatorValue(options.defaultFilter ?? "false", "Default filter")}`,
+        options.branch === "@default" ? "branch:(default:true)" : branchDimension(options.branch) ?? "branch:(default:any)",
         options.job !== undefined ? nestedId("buildType", options.job, "TeamCity job ID") : undefined,
         options.project !== undefined
           ? nestedId("affectedProject", options.project, "TeamCity project ID")
@@ -503,6 +504,7 @@ export class TeamCityClient {
       buildFields,
       (item) => item as TeamCityBuild,
       options,
+      options.job === undefined ? options.lookupLimit ?? 5000 : undefined,
     );
   }
 
@@ -627,7 +629,7 @@ export class TeamCityClient {
       [
         options.connected === undefined ? undefined : `connected:${locatorValue(options.connected, "Connected filter")}`,
         options.enabled === undefined ? undefined : `enabled:${locatorValue(options.enabled, "Enabled filter")}`,
-        options.authorized === undefined ? undefined : `authorized:${locatorValue(options.authorized, "Authorized filter")}`,
+        `authorized:${locatorValue(options.authorized ?? "any", "Authorized filter")}`,
       ],
       "agent",
       agentFields,
@@ -1547,7 +1549,7 @@ export class TeamCityClient {
     jobId: string,
     options: TeamCityPageOptions & { fields?: F } = {},
   ) {
-    return this.#list(`${jobPath(jobId)}/branches`, [], "branch", "name,default,active", (item) => {
+    return this.#list(`${jobPath(jobId)}/branches`, ["policy:ALL_BRANCHES"], "branch", "name,default,active", (item) => {
       const { name, default: isDefault, active } =
         item as { name: string; default?: boolean; active?: boolean };
       return {
@@ -1678,7 +1680,7 @@ export class TeamCityClient {
   public listPools<F extends string | undefined = undefined>(
     options: TeamCityPageOptions & { fields?: F } = {},
   ) {
-    return this.#list("/app/rest/agentPools", [], "agentPool", "id,name",
+    return this.#list("/app/rest/agentPools", ["orphanedPool:any"], "agentPool", "id,name",
       (item) => safeNamed(item as AgentPoolSummary), options);
   }
 
@@ -2067,7 +2069,7 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       `${buildPath(id, owner)}/tags`,
-      { fields: "tag(name)", ...(locator === undefined ? {} : { locator }) },
+      { fields: "tag(name)", locator: locator ?? "private:any" },
       (value) => ((value as { tag?: { name: string }[] }).tag ?? []).map((tag) => tag.name),
       fields,
     );
@@ -2341,7 +2343,7 @@ export class TeamCityClient {
     return this.#projectedJson(
       "GET",
       `${jobPath(jobId)}/builds`,
-      { fields: `build(${operationBuildFields})` },
+      { locator: "defaultFilter:false,branch:(default:any)", fields: `build(${operationBuildFields})` },
       value => ((value as { build?: OperationBuild[] }).build ?? []).map(safeOperationBuild),
       fields
     );
@@ -2404,7 +2406,7 @@ export class TeamCityClient {
     projectId: string,
     options: TeamCityPageOptions & { fields?: F } = {},
   ) {
-    return this.#list(`${projectPath(projectId)}/branches`, [], "branch", "name,default", (item) => {
+    return this.#list(`${projectPath(projectId)}/branches`, ["policy:ALL_BRANCHES"], "branch", "name,default", (item) => {
       const branch = item as { name: string; default?: boolean };
       return {
         name: branch.name,
@@ -4500,6 +4502,7 @@ export class TeamCityClient {
     fields: string,
     project: (item: unknown) => T,
     page: TeamCityPageOptions & { fields?: F },
+    initialLookupLimit?: number,
   ): Promise<TeamCityPage<Projected<T, F>>> {
     const { limit, start } = normalizePage(page);
     const projection = page.fields === undefined ? undefined : fieldsProjection(page.fields);
@@ -4507,6 +4510,8 @@ export class TeamCityClient {
       const response = triage.object(await this.#requestJson("GET", path, {
         locator: joinLocator(
           ...locator,
+          request.lookupLimit === undefined && initialLookupLimit !== undefined
+            ? `lookupLimit:${initialLookupLimit}` : undefined,
           `start:${request.start}`,
           `count:${request.count}`,
           request.lookupLimit === undefined ? undefined : `lookupLimit:${request.lookupLimit}`,
@@ -4562,7 +4567,7 @@ export class TeamCityClient {
   ) {
     return this.#list(
       "/app/rest/audit",
-      [project ? nestedId("affectedProject", project, "Project ID") : undefined],
+      ["systemAction:any", "hidden:any", project ? nestedId("affectedProject", project, "Project ID") : undefined],
       "auditEvent",
       system.auditFields,
       system.safeAudit,
@@ -4729,7 +4734,8 @@ export class TeamCityClient {
     options: { project?: string; global?: boolean },
     page: TeamCityPageOptions & { fields?: F },
   ) {
-    return this.#list("/app/rest/health", [system.healthLocator(options)], "healthItem",
+    return this.#list("/app/rest/health", [system.healthLocator(options.project === undefined && options.global === undefined
+      ? { project: "_Root", global: true } : options)], "healthItem",
       system.healthFields, system.safeHealth, page);
   }
   public async getHealth<F extends string | undefined = undefined>(
@@ -5103,7 +5109,7 @@ export class TeamCityClient {
         files.treePath(kind, id) + suffix,
         {
           ...files.controlledFileQuery(kind, controls),
-          locator: files.fileLocator(count),
+          locator: "hidden:any," + files.fileLocator(count),
           fields: `count,file(${controls.fields ?? files.fileFields})`,
         },
       );
@@ -5120,7 +5126,7 @@ export class TeamCityClient {
     const raw = triage.object(
       await this.#requestJson("GET", files.treePath(kind, id) + suffix, {
         ...files.controlledFileQuery(kind, controls),
-        locator: files.fileLocator(requested, true),
+        locator: "hidden:any," + files.fileLocator(requested, true),
         fields: `count,file(${controls.fields ?? files.artifactFileFields})`,
       }),
     );

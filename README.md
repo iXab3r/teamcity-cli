@@ -26,7 +26,10 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 
 Requests send what the caller supplies. TeamCity validates service values and applies omitted-field
 defaults. Native JSON DTOs work alongside compact options; permission gates, confirmations and local
-file/credential safety remain enforced. See the [request contract](docs/reference.md).
+file/credential safety remain enforced. Lists without filters request all items within their page
+limits: builds include all branches and states, and agents include unauthorized agents. Use
+`builds list --branch @default` or `--branch @this` to narrow the branch; templates remain separate
+from jobs. See [list defaults](docs/reference.md#list-defaults) for scan bounds and scoped exceptions.
 
 ## Coverage
 

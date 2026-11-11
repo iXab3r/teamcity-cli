@@ -204,8 +204,8 @@ test("builds list reads across a lookup-limit continuation and reports completen
   assert.match(result.stdout, /^BUILD\s+JOB\s+BRANCH\s+STATE\s+RESULT\s+AGE\n9\s+finished\s+SUCCESS/);
   assert.doesNotMatch(result.stdout, /More results|Shown:/);
   assert.deepEqual(locators, [
-    "status:SUCCESS,start:0,count:3",
-    "status:SUCCESS,start:0,count:3,lookupLimit:10000",
+    "defaultFilter:false,branch:(default:any),status:SUCCESS,lookupLimit:5000,start:0,count:3",
+    "defaultFilter:false,branch:(default:any),status:SUCCESS,start:0,count:3,lookupLimit:10000",
   ]);
 });
 

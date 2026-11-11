@@ -187,7 +187,7 @@ test("native filters, custom file areas and backup names are server-validated", 
       return HttpResponse.json({ build: [] });
     }
     assert.equal(url.pathname, "/app/rest/server/files/custom.future");
-    assert.match(url.searchParams.get("locator")!, /^count:0$/);
+    assert.match(url.searchParams.get("locator")!, /^hidden:any,count:0$/);
     return HttpResponse.json({ file: [] });
   });
   server.use(http.all("*", ({ request }) => requests.handle(request)));

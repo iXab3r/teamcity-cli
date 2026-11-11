@@ -176,7 +176,7 @@ test("US-001-A2 native item projections preserve filtered multi-page selection o
       method: "GET", url: origin + "/app/rest/builds",
       query: {
         fields: "nextHref,build(number,agent(name))",
-        locator: "branch:(name:main),buildType:(id:Demo_Build)," +
+        locator: "defaultFilter:false,branch:(name:main),buildType:(id:Demo_Build)," +
           "affectedProject:(id:Demo),state:finished,status:SUCCESS," + (second ? "start:8,count:2,lookupLimit:20" : "start:7,count:3"),
       },
     });
@@ -255,7 +255,7 @@ for (const credential of ["1", 'synthetic-quote"slash\\credential']) {
     const requests = trackRequests(t, 2, async (request, index) => {
       await assertHttpRequest(request, {
         method: "GET", url: origin + "/app/rest/builds",
-        query: { fields: "nextHref,build(custom)", locator: "" + (index === 0 ? "start:0,count:3" : "start:1,count:2") },
+        query: { fields: "nextHref,build(custom)", locator: "defaultFilter:false,branch:(default:any),lookupLimit:5000," + (index === 0 ? "start:0,count:3" : "start:1,count:2") },
       });
       const build = [{ custom: { echo: `before ${credential} after`, number: 1, flag: false, empty: null } }];
       return HttpResponse.json(index === 0 ? { build, nextHref: "/app/rest/builds?locator=start:1" } : { build });

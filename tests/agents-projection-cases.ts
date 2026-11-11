@@ -12,7 +12,7 @@ export const cases = [
     ],
     "path": "/app/rest/agents",
     "defaultQuery": {
-      "locator": "start:3,count:3",
+      "locator": "authorized:any,start:3,count:3",
       "fields": "nextHref,agent(id,name,connected,enabled,authorized,uptodate,webUrl,build(id,buildTypeId,number,state,status))"
     },
     "method": "GET",
