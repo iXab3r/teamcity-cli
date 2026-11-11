@@ -57,7 +57,7 @@ test("S4 validates IDs, required options, fields, booleans, policy, tags and cre
 
     ["pools", "agents", "list", "1", "--start", "-1"],
 
-    ["agents", "fields", "show", "7", "authToken"],
+    ["agents", "fields", "show", "7", "\ud800"],
 
     ["agents", "fields", "set", "7", "enabled", "Bearer synthetic"],
     ["agents", "enabled", "set", "7", "TRUE"],
@@ -237,7 +237,7 @@ test("S4 statistics preserve API string values and numeric precision", async (te
 test("S4 JSON-RPC isolates profiles, credentials and permission failures and continues the session", async (testContext) => {
   const commands = [
     ["agents", "policy", "set", "--help"],
-    ["agents", "fields", "show", "7", "authToken"],
+    ["agents", "fields", "show", "7", "\ud800"],
     ["builds", "pin", "set", "42", "true"],
     ["builds", "pin", "set", "42", "false", "--profile", "uat"],
     ["agents", "pool", "show", "7"],

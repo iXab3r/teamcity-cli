@@ -185,7 +185,8 @@ Parameters use `list <owner-id>`, `show/delete <owner-id> <name>` and
 `create/set <owner-id> <name> --value <value>`. Plain writes support non-secret values.
 Reads return every plain value supplied by TeamCity, including values with names such as `token`,
 UI-hidden text and future parameter types. Only password-type parameters, `secure:` properties,
-and values the server masks or omits have `redacted: true` and no value. The CLI never unmasks them.
+and values the server withholds have `redacted: true` and no value. The CLI never unmasks them.
+Literal `*` and `*****` values remain readable; names and value spelling do not imply secrecy.
 An absent/empty type spec means a plain parameter. Ordinary parameter reads return the type name;
 configuration reads retain native type metadata. Create/set preflight metadata and reject protected
 or malformed metadata before writing; only create tolerates a 404. Write validation remains stricter
@@ -366,6 +367,12 @@ plugin settings. Removing a dependency never deletes its upstream job.
 Trigger/dependency path IDs accept letters, digits, `_` and `-`, not raw locators such as `id:...`.
 Feature IDs are literal encoded path segments. All three families return metadata and all plain
 property values, including unknown plugin properties. Password/secure values remain redacted.
+
+`jobs triggers fields show <job-id> <trigger-id> <field>` reads a scalar trigger setting,
+such as `disabled`, through TeamCity's `triggers/<id>/<field>` endpoint. Schedule properties
+such as `cronExpression_dm` belong to the trigger's `properties` collection; passing them as
+scalar fields can return HTTP 400. Read them with `jobs triggers show <job-id> <trigger-id>`
+or select the collection with `--fields 'properties(property(name,value,type(rawValue)))'`.
 
 Template attach preserves other attachments. By default it sends `optimizeSettings=false`;
 `--optimize-settings` asks TeamCity to remove redundant local settings. Detach affects only the

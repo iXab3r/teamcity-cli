@@ -64,7 +64,7 @@ GET /app/rest/agentPools	AgentPool	ReadOnly	covered	pools list			exercised-in-pa
 GET /app/rest/agentPools/{p1}	AgentPool	ReadOnly	covered	pools show <pool-id>	getPool		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts;tests/validation-contract.test.ts
 GET /app/rest/agentPools/{p1}/agents	AgentPool	ReadOnly	covered	pools agents list <pool-id>			exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts
 GET /app/rest/agentPools/{p1}/projects	AgentPool	ReadOnly	covered	pools projects list <pool-id>	listPoolProjects		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts
-GET /app/rest/agentPools/{p1}/{p2}	AgentPool	ReadOnly	covered	pools fields show <pool-id> <field>	getPoolField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/agentPools/{p1}/{p2}	AgentPool	ReadOnly	covered	pools fields show <pool-id> <field>	getPoolField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/agentTypes/{p1}	AgentType	ReadOnly	covered	agents types show <type-id>	getAgentType		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/bulk-configuration.test.ts
 GET /app/rest/agents	Agent	ReadOnly	covered	agents list			exercised-in-passing-suite	tests/agents-projection.test.ts;tests/cli.test.ts;tests/presentation.test.ts
 GET /app/rest/agents/{p1}	Agent	ReadOnly	covered	agents parameters list <agent-id>;agents show <id>	listAgentParameters;getAgent		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/read-values.test.ts
@@ -74,7 +74,7 @@ GET /app/rest/agents/{p1}/compatibleBuildTypes	Agent	ReadOnly	covered	agents com
 GET /app/rest/agents/{p1}/enabledInfo	Agent	ReadOnly	covered	agents enabled show <agent-id>	getAgentStatus		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agents/{p1}/incompatibleBuildTypes	Agent	ReadOnly	covered	agents incompatible-jobs <agent-id>	listAgentIncompatibleJobs		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
 GET /app/rest/agents/{p1}/pool	Agent	ReadOnly	covered	agents pool show <agent-id>	getAgentPool		exercised-in-passing-suite	tests/agents-projection.test.ts;tests/authoring.test.ts;tests/operator.test.ts
-GET /app/rest/agents/{p1}/{p2}	Agent	ReadOnly	covered	agents fields show <agent-id> <field>	getAgentField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/agents/{p1}/{p2}	Agent	ReadOnly	covered	agents fields show <agent-id> <field>	getAgentField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/apiVersion	Root	ReadOnly	covered	server api-version	getApiVersion		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/audit	Audit	ReadOnly	covered	audit list			exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
 GET /app/rest/audit/{p1}	Audit	ReadOnly	covered	audit show <id>	getAudit		exercised-in-passing-suite	tests/health-audit-projection.test.ts;tests/system.test.ts
@@ -123,8 +123,8 @@ GET /app/rest/buildTypes/{p1}/steps/{p2}/{p3}	BuildType	ReadOnly	covered	jobs st
 GET /app/rest/buildTypes/{p1}/templates	BuildType	ReadOnly	covered	jobs templates list <job-id>	listTemplates		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts;tests/job-attachments-projection.test.ts
 GET /app/rest/buildTypes/{p1}/templates/{p2}	BuildType	ReadOnly	covered	jobs templates show <job-id> <template-id>	getAttachedTemplate		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/job-attachments-projection.test.ts
 GET /app/rest/buildTypes/{p1}/triggers	BuildType	ReadOnly	covered	jobs triggers list <job-id>	listExtensions		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts;tests/job-extensions-projection.test.ts;tests/read-values.test.ts
-GET /app/rest/buildTypes/{p1}/triggers/{p2}	BuildType	ReadOnly	covered	jobs triggers show <job-id> <trigger-id>	getExtension		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts;tests/job-extensions-projection.test.ts;tests/read-values.test.ts
-GET /app/rest/buildTypes/{p1}/triggers/{p2}/{p3}	BuildType	ReadOnly	covered	jobs triggers fields show <job-id> <trigger-id> <field>	getEntitySetting		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
+GET /app/rest/buildTypes/{p1}/triggers/{p2}	BuildType	ReadOnly	covered	jobs triggers show <job-id> <trigger-id>	getExtension		exercised-in-passing-suite	tests/authoring.test.ts;tests/configuration.test.ts;tests/job-extensions-projection.test.ts;tests/read-values-review.test.ts;tests/read-values.test.ts
+GET /app/rest/buildTypes/{p1}/triggers/{p2}/{p3}	BuildType	ReadOnly	covered	jobs triggers fields show <job-id> <trigger-id> <field>	getEntitySetting		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts;tests/validation-contract.test.ts
 GET /app/rest/buildTypes/{p1}/vcs-root-entries	BuildType	ReadOnly	covered	jobs vcs list <job-id>	listVcsEntries		exercised-in-passing-suite	tests/authoring.test.ts;tests/job-attachments-projection.test.ts
 GET /app/rest/buildTypes/{p1}/vcs-root-entries/{p2}	BuildType	ReadOnly	covered	jobs vcs show <job-id> <root-id>	getVcsEntry		exercised-in-passing-suite	tests/authoring.test.ts;tests/job-attachments-projection.test.ts
 GET /app/rest/buildTypes/{p1}/vcs-root-entries/{p2}/checkout-rules	BuildType	ReadOnly	covered	jobs vcs checkout-rules show <job-id> <root-id>	getCheckoutRules		exercised-in-passing-suite	tests/authoring.test.ts
@@ -134,7 +134,7 @@ GET /app/rest/buildTypes/{p1}/vcs/files/latest/files{p2}	BuildType	ReadOnly	cove
 GET /app/rest/buildTypes/{p1}/vcs/files/latest/metadata{p2}	BuildType	ReadOnly	covered	jobs files metadata <id> <path>	getFileMetadata		exercised-in-passing-suite	tests/files.test.ts;tests/job-files-controls.test.ts;tests/job-files-projection.test.ts
 GET /app/rest/buildTypes/{p1}/vcs/files/latest/{p2}	BuildType	ReadOnly	covered	jobs files children <id> <path>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/job-files-controls.test.ts;tests/job-files-projection.test.ts
 GET /app/rest/buildTypes/{p1}/vcsRootInstances	BuildType	ReadOnly	covered	jobs vcs-instances <id>	getJobVcsInstances		exercised-in-passing-suite	tests/jobs-projection.test.ts;tests/system.test.ts
-GET /app/rest/buildTypes/{p1}/{p2}	BuildType	ReadOnly	covered	jobs fields show <job-id> <field>	getOwnerField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/buildTypes/{p1}/{p2}	BuildType	ReadOnly	covered	jobs fields show <job-id> <field>	getOwnerField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/builds	Build	ReadOnly	covered	builds list;builds show [build-id]	;getLatestFinishedBuild		exercised-in-passing-suite	tests/authoring.test.ts;tests/build-flow.test.ts;tests/build-projection.test.ts;tests/cli.test.ts;tests/paging.test.ts;tests/presentation.test.ts;tests/validation-contract.test.ts
 GET /app/rest/builds/aggregated/{p1}/status	Build	ReadOnly	covered	builds batch status	getBuildBatchStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/option-parsers.test.ts
 GET /app/rest/builds/aggregated/{p1}/statusIcon{p2}	Build	ReadOnly	covered	builds aggregate-icon <id>			exercised-in-passing-suite	tests/files.test.ts
@@ -177,7 +177,7 @@ GET /app/rest/changes/{p1}/issues	Change	ReadOnly	covered	changes issues <id>	ge
 GET /app/rest/changes/{p1}/parentChanges	Change	ReadOnly	covered	changes parents <change-id>	listChangeParents		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts;tests/operator.test.ts
 GET /app/rest/changes/{p1}/parentRevisions	Change	ReadOnly	covered	changes parent-revisions <id>	getChangeParentRevisions		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/changes/{p1}/vcsRootInstance	Change	ReadOnly	covered	changes root-instance <id>	getChangeRootInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/changes-projection.test.ts
-GET /app/rest/changes/{p1}/{p2}	Change	ReadOnly	covered	changes field <id> <field>	getChangeField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/changes/{p1}/{p2}	Change	ReadOnly	covered	changes field <id> <field>	getChangeField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/cloud/images	CloudInstance	ReadOnly	covered	cloud images list			exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
 GET /app/rest/cloud/images/{p1}	CloudInstance	ReadOnly	covered	cloud images show	getCloudImage		exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts;tests/infrastructure.test.ts
 GET /app/rest/cloud/instances	CloudInstance	ReadOnly	covered	cloud instances list			exercised-in-passing-suite	tests/authoring.test.ts;tests/cloud-projection.test.ts
@@ -225,11 +225,11 @@ GET /app/rest/projects/{p1}/templates	Project	ReadOnly	covered	projects template
 GET /app/rest/projects/{p1}/versionedSettings/affectedProjects	VersionedSettings	ReadOnly	covered	projects versioned-settings affected <id>	getVersionedAffectedProjects		exercised-in-passing-suite	tests/authoring.test.ts;tests/versioned-settings-projection.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/config	VersionedSettings	ReadOnly	covered	projects versioned-settings config show <id>	getVersionedConfig		exercised-in-passing-suite	tests/authoring.test.ts;tests/versioned-settings-projection.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/config/effective	VersionedSettings	ReadOnly	covered	projects versioned-settings config effective <id>	getEffectiveVersionedConfig		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/versioned-settings-projection.test.ts
-GET /app/rest/projects/{p1}/versionedSettings/config/parameters/{p2}	VersionedSettings	ReadOnly	covered	projects versioned-settings config fields get <id> <field>	getVersionedConfigField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/projects/{p1}/versionedSettings/config/parameters/{p2}	VersionedSettings	ReadOnly	covered	projects versioned-settings config fields get <id> <field>	getVersionedConfigField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/contextParameters	VersionedSettings	ReadOnly	covered	projects versioned-settings context list <id>	listVersionedContext		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/status	VersionedSettings	ReadOnly	covered	projects versioned-settings status <id>	getVersionedStatus		exercised-in-passing-suite	tests/authoring.test.ts;tests/infrastructure.test.ts;tests/versioned-settings-projection.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/tokens	VersionedSettings	ReadOnly	covered	projects versioned-settings tokens list <id>	listVersionedTokenNames		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
-GET /app/rest/projects/{p1}/{p2}	Project	ReadOnly	covered	projects fields show <project-id> <field>	getOwnerField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/projects/{p1}/{p2}	Project	ReadOnly	covered	projects fields show <project-id> <field>	getOwnerField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/roles	Role	ReadOnly	covered	roles list	listRoleDefinitions		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
 GET /app/rest/roles/id:{p1}	Role	ReadOnly	covered	roles show <id>	getRoleDefinition		exercised-in-passing-suite	tests/roles-projection.test.ts;tests/system.test.ts
 GET /app/rest/server	Server	ReadOnly	covered	server status	getServerStatus		exercised-in-passing-suite	tests/cli.test.ts;tests/server-projection.test.ts
@@ -252,7 +252,7 @@ GET /app/rest/server/nodes/{p1}/disabledResponsibilities	Node	ReadOnly	covered	s
 GET /app/rest/server/nodes/{p1}/effectiveResponsibilities	Node	ReadOnly	covered	server nodes responsibilities effective <id>	getNodeResponsibilities		exercised-in-passing-suite	tests/authoring.test.ts;tests/server-projection.test.ts
 GET /app/rest/server/nodes/{p1}/enabledResponsibilities	Node	ReadOnly	covered	server nodes responsibilities enabled <id>	getNodeResponsibilities		exercised-in-passing-suite	tests/authoring.test.ts;tests/server-projection.test.ts
 GET /app/rest/server/plugins	Server	ReadOnly	covered	server plugins	getPlugins		exercised-in-passing-suite	tests/server-projection.test.ts;tests/system.test.ts
-GET /app/rest/server/{p1}	Server	ReadOnly	covered	server field <field>	getServerField		exercised-in-passing-suite	tests/system.test.ts
+GET /app/rest/server/{p1}	Server	ReadOnly	covered	server field <field>	getServerField		exercised-in-passing-suite	tests/read-values-review.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
 GET /app/rest/testOccurrences	TestOccurrence	ReadOnly	covered	builds diagnose <build-id>;builds tests <id>			exercised-in-passing-suite	tests/build-flow.test.ts;tests/presentation.test.ts;tests/triage-projection.test.ts
 GET /app/rest/testOccurrences/{p1}	TestOccurrence	ReadOnly	covered	tests occurrence <id>	getTriageOccurrence		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts;tests/triage.test.ts
 GET /app/rest/tests	Test	ReadOnly	covered	tests list			exercised-in-passing-suite	tests/authoring.test.ts;tests/triage-projection.test.ts
@@ -274,7 +274,7 @@ GET /app/rest/users/{p1}/properties/{p2}	User	ReadOnly	covered	users properties 
 GET /app/rest/users/{p1}/roles	User	ReadOnly	covered	users roles list <id>	listAccountRoles		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts
 GET /app/rest/users/{p1}/roles/{p2}/{p3}	User	ReadOnly	covered	users roles show <id> <role-id>	getAccountRole		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/users/{p1}/tokens	User	ReadOnly	covered	users tokens list	listCurrentUserTokens		exercised-in-passing-suite	tests/admin.test.ts;tests/authoring.test.ts;tests/m05-review-regressions.test.ts;tests/users-projection.test.ts
-GET /app/rest/users/{p1}/{p2}	User	ReadOnly	covered	users fields get <id> <field>	getAccountUserField		exercised-in-passing-suite	tests/authoring.test.ts;tests/validation-contract.test.ts
+GET /app/rest/users/{p1}/{p2}	User	ReadOnly	covered	users fields get <id> <field>	getAccountUserField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts;tests/validation-contract.test.ts
 GET /app/rest/vcs-root-instances	VcsRootInstance	ReadOnly	covered	vcs instances list			exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}	VcsRootInstance	ReadOnly	covered	vcs instances show <id>	getVcsInstance		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}/files/latest	VcsRootInstance	ReadOnly	covered	vcs instances files list <id>	listFiles		exercised-in-passing-suite	tests/files.test.ts;tests/vcs-instance-controls.test.ts;tests/vcs-instances-projection.test.ts
@@ -285,14 +285,14 @@ GET /app/rest/vcs-root-instances/{p1}/files/latest/{p2}	VcsRootInstance	ReadOnly
 GET /app/rest/vcs-root-instances/{p1}/properties	VcsRootInstance	ReadOnly	covered	vcs instances properties <id>	listVcsInstanceProperties		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}/repositoryState	VcsRootInstance	ReadOnly	covered	vcs instances state show <id>	getVcsRepositoryState		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-instances-projection.test.ts
 GET /app/rest/vcs-root-instances/{p1}/repositoryState/creationDate	VcsRootInstance	ReadOnly	covered	vcs instances state created <id>	getVcsRepositoryStateCreated		exercised-in-passing-suite	tests/authoring.test.ts
-GET /app/rest/vcs-root-instances/{p1}/{p2}	VcsRootInstance	ReadOnly	covered	vcs instances fields get <id> <field>	getVcsInstanceField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/vcs-root-instances/{p1}/{p2}	VcsRootInstance	ReadOnly	covered	vcs instances fields get <id> <field>	getVcsInstanceField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/vcs-roots	VcsRoot	ReadOnly	covered	vcs roots list			exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-roots-projection.test.ts
 GET /app/rest/vcs-roots/{p1}	VcsRoot	ReadOnly	covered	vcs roots show <id>	getVcsRoot		exercised-in-passing-suite	tests/authoring.test.ts;tests/vcs-roots-projection.test.ts
 GET /app/rest/vcs-roots/{p1}/instances	VcsRoot	ReadOnly	covered	vcs roots instances <id>	getVcsRootInstances		exercised-in-passing-suite	tests/authoring.test.ts;tests/m04-review-regressions.test.ts;tests/vcs-roots-projection.test.ts
 GET /app/rest/vcs-roots/{p1}/properties	VcsRoot	ReadOnly	covered	vcs roots properties list <id>	listVcsRootProperties		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values.test.ts;tests/vcs-roots-projection.test.ts
 GET /app/rest/vcs-roots/{p1}/properties/{p2}	VcsRoot	ReadOnly	covered	vcs roots properties exists <id> <name>	checkVcsRootProperty		exercised-in-passing-suite	tests/authoring.test.ts
 GET /app/rest/vcs-roots/{p1}/settingsFile	VcsRoot	ReadOnly	covered	vcs roots settings-path <id>	getSettingsPath		exercised-in-passing-suite	tests/files.test.ts
-GET /app/rest/vcs-roots/{p1}/{p2}	VcsRoot	ReadOnly	covered	vcs roots fields get <id> <field>	getVcsRootField		exercised-in-passing-suite	tests/authoring.test.ts
+GET /app/rest/vcs-roots/{p1}/{p2}	VcsRoot	ReadOnly	covered	vcs roots fields get <id> <field>	getVcsRootField		exercised-in-passing-suite	tests/authoring.test.ts;tests/read-values-review.test.ts
 GET /app/rest/version	Root	ReadOnly	covered	server rest-version	getRestVersion		exercised-in-passing-suite	tests/authoring.test.ts
 POST /app/rest/agentPools	AgentPool	Update	covered	pools create	createPool		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts
 POST /app/rest/agentPools/{p1}/agents	AgentPool	Update	covered	pools agents assign <pool-id> <agent-id>	assignPoolAgent		exercised-in-passing-suite	tests/authoring.test.ts;tests/operator.test.ts;tests/pools-projection.test.ts

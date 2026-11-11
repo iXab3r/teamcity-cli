@@ -1,7 +1,7 @@
-# Current REST coverage — 0.9.0 candidate
+# Current REST coverage — 0.9.1 candidate
 
 The current mapping covers **449 of 449 operations: 449 covered, 0 partial, 0 missing**.
-This is the 0.9.0 candidate; the published product is 0.8.0.
+This is the 0.9.1 candidate; the published product is 0.8.0.
 Core remains exactly `@eyeauras/cli-factory` 0.7.1.
 
 The pinned source is public JetBrains TeamCity Swagger 2.0,

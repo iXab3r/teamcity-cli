@@ -25,11 +25,11 @@ export function createAdvancedAuthoringCommands(
               : "dependency-id";
     return command(
       "fields",
-      kind === "steps" ? "Manage name and disabled settings" : "Manage disabled settings",
+      "Manage scalar entity settings",
       [
         leaf(
           `show <job-id> <${arg}> <field>`,
-          "Read an allowed setting",
+          "Read a scalar entity setting",
           Permission.ReadOnly,
           (c, { args }) =>
             c.getEntitySetting(kind, text(args, "job-id"), text(args, arg), text(args, "field")),

@@ -1233,7 +1233,7 @@ export class TeamCityClient {
     id: string,
     field: string,
   ) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${entityPath(kind, jobId, id)}/${pathSegment(field)}`);
     return { jobId: jobId, id: id, field, value };
   }
@@ -1494,7 +1494,7 @@ export class TeamCityClient {
   }
 
   public async getOwnerField(owner: "projects" | "jobs", id: string, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText(
       "GET",
       `${owner === "projects" ? projectPath(id) : jobPath(id)}/${pathSegment(field)}`,
@@ -1681,7 +1681,7 @@ export class TeamCityClient {
   }
 
   public async getPoolField(id: number, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${poolPath(id)}/${pathSegment(field)}`);
     return { poolId: id, field, value };
   }
@@ -1889,7 +1889,7 @@ export class TeamCityClient {
   }
 
   public async getAgentField(id: number, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${agentPath(id)}/${pathSegment(field)}`);
     return { agentId: id, field, value };
   }
@@ -1976,7 +1976,7 @@ export class TeamCityClient {
   }
 
   public async getBuildScalar(id: number, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText("GET", `${buildPath(id)}/${pathSegment(field)}`);
     return { buildId: id, field, value };
   }
@@ -2952,7 +2952,7 @@ export class TeamCityClient {
   }
 
   public async getChangeField(id: number, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText(
       "GET",
       `/app/rest/changes/id:${integerId(id, "Change ID")}/${pathSegment(field)}`,
@@ -3524,7 +3524,7 @@ export class TeamCityClient {
   }
 
   public async getAccountUserField(id: string, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText(
       "GET",
       admin.accountPath("users", id) + "/" + pathSegment(field),
@@ -3872,7 +3872,7 @@ export class TeamCityClient {
   }
 
   public async getVcsRootField(id: string, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText(
       "GET",
       infrastructure.vcsRootPath(id) + "/" + pathSegment(field),
@@ -4014,7 +4014,7 @@ export class TeamCityClient {
   }
 
   public async getVcsInstanceField(id: string, field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     const value = await this.#requestText(
       "GET",
       infrastructure.vcsInstancePath(id) + "/" + pathSegment(field),
@@ -4118,7 +4118,7 @@ export class TeamCityClient {
   }
 
   public async getVersionedConfigField(id: string, field: string) {
-    infrastructure.versionedField(field);
+    requiredText(field, "Field name");
     const value = await this.#requestText(
       "GET",
       infrastructure.versionedPath(id) + "/config/parameters/" + pathSegment(field),
@@ -4950,7 +4950,7 @@ export class TeamCityClient {
   }
 
   public async getServerField(field: string) {
-    plainProperty(field, "");
+    requiredText(field, "Field name");
     return {
       field,
       value: await this.#requestText("GET", "/app/rest/server/" + pathSegment(field)),
@@ -5161,7 +5161,7 @@ export class TeamCityClient {
       "GET",
       `/app/rest/builds/id:${buildId}/resolved/` + encodeURIComponent(expression),
     );
-    if (value === expression || /^\*{3,}$/.test(value))
+    if (value === expression)
       throw new Error("Build parameter remained unresolved; no value stored.");
     await persistSecretKeys(secrets, [key], [value]);
     return { alias, stored: true };

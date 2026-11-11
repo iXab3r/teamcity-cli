@@ -9,8 +9,9 @@ Historical extraction provenance remains in [migration](migration.md).
 
 Read commands return plain values supplied by TeamCity, including scripts and unknown plugin,
 requirement, trigger, dependency, VCS and agent properties. Password-type parameters, `secure:`
-properties and values masked or omitted by the server remain redacted. Read policy does not use
+properties and values withheld by the server remain redacted. Read policy does not use
 credential-name or value heuristics; plain write validation and protected-metadata preflights remain.
+Literal `*` and `*****` values are readable unless TeamCity marks their property as protected.
 `jobs configuration show` and `projects templates show` preserve native configuration/type metadata,
 including build settings, while `agents parameters list` reads system/env/config parameters.
 Explicit native projections also remove values when returned property metadata marks them secret.

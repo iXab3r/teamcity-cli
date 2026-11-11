@@ -125,8 +125,7 @@ export function safeProperty(property: RawProperty, exposeValue = true) {
 export function isSecretProperty(property: RawProperty): boolean {
   return /^secure:/i.test(property.name) ||
     /^\s*password(?:\s|$)/i.test(property.type?.rawValue ?? "") ||
-    property.value == null ||
-    (typeof property.value === "string" && /^\*+$/.test(property.value));
+    property.value == null;
 }
 
 /** Retain native configuration shape, removing only server-protected property values. */
