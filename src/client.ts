@@ -797,7 +797,6 @@ export class TeamCityClient {
   }
 
   public async deleteProject(id: string) {
-    if (id === "_Root") throw new Error("Cannot delete the root project.");
     await this.#request("DELETE", projectPath(id));
     return { id: id, deleted: true };
   }
@@ -4191,11 +4190,14 @@ export class TeamCityClient {
     });
     textIds(entries.map((item) => item.name));
     const versionedSettingsToken = propertiesBody(properties).property;
-    for (const item of entries)
+    const directNames = new Set(versionedSettingsToken.map((item) => item.name));
+    for (const item of entries) {
+      if (directNames.has(item.name)) continue;
       versionedSettingsToken.push({
         name: item.name,
         value: await requireInputSecret(secrets, item.alias),
       });
+    }
     await this.#request(
       "POST",
       infrastructure.versionedPath(id) + "/tokens",
@@ -5108,19 +5110,23 @@ export class TeamCityClient {
   }
   public async resolveSecureReference(
     project: string,
-    referenceAlias: string,
+    referenceAlias: string | undefined,
     outputAlias: string,
     secrets: ScopedSecrets,
+    referenceValue?: string,
   ) {
     const path = "/app/rest/projects/" + idPath(project, "Project ID") + "/secure/values/",
-      key = inputSecretKey(outputAlias),
-      referenceKey = files.referenceKey(referenceAlias);
+      key = inputSecretKey(outputAlias);
     await preflightSecretKeys(secrets, [key]);
-    let reference: string;
-    try {
-      reference = await secrets.require(referenceKey);
-    } catch (cause) {
-      throw new Error("Required secure reference is unavailable.", { cause: diagnosticCause(cause) });
+    let reference = referenceValue;
+    if (reference === undefined) {
+      if (referenceAlias === undefined) throw new Error("Supply a reference value or a secure-reference alias.");
+      const referenceKey = files.referenceKey(referenceAlias);
+      try {
+        reference = await secrets.require(referenceKey);
+      } catch (cause) {
+        throw new Error("Required secure reference is unavailable.", { cause: diagnosticCause(cause) });
+      }
     }
     const value = await this.#requestText("GET", path + files.sensitiveSegment(reference));
     await persistSecretKeys(secrets, [key], [value]);

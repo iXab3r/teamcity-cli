@@ -206,8 +206,8 @@ connection property values. `vcs instances properties <id>` returns instance pro
 
 Deletion always targets one explicit ID/name. Deleting a project/job can cascade through its
 server-owned children, settings and history according to TeamCity policy; there is no extra
-client-side sweep or undo. Deleting `_Root` is refused. Successful empty responses return an
-acknowledgement; a missing entity remains an HTTP error, not a successful delete.
+client-side sweep or undo. Project deletion, including `_Root`, is forwarded for TeamCity to validate.
+Successful empty responses return an acknowledgement; a missing entity remains an HTTP error, not a successful delete.
 Mutations are not automatically retried. HTTP errors expose status only, not remote body text;
 malformed JSON errors contain no response excerpts.
 
@@ -608,7 +608,8 @@ Writes also accept direct values; alias lookup is an optional convenience. There
 scanning, plaintext profile storage fallback or automatic auth-token reuse.
 `credentials forget <alias>` removes only that input entry. Versioned-settings token mappings use
 `--mapping remote-name=alias` or repeatable `--property remote-name=value`; lists expose names and
-deletes retain local aliases. Direct `--value`/`--key` takes precedence when an alias is also supplied.
+deletes retain local aliases. A direct `--property` wins over a same-name `--mapping`; that alias is not looked up.
+Direct `--value`/`--key` takes precedence when an alias is also supplied.
 
 | Secure namespace | Purpose | Explicit cleanup |
 |---|---|---|
@@ -636,6 +637,7 @@ and TeamCity timestamps. Parent IDs remain explicit. Destructive/upsert commands
 `server authentication replace --item <json> --confirm` replaces the **complete module list** and
 can lock out users. Omitted scalar settings are preserved; omitted modules are not injected. Typed
 modules accept direct properties plus optional `secrets:[{"name":"password","alias":"directory"}]`.
+Direct properties win over same-name aliases; those aliases are not looked up. Property names are forwarded unchanged.
 It never reads and rewrites masked existing credentials. `server settings set` preserves additional native fields, including paths and URLs; known scalar
 types are checked; caller-supplied names and values are forwarded.
 
@@ -719,7 +721,10 @@ teamcity-cli projects secure resolve Example --reference reference --store-as re
 teamcity-cli builds resolve-parameter 12345 env.MODE --store-as resolved-mode --profile uat
 ```
 
-`create-reference` accepts `--value` or `--value-secret`, preserving whitespace. Returned values
+`create-reference` accepts `--value` or `--value-secret`, preserving whitespace.
+`resolve` accepts `--reference-value <reference>` or `--reference <alias>`; the direct reference
+wins when both are supplied, without looking up the alias. References are encoded as one path segment;
+`.` and `..` are rejected. Returned values
 continue to use the requested `--store-as` aliases. A parameter expression
 returned unchanged is unresolved, not success. Aliases are collision-checked; no secrets in JSON,
 RPC, diagnostics or files. These routes and sensitive downloads are excluded from live proof.

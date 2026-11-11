@@ -32,7 +32,7 @@ DELETE /app/rest/deploymentDashboards/{p1}/instances/{p2}	DeploymentDashboard	Up
 DELETE /app/rest/investigations/{p1}	Investigation	Update	covered	investigations delete	deleteInvestigation		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/mutes/multiple	Mute	Update	covered	mutes delete-many	deleteMutes		exercised-in-passing-suite	tests/assignments-projection.test.ts;tests/system.test.ts;tests/validation-contract.test.ts
 DELETE /app/rest/mutes/{p1}	Mute	Update	covered	mutes delete <id>	deleteMute		exercised-in-passing-suite	tests/authoring.test.ts;tests/triage.test.ts
-DELETE /app/rest/projects/{p1}	Project	Update	covered	projects delete <id>	deleteProject		exercised-in-passing-suite	tests/authoring.test.ts
+DELETE /app/rest/projects/{p1}	Project	Update	covered	projects delete <id>	deleteProject		exercised-in-passing-suite	tests/authoring.test.ts;tests/thin-writes.test.ts
 DELETE /app/rest/projects/{p1}/agentPools/{p2}	Project	Update	covered	projects pools unassign <project-id> <pool-id>	unassignProjectPool		exercised-in-passing-suite	tests/authoring.test.ts
 DELETE /app/rest/projects/{p1}/defaultTemplate	Project	Update	covered	projects templates default clear <project-id>	clearDefaultTemplate		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/project-writes-projection.test.ts
 DELETE /app/rest/projects/{p1}/parameters	Project	Update	covered	projects parameters clear <owner-id>	clearParameters		exercised-in-passing-suite	tests/authoring.test.ts
@@ -219,7 +219,7 @@ GET /app/rest/projects/{p1}/parameters/{p2}/value	Project	ReadOnly	covered	proje
 GET /app/rest/projects/{p1}/parentProject	Project	ReadOnly	covered	projects parent <project-id>	getProjectParent		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/projects-projection.test.ts
 GET /app/rest/projects/{p1}/projectFeatures	Project	ReadOnly	covered	projects features list <project-id>	listProjectFeatures		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/project-configuration-projection.test.ts
 GET /app/rest/projects/{p1}/projectFeatures/{p2}	Project	ReadOnly	covered	projects features show <project-id> <feature-id>	getProjectFeature		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/project-configuration-projection.test.ts
-GET /app/rest/projects/{p1}/secure/values/{p2}	Project	ReadOnly	covered	projects secure resolve <id>	resolveSecureReference		exercised-in-passing-suite	tests/files.test.ts
+GET /app/rest/projects/{p1}/secure/values/{p2}	Project	ReadOnly	covered	projects secure resolve <id>	resolveSecureReference		exercised-in-passing-suite	tests/files.test.ts;tests/thin-writes.test.ts
 GET /app/rest/projects/{p1}/settingsFile	Project	ReadOnly	covered	projects settings-path <id>	getSettingsPath		exercised-in-passing-suite	tests/files.test.ts
 GET /app/rest/projects/{p1}/templates	Project	ReadOnly	covered	projects templates list <project-id>	listProjectTemplates		exercised-in-passing-suite	tests/advanced-authoring.test.ts;tests/authoring.test.ts;tests/projects-projection.test.ts
 GET /app/rest/projects/{p1}/versionedSettings/affectedProjects	VersionedSettings	ReadOnly	covered	projects versioned-settings affected <id>	getVersionedAffectedProjects		exercised-in-passing-suite	tests/authoring.test.ts;tests/versioned-settings-projection.test.ts

@@ -1443,7 +1443,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/authoring.test.ts"
+    "tests/authoring.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",
@@ -10839,7 +10840,7 @@
     "tests/read-values-review.test.ts"
    ],
    "nonLeafTransportTests": [
-    "tests/authoring.test.ts:337"
+    "tests/authoring.test.ts:336"
    ],
    "liveService": "not-run",
    "independentReview": "not-performed"
@@ -11158,6 +11159,7 @@
     "command": "projects secure resolve <id>",
     "permission": "Credentials",
     "options": [
+     "--reference-value <reference>",
      "--reference <alias>",
      "--store-as <alias>"
     ],
@@ -11173,7 +11175,8 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
-    "tests/files.test.ts"
+    "tests/files.test.ts",
+    "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
    "liveService": "not-run",

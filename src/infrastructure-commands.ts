@@ -453,7 +453,7 @@ export function createInfrastructureCommands(
             propertyOption,
             repeatOption(
               "--mapping <remote-name=alias>",
-              "Supply mapping names and input-secret aliases; repeat",
+              "Supply alias mappings; direct properties take precedence",
             ),
           ],
         },

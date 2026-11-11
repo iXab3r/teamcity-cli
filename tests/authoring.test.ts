@@ -211,7 +211,6 @@ test("authoring validates fields, required options, paging, paths and property s
     ["projects", "create", "Example"],
 
     ["projects", "move", "Example"],
-    ["projects", "delete", "_Root"],
     ["jobs", "create", "Build", "--name", "Build"],
     ["jobs", "move", "Build"],
     ["jobs", "parameters", "set", "Build", "env.MODE"],

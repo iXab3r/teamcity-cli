@@ -229,21 +229,15 @@ export async function authBody(value: unknown, secrets: ScopedSecrets) {
         };
       }),
     ).property;
-    const used = new Set(properties.map((p) => p.name));
+    const directNames = new Set(properties.map((p) => p.name));
     for (const item of array(m.secrets)) {
       const s = inputRecord(item, ["name", "alias"]);
-      // Resolve optional aliases alongside native property values.
-      if (
-        typeof s.name !== "string" ||
-        !s.name ||
-        /[\u0000-\u001f]/.test(s.name) ||
-        used.has(s.name)
-      )
-        throw new Error("Invalid or duplicate secure property name.");
-      used.add(s.name);
+      const name = inputText(s.name, "Property name"),
+        alias = inputText(s.alias, "Alias");
+      if (directNames.has(name)) continue;
       properties.push({
-        name: s.name,
-        value: await requireInputSecret(secrets, inputText(s.alias, "Alias")),
+        name,
+        value: await requireInputSecret(secrets, alias),
       });
     }
     const { secrets: aliases, ...native } = m;
