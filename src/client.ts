@@ -4795,7 +4795,7 @@ export class TeamCityClient {
     );
   }
   public async getAuthenticationSettings() {
-    return system.safeAuth(await this.#requestJson("GET", "/app/rest/server/authSettings"));
+    return system.safeAuth(await this.#requestJson("GET", "/app/rest/server/authSettings"), true);
   }
   public async replaceAuthenticationSettings(value: unknown, secrets: ScopedSecrets) {
     const body = await system.authBody(value, secrets);

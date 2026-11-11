@@ -11977,6 +11977,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/read-values-review.test.ts",
     "tests/system.test.ts"
    ],
    "nonLeafTransportTests": [],

@@ -7,7 +7,7 @@ The Cake driver is adapted from pinned nexus-cli/opensearch-cli; see [build/NOTI
 
 ## Core dependency and product approval
 
-Published product **0.8.0** and the **0.9.1** candidate pin published Core **0.7.1** at
+Published product **0.9.0** and the **0.9.1** candidate pin published Core **0.7.1** at
 [optional provenance: release revision bf79b80636bcdd790bbd6c25648842ae5213f267](https://github.com/iXab3r/EyeAuras.CliFactory/commit/bf79b80636bcdd790bbd6c25648842ae5213f267).
 The owner approved Core's exact npm stage. Core VerifyRegistry build **33314** completed with a
 `published-verified` receipt; npm's version/latest and SHA-512, installed Core behavior, and
@@ -23,7 +23,7 @@ approves that exact verified product stage with 2FA. Pre-merge branch checks use
 
 ## Next product version
 
-The #376 fix prepares product **0.9.1**, following the #156 candidate **0.9.0**,
+The #376 fix prepares product **0.9.1**, following published **0.9.0** (#156, #372),
 still pinned to Core **0.7.1**.
 This version bump does not stage or publish a release. After merge, use 0.9.1 for all version
 arguments and release labels below; the 0.7.1 approval record above remains historical evidence.

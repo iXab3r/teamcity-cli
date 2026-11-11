@@ -58,7 +58,8 @@ empty success. Batch empty/malformed handling remains unchanged.
 Token creation retains Credentials permission and stores a returned value under the requested alias;
 if fields omit it, nothing is stored. `users show <id>` defaults to `id,username,name`, matching a
 safe list item, and missing users return `http.notFound`. License keys use local aliases.
-Default parameter/VCS property projections remain names-only; feature property names exclude values.
+Default parameter, VCS and feature property projections return the values TeamCity returns; only
+password-typed, `secure:` and server-withheld values are hidden.
 REST plugin info retains XML request/parsing by default and requests JSON with explicit fields.
 Download bounds, output paths and no-overwrite publication remain unchanged. Template
 `--optimize-settings`/`--inline-settings`, VCS checkout rules, write bodies, selectors, scope filters,
