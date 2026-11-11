@@ -1985,6 +1985,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-secret-masking.test.ts",
     "tests/system.test.ts",
     "tests/thin-writes.test.ts"
    ],
@@ -5342,6 +5343,7 @@
     "tests/job-parameters-projection.test.ts",
     "tests/native-request-bodies.test.ts",
     "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/password-parameter.test.ts",
     "tests/read-values-review.test.ts",
     "tests/thin-requests.test.ts",
@@ -7966,6 +7968,7 @@
     "tests/copy-job.test.ts",
     "tests/files.test.ts",
     "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-requests.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -11398,6 +11401,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/files.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -12026,6 +12030,7 @@
    "tests": [
     "tests/cli.test.ts",
     "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/server-projection.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -12659,6 +12664,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-secret-masking.test.ts",
     "tests/server-projection.test.ts",
     "tests/system.test.ts",
     "tests/thin-writes.test.ts"
@@ -15384,6 +15390,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/native-request-bodies.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts"
    ],
@@ -17761,6 +17768,7 @@
     "tests/files.test.ts",
     "tests/native-request-bodies.test.ts",
     "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -17996,6 +18004,7 @@
     "tests/authoring.test.ts",
     "tests/infrastructure.test.ts",
     "tests/native-request-bodies.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-writes.test.ts"
    ],
    "nonLeafTransportTests": [],
@@ -18214,6 +18223,7 @@
   "verification": {
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
+    "tests/native-secret-masking.test.ts",
     "tests/server-projection.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts",
@@ -18579,6 +18589,7 @@
    "tests": [
     "tests/admin.test.ts",
     "tests/authoring.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/thin-requests.test.ts",
     "tests/users-projection.test.ts",
     "tests/validation-contract.test.ts"
@@ -20242,6 +20253,7 @@
     "tests/job-parameters-projection.test.ts",
     "tests/native-request-bodies.test.ts",
     "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/password-parameter.test.ts",
     "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts"
@@ -22774,6 +22786,7 @@
    "existingOffline": "exercised-in-passing-suite",
    "tests": [
     "tests/native-responses.test.ts",
+    "tests/native-secret-masking.test.ts",
     "tests/system.test.ts",
     "tests/thin-requests.test.ts",
     "tests/thin-writes.test.ts",

@@ -37,6 +37,14 @@ follow-up-hint fields. Project lists retain their tree view by default.
 Client projections return opaque `NativeJson` (`unknown`), including list items; callers must
 validate before accessing shaped properties. Default calls retain their result types.
 
+Output masks the profile credential, input-secret alias values actually used in a request
+(`--value-secret`, authentication `secrets`, `--mapping`, license and reference aliases), and
+server-issued values saved through `--alias` or `--store-as` (user/pool tokens, secure references
+and resolved parameters). These values are masked wherever they occur in human, JSON, execute
+and RPC results or errors, including with `--fields`. Knowledge is isolated to the invocation.
+Values supplied as plain text are printed as returned, including plain license keys; read-side
+password/`secure:`/withheld property hiding still applies.
+
 Credential masking covers literal, percent-encoded (either hex case) and JSON-escaped credentials
 through three nested decoding rounds, in keys and string values on success and partial errors.
 Literal matches are replaced in place; decoded matches redact the whole original string.
@@ -78,8 +86,9 @@ permissions, confirmations, dot-segment rejection and local-machine safety remai
 `--latest` retains finished, non-personal, all-branch selection; artifact lists retain archive recognition;
 page limits/lookahead and avatar size 64 retain their paging and HTTP-target semantics.
 
-HTTP failures include the first 4 KiB of the server response, decoded without a split UTF-8
-character at the bound and with the profile credential masked. Diagnostic reading failures retain
+HTTP failures include up to 4 KiB of server response text. A bounded read looks beyond the
+output limit to mask known secrets before UTF-8-safe truncation; trailing partial matches of known
+secrets are dropped. Diagnostic reading failures retain
 the known HTTP status. Request bodies are not appended. Error codes, exit codes, mutation uncertainty
 and Core 0.7.1 diagnostics remain unchanged. Malformed JSON still fails.
 

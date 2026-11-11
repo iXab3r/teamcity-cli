@@ -332,6 +332,7 @@ export class TeamCityUnknownOutcomeError extends CliError {
 export class TeamCityClient {
   readonly #baseUrl: string;
   readonly #token: string | undefined;
+  readonly #knownSecrets = new Set<string>();
   readonly #guest: boolean;
   readonly #fetch: typeof globalThis.fetch;
   readonly #signal: AbortSignal | undefined;
@@ -347,6 +348,7 @@ export class TeamCityClient {
     }
     this.#baseUrl = baseUrl;
     this.#token = token;
+    if (token) this.#knownSecrets.add(token);
     this.#guest = options.guest === true;
     this.#fetch = options.fetch ?? globalThis.fetch;
     this.#signal = options.signal;
@@ -743,16 +745,13 @@ export class TeamCityClient {
     );
   }
 
-  public async createProject<F extends string | undefined = undefined>(id: string, options: CreateProjectOptions, fields?: F): Promise<Projected<TeamCityProject, F>> {
-    const nativeResponse = await this.#requestJson<TeamCityProject>("POST", "/app/rest/projects", { fields: projectFields }, {
+  public createProject<F extends string | undefined = undefined>(id: string, options: CreateProjectOptions, fields?: F): Promise<Projected<TeamCityProject, F>> {
+    return this.#requestJson<TeamCityProject>("POST", "/app/rest/projects", { fields: projectFields }, {
         id: requiredText(id, "Project ID"),
         ...(options.name === undefined ? {} : { name: requiredText(options.name, "Project name") }),
         ...(options.parent === undefined ? {} : { parentProject: { id: requiredText(options.parent, "Parent project ID") } }),
         ...Object.fromEntries(Object.entries(options).filter(([key]) => key !== "parent")),
-      });
-    return this.#projectedValue(nativeResponse, fields, () => {
-      return nativeResponse;
-    });
+      }).then(value => this.#projectedValue(value, fields, () => value));
   }
 
   public createJob<F extends string | undefined = undefined>(
@@ -891,6 +890,7 @@ export class TeamCityClient {
   }
 
   public async setPasswordParameter<F extends string | undefined = undefined>(jobId: string, name: string, alias: string | undefined, secrets: ScopedSecrets, plainValue?: string, native: Record<string, unknown> = {}, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const collection = parametersPath("jobs", jobId);
     pathSegment(name);
     const path = `${collection}/${pathSegment(name)}`;
@@ -3524,6 +3524,7 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     fields?: F,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const body = admin.tokenBody(input);
     const key = admin.issuedTokenKey(input.alias);
     if ((await admin.readIssuedToken(secrets, input.alias)) !== undefined)
@@ -3547,6 +3548,7 @@ export class TeamCityClient {
         "Token may have been created, but its one-time result was invalid; inspect/revoke the named remote token.",
       );
     const metadata = admin.safeToken(raw);
+    this.#knownSecrets.add(raw.value);
     try {
       await secrets.set(key, JSON.stringify({ name: body.name, value: raw.value }));
     } catch (cause) {
@@ -3559,6 +3561,7 @@ export class TeamCityClient {
   }
 
   public async deleteCurrentUserToken<F extends string | undefined = undefined>(name: string, secrets: ScopedSecrets, alias?: string, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const tokenName = requiredText(name, "Token name");
     if (alias !== undefined) {
       const contents = await admin.readIssuedToken(secrets, alias);
@@ -4257,6 +4260,7 @@ export class TeamCityClient {
   }
 
   public async setVersionedTokens<F extends string | undefined = undefined>(id: string, mappings: readonly string[], secrets: ScopedSecrets, properties: readonly PlainProperty[] = [], native: Record<string, unknown> = {}, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     triage.typedItems([...mappings, ...properties]);
     const entries = mappings.map((mapping) => {
       const split = mapping.indexOf("=");
@@ -4421,7 +4425,7 @@ export class TeamCityClient {
     project: (value: unknown) => T,
     property?: RawProperty,
   ): Projected<T, F> {
-    if (fields === undefined) return project(value) as Projected<T, F>;
+    if (fields === undefined) return this.#maskValue(project(value)) as Projected<T, F>;
     if (property && isSecretProperty({ ...property, value: "" })) {
       if (typeof value === "string") value = safeProperty(property, false);
       else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
@@ -4430,17 +4434,61 @@ export class TeamCityClient {
       }
     }
     value = readableConfiguration(value);
-    if (!this.#token) return value as Projected<T, F>;
-    const mask = knownCredentialMask(this.#token);
-    const redact = (item: unknown): unknown => {
-      if (typeof item === "string") return mask(item);
-      if (Array.isArray(item)) return item.map(redact);
-      if (item !== null && typeof item === "object") {
-        return Object.fromEntries(Object.entries(item).map(([key, nested]) => [mask(key), redact(nested)]));
+    return this.#maskValue(value) as Projected<T, F>;
+  }
+
+  #maskText(text: string): string {
+    for (const secret of [...this.#knownSecrets].sort((a, b) => b.length - a.length)) {
+      text = knownCredentialMask(secret)(text);
+    }
+    return text;
+  }
+
+  #maskValue<T>(value: T): T {
+    if (typeof value === "string") return this.#maskText(value) as T;
+    if (Array.isArray(value)) return value.map(item => this.#maskValue(item)) as T;
+    if (value !== null && typeof value === "object") {
+      return Object.fromEntries(Object.entries(value).map(([key, nested]) =>
+        [this.#maskText(key), this.#maskValue(nested)])) as T;
+    }
+    return value;
+  }
+
+  /** The client belongs to one invocation; retain only values actually read or written. */
+  #rememberSecrets(secrets: ScopedSecrets): ScopedSecrets {
+    const remember = (key: string, value: string | undefined) => {
+      if (value) this.#knownSecrets.add(value);
+      if (key.startsWith("issued-token:") && value) {
+        try {
+          const token: unknown = JSON.parse(value)?.value;
+          if (typeof token === "string" && token) this.#knownSecrets.add(token);
+        } catch { /* Invalid secure records are diagnosed by their consumer. */ }
       }
-      return item;
+      return value;
     };
-    return redact(value) as Projected<T, F>;
+    return {
+      get: async key => remember(key, await secrets.get(key)),
+      require: async key => remember(key, await secrets.require(key))!,
+      set: async (key, value) => {
+        remember(key, value);
+        await secrets.set(key, value);
+      },
+      delete: key => secrets.delete(key),
+    };
+  }
+
+  /** A bounded/interrupted read must not publish the beginning of a known secret. */
+  #dropSecretPrefix(text: string): string {
+    let end = text.length;
+    for (const secret of this.#knownSecrets) {
+      for (let length = Math.min(secret.length - 1, text.length); length > 0; length--) {
+        if (text.endsWith(secret.slice(0, length))) {
+          end = Math.min(end, text.length - length);
+          break;
+        }
+      }
+    }
+    return text.slice(0, end);
   }
 
   /** A bounded selection of `key` items that follows TeamCity's continuation; see `readPages`. */
@@ -4485,6 +4533,7 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     native: Record<string, unknown> = {},
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const poolId = poolNumber(Number(integerId(id, "Pool ID")));
     if (ttl !== undefined) system.integer(ttl);
     const keys = aliases.map(inputSecretKey);
@@ -4498,13 +4547,13 @@ export class TeamCityClient {
       ),
     );
     await persistSecretKeys(secrets, keys, triage.array(result.item) as string[]);
-    return {
+    return this.#maskValue({
       poolId,
       aliases: [...aliases],
       count: aliases.length,
       timeToLiveSeconds: ttl,
       stored: true,
-    };
+    });
   }
   public listAudit<F extends string | undefined = undefined>(
     page: TeamCityPageOptions & { fields?: F },
@@ -4865,6 +4914,7 @@ export class TeamCityClient {
     });
   }
   public async replaceAuthenticationSettings<F extends string | undefined = undefined>(value: unknown, secrets: ScopedSecrets, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const body = await system.authBody(value, secrets);
     const nativeResponse = await this.#requestJson("PUT", "/app/rest/server/authSettings", {}, body);
     return this.#projectedValue(nativeResponse, fields, () => {
@@ -4965,6 +5015,7 @@ export class TeamCityClient {
     fields?: F,
     plainValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const value = await inputValue(secrets, alias, plainValue);
     const response = await this.#textJson(
       "POST",
@@ -4982,6 +5033,7 @@ export class TeamCityClient {
     fields?: F,
     plainValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const value = await inputValue(secrets, alias, plainValue);
     if (value === undefined) throw new Error("Supply a license key or an input-secret alias for the URL.");
     return this.#projectedJson(
@@ -4994,6 +5046,7 @@ export class TeamCityClient {
   }
 
   public async deleteLicense<F extends string | undefined = undefined>(alias: string | undefined, secrets: ScopedSecrets, plainValue?: string, fields?: F) {
+    secrets = this.#rememberSecrets(secrets);
     const value = await inputValue(secrets, alias, plainValue);
     if (value === undefined) throw new Error("Supply a license key or an input-secret alias for the URL.");
     const nativeResponse = await this.#request("DELETE", "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value));
@@ -5195,13 +5248,14 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     plainValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const path = "/app/rest/projects/" + idPath(project, "Project ID") + "/secure/tokens",
       key = files.referenceKey(outputAlias);
     await preflightSecretKeys(secrets, [key]);
     const value = await inputValue(secrets, inputAlias, plainValue);
     const reference = await this.#requestText("POST", path, value);
     await persistSecretKeys(secrets, [key], [reference]);
-    return { projectId: project, referenceAlias: outputAlias, stored: true };
+    return this.#maskValue({ projectId: project, referenceAlias: outputAlias, stored: true });
   }
   public async resolveSecureReference(
     project: string,
@@ -5210,6 +5264,7 @@ export class TeamCityClient {
     secrets: ScopedSecrets,
     referenceValue?: string,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const path = "/app/rest/projects/" + idPath(project, "Project ID") + "/secure/values/",
       key = inputSecretKey(outputAlias);
     await preflightSecretKeys(secrets, [key]);
@@ -5225,7 +5280,7 @@ export class TeamCityClient {
     }
     const value = await this.#requestText("GET", path + files.sensitiveSegment(reference));
     await persistSecretKeys(secrets, [key], [value]);
-    return { alias: outputAlias, stored: true };
+    return this.#maskValue({ alias: outputAlias, stored: true });
   }
   public async resolveBuildParameter(
     id: string,
@@ -5233,6 +5288,7 @@ export class TeamCityClient {
     alias: string,
     secrets: ScopedSecrets,
   ) {
+    secrets = this.#rememberSecrets(secrets);
     const buildId = integerId(id, "Build ID");
     requiredText(name, "Parameter name");
     const expression = "%" + name + "%",
@@ -5243,7 +5299,7 @@ export class TeamCityClient {
       `/app/rest/builds/id:${buildId}/resolved/` + encodeURIComponent(expression),
     );
     await persistSecretKeys(secrets, [key], [value]);
-    return { alias, stored: true };
+    return this.#maskValue({ alias, stored: true });
   }
   async #download(
     path: string,
@@ -5315,7 +5371,7 @@ export class TeamCityClient {
    * unknown; a read changed nothing and can be retried, unless its own signal stopped it.
    */
   #lost(method: HttpMethod, stage: "request" | "response", cause?: unknown): Error {
-    const safeCause = cause === undefined ? undefined : diagnosticCause(cause, this.#token ? [this.#token] : []);
+    const safeCause = cause === undefined ? undefined : diagnosticCause(cause, [...this.#knownSecrets]);
     if (method !== "GET") {
       return new TeamCityUnknownOutcomeError(stage === "request"
         ? "TeamCity network request failed; remote outcome is unknown."
@@ -5405,7 +5461,9 @@ export class TeamCityClient {
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
     let text = "";
-    let remaining = 4096;
+    // Three rounds of JSON escaping can expand a character sixfold per round.
+    // Look past the output bound so encoded as well as literal copies can be masked first.
+    let remaining = 4096 + Math.max(0, ...[...this.#knownSecrets].map(value => Buffer.byteLength(value) * 216));
     if (reader) {
       const cancel = () => { void reader.cancel().catch(() => undefined); };
       this.#signal?.addEventListener("abort", cancel, { once: true });
@@ -5429,7 +5487,11 @@ export class TeamCityClient {
         reader.releaseLock();
       }
     }
-    const explanation = this.#token ? knownCredentialMask(this.#token)(text) : text;
+    const masked = this.#dropSecretPrefix(this.#maskText(text));
+    const bounded = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+      Buffer.from(masked).subarray(0, 4096), { stream: true },
+    );
+    const explanation = this.#dropSecretPrefix(bounded);
     return new HttpError(response.status,
       `TeamCity request failed with HTTP ${response.status}.${explanation === "" ? "" : " " + explanation}`);
   }

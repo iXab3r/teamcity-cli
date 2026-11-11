@@ -80,10 +80,10 @@ test("TeamCity stream failure and pending abort are private and release the read
   }
 });
 
-test("TeamCity reads only the diagnostic prefix and cancels non-success bodies", async () => {
+test("TeamCity bounds diagnostic lookahead and cancels non-success bodies", { timeout: 5000 }, async () => {
   let cancelled = 0;
   const input = new Response(new ReadableStream<Uint8Array>({
-    start(controller) { controller.enqueue(Buffer.from("x".repeat(4096) + "omitted")); },
+    start(controller) { controller.enqueue(Buffer.from("x".repeat(65536) + "omitted")); },
     cancel() { cancelled++; },
   }), { status: 503 });
   const client = new TeamCityClient({ ...connection, fetch: async () => input });

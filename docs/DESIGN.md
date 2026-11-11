@@ -56,8 +56,9 @@ have happened; an authentication GET is not an uncertain write.
 `HttpError(status, message, { cause?, next? })` is the shared typed failure for an error status.
 It maps `401 http.unauthorized` (with `next: auth login`), `403 http.forbidden`, `404 http.notFound`,
 `409 http.conflict`, `429 http.rateLimited`, `5xx http.serverError` and other statuses to
-`http.rejected`, and exposes `status`. The integration supplies the sentence; the body is never
-read into it. Transport failures from `fetchWithRedirects` carry `request.dns`, `request.tls`,
+`http.rejected`, and exposes `status`. The integration supplies the sentence and may include up to 4 KiB of masked server response
+text, truncated after masking at a UTF-8-safe boundary. Known secret prefixes at the cut are dropped;
+request bodies are never appended. Transport failures from `fetchWithRedirects` carry `request.dns`, `request.tls`,
 `request.timeout`, `request.connection` or `request.failed` with one classified sentence.
 
 **One diagnostic model serves people and agents.** Core owns wrapping support, redaction and
@@ -323,7 +324,8 @@ control, so redirected stderr stays readable, and progress is never part of the 
 A handler reports a failed domain outcome, such as a finished build with `FAILURE`, by throwing
 Core's `CliError` with the `result` it would otherwise have returned. The error has these fields:
 - `code`: a stable, dotted machine reason;
-- `message`: safe text without response bodies or credentials;
+- `message`: safe text, optionally including up to 4 KiB of masked server response text;
+  mask before UTF-8-safe truncation and drop trailing partial matches of known secrets;
 - `exitCode`: 1 unless another documented status is given;
 - optional `result`;
 - optional `cause`, with stack/cause diagnostics governed by the cross-tool policy above;

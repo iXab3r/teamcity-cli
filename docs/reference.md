@@ -11,8 +11,8 @@ output, and JSON-RPC behavior is supplied by the pinned `@eyeauras/cli-factory` 
 Ordinary text, JSON and XML responses have no tool-imposed byte ceiling. Invalid Content-Length
 and incomplete or mismatched unencoded/identity transfers still fail. Compressed wire length is
 syntax-checked without comparing it with decoded size. Stream errors explain the failure and
-keep redacted native causes; stack traces appear with `--verbose`. HTTP failures include the first 4 KiB of server text,
-with profile-credential masking; malformed JSON errors still omit response excerpts. UTF-8 decoding preserves an initial BOM. Specialized discard
+keep redacted native causes; stack traces appear with `--verbose`. HTTP failures include up to 4 KiB of server text,
+masked before UTF-8-safe truncation with trailing known-secret prefixes dropped; malformed JSON errors still omit response excerpts. UTF-8 decoding preserves an initial BOM. Specialized discard
 probes stop reading unwanted bytes after 64 KiB; this does not reject an operation or truncate
 returned content. No automatic retry or command replay is added.
 
@@ -611,6 +611,15 @@ Inspect configuration before retrying; the CLI does not retry or claim rollback.
 
 ## Explicit credential inputs
 
+Human, JSON, execute and RPC output and errors mask the profile credential, alias values the CLI
+reads for a request (`--value-secret`, authentication `secrets`, `--mapping`, license/reference
+aliases), and issued values it stores with `--alias` or `--store-as` (user/pool tokens, secure
+references and resolved parameters). Masking applies wherever those values occur, including
+native `--fields` results, and is scoped to the invocation. Plain-text inputs are printed as
+returned, including a license key supplied with `--key`; password/`secure:`/withheld property
+hiding remains. Literal, percent-encoded and JSON-escaped copies follow the native projection
+masking rules above.
+
 Use `credentials import <alias> --env <VARIABLE_NAME>` to import only the named environment
 variable into the current profile's platform secret store. Requires Credentials; existing aliases fail.
 Writes also accept direct values; alias lookup is an optional convenience. There is no environment
@@ -878,7 +887,7 @@ TeamCity adds these:
 
 | Code | Meaning |
 |---|---|
-| `http.unauthorized`, `http.forbidden`, `http.notFound`, `http.conflict`, `http.rejected`, `http.rateLimited`, `http.serverError` | Core's `HttpError`: TeamCity answered with that HTTP status, also for a refused download; the first 4 KiB of server response text is included with profile-credential masking and a UTF-8-safe boundary; `401` suggests `auth login` |
+| `http.unauthorized`, `http.forbidden`, `http.notFound`, `http.conflict`, `http.rejected`, `http.rateLimited`, `http.serverError` | Core's `HttpError`: TeamCity answered with that HTTP status, also for a refused download; up to 4 KiB of server response text is included, masking known secrets before UTF-8-safe truncation and dropping trailing known-secret prefixes; `401` suggests `auth login` |
 | `request.failed` | A read was lost in transit; nothing was changed, so it can be retried. A lost download reports Core's download error instead |
 | `request.unknownOutcome` | A write was lost in transit; it may or may not have been applied, and is never repeated |
 | `run.unknownOutcome` | The queue request's outcome is unknown; check `builds list --job <id> --state any` |
