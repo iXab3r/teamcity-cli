@@ -40,7 +40,7 @@ test("all S2 leaves declare their gate and deny before HTTP", async (testContext
   assert.equal(requests, 0);
 });
 
-test("S2 rejects malformed syntax, secret properties and self-dependencies before HTTP", async (testContext) => {
+test("S2 rejects malformed syntax and self-dependencies before HTTP", async (testContext) => {
   const { cli } = await writableCli(testContext);
   let requests = 0;
   server.use(
@@ -67,23 +67,12 @@ test("S2 rejects malformed syntax, secret properties and self-dependencies befor
     for (const property of [
       "=empty",
       "missing-equals",
-      "env.TOKEN=synthetic",
-      "setting=Bearer fixture-credential",
     ]) {
       invalid.push([...create, "--property", property]);
     }
   }
   for (const argv of invalid)
     await assert.rejects(cli.execute(["jobs", ...argv]), Error, argv.join(" "));
-  // Direct SDK callers cannot bypass the shared property validation.
-  const client = new TeamCityClient({ baseUrl: "https://teamcity.test", token: "fixture-token" });
-  await assert.rejects(
-    client.createExtension("features", "Build", {
-      type: "plugin",
-      properties: [{ name: "password", value: "synthetic" }],
-    }),
-    /non-secret/,
-  );
   assert.equal(requests, 0);
 });
 

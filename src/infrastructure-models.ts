@@ -1,6 +1,6 @@
 import { locatorValue, idPath, requiredText } from "./locator.js";
 import { plainProperty, propertiesBody, safeProperty, type RawProperty, type PlainProperty } from "./authoring-models.js";
-import { allowedField } from "./advanced-authoring-models.js";
+import { allowedField, booleanText } from "./advanced-authoring-models.js";
 import { apiInputRecord, array, inputText, object, safeScalars } from "./triage-models.js";
 
 export type CloudKind = "profiles" | "images" | "instances";
@@ -127,15 +127,13 @@ export function versionedField(field: string, value?: string) {
   if (field === "format") return versionedFormat(value);
   if (field === "vcsRootId") return inputText(value, "Root ID");
   const result = inputText(value, "Configuration value");
-  if (field === "storeSecureValuesOutsideVcs" && result !== "true")
-    throw new Error("Secrets must remain outside VCS.");
+  if (field === "storeSecureValuesOutsideVcs") return booleanText(result);
   return result;
 }
 export function versionedConfigBody(value: unknown) {
   const input = apiInputRecord(value, [...versionedConfigKeys, "importDecision"]);
   const result: Record<string, unknown> = {
     ...input,
-    storeSecureValuesOutsideVcs: true,
   };
   for (const [key, field] of Object.entries(input)) {
     if (![...versionedConfigKeys, "importDecision"].includes(key)) continue;
@@ -168,8 +166,6 @@ export function versionedConfigBody(value: unknown) {
       ].includes(key)
     ) {
       if (typeof field !== "boolean") throw new Error("Configuration flags must be booleans.");
-      if (key === "storeSecureValuesOutsideVcs" && !field)
-        throw new Error("Secrets must remain outside VCS.");
       result[key] = field;
     } else result[key] = versionedField(key, inputText(field, key));
   }

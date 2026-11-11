@@ -1,6 +1,6 @@
 {
   "name": "@eyeauras/teamcity-cli",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "AI-friendly TeamCity CLI built with AI CLI Factory.",
   "type": "module",
   "main": "./dist/src/index.js",

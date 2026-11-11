@@ -284,31 +284,32 @@ export function createSystemCommands(
       ),
       command(
         "add",
-        "Add key from alias",
+        "Add a license key",
         async ({ options }, context) =>
           (await clientFor(context)).addLicense(
-            text(options, "secret"),
+            options.secret as string | undefined,
             context.secrets,
             fieldsFromOptions(options),
+            options.key as string | undefined,
           ),
         {
           permission: "Admin",
-          options: [fieldsOption, option("--secret <alias>", "Select an input-secret alias", true)],
+          options: [fieldsOption, option("--key <value>", "Supply a license key"), option("--secret <alias>", "Select an input-secret alias")],
         },
       ),
       command(
-        "show <alias>",
-        "Inspect alias-referenced license",
+        "show [alias]",
+        "Inspect a license",
         async ({ args, options }, context) =>
-          (await clientFor(context)).getLicense(args.alias, context.secrets, fieldsFromOptions(options)),
-        { permission: R, options: [fieldsOption] },
+          (await clientFor(context)).getLicense(args.alias as string | undefined, context.secrets, fieldsFromOptions(options), options.key as string | undefined),
+        { permission: R, options: [fieldsOption, option("--key <value>", "Supply a license key")] },
       ),
       command(
-        "delete <alias>",
+        "delete [alias]",
         "Remove a license",
-        async ({ args }, context) =>
-          (await clientFor(context)).deleteLicense(args.alias, context.secrets),
-        { permission: "Admin", options: [confirm] },
+        async ({ args, options }, context) =>
+          (await clientFor(context)).deleteLicense(args.alias as string | undefined, context.secrets, options.key as string | undefined),
+        { permission: "Admin", options: [confirm, option("--key <value>", "Supply a license key")] },
       ),
     ]),
     leaf(

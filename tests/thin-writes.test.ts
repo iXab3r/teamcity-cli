@@ -3,6 +3,7 @@ import test from "node:test";
 import { assertHttpRequest, trackRequests, assertPermissionDenied } from "@eyeauras/cli-factory/testing";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { TeamCityClient } from "../src/client.js";
 import { createTestRuntime } from "./support.js";
 
 const base = "https://teamcity.test/app/rest";
@@ -77,6 +78,17 @@ const cases: WriteCase[] = [
     query: { fields: "count,licenseKey(valid,active,expired,obsolete,expirationDate,maintenanceEndDate,type,servers,agents,unlimitedAgents,buildTypes,unlimitedBuildTypes,pipelines,unlimitedPipelines)" }, text: "synthetic-license", response: {},
   },
   {
+    name: "plain license key lookup",
+    argv: ["server", "licenses", "show", "--key", "synthetic-license"],
+    permission: "ReadOnly", method: "GET", path: "/server/licensingData/licenseKeys/synthetic-license",
+    query: { fields: "valid,active,expired,obsolete,expirationDate,maintenanceEndDate,type,servers,agents,unlimitedAgents,buildTypes,unlimitedBuildTypes,pipelines,unlimitedPipelines" }, response: {},
+  },
+  {
+    name: "plain license key deletion",
+    argv: ["server", "licenses", "delete", "--key", "synthetic-license", "--confirm"],
+    permission: "Admin", method: "DELETE", path: "/server/licensingData/licenseKeys/synthetic-license",
+  },
+  {
     name: "plain secure-reference input preserving whitespace",
     argv: ["projects", "secure", "create-reference", "Example", "--value", " synthetic-value \n", "--store-as", "fixture"],
     permission: "Credentials", method: "POST", path: "/projects/id:Example/secure/tokens", text: " synthetic-value \n",
@@ -103,7 +115,7 @@ const cases: WriteCase[] = [
 
 for (const c of cases) {
   test(`#379 forwards ${c.name}`, async t => {
-    const runtime = await createTestRuntime(t);
+    const runtime = await createTestRuntime(t, { profiles: [{ name: "default", url: "https://teamcity.test", permissions: [] }] });
     const cli = runtime.createCli();
     const requests = trackRequests(t, c.name.startsWith("plain password") ? 2 : 1, async request => {
       if (c.name.startsWith("plain password") && request.method === "GET") {
@@ -112,7 +124,7 @@ for (const c of cases) {
       }
       await assertHttpRequest(request, {
         method: c.method ?? "PUT", url: base + c.path, query: c.query ?? {},
-        body: c.json === undefined ? { text: c.text ?? "" } : { json: c.json },
+        ...(c.json !== undefined ? { body: { json: c.json } } : c.text !== undefined ? { body: { text: c.text } } : {}),
       });
       return c.response === undefined ? HttpResponse.text("synthetic-reference") : HttpResponse.json(c.response);
     });
@@ -122,3 +134,36 @@ for (const c of cases) {
     await cli.execute(c.argv);
   });
 }
+
+test("#379 SDK collection replacement retains protected metadata and build scalar input", async t => {
+  const client = new TeamCityClient({ baseUrl: "https://teamcity.test", token: "fixture-token" });
+  const requests = trackRequests(t, 2, async (request, index) => {
+    await assertHttpRequest(request, index === 0 ? {
+      method: "PUT", url: base + parameter, query: { fields: `property(${fields})` },
+      body: { json: { property: [protectedProperty] } },
+    } : {
+      method: "PUT", url: base + "/builds/id:7/number", query: {},
+      body: { text: "Bearer synthetic-value" },
+    });
+    return index === 0 ? HttpResponse.json({ property: [protectedProperty] }) : HttpResponse.text("accepted");
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  const result = await client.replaceAllParameters("jobs", "Example", [protectedProperty]);
+  assert.deepEqual(result, [{ name: protectedProperty.name, type: "protected", redacted: true }]);
+  await client.setBuildScalar(7, "number", "Bearer synthetic-value");
+});
+
+test("#379 direct input takes precedence over aliases and remote rejection is not retried", async t => {
+  const runtime = await createTestRuntime(t);
+  const cli = runtime.createCli();
+  await cli.execute(["permissions", "grant", "Admin"]);
+  const requests = trackRequests(t, 1, async request => {
+    assert.equal(await request.text(), " synthetic-license \n");
+    return HttpResponse.text("synthetic-private-error", { status: 400 });
+  });
+  server.use(http.all("*", ({ request }) => requests.handle(request)));
+  const result = await runtime.run(cli, ["server", "licenses", "add", "--secret", "missing-alias", "--key", " synthetic-license \n", "--json"]);
+  assert.equal(result.exitCode, 1);
+  assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
+  assert.doesNotMatch(result.stderr, /synthetic-private-error/);
+});

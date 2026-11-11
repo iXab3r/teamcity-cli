@@ -38,7 +38,7 @@ test("all 50 S3 leaves deny before HTTP when their profile has no permissions", 
   assert.equal(calls, 0);
 });
 
-test("S3 validates flags, fields, booleans, paths, secret-like properties and self-dependencies locally", async (testContext) => {
+test("S3 validates flags, fields, booleans, paths and self-dependencies locally", async (testContext) => {
   const { cli } = await writable(testContext);
   let calls = 0;
   server.use(
@@ -51,16 +51,6 @@ test("S3 validates flags, fields, booleans, paths, secret-like properties and se
     ["jobs", "agent-requirements", "create", "Build", "--type", "equals"],
     [
       "jobs",
-      "agent-requirements",
-      "create",
-      "Build",
-      "--type",
-      "equals",
-      "--parameter",
-      "env.PASSWORD",
-    ],
-    [
-      "jobs",
       "artifact-dependencies",
       "create",
       "Build",
@@ -80,17 +70,6 @@ test("S3 validates flags, fields, booleans, paths, secret-like properties and se
       "lastSuccessful",
     ],
 
-    ["jobs", "features", "parameters", "set", "Build", "Feature", "secret", "synthetic"],
-    [
-      "projects",
-      "features",
-      "create",
-      "Example",
-      "--type",
-      "plugin",
-      "--property",
-      "password=synthetic",
-    ],
     ["projects", "features", "replace", "Example", "Feature"],
     ["projects", "templates", "create", "Example", "Template"],
     ["projects", "templates", "default", "set", "Example"],
@@ -98,15 +77,6 @@ test("S3 validates flags, fields, booleans, paths, secret-like properties and se
     ["jobs", "branches", "Build", "--start", "-1"],
 
   ];
-  for (const kind of [
-    "steps",
-    "features",
-    "triggers",
-    "agent-requirements",
-    "artifact-dependencies",
-  ]) {
-    invalid.push(["jobs", kind, "fields", "set", "Build", "Entity", "disabled", "Bearer synthetic"]);
-  }
   for (const argv of invalid) await assert.rejects(cli.execute(argv), Error, argv.join(" "));
   assert.equal(calls, 0);
 });
@@ -171,37 +141,6 @@ test("S3 artifact options and requirement activation preserve exact typed bodies
       properties: { property: [{ name: "property-name", value: "env.MODE" }] },
     },
   ]);
-});
-
-test("S3 output parameter writes never downgrade protected metadata and create alone tolerates 404", async (testContext) => {
-  const { cli } = await writable(testContext);
-  let writes = 0;
-  server.use(
-    http.all(`${base}/buildTypes/id:Build/output-parameters*`, ({ request }) => {
-      if (request.method === "GET")
-        return HttpResponse.json({ name: "MODE", type: { rawValue: "password" } });
-      writes++;
-      return HttpResponse.json({ name: "MODE", value: "debug" });
-    }),
-  );
-  for (const action of ["create", "set"])
-    await assert.rejects(
-      cli.execute(["jobs", "output-parameters", action, "Build", "MODE", "--value", "debug"]),
-      /Protected/,
-    );
-  assert.equal(writes, 0);
-  server.use(
-    http.get(
-      `${base}/buildTypes/id:Build/output-parameters/MODE`,
-      () => new HttpResponse(null, { status: 404 }),
-    ),
-  );
-  await assert.rejects(
-    cli.execute(["jobs", "output-parameters", "set", "Build", "MODE", "--value", "debug"]),
-    /404/,
-  );
-  await cli.execute(["jobs", "output-parameters", "create", "Build", "MODE", "--value", "debug"]);
-  assert.equal(writes, 1);
 });
 
 test("S3 handles empty lists, full property clearing and safe malformed/delete errors", async (testContext) => {

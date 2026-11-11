@@ -175,7 +175,6 @@ export const authoringCases: AuthoringCase[] = [
           argv: [owner, "parameters", action, id, "env.MODE", "--value", "debug"],
           method: action === "create" ? "POST" : "PUT",
           path: action === "create" ? path : `${path}/env.MODE`,
-          preflight: `${path}/env.MODE`,
           body: { name: "env.MODE", value: "debug" },
           query: { fields: propertyFields },
           response: property,

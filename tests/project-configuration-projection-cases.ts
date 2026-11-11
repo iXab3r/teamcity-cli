@@ -122,12 +122,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/projects/id:Demo/parameters/env.MODE",
-      "query": {
-        "fields": "name,inherited,type(rawValue)"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "projects parameters set Demo env.MODE --value test",
@@ -167,12 +162,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/projects/id:Demo/parameters/env.MODE",
-      "query": {
-        "fields": "name,inherited,type(rawValue)"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "projects parameters replace-all Demo --property env.MODE=test",
@@ -217,12 +207,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/projects/id:Demo/parameters",
-      "query": {
-        "fields": "property(name,inherited,type(rawValue))"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "projects features list Demo",

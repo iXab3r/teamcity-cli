@@ -9,14 +9,14 @@ import { plainProperty, safeProperty } from "../src/authoring-models.js";
 const base = "https://teamcity.test/app/rest";
 const service = "ai-cli-factory:teamcity-cli";
 const server = setupServer();
-test("write validation rejects credential-bearing URLs while reads preserve plain values", () => {
+test("write inputs and reads preserve credential-shaped plain values", () => {
   for (const value of [
     "https://example.test/repo?%74oken=synthetic",
     "https://example.test/repo#access_token=synthetic",
     "https://synthetic@example.test/repo",
     "https://example.test/file?X-Amz-Signature=synthetic",
   ]) {
-    assert.throws(() => plainProperty("url", value));
+    assert.deepEqual(plainProperty("url", value), { name: "url", value });
     assert.deepEqual(safeProperty({ name: "url", value }), {
       name: "url",
       type: "plain",
@@ -56,7 +56,6 @@ for (const format of ["csharp", "future-format+v2", "xml", "kotlin", " future fo
       const body = await request.json() as Record<string, unknown>;
       assert.deepEqual(body, {
         synchronizationMode: "enabled", vcsRootId: "Git", format,
-        storeSecureValuesOutsideVcs: true,
       });
       return HttpResponse.json(body);
     });
@@ -119,28 +118,11 @@ test("S8 all50 gates deny before network or secret-input reads", async (testCont
     );
 });
 
-test("S8 typed inputs reject unsafe URLs, missing confirmation, invalid fields and secret-to-VCS settings", async (testContext) => {
+test("S8 typed inputs reject missing confirmation and invalid fields", async (testContext) => {
   const { cli } = await writable(testContext);
   const requests = trackRequests(testContext, 0, () => HttpResponse.json({}));
   server.use(http.all("*", ({ request }) => requests.handle(request)));
-  const createRoot = [
-    "vcs",
-    "roots",
-    "create",
-    "Git",
-    "--name",
-    "Git",
-    "--project",
-    "Example",
-    "--branch",
-    "main",
-    "--url",
-  ];
   const invalid = [
-    ...[
-      "https://fixture:synthetic-hidden@example.test/repo.git",
-      "https://example.test/repo.git?token=synthetic-hidden",
-    ].map((url) => [...createRoot, url]),
     [
       "cloud",
       "instances",
@@ -155,18 +137,6 @@ test("S8 typed inputs reject unsafe URLs, missing confirmation, invalid fields a
     ["cloud", "images", "show", "--cloud-profile", "Cloud"],
 
     ["vcs", "roots", "properties", "clear", "Git"],
-    [
-      "vcs",
-      "roots",
-      "properties",
-      "set",
-      "Git",
-      "url",
-      "https://example.test/repo?token=synthetic-hidden",
-    ],
-    ["vcs", "roots", "properties", "set", "Git", "secure:password", "synthetic-hidden"],
-
-    ["vcs", "instances", "fields", "set", "8", "commitHookMode", "Bearer synthetic"],
 
     [...versioned, "commit", "Example"],
     [...versioned, "load", "Example"],
@@ -176,27 +146,8 @@ test("S8 typed inputs reject unsafe URLs, missing confirmation, invalid fields a
       "replace",
       "Example",
       "--item",
-      '{"synchronizationMode":"disabled","storeSecureValuesOutsideVcs":false}',
-    ],
-    [
-      ...versioned,
-      "config",
-      "replace",
-      "Example",
-      "--item",
       '{"synchronizationMode":"disabled","portableDsl":"false"}',
     ],
-    [
-      ...versioned,
-      "config",
-      "replace",
-      "Example",
-      "--item",
-      '{"synchronizationMode":"disabled","password":"synthetic-hidden"}',
-    ],
-    [...versioned, "config", "fields", "set", "Example", "storeSecureValuesOutsideVcs", "false"],
-    [...versioned, "config", "fields", "set", "Example", "showSettingsChanges", "Bearer synthetic"],
-    [...versioned, "context", "replace", "Example", "--property", "password=synthetic-hidden"],
     [
       ...versioned,
       "tokens",
@@ -300,7 +251,6 @@ test("S8 full repository/context replacements preserve empty and false values wi
   assert.deepEqual(value, {
     synchronizationMode: "disabled",
     allowUIEditing: false,
-    storeSecureValuesOutsideVcs: true,
     portableDsl: false,
   });
   assert.deepEqual(bodies.slice(0, 3), [

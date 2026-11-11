@@ -27,7 +27,7 @@ export function inputRecord(value: unknown, keys: readonly string[]) {
   if (Object.keys(item).some((k) => !keys.includes(k))) throw new Error("Unknown input field.");
   return item;
 }
-/** Native JSON bodies can grow; additional fields still use the plain-property credential boundary. */
+/** Native JSON bodies can grow; validate additional fields as JSON. */
 export function apiInputRecord(value: unknown, known: readonly string[]) {
   const item = object(value);
   if (![Object.prototype, null].includes(Object.getPrototypeOf(item))) throw new Error("Expected a JSON object.");

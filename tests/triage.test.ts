@@ -46,7 +46,7 @@ test("S6 all 50 gates deny before any HTTP", async (testContext) => {
   assert.equal(calls, 0);
 });
 
-test("S6 validates identities, controls, body types and secret input before HTTP", async (testContext) => {
+test("S6 validates identities, controls and body types before HTTP", async (testContext) => {
   const { cli } = await writable(testContext);
   let calls = 0;
   server.use(
@@ -61,12 +61,9 @@ test("S6 validates identities, controls, body types and secret input before HTTP
     ["builds", "batch", "delete", "--build", "9007199254740993"],
     ["builds", "batch", "pin", "--build", "42", "--status", "yes"],
     ["builds", "finish-at", "42"],
-    ["builds", "finish-at", "42", "Bearer synthetic"],
-    ["builds", "set-status", "42", "Bearer synthetic", "--comment", "Synthetic"],
     ["builds", "vcs-labels", "add", "42", "--label", "example"],
 
     ["investigations", "create", "--item", "{synthetic-invalid"],
-    ["investigations", "create", ...item({ ...investigation, password: "synthetic-invalid" })],
     ["investigations", "replace", ...item({ ...investigation, assignee: "wrong type" })],
     ["investigations", "create", ...item({ ...investigation, resolution: 1 })],
     ["investigations", "show", "--target", '{"kind":"job","jobId":"Build","projectId":"Example"}'],

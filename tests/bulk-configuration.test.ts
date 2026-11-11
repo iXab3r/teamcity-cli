@@ -58,21 +58,10 @@ test("S5 validates typed items, IDs, booleans, confirmation and bounded queue sc
     ["queue", "reorder"],
 
     ["projects", "jobs", "create", "Example", "Build"],
-
-    ["jobs", "output-parameters", "replace-all", "Build", "--property", "password=synthetic"],
-    ["jobs", "parameters", "value", "set", "Build", "env.MODE", "Bearer synthetic-token"],
     ["jobs", "steps", "replace-all", "Build", "--item", "{broken"],
     ["jobs", "steps", "replace-all", "Build", "--item", "null"],
 
     ["jobs", "features", "replace-all", "Build", "--item", '{"type":"plugin","enabled":"false"}'],
-    [
-      "jobs",
-      "steps",
-      "replace-all",
-      "Build",
-      "--item",
-      '{"name":"Echo","type":"runner","properties":[{"name":"password","value":"synthetic"}]}',
-    ],
     [
       "jobs",
       "artifact-dependencies",
@@ -81,29 +70,13 @@ test("S5 validates typed items, IDs, booleans, confirmation and bounded queue sc
       "--item",
       '{"source":"Source","rules":"*.zip"}',
     ],
-    [
-      "jobs",
-      "agent-requirements",
-      "replace-all",
-      "Build",
-      "--item",
-      '{"type":"exists","parameter":"secret"}',
-    ],
-    [
-      "jobs",
-      "vcs",
-      "replace-all",
-      "Build",
-      "--item",
-      '{"rootId":"Git","rules":"Bearer synthetic-token"}',
-    ],
 
   ];
   for (const argv of invalid) await assert.rejects(cli.execute(argv), Error, argv.join(" "));
   assert.equal(calls, 0);
 });
 
-test("S5 protected metadata prevents downgrade and raw value reads; bulk replacement only preflights metadata", async (testContext) => {
+test("S5 protected metadata hides raw value and type reads", async (testContext) => {
   const { cli } = await writable(testContext);
   const requests: string[] = [];
   server.use(
@@ -123,16 +96,8 @@ test("S5 protected metadata prevents downgrade and raw value reads; bulk replace
   for (const part of ["value", "type", "raw-type"]) {
     const result = await cli.execute(["jobs", "parameters", part, "show", "Build", "env.MODE"]);
     assert.deepEqual(result, { name: "env.MODE", type: "protected", redacted: true });
-    await assert.rejects(
-      cli.execute(["jobs", "parameters", part, "set", "Build", "env.MODE", "text"]),
-      /Protected/,
-    );
   }
-  await assert.rejects(
-    cli.execute(["jobs", "parameters", "replace-all", "Build", "--property", "env.MODE=debug"]),
-    /Protected/,
-  );
-  assert.equal(requests.length, 7);
+  assert.equal(requests.length, 3);
   assert.ok(requests.every((r) => !r.endsWith("/value") && !r.endsWith("/type")));
 });
 

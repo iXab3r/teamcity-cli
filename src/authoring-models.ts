@@ -63,33 +63,6 @@ export const snapshotFields = `${extensionFields},source-buildType(${identityFie
 export const rootFields = "id,name,vcsName,project(id,name)";
 export const entryFields = `vcs-root(${rootFields}),checkout-rules`;
 
-const sensitiveName =
-  /secure:|(?:password|passwd|secret|token|credentials?(?:JSON)?|private[._-]?key|secret[._-]?key|api[._-]?key|access[._-]?key|encryption[._-]?key|authorization|cookie)(?:[._-]?(?:value|hash|digest|header))?$/i;
-const protectedSpec = /\bpassword\b|display\s*=\s*['"]?hidden\b/i;
-function sensitiveValue(value: string): boolean {
-  if (/-----BEGIN |\bBearer\s|credentialsJSON:/i.test(value)) return true;
-  for (const match of value.matchAll(/[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+/gi)) {
-    let url: URL;
-    try {
-      url = new URL(match[0]);
-    } catch {
-      continue;
-    }
-    // SSH user names identify an account; passwords and HTTP token-as-user URLs carry secrets.
-    if (url.password || (url.username && url.protocol !== "ssh:")) return true;
-    const keys = [...url.searchParams.keys(), ...new URLSearchParams(url.hash.slice(1)).keys()];
-    if (
-      keys.some(
-        (key) =>
-          sensitiveName.test(key) ||
-          /^(?:sig|signature|x-amz-signature|x-goog-signature)$/i.test(key),
-      )
-    )
-      return true;
-  }
-  return false;
-}
-
 export function parameterType(property: RawProperty): string {
   if (property.type === undefined) return "plain";
   const spec = property.type?.rawValue;
@@ -97,15 +70,6 @@ export function parameterType(property: RawProperty): string {
   if (/^\s*password(?:\s|$)/i.test(spec)) return "protected";
   const kind = spec.trim().split(/\s+/)[0] ?? "";
   return kind === "" ? "plain" : kind;
-}
-
-export function isPlainParameter(property: RawProperty): boolean {
-  return (
-    typeof property.name === "string" &&
-    !sensitiveName.test(property.name) &&
-    (property.type === undefined ||
-      (typeof property.type?.rawValue === "string" && !protectedSpec.test(property.type.rawValue)))
-  );
 }
 
 export function safeProperty(property: RawProperty, exposeValue = true) {
@@ -121,7 +85,7 @@ export function safeProperty(property: RawProperty, exposeValue = true) {
   };
 }
 
-/** Read policy follows TeamCity metadata, independently of argv/write validation. */
+/** Read policy follows TeamCity metadata, independently of write inputs. */
 export function isSecretProperty(property: RawProperty): boolean {
   return /^secure:/i.test(property.name) ||
     /^\s*password(?:\s|$)/i.test(property.type?.rawValue ?? "") ||
@@ -146,17 +110,12 @@ export function readableConfiguration(value: unknown, property = false): unknown
 export function plainProperty(name: string, value: string): PlainProperty {
   const normalized = requiredText(name, "Property name");
   if (typeof value !== "string") throw new Error("Property value must be text.");
-  if (sensitiveName.test(normalized) || sensitiveValue(value)) {
-    throw new Error("Only non-secret properties are supported; do not pass credentials on argv.");
-  }
   return { name: normalized, value };
 }
 
 export function propertiesBody(input: readonly PlainProperty[] = []) {
   const properties = input.map((p) => {
     const plain = plainProperty(p.name, p.value);
-    if (!isPlainParameter(p as RawProperty))
-      throw new Error("Protected parameter values require secure storage.");
     return { ...p, ...plain };
   });
   return { property: properties };

@@ -39,7 +39,7 @@ test("all 50 S4 leaves deny before HTTP without their declared profile permissio
   assert.equal(calls, 0);
 });
 
-test("S4 validates IDs, required options, fields, booleans, policy, tags and credential-shaped inputs locally", async (testContext) => {
+test("S4 validates IDs, required options, fields, booleans, policy and required tag options locally", async (testContext) => {
   const { cli } = await writable(testContext);
   let calls = 0;
   server.use(
@@ -58,8 +58,6 @@ test("S4 validates IDs, required options, fields, booleans, policy, tags and cre
     ["pools", "agents", "list", "1", "--start", "-1"],
 
     ["agents", "fields", "show", "7", "\ud800"],
-
-    ["agents", "fields", "set", "7", "enabled", "Bearer synthetic"],
     ["agents", "enabled", "set", "7", "TRUE"],
     ["agents", "authorized", "set", "7", "0"],
     ["agents", "policy", "set", "7", "all"],
@@ -75,15 +73,7 @@ test("S4 validates IDs, required options, fields, booleans, policy, tags and cre
   ];
   for (const owner of ["builds", "queue"]) {
     invalid.push([owner, "tags", "add", "42"]);
-    invalid.push([owner, "tags", "add", "42", "--tag", "Bearer synthetic-token"]);
   }
-  for (const argv of [
-    ["agents", "enabled", "set", "7", "true", "--comment"],
-    ["builds", "pin", "set", "42", "true", "--comment"],
-    ["builds", "comment", "set", "42", "--text"],
-    ["builds", "status-text", "set", "42"],
-  ])
-    invalid.push([...argv, "Bearer synthetic-token"]);
   for (const argv of invalid) await assert.rejects(cli.execute(argv), Error, argv.join(" "));
   assert.equal(calls, 0);
 });

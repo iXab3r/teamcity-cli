@@ -232,7 +232,7 @@ export async function authBody(value: unknown, secrets: ScopedSecrets) {
     const used = new Set(properties.map((p) => p.name));
     for (const item of array(m.secrets)) {
       const s = inputRecord(item, ["name", "alias"]);
-      // Native secure property names are allowed here; only aliases carry their values.
+      // Resolve optional aliases alongside native property values.
       if (
         typeof s.name !== "string" ||
         !s.name ||

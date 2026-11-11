@@ -233,7 +233,6 @@ advancedAuthoringCases.push(
       body: { name: "env.MODE", value: "debug" },
       response: property,
       expected: safe,
-      preflight: `${output}/env.MODE`,
     }),
   ),
   {

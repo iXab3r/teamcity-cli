@@ -555,9 +555,10 @@ enum alone does not overrule an explicit enum elsewhere in the primary reference
 versions and gaps; when a service-value rule is uncertain, preserve the value and let the API validate it.
 
 Validate JSON value types and representable numbers, encode identifiers and locator dimensions without
-changing their values, and retain explicit permissions, profile isolation, secret protection and safe
-errors. Give each separate transport/security check its concrete reason: for example, dot segments
-would change URL routing, bearer text cannot enter a plain argv property, and a download destination
+changing their values, and retain explicit permissions, profile isolation, read-side secret protection
+and safe errors. Service writes forward caller input, including bearer text; aliases are optional.
+Give each separate transport/security check its concrete reason: for example, dot segments
+would change URL routing, and a download destination
 must stay under the active profile without overwriting another file. Local controls such as polling
 duration and caller byte budgets are CLI behavior, not claims about service limits. Compact CLI forms
 may translate flags or selectors into service DTOs; document that translation and preserve additional

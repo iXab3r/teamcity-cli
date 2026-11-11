@@ -6,6 +6,7 @@ import * as infrastructure from "./infrastructure-models.js";
 import * as system from "./system-models.js";
 import {
   requireInputSecret,
+  inputValue,
   inputSecretKey,
   preflightSecretKeys,
   persistSecretKeys,
@@ -38,7 +39,6 @@ import {
   stepFields,
   rootFields,
   entryFields,
-  isPlainParameter,
   plainProperty,
   safeProperty,
   isSecretProperty,
@@ -208,7 +208,7 @@ export interface RunJobOptions {
   comment?: string;
   /** Clear this build's entire checkout and fetch its sources again. */
   cleanSources?: boolean;
-  /** One-off, non-secret parameters for this build only; the job configuration is unchanged. */
+  /** One-off parameters for this build only; the job configuration is unchanged. */
   properties?: readonly PlainProperty[];
 }
 
@@ -857,18 +857,14 @@ export class TeamCityClient {
     return this.#writeParameter("PUT", owner, id, name, value, fields);
   }
 
-  public async setPasswordParameter(jobId: string, name: string, alias: string, secrets: ScopedSecrets) {
+  public async setPasswordParameter(jobId: string, name: string, alias: string | undefined, secrets: ScopedSecrets, plainValue?: string) {
     const collection = parametersPath("jobs", jobId);
     pathSegment(name);
     const path = `${collection}/${pathSegment(name)}`;
-    const value = await requireInputSecret(secrets, alias);
+    const value = await inputValue(secrets, alias, plainValue);
     const existing = await this.#requestJson<RawProperty>("GET", path, {
       fields: "name,inherited,type(rawValue)",
     });
-    if (existing.name !== name || existing.inherited === true ||
-        !/^password(?:\s|$)/i.test(existing.type?.rawValue ?? "")) {
-      throw new Error("Expected an existing job-owned password parameter.");
-    }
     try {
       // Retain the password specification and discard any server echo of its value.
       await this.#request("PUT", path, {}, { name, value, type: existing.type },
@@ -890,17 +886,6 @@ export class TeamCityClient {
     const body = plainProperty(name, value);
     const collection = parametersPath(owner, id);
     const path = `${collection}/${pathSegment(body.name)}`;
-    try {
-      const existing = await this.#requestJson<RawProperty>("GET", path, {
-        fields: "name,inherited,type(rawValue)",
-      });
-      if (existing.name !== body.name || !isPlainParameter(existing)) {
-        throw new Error("Protected or malformed parameter metadata cannot be changed.");
-      }
-    } catch (error) {
-      if (!(method === "POST" && error instanceof HttpError && error.status === 404))
-        throw error;
-    }
     return this.#projectedJson(
       method,
       method === "POST" ? collection : path,
@@ -2149,11 +2134,6 @@ export class TeamCityClient {
   ) {
     const body = propertiesBody(properties);
     const path = parametersPath(owner, id);
-    const current = await this.#requestJson<{ property?: RawProperty[] }>("GET", path, {
-      fields: "property(name,inherited,type(rawValue))",
-    });
-    if ((current.property ?? []).some((p) => !isPlainParameter(p)))
-      throw new Error("Protected parameter metadata cannot be replaced with plain parameters.");
     return this.#projectedJson(
       "PUT",
       path,
@@ -2193,12 +2173,10 @@ export class TeamCityClient {
     value?: string,
   ) {
     const path = `${parametersPath(owner, id)}/${pathSegment(name)}`;
-    const metadata = await this.#requestJson<RawProperty>("GET", path, {
-      fields: "name,inherited,type(rawValue)",
-    });
-    if (method === "PUT" ? !isPlainParameter(metadata) : isSecretProperty({ ...metadata, value: "" })) {
-      if (method === "PUT")
-        throw new Error("Protected parameter metadata cannot be changed with plain input.");
+    const metadata = method === "GET"
+      ? await this.#requestJson<RawProperty>("GET", path, { fields: "name,inherited,type(rawValue)" })
+      : { name };
+    if (method === "GET" && isSecretProperty({ ...metadata, value: "" })) {
       return safeProperty(metadata, false);
     }
     if (part === "value") {
@@ -4201,8 +4179,8 @@ export class TeamCityClient {
     );
   }
 
-  public async setVersionedTokens(id: string, mappings: readonly string[], secrets: ScopedSecrets) {
-    triage.typedItems(mappings);
+  public async setVersionedTokens(id: string, mappings: readonly string[], secrets: ScopedSecrets, properties: readonly PlainProperty[] = []) {
+    triage.typedItems([...mappings, ...properties]);
     const entries = mappings.map((mapping) => {
       const split = mapping.indexOf("=");
       if (split < 1) throw new Error("Mapping requires remote-name=local-alias.");
@@ -4212,7 +4190,7 @@ export class TeamCityClient {
       };
     });
     textIds(entries.map((item) => item.name));
-    const versionedSettingsToken = [];
+    const versionedSettingsToken = propertiesBody(properties).property;
     for (const item of entries)
       versionedSettingsToken.push({
         name: item.name,
@@ -4226,7 +4204,7 @@ export class TeamCityClient {
       "application/json",
       { discard: true },
     );
-    return { names: entries.map((item) => item.name), updated: true };
+    return { names: versionedSettingsToken.map((item) => item.name), updated: true };
   }
 
   public async deleteVersionedTokens(id: string, names: readonly string[]) {
@@ -4886,11 +4864,12 @@ export class TeamCityClient {
   }
 
   public async addLicense<F extends string | undefined = undefined>(
-    alias: string,
+    alias: string | undefined,
     secrets: ScopedSecrets,
     fields?: F,
+    plainValue?: string,
   ) {
-    const value = await requireInputSecret(secrets, alias);
+    const value = await inputValue(secrets, alias, plainValue);
     const response = await this.#textJson(
       "POST",
       "/app/rest/server/licensingData/licenseKeys",
@@ -4902,11 +4881,12 @@ export class TeamCityClient {
   }
 
   public async getLicense<F extends string | undefined = undefined>(
-    alias: string,
+    alias: string | undefined,
     secrets: ScopedSecrets,
     fields?: F,
+    plainValue?: string,
   ) {
-    const value = await requireInputSecret(secrets, alias);
+    const value = await inputValue(secrets, alias, plainValue);
     return this.#projectedJson(
       "GET",
       "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
@@ -4916,8 +4896,8 @@ export class TeamCityClient {
     );
   }
 
-  public async deleteLicense(alias: string, secrets: ScopedSecrets) {
-    const value = await requireInputSecret(secrets, alias);
+  public async deleteLicense(alias: string | undefined, secrets: ScopedSecrets, plainValue?: string) {
+    const value = await inputValue(secrets, alias, plainValue);
     await this.#request(
       "DELETE",
       "/app/rest/server/licensingData/licenseKeys/" + pathSegment(value),
@@ -5112,14 +5092,15 @@ export class TeamCityClient {
   }
   public async createSecureReference(
     project: string,
-    inputAlias: string,
+    inputAlias: string | undefined,
     outputAlias: string,
     secrets: ScopedSecrets,
+    plainValue?: string,
   ) {
     const path = "/app/rest/projects/" + idPath(project, "Project ID") + "/secure/tokens",
       key = files.referenceKey(outputAlias);
     await preflightSecretKeys(secrets, [key]);
-    const value = await requireInputSecret(secrets, inputAlias);
+    const value = await inputValue(secrets, inputAlias, plainValue);
     const reference = await this.#requestText("POST", path, value);
     files.sensitiveSegment(reference);
     await persistSecretKeys(secrets, [key], [reference]);

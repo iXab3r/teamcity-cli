@@ -127,7 +127,7 @@ test("S9 all gates, help and error paths avoid network/preflight leaks", async (
     assert.doesNotMatch(runtime.stderr() + runtime.stdout(), /synthetic-private-error/);
   }
 });
-test("S9 strict settings reject unknown fields, invalid sentinels and unsafe auth before HTTP", async (testContext) => {
+test("S9 settings reject invalid sentinels and missing confirmation before HTTP", async (testContext) => {
   const r = await createTestRuntime(testContext);
   const cli = r.createCli();
   await cli.execute(["permissions", "grant", "Admin"]);
@@ -141,17 +141,6 @@ test("S9 strict settings reject unknown fields, invalid sentinels and unsafe aut
   );
   for (const argv of [
     ["server", "field", "\ud800"],
-    ["server", "settings", "set", "--item", '{"encryptionKey":"synthetic-not-allowed"}'],
-
-    [
-      "server",
-      "authentication",
-      "replace",
-      "--item",
-      '{"modules":[{"name":"Default","properties":[{"name":"password","value":"synthetic"}]}]}',
-      "--confirm",
-    ],
-    ["server", "backup", "start", "Bearer synthetic", "--confirm"],
     ["deployments", "delete", "Release"],
     [
       "deployments",

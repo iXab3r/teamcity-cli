@@ -36,6 +36,9 @@ Use [local test/fixture and proof instructions](docs/reference.md#tests-and-loca
   profile paths, credential identity, permission categories and 0.7 pagination contracts.
 - One declaration tree supplies human/JSON/persistent RPC. Handlers return data. Shared output,
   EPIPE handling, AppData, permissions and secret-store behavior belong to Core.
+- Writes forward caller-supplied names and values for TeamCity to validate; input-secret aliases
+  are optional. Reads hide password-typed, `secure:` and server-withheld values. Preserve permission
+  categories and masking of the active profile credential.
 - All service tests are offline at native fetch/MSW with synthetic profiles and memory secrets.
   Local profile-backed proof is separate, fixed, bounded ReadOnly and refuses CI.
 - No deployment addresses, private identities, credentials or unsanitized responses in source,

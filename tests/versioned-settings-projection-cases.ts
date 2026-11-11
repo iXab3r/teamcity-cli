@@ -276,7 +276,7 @@ export const cases: ProjectionCase[] = [
     "query": {
       "fields": "synchronizationMode,vcsRootId,format,buildSettingsMode,allowUIEditing,showSettingsChanges,storeSecureValuesOutsideVcs,portableDsl,settingsPath,applyChangesInDependenciesAndVcsSettings,dslExecutionMode"
     },
-    "body": "{\"format\":\"kotlin\",\"storeSecureValuesOutsideVcs\":true}",
+    "body": "{\"format\":\"kotlin\"}",
     "baselineResult": {
       "format": "kotlin"
     },

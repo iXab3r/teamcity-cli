@@ -120,12 +120,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/buildTypes/id:Demo/parameters/env.MODE",
-      "query": {
-        "fields": "name,inherited,type(rawValue)"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "jobs parameters set Demo env.MODE --value test",
@@ -165,12 +160,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/buildTypes/id:Demo/parameters/env.MODE",
-      "query": {
-        "fields": "name,inherited,type(rawValue)"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "jobs parameters replace-all Demo --property env.MODE=test",
@@ -215,12 +205,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/buildTypes/id:Demo/parameters",
-      "query": {
-        "fields": "property(name,inherited,type(rawValue))"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "jobs output-parameters list Demo",
@@ -342,12 +327,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/buildTypes/id:Demo/output-parameters/env.MODE",
-      "query": {
-        "fields": "name,inherited,type(rawValue)"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "jobs output-parameters set Demo env.MODE --value test",
@@ -387,12 +367,7 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/buildTypes/id:Demo/output-parameters/env.MODE",
-      "query": {
-        "fields": "name,inherited,type(rawValue)"
-      }
-    }
+    "preflight": null
   },
   {
     "name": "jobs output-parameters replace-all Demo --property env.MODE=test",
@@ -437,11 +412,6 @@ export const cases: ProjectionCase[] = [
     "stderr": "",
     "collection": "",
     "permission": "Update",
-    "preflight": {
-      "path": "/app/rest/buildTypes/id:Demo/output-parameters",
-      "query": {
-        "fields": "property(name,inherited,type(rawValue))"
-      }
-    }
+    "preflight": null
   }
 ];

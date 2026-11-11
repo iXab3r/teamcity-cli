@@ -196,7 +196,7 @@ test("all authoring leaves reject unknown options before HTTP and surface remote
   }
 });
 
-test("authoring validates fields, required options, paging, paths and plain properties before HTTP", async (testContext) => {
+test("authoring validates fields, required options, paging, paths and property syntax before HTTP", async (testContext) => {
   const runtime = await createTestRuntime(testContext);
   const cli = runtime.createCli();
   await cli.execute(["permissions", "grant", "Update"]);
@@ -212,13 +212,9 @@ test("authoring validates fields, required options, paging, paths and plain prop
 
     ["projects", "move", "Example"],
     ["projects", "delete", "_Root"],
-
-    ["projects", "set", "Example", "archived", "Bearer synthetic"],
     ["jobs", "create", "Build", "--name", "Build"],
     ["jobs", "move", "Build"],
-    ["jobs", "set", "Build", "paused", "Bearer synthetic"],
     ["jobs", "parameters", "set", "Build", "env.MODE"],
-    ["projects", "parameters", "create", "Example", "env.PASSWORD", "--value", "synthetic"],
     ["projects", "parameters", "show", "Example", ".."],
     ["jobs", "steps", "show", "Build", "."],
     ["jobs", "steps", "create", "Build", "--name", "Echo"],
@@ -233,19 +229,6 @@ test("authoring validates fields, required options, paging, paths and plain prop
       "simpleRunner",
       "--property",
       "=empty",
-    ],
-
-    [
-      "jobs",
-      "steps",
-      "create",
-      "Build",
-      "--name",
-      "Echo",
-      "--type",
-      "simpleRunner",
-      "--property",
-      "token=synthetic",
     ],
     ["jobs", "vcs", "attach", "Build"],
     ["jobs", "vcs", "replace", "Build", "Root"],
@@ -285,61 +268,6 @@ test("parameter reads use server secret metadata and preserve plain UI types and
     assert.equal(runtime.stdout().includes("synthetic-hidden"), false);
     assert.match(runtime.stdout(), /visible/);
   }
-});
-
-test("parameter writes preflight metadata, reject protected/malformed metadata and only tolerate create 404", async (testContext) => {
-  const runtime = await createTestRuntime(testContext);
-  const cli = runtime.createCli();
-  await cli.execute(["permissions", "grant", "Update"]);
-  let writes = 0;
-  server.use(
-    http.all(`${base}/projects/id:Example/parameters*`, ({ request }) => {
-      if (request.method === "GET")
-        return HttpResponse.json({ name: "innocent", type: { rawValue: "password" } });
-      writes += 1;
-      return HttpResponse.json({ name: "innocent", value: "debug" });
-    }),
-  );
-  for (const action of ["create", "set"]) {
-    await assert.rejects(
-      cli.execute(["projects", "parameters", action, "Example", "innocent", "--value", "debug"]),
-      /Protected or malformed/,
-    );
-  }
-  assert.equal(writes, 0);
-  for (const metadata of [{ name: "innocent", type: {} }, {}]) {
-    server.use(
-      http.get(`${base}/projects/id:Example/parameters/innocent`, () =>
-        HttpResponse.json(metadata),
-      ),
-    );
-    await assert.rejects(
-      cli.execute(["projects", "parameters", "set", "Example", "innocent", "--value", "debug"]),
-      /Protected or malformed/,
-    );
-  }
-  assert.equal(writes, 0);
-  server.use(
-    http.get(
-      `${base}/projects/id:Example/parameters/innocent`,
-      () => new HttpResponse(null, { status: 404 }),
-    ),
-  );
-  await cli.execute([
-    "projects",
-    "parameters",
-    "create",
-    "Example",
-    "innocent",
-    "--value",
-    "debug",
-  ]);
-  assert.equal(writes, 1);
-  await assert.rejects(
-    cli.execute(["projects", "parameters", "set", "Example", "innocent", "--value", "debug"]),
-    /HTTP 404/,
-  );
-  assert.equal(writes, 1);
 });
 
 test("steps replace does not read/merge and returns plain plugin values", async (testContext) => {
@@ -619,5 +547,5 @@ test("offline workflow authors a project/job, launches it and cleans up explicit
     await cli.execute(argv);
   assert.equal(project, undefined);
   assert.equal(job, undefined);
-  assert.equal(requests.length, 14);
+  assert.equal(requests.length, 13);
 });

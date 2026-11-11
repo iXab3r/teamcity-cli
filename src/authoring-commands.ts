@@ -54,12 +54,12 @@ export function createAuthoringCommands(
         ...bulk.parameters(owner),
         ...(owner === "jobs" ? [command(
           "set-password <job-id> <name>",
-          "Replace a password from secure storage",
+          "Replace a password parameter",
           async ({ args, options }, context) =>
             (await clientFor(context)).setPasswordParameter(
-              args["job-id"], args.name, text(options, "valueSecret"), context.secrets,
+              args["job-id"], args.name, options.valueSecret as string | undefined, context.secrets, options.value as string | undefined,
             ),
-          { permission: "Credentials", options: [option("--value-secret <alias>", "Select an input-secret alias", true)] },
+          { permission: "Credentials", options: [option("--value <value>", "Set the parameter value"), option("--value-secret <alias>", "Select an input-secret alias")] },
         )] : []),
         leaf(
           `list <${ownerArg}>`,
@@ -84,7 +84,7 @@ export function createAuthoringCommands(
         ),
         leaf(
           `create <${ownerArg}> <name>`,
-          "Create a plain parameter",
+          "Create a parameter",
           Permission.Update,
           (c, { args, options }) =>
             c.createParameter(
@@ -98,7 +98,7 @@ export function createAuthoringCommands(
         ),
         leaf(
           `set <${ownerArg}> <name>`,
-          "Set a plain parameter after checking its type",
+          "Set a parameter",
           Permission.Update,
           (c, { args, options }) =>
             c.setParameter(

@@ -421,7 +421,7 @@ export const infrastructureCases: AuthoringCase[] = [
     { fields: VC },
     config,
     config,
-    config,
+    { synchronizationMode: "enabled", vcsRootId: "Git", format: "kotlin" },
   ),
   scoped(
     ["projects", "versioned-settings", "config", "effective", "Example"],

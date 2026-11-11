@@ -22,9 +22,6 @@ for (const owner of ["jobs", "projects", "output"] as const) {
     body: { property: [property] },
     response: { property: [property] },
     expected: [safeProperty],
-    preflight: path,
-    preflightFields: "property(name,inherited,type(rawValue))",
-    preflightResponse: { property: [{ name: "env.MODE", type: { rawValue: "text" } }] },
   });
   cases.push({
     argv: [...command, "clear", id, "--confirm"],
@@ -53,9 +50,9 @@ for (const owner of ["jobs", "projects", "output"] as const) {
         response: part === "type" ? { rawValue: value } : value,
         expected:
           part === "value"
-            ? { ...property, type: "text", redacted: false }
+            ? { ...property, type: method === "GET" ? "text" : "plain", redacted: false }
             : { name: "env.MODE", type: "text", redacted: false },
-        preflight: `${path}/env.MODE`,
+        ...(method === "GET" ? { preflight: `${path}/env.MODE` } : {}),
       });
     }
   }

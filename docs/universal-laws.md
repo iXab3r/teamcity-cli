@@ -15,8 +15,10 @@ The owner authorizes local instruction copies; shared runtime implementations re
    and knowledge alongside reliability; common safety guarantees must not depend on copied glue.
 2. **One command declaration.** Help, human output, JSON output, and JSON-RPC execution derive from
    the same recursive command tree. Handlers return data; they do not render formats.
-3. **Credentials stay out of config and output.** Use the injected secret store for standalone
-   secrets. Explicit browser auth state may persist in profile AppData per DESIGN.md; never log,
+3. **Profile credentials stay out of config and output.** Use the injected secret store for profile
+   credentials. Service writes forward caller input, including credential-like names and values;
+   input-secret aliases are optional. Reads hide server-protected values and mask the profile credential.
+   Explicit browser auth state may persist in profile AppData per DESIGN.md; never log,
    snapshot or commit credentials. Explicit user-requested videos are sensitive artifacts under
    protected profile AppData per DESIGN.md, never fixtures. There is no silent storage fallback.
 4. **Profiles isolate environments.** Endpoint/config and credential identity both include the

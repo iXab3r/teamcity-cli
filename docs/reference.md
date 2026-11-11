@@ -70,8 +70,8 @@ Licensed under MIT. See the [release guide](release.md).
 | `jobs create/set/move/delete` | Author build configurations | `Update` |
 | `jobs copy <source-id> <id> --name <name> --project <id>` | Copy settings server-side, including protected parameters, without exposing their values | `Credentials` |
 | `projects parameters list/show`, `jobs parameters list/show` | Inspect safe parameter values and metadata | `ReadOnly` |
-| `projects parameters create/set/delete`, `jobs parameters create/set/delete` | Manage plain parameters | `Update` |
-| `jobs parameters set-password <job-id> <name> --value-secret <alias>` | Replace an existing job-owned password from the active profile's input-secret; retain its specification and return no value | `Credentials` |
+| `projects parameters create/set/delete`, `jobs parameters create/set/delete` | Manage parameters | `Update` |
+| `jobs parameters set-password <job-id> <name> --value <value>` (or `--value-secret <alias>`) | Replace a parameter from `--value` or the active profile's input-secret; retain its specification and return no value | `Credentials` |
 | `jobs steps list/show` | Inspect ordered step summaries | `ReadOnly` |
 | `jobs steps create/replace/delete` | Manage build steps | `Update` |
 | `vcs roots list/show` | Discover existing roots without connection properties | `ReadOnly` |
@@ -182,16 +182,15 @@ forward scalar fields and string values unchanged; TeamCity validates field avai
 `jobs move <id> --project <id>`. No create command promises client-side upsert or conflict semantics.
 
 Parameters use `list <owner-id>`, `show/delete <owner-id> <name>` and
-`create/set <owner-id> <name> --value <value>`. Plain writes support non-secret values.
+`create/set <owner-id> <name> --value <value>`. Writes forward caller-supplied names and values for TeamCity to validate.
 Reads return every plain value supplied by TeamCity, including values with names such as `token`,
 UI-hidden text and future parameter types. Only password-type parameters, `secure:` properties,
 and values the server withholds have `redacted: true` and no value. The CLI never unmasks them.
 Literal `*` and `*****` values remain readable; names and value spelling do not imply secrecy.
 An absent/empty type spec means a plain parameter. Ordinary parameter reads return the type name;
-configuration reads retain native type metadata. Create/set preflight metadata and reject protected
-or malformed metadata before writing; only create tolerates a 404. Write validation remains stricter
-than reads: credentials must use the secret workflows, not argv. The preflight is not atomic against
-concurrent server changes.
+configuration reads retain native type metadata. Create/set and collection replacement send writes
+without protected-metadata preflights. The password helper reads metadata to preserve the existing
+specification, accepts `--value` or `--value-secret`, and leaves validation to TeamCity.
 
 Steps accept `--name`, `--type`, and repeatable `--property <key=value>` (split on the first `=`;
 duplicate/empty keys fail). `jobs steps replace <job-id> <step-id>` fully replaces writable input:
@@ -267,8 +266,7 @@ teamcity-cli builds diagnose 101
   The names remain in the final result with `--wait`, including a failed wait. This uses the
   [optional API reference: Build properties contract](https://github.com/JetBrains/teamcity-rest/blob/fc730e618ccd4b57dbbaf03425bb79a9580d19d2/rest-api/src/jetbrains/buildServer/server/rest/model/build/Build.java#L632),
   which includes custom-build parameters.
-- Parameter values are not echoed in output or errors. Never pass secrets in argv; secret
-  parameters are not supported here.
+- Parameter values are forwarded unchanged and are not echoed in the queue result.
 - If the queue response is lost or unreadable, or TeamCity or a proxy answers with a 5xx status,
   the outcome is unknown. The command fails with `run.unknownOutcome` and suggests
   `builds list --job <id> --state any`, preceded by the same list for the run's `--branch` when
@@ -355,10 +353,10 @@ teamcity-cli jobs templates detach Example_Build Example_Template --inline-setti
 
 Triggers/features accept `create <job-id>`, `show/delete <job-id> <trigger-id|feature-id>` and
 `replace <job-id> <trigger-id|feature-id>`. Both create and replace require `--type`, accept
-repeatable non-secret `--property <key=value>`, and leave omitted activation fields to TeamCity.
+repeatable `--property <key=value>`, and leave omitted activation fields to TeamCity.
 Extensions may be enabled by server defaults; `--enabled` sends `disabled:false`. Replacement is a full writable replacement: omitted properties
 and trigger customization are not retained. No hidden GET/merge or retries occur. Trigger
-`buildCustomization` and credential provisioning are not supported by this slice.
+`buildCustomization` is not supported by this slice.
 
 Snapshot dependencies use the same list/show/create/replace/delete shape, with required
 `--source <upstream-job-id>` instead of `--type` for writes. Their dependency ID is the upstream
@@ -420,11 +418,11 @@ cycles and plugin semantics. Replace is full writable replacement, not a hidden 
 The `fields show/set` subtree forwards scalar field names and text values to the API; steps
 also support named fields such as `name`; their text is validated by TeamCity. Step/feature `parameters replace`
 replaces the complete property set; no `--property` clears it. `parameters set` changes one named
-non-secret property. Plugin list/show returns property values; single-property show uses the collection metadata so
-password types remain protected. Output parameters use the same read policy. Their writes retain
-plain-parameter validation and protected-metadata preflights.
+property. Plugin list/show returns property values; single-property show uses the collection metadata so
+password types remain protected. Output parameters use the same read policy. Writes forward
+caller input without secrecy refusals or protected-metadata preflights.
 
-Project features accept `--type` and repeatable non-secret properties, have no disabled toggle,
+Project features accept `--type` and repeatable properties, have no disabled toggle,
 and take effect immediately. Project template creation requires an ID and `--name`. Clearing the
 own default does not delete the template and may reveal an inherited default. `jobs templates show`
 inspects one attachment. `jobs branches` is bounded with `--limit`/`--start`; aliases, tags and
@@ -434,7 +432,7 @@ project-template/feature lists preserve native scoped order without paging.
 
 Pool and agent changes can alter where builds run. Numeric IDs must be safe integers; the server
 validates identity and deletion semantics, including pool 0 (the default). Field selectors are
-encoded and sent to the API; writes reject credential-shaped names. Assigning an agent moves its pool membership; unassigning a project
+encoded and sent to the API, including credential-like names on writes. Assigning an agent moves its pool membership; unassigning a project
 removes membership, never the project. Deleting an agent requires inactivity, validated by TeamCity.
 
 ```text
@@ -450,8 +448,8 @@ teamcity-cli builds statistics list 42 --profile uat --json
 ```
 
 `agents enabled/authorized set` and `builds pin set` accept strict `true`/`false` plus an optional
-non-secret `--comment`. Raw scalar field writes preserve text; the server validates these values. Dedicated JSON Boolean
-controls require `true` or `false`. Writing `authToken` is forbidden; reading it returns what the server returns.
+`--comment`. Raw scalar field writes preserve text; the server validates these values. Dedicated JSON Boolean
+controls require `true` or `false`. Scalar writes also forward credential-like names such as `authToken`.
 Policy is `any` or `selected` (case-insensitive, as on the server); supplied spelling and job lists
 are forwarded unchanged, including repetitions. An empty `selected` list permits none. It fully replaces selection. Policy output is `{policy, jobs}`. Agent/pool and
 compatibility responses expose identities. `agents parameters list <agent-id>` returns all system,
@@ -482,9 +480,9 @@ credential/cloud/file surfaces.
 `replace-all` replaces complete collections; omitted items are removed. Job steps/features/triggers,
 requirements/dependencies/VCS entries and project features accept repeated `--item <json>` with
 documented compact family forms. Additional native JSON fields are preserved. Parameters use repeated `--property name=value`;
-metadata preflights prevent replacing protected settings. `parameters clear --confirm` deliberately
-deletes all own parameters, including protected ones. `value/type/raw-type show/set` only exposes
-plain values or safe type names; raw secret/type text is never returned.
+writes forward the supplied collection without a protected-metadata preflight. `parameters clear --confirm` deliberately
+deletes all own parameters, including protected ones. `value/type/raw-type show` hides protected values and type text. The corresponding `set` leaves
+forward caller input without a metadata preflight; scalar value responses have no type metadata.
 
 Project pools, pool projects, project child ordering and template attachments have explicit full
 replacement commands. `queue delete-page --job Example_Build --limit 10 --confirm` deletes only
@@ -579,7 +577,7 @@ and may interrupt running work. Acknowledgement is not proof of the final provid
 
 `vcs roots create` provisions anonymous Git with explicit URL/branch/project/name, preserving
 service strings and URL spelling. Supported Git transports are validated by TeamCity.
-Embedded passwords and HTTP token-as-user URLs are rejected; SSH account names remain literal.
+URL values, including embedded authentication and signature parameters, are forwarded unchanged.
 Property lists return plain values with server secrets redacted; existence reads return an
 acknowledgement. Replace/clear
 operate on the whole native map and can break attached jobs. `vcs instances` exposes polling,
@@ -588,8 +586,7 @@ reports scheduling only for HTTP202, not other successful statuses.
 
 `projects versioned-settings` covers configuration/effective configuration, typed scalar fields,
 context parameters, check/commit/load/status and secure-value mappings. Config replacement forwards supplied native fields without inventing missing service values.
-Only `storeSecureValuesOutsideVcs: true` is inserted to keep secure values outside VCS; disabling
-that protection is rejected. The server decides omitted-field and mode/root requirements. An existing-root conflict requires the caller to choose
+`storeSecureValuesOutsideVcs` is forwarded only when supplied, including `false`. The server decides omitted-field and mode/root requirements. An existing-root conflict requires the caller to choose
 `importDecision`, never an automatic overwrite decision. Commit/load need confirmation.
 Context replacement removes omitted entries; context lists return plain values with server secrets redacted.
 
@@ -607,9 +604,11 @@ Inspect configuration before retrying; the CLI does not retry or claim rollback.
 
 Use `credentials import <alias> --env <VARIABLE_NAME>` to import only the named environment
 variable into the current profile's platform secret store. Requires Credentials; existing aliases fail.
-No raw credential argv, environment scanning, plaintext fallback or automatic auth-token reuse.
+Writes also accept direct values; alias lookup is an optional convenience. There is no environment
+scanning, plaintext profile storage fallback or automatic auth-token reuse.
 `credentials forget <alias>` removes only that input entry. Versioned-settings token mappings use
-`--mapping remote-name=alias`; lists expose names and deletes retain local aliases.
+`--mapping remote-name=alias` or repeatable `--property remote-name=value`; lists expose names and
+deletes retain local aliases. Direct `--value`/`--key` takes precedence when an alias is also supplied.
 
 | Secure namespace | Purpose | Explicit cleanup |
 |---|---|---|
@@ -636,15 +635,15 @@ and TeamCity timestamps. Parent IDs remain explicit. Destructive/upsert commands
 
 `server authentication replace --item <json> --confirm` replaces the **complete module list** and
 can lock out users. Omitted scalar settings are preserved; omitted modules are not injected. Typed
-modules accept non-secret properties plus `secrets:[{"name":"password","alias":"directory"}]`.
+modules accept direct properties plus optional `secrets:[{"name":"password","alias":"directory"}]`.
 It never reads and rewrites masked existing credentials. `server settings set` preserves additional native fields, including paths and URLs; known scalar
-types are checked, and inline encryption keys and credential-shaped data remain blocked.
+types are checked; caller-supplied names and values are forwarded.
 
 `server cleanup configure` changes a future schedule, not immediate cleanup. `server backup start`
 schedules a timestamped config/database backup, excluding logs/personal changes/running builds/
 supplementary data; returned filename is not completion proof. License commands use input-secret
-aliases even where native REST embeds a key in the URL. Server scalar fields are encoded and server-validated; credential-shaped names such as
-superuser-token are readable but cannot be written. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
+aliases or direct `--key <value>` inputs (`add`, `show`, `delete`), including where native REST
+embeds a key in the URL. Scalar fields are encoded and server-validated. XML-only `server rest-plugin` is projected to ordinary JSON metadata.
 
 `pools tokens create <id> --ttl <seconds> --store-as <alias>` mints one-time registration tokens,
 not user access tokens. Repeat aliases for a batch; TTL uses the API's signed integer type in seconds; lifetime semantics are validated by TeamCity.
@@ -720,7 +719,8 @@ teamcity-cli projects secure resolve Example --reference reference --store-as re
 teamcity-cli builds resolve-parameter 12345 env.MODE --store-as resolved-mode --profile uat
 ```
 
-Values go only from/to profile secret aliases, preserving whitespace. A parameter expression
+`create-reference` accepts `--value` or `--value-secret`, preserving whitespace. Returned values
+continue to use the requested `--store-as` aliases. A parameter expression
 returned unchanged is unresolved, not success. Aliases are collision-checked; no secrets in JSON,
 RPC, diagnostics or files. These routes and sensitive downloads are excluded from live proof.
 
@@ -804,7 +804,7 @@ Help describes actions briefly. Operational caveats live with the command groups
   to the server filesystem. A local `forget` removes only the stored alias, leaving remote state.
 - Administration can change access immediately. Replacing authentication modules can lock users
   out. Current-user tokens, project secure references, agent-registration credentials and license
-  aliases are separate credential kinds. Values stay in profile secret storage; use name/existence
+  keys are separate credential kinds. Issued values stay in profile secret storage; use name/existence
   commands to inspect them. Backups can contain server data and are not downloaded automatically.
 - Cloud lifecycle actions can incur cost; forced termination can interrupt running work. An
   acknowledgement confirms the request, not the final provider state. VCS settings changes can
