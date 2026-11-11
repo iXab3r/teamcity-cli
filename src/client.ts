@@ -907,7 +907,8 @@ export class TeamCityClient {
       contents = await this.#request("PUT", path, {}, { name, value, ...native, type: native.type ?? existing?.type ?? { rawValue: "password" } },
         "application/json", { discard: fields === undefined });
     } catch (cause) {
-      throw new Error("Password parameter update failed.", { cause: diagnosticCause(cause, typeof value === "string" ? [value] : []) });
+      const fromAlias = native.value === undefined && plainValue === undefined && typeof value === "string";
+      throw new Error("Password parameter update failed.", { cause: diagnosticCause(cause, fromAlias ? [value] : []) });
     }
     return this.#projectedAcknowledgement(contents, fields, { jobId: jobId, name, stored: true },
       { name, type: (native.type ?? existing?.type ?? { rawValue: "password" }) as NonNullable<RawProperty["type"]> });
@@ -5461,6 +5462,7 @@ export class TeamCityClient {
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
     let text = "";
+    let complete = !reader;
     // Three rounds of JSON escaping can expand a character sixfold per round.
     // Look past the output bound so encoded as well as literal copies can be masked first.
     let remaining = 4096 + Math.max(0, ...[...this.#knownSecrets].map(value => Buffer.byteLength(value) * 216));
@@ -5473,6 +5475,7 @@ export class TeamCityClient {
           const chunk = await reader.read();
           if (chunk.done) {
             text += decoder.decode();
+            complete = true;
             break;
           }
           const bytes = chunk.value.subarray(0, remaining);
@@ -5487,11 +5490,12 @@ export class TeamCityClient {
         reader.releaseLock();
       }
     }
-    const masked = this.#dropSecretPrefix(this.#maskText(text));
+    // Only a cut can leave a secret's start at the end; a complete body is the server's own text.
+    const masked = complete ? this.#maskText(text) : this.#dropSecretPrefix(this.#maskText(text));
     const bounded = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
       Buffer.from(masked).subarray(0, 4096), { stream: true },
     );
-    const explanation = this.#dropSecretPrefix(bounded);
+    const explanation = Buffer.byteLength(masked) > 4096 ? this.#dropSecretPrefix(bounded) : bounded;
     return new HttpError(response.status,
       `TeamCity request failed with HTTP ${response.status}.${explanation === "" ? "" : " " + explanation}`);
   }

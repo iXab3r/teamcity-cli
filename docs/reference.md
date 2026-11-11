@@ -219,8 +219,8 @@ Deletion always targets one explicit ID/name. Deleting a project/job can cascade
 server-owned children, settings and history according to TeamCity policy; there is no extra
 client-side sweep or undo. Project deletion, including `_Root`, is forwarded for TeamCity to validate.
 Successful empty responses return an acknowledgement; a missing entity remains an HTTP error, not a successful delete.
-Mutations are not automatically retried. HTTP errors expose status only, not remote body text;
-malformed JSON errors contain no response excerpts.
+Mutations are not automatically retried. HTTP errors include the server's response text, masked
+and bounded to 4 KiB; malformed JSON errors contain no response excerpts.
 
 `builds list` sends only supplied filters. TeamCity chooses its defaults; `--default-filter`,
 `--state`, `--status` and `--branch` select filters. Project/job lists likewise omit archived/template

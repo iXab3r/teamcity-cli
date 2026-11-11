@@ -64,7 +64,8 @@ for (const source of ["profile", "alias"] as const) {
         };
       } else server.use(http.all("*", () => HttpResponse.text(prefix + suffix, { status: 400 })));
       const argv = source === "profile" ? ["server", "status"] : writes[1]!.argv;
-      const explanation = ending === "partial" || ending === "stream-failure" ? prefix
+      // A complete body is the server's own text; only a cut read drops a trailing secret start.
+      const explanation = ending === "partial" ? prefix + suffix : ending === "stream-failure" ? prefix
         : ending === "encoded" ? "[redacted]" : prefix + "[redacted]";
       const message = "TeamCity request failed with HTTP 400. " + explanation;
       const cli = rt.createCli();
