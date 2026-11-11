@@ -1,4 +1,4 @@
-import { fieldsOption } from "./projection.js";
+import { fieldsOption, fieldsFromOptions } from "./projection.js";
 import {
   command, Permission, type CommandContext,
   type OptionDefinition,
@@ -133,7 +133,7 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
       "artifacts-path <id>",
       "Read the server artifact directory path",
       R,
-      (c, { args }) => c.getArtifactsPath(args.id),
+      (c, { args, options }) => c.getArtifactsPath(args.id, fieldsFromOptions(options)), [fieldsOption]
     ),
     command(
       "source <id> <path>",
@@ -187,7 +187,7 @@ export function createFileCommands(clientFor: (c: CommandContext) => Promise<Tea
       "settings-path <id>",
       "Read the server configuration path",
       R,
-      (c, { args }) => c.getSettingsPath(kind, args.id),
+      (c, { args, options }) => c.getSettingsPath(kind, args.id, fieldsFromOptions(options)), [fieldsOption]
     );
   const projects = [
     settings("projects"),

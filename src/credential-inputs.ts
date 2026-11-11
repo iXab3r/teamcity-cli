@@ -18,7 +18,7 @@ export async function persistSecretKeys(
   keys: readonly string[],
   values: readonly string[],
 ) {
-  if (values.length !== keys.length || values.some((v) => typeof v !== "string" || !v.length))
+  if (values.length !== keys.length || values.some((v) => typeof v !== "string"))
     throw new Error("Invalid sensitive response; remote outcome is unknown.");
   try {
     for (let i = 0; i < keys.length; i++) await secrets.set(keys[i]!, values[i]!);

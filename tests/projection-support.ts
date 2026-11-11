@@ -74,7 +74,8 @@ async function failure(rt: Runtime, cli: CliApplication, argv: string[], surface
     else assert.ok(rendered.stderr.trim().split("\n").length <= 3, rendered.stderr);
     evidence = rendered.stderr;
   }
-  assert.doesNotMatch(evidence, /synthetic-projection-credential|synthetic-server-payload/);
+  assert.doesNotMatch(evidence, /synthetic-projection-credential/);
+  if (code === "error") assert.doesNotMatch(evidence, /synthetic-server-payload/);
   return evidence;
 }
 
@@ -256,7 +257,7 @@ for (const c of buildProjectionCases.filter(c => c.method !== "GET")) {
         await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "request.unknownOutcome");
       } else if (c.argv.includes("start") || c.acknowledgement) {
         await success(rt, cli, c.argv, surface, c.baselineResult);
-        await success(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, c.baselineResult);
+        await success(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, kind === "malformed" ? "invalid JSON" : c.baselineResult);
       } else {
         await failure(rt, cli, c.argv, surface, "error");
         await failure(rt, cli, [...c.argv, c.field ? "--field" : "--fields", projection], surface, "error");

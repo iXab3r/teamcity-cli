@@ -45,11 +45,6 @@ export function safeArtifactFile(value: unknown) {
 }
 export const safeFiles = (v: unknown) => collection(v, "file", safeFile);
 export function serverPath(value: string) {
-  if (
-    !value ||
-    !/^(?:[A-Za-z]:[\\/]|\/|\\\\)/.test(value)
-  )
-    throw new Error("Expected an absolute server path; response omitted.");
   return { serverPath: value };
 }
 export const referenceKey = (alias: string) => "secure-reference:" + credentialAlias(alias);

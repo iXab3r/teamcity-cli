@@ -137,7 +137,7 @@ test("authoring uses gated JSON, text and empty responses through the real tree"
   assert.deepEqual(await cli.execute(["projects", "delete", "Example"]), { id: "Example", deleted: true });
 });
 
-test("all authoring leaves reject unknown options before HTTP and surface remote errors without payloads", async (testContext) => {
+test("all authoring leaves reject unknown options before HTTP and surface masked server explanations", async (testContext) => {
   assert.equal(authoringCases.length, 32);
   assert.equal(authoringCases.filter((c) => c.method !== "GET").length, 21);
   assert.equal(configurationCases.length, 18);
@@ -187,7 +187,7 @@ test("all authoring leaves reject unknown options before HTTP and surface remote
     await assert.rejects(cli.execute(example.argv), (error: unknown) => {
       assert.ok(error instanceof HttpError);
       assert.equal(error.status, 403);
-      assert.equal(error.message, "TeamCity request failed with HTTP 403.");
+      assert.equal(error.message, "TeamCity request failed with HTTP 403. synthetic-sensitive-error-body [redacted]");
       assert.equal(error.cause, undefined);
       return true;
     });

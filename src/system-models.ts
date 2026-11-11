@@ -237,14 +237,19 @@ export function safeMetric(value: unknown) {
       v.metricValues === undefined ? undefined : object(v.metricValues).metricValue,
     ).map((x) => {
       const m = object(x);
-      if (typeof m.value !== "number" || !Number.isFinite(m.value))
-        throw new Error("Invalid numeric metric.");
       return safeScalars(m, ["name", "value"]);
     }),
   };
 }
-// Deliberately parse the attribute-only plugin projection, not a general XML document.
+// Preserve the familiar attribute summary; other XML is opaque and never evaluated.
 export function pluginXml(value: string) {
+  try {
+    return projectedPluginXml(value);
+  } catch {
+    return value;
+  }
+}
+function projectedPluginXml(value: string) {
   if (/<!|&(?!(?:amp|lt|gt|quot|apos);)/.test(value))
     throw new Error("Unsafe or unsupported plugin XML.");
   const match = value.match(

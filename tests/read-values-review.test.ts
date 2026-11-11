@@ -84,7 +84,7 @@ test("#376 trigger cron properties are read through the trigger, not its scalar 
   const rejected = await rt.run(cli, ["jobs", "triggers", "fields", "show", "Example_Build", "Trigger", "cronExpression_dm", "--json"]);
   assert.equal(rejected.exitCode, 1);
   assert.equal(JSON.parse(rejected.stderr).error.code, "http.rejected");
-  assert.doesNotMatch(rejected.stderr, /synthetic-private-response/);
+  assert.match(rejected.stderr, /synthetic-private-response/);
   assert.equal(scalarReads, 1);
   const result = await cli.execute(["jobs", "triggers", "show", "Example_Build", "Trigger"]) as { properties: unknown };
   assert.deepEqual(result.properties, [{ name: "cronExpression_dm", type: "plain", value: "*", redacted: false }]);

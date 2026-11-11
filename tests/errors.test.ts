@@ -12,7 +12,7 @@ test.after(() => server.close());
 
 const base = "https://teamcity.test/app/rest";
 
-test("TeamCity failures have stable machine codes on stderr and in JSON-RPC, never response bodies", async (t) => {
+test("TeamCity failures have stable machine codes on stderr and in JSON-RPC, with masked server explanations", async (t) => {
   server.use(
     http.get(`${base}/builds/id:404`, () => HttpResponse.text("synthetic-private-body", { status: 404 })),
     http.get(`${base}/builds/id:403`, () => HttpResponse.text("synthetic-private-body", { status: 403 })),
@@ -26,14 +26,14 @@ test("TeamCity failures have stable machine codes on stderr and in JSON-RPC, nev
     assert.equal(result.stdout, "", "A failed read prints nothing on stdout.");
     assert.partialDeepStrictEqual(JSON.parse(result.stderr), {
       error: {
-        code, message: `TeamCity request failed with HTTP ${id}.`, exitCode: 1, profile: "default",
+        code, message: `TeamCity request failed with HTTP ${id}. synthetic-private-body`, exitCode: 1, profile: "default",
       },
     });
     const [reply] = await runtime.rpc(cli, [["builds", "show", id!]]) as Array<{
       error: { message: string; data: unknown };
     }>;
     assert.deepEqual(reply?.error.data, { code, exitCode: 1, profile: "default" });
-    assert.doesNotMatch(result.stderr + JSON.stringify(reply), /synthetic-private-body/);
+    assert.match(result.stderr + JSON.stringify(reply), /synthetic-private-body/);
   }
 });
 

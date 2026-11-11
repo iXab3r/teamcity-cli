@@ -165,7 +165,7 @@ test("#379 direct input takes precedence over aliases and remote rejection is no
   const result = await runtime.run(cli, ["server", "licenses", "add", "--secret", "missing-alias", "--key", " synthetic-license \n", "--json"]);
   assert.equal(result.exitCode, 1);
   assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
-  assert.doesNotMatch(result.stderr, /synthetic-private-error/);
+  assert.match(result.stderr, /synthetic-private-error/);
 });
 
 for (const existing of [false, true]) {

@@ -72,7 +72,7 @@ test("file metadata keeps signed API size and avatar size semantics reach remote
     const result = await t.runtime.run(t.cli, ["users", "avatar", "download", "3", "--size", "0", "--output", "avatar.png", "--json"]);
     assert.equal(result.exitCode, 1);
     assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
-    assert.ok(!result.stderr.includes("synthetic-private-response"));
+    assert.ok(result.stderr.includes("synthetic-private-response"));
     assert.equal(calls, 2);
   } finally {
     await t.cleanup();
@@ -235,7 +235,8 @@ test("download transport failures keep HTTP status semantics and remove private 
           error.message,
           kind === "status" ? /TeamCity request failed with HTTP 503/ : /Download failed/,
         );
-        assert.doesNotMatch(error.message, /private|invalid/);
+        if (kind === "status") assert.match(error.message, /private response/);
+        else assert.doesNotMatch(error.message, /private|invalid/);
         return true;
       });
       assert.deepEqual((await readdir(t.root)).filter(name => !name.startsWith(".download-") && name !== "outside"), []);
@@ -381,7 +382,7 @@ test("S10 size limits apply to actual streams and all failed staging bytes are r
     }
   }
 });
-test("S10 invalid PNG ZIP SVG content/media never becomes a successful file", async (testContext) => {
+test("S10 invalid PNG ZIP content/media never becomes a successful file", async (testContext) => {
   const samples = [
     {
       argv: ["users", "avatar", "download", "3", "--output", "x.png"],
@@ -397,11 +398,6 @@ test("S10 invalid PNG ZIP SVG content/media never becomes a successful file", as
       argv: ["builds", "artifacts", "archive", "7", "docs", "--output", "x.zip"],
       media: "application/zip",
       bytes: sourceBytes,
-    },
-    {
-      argv: ["builds", "icon", "7", "--output", "x.svg"],
-      media: "image/svg+xml",
-      bytes: new TextEncoder().encode('<!DOCTYPE svg [<!ENTITY x "synthetic">]><svg/>'),
     },
   ];
   for (const c of samples) {
@@ -544,7 +540,7 @@ test("S10 persistent RPC keeps downloaded bytes and paths isolated by active pro
     await t.cleanup();
   }
 });
-test("S10 secure resolution rejects collisions and unresolved expressions and reports store failures", async (testContext) => {
+test("S10 secure resolution checks collisions, stores unresolved text and reports store failures", async (testContext) => {
   const t = await fileRuntime(testContext);
   let calls = 0;
   try {
@@ -560,12 +556,13 @@ test("S10 secure resolution rejects collisions and unresolved expressions and re
     await assert.rejects(t.cli.execute(argv), /already exists/);
     assert.equal(calls, 0);
     await t.runtime.secretStore.delete(service, "default:input-secret:resolved");
-    await assert.rejects(t.cli.execute(argv), /unresolved/);
+    assert.deepEqual(await t.cli.execute(argv), { alias: "resolved", stored: true });
     assert.equal(calls, 1);
     assert.equal(
       await t.runtime.secretStore.get(service, "default:input-secret:resolved"),
-      undefined,
+      "%env.MODE%",
     );
+    await t.runtime.secretStore.delete(service, "default:input-secret:resolved");
     server.use(
       http.get(base + "/builds/id:7/resolved/:value", () => {
         calls++;

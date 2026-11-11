@@ -97,8 +97,8 @@ test("versioned settings format keeps safe remote validation failures", async (t
     assert.equal(result.stdout, "");
     const error = JSON.parse(result.stderr).error;
     assert.equal(error.code, "http.rejected");
-    assert.equal(error.message, "TeamCity request failed with HTTP 400.");
-    assert.ok(!result.stderr.includes("synthetic-private-server-detail"));
+    assert.equal(error.message, "TeamCity request failed with HTTP 400. synthetic-private-server-detail");
+    assert.ok(result.stderr.includes("synthetic-private-server-detail"));
   }
 });
 
@@ -273,7 +273,7 @@ test("S8 config reset may fail after mutation: no retry or false rollback acknow
   );
   await assert.rejects(
     cli.execute([...versioned, "config", "fields", "reset", "Example", "vcsRootId", "--confirm"]),
-    { message: "TeamCity request failed with HTTP 400." },
+    { message: "TeamCity request failed with HTTP 400. synthetic-private-diagnostic" },
   );
   assert.equal(changed, true);
   assert.equal(calls, 1);

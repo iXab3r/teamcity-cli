@@ -88,7 +88,8 @@ async function failure(
     else assert.ok(rendered.stderr.trim().split("\n").length <= 3, rendered.stderr);
     evidence = rendered.stderr;
   }
-  assert.doesNotMatch(evidence, /synthetic-projection-credential|synthetic-server-payload/);
+  assert.doesNotMatch(evidence, /synthetic-projection-credential/);
+  if (code === "error") assert.doesNotMatch(evidence, /synthetic-server-payload/);
   return evidence;
 }
 
@@ -234,5 +235,6 @@ test("malformed acknowledgement body preserves default behavior", async t => {
   const rt = await runtime(t, ["Update"]);
   server.use(http.all("*", () => HttpResponse.text("not JSON")));
   const baseline = await rt.createCli().execute(c.argv);
-  assert.deepEqual(await rt.createCli().execute([...c.argv, "--fields", projection]), baseline);
+  assert.equal(await rt.createCli().execute([...c.argv, "--fields", projection]), "not JSON");
+  assert.ok(baseline);
 });

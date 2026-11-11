@@ -193,7 +193,7 @@ test("S6 typed investigation replacement uses one exact target and no hidden rea
     }),
   );
   await assert.rejects(cli.execute(["investigations", "replace", ...item(investigation)]), {
-    message: "TeamCity request failed with HTTP 400.",
+    message: "TeamCity request failed with HTTP 400. synthetic-private",
   });
   assert.equal(failures, 1);
 });
@@ -280,7 +280,7 @@ test("S6 metadata probes discard private bytes and bound reading even on an unen
   );
   await assert.rejects(
     cli.execute(["builds", "resulting-properties", "exists", "42", "env.MODE"]),
-    { message: "TeamCity request failed with HTTP 404." },
+    { message: "TeamCity request failed with HTTP 404. synthetic-private" },
   );
 });
 

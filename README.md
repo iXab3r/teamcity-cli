@@ -16,7 +16,7 @@ teamcity-cli builds list --job Demo_Tests --branch main --limit 20
 | **Read-only by default** | A fresh profile can only read. Writes need `permissions grant Update` for that profile; account and server administration need `Admin`, token and secret workflows need `Credentials`, each granted separately. |
 | **Made for build triage** | `builds diagnose` answers "why did it fail" in one call: up to 10 problems and 20 failed tests. `jobs run --wait` and `builds wait` exit 0 on success, 1 on failure, 124 on timeout, 130 on Ctrl+C. |
 | **Cheap for agents** | `--json` on every command, paged lists (`--limit`, `--start`) that return `hasMore` and `nextStart`, stable error codes, and a persistent `--json-rpc` session without restarting Node. |
-| **Profile credentials** | Profile tokens live in the platform secret store, never in profile JSON. Writes forward caller input; secret aliases are optional. Password/secure parameters come back as `redacted: true`, and errors carry the HTTP status, never the response body. |
+| **Profile credentials** | Profile tokens live in the platform secret store, never in profile JSON. Writes forward caller input; secret aliases are optional. Password/secure parameters come back as `redacted: true`, and HTTP errors include the first 4 KiB of server text with the profile credential masked. |
 | **Predictable** | No write is retried or replayed. When the answer to a queue request is lost, `jobs run` reports `run.unknownOutcome` and the command to check with, instead of posting again. |
 
 <picture>
@@ -71,6 +71,13 @@ Use `jobs configuration show <job-id> --json` for build settings and content,
 `projects templates show <template-id> --json` for a template, and
 `agents parameters list <agent-id> --json` for system, environment and configuration parameters.
 Treat real output as private configuration when sharing it.
+
+Use `--fields <projection>` on response commands for native TeamCity output. JSON endpoints that
+accept `fields` receive it unchanged; other endpoints return their native body without an extra query
+parameter. Lists retain their paging envelope. Defaults keep the existing summaries and human views;
+password/`secure:`/withheld values stay hidden. Downloads save native bytes, and `--store-as` keeps
+secret-only responses in the secret store. XML outside the REST plugin summary subset returns as text;
+status SVG files are saved without interpreting their content.
 
 Needs Node.js 22+. Your server's version and your account's rights still decide what a call is
 allowed to do; the local permission gate does not replace TeamCity's own authorization.

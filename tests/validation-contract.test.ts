@@ -130,7 +130,7 @@ test("self references and service-message text keep safe remote validation witho
     const result = await f.run(cli, [...row.argv, "--json"]);
     assert.equal(result.exitCode, 1);
     assert.equal(JSON.parse(result.stderr).error.code, "http.rejected", result.stderr);
-    assert.ok(!result.stderr.includes("synthetic-private-detail"));
+    assert.ok(result.stderr.includes("synthetic-private-detail"));
   }
 });
 
@@ -210,7 +210,7 @@ test("field names reach TeamCity and remote field errors stay safe", async t => 
   const result = await f.run(cli, ["users", "fields", "get", "7", "futureField", "--json"]);
   assert.equal(result.exitCode, 1);
   assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
-  assert.ok(!result.stderr.includes("synthetic-private-response"));
+  assert.ok(result.stderr.includes("synthetic-private-response"));
 });
 
 test("valid lookup progress passes thirteen HTTP pages without a hidden cutoff", async t => {
@@ -247,7 +247,7 @@ test("timestamp text follows server configuration rather than a fixed client pat
   const result = await f.run(cli, ["builds", "finish-at", "42", value, "--json"]);
   assert.equal(result.exitCode, 1);
   assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
-  assert.ok(!result.stderr.includes("synthetic-private-response"));
+  assert.ok(result.stderr.includes("synthetic-private-response"));
 });
 
 test("numeric identity semantics are validated remotely with safe errors", async t => {
@@ -263,7 +263,7 @@ test("numeric identity semantics are validated remotely with safe errors", async
     const result = await f.run(cli, [...argv, "--json"]);
     assert.equal(result.exitCode, 1);
     assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
-    assert.ok(!result.stderr.includes("synthetic-private-response"));
+    assert.ok(result.stderr.includes("synthetic-private-response"));
   }
 });
 
@@ -289,6 +289,6 @@ test("queue positions, token statuses and expiration semantics reach remote vali
     const result = await f.run(cli, [...argv, "--json"]);
     assert.equal(result.exitCode, 1);
     assert.equal(JSON.parse(result.stderr).error.code, "http.rejected");
-    assert.ok(!result.stderr.includes("synthetic-private-response"));
+    assert.ok(result.stderr.includes("synthetic-private-response"));
   }
 });

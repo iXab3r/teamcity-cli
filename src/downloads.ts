@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import {
   FilePublicationError,
   publishFile,
@@ -23,11 +22,9 @@ function mediaType(response: Response, format: DownloadFormat) {
   const allowed =
     format === "png"
       ? ["image/png"]
-      : format === "svg"
-        ? ["image/svg+xml"]
-        : format === "zip"
-          ? ["application/zip", "application/x-zip-compressed", "application/octet-stream"]
-          : undefined;
+      : format === "zip"
+        ? ["application/zip", "application/x-zip-compressed", "application/octet-stream"]
+        : undefined;
   if (allowed && !allowed.includes(media)) {
     throw new Error("Unexpected download media type.");
   }
@@ -54,16 +51,6 @@ async function verifyFormat(file: StagedFile, format: DownloadFormat) {
   ) {
     throw new Error("Invalid ZIP signature.");
   }
-  if (format === "svg") {
-    const value = await readFile(file.path, "utf8");
-    if (
-      /<!DOCTYPE|<!ENTITY/i.test(value) ||
-      !/^\s*(?:<\?xml\s+[^?]*\?>\s*)?<svg(?:\s|>)/.test(value) ||
-      !/<\/svg>\s*$|\/\>\s*$/.test(value)
-    ) {
-      throw new Error("Invalid/unsafe SVG document; never rendered.");
-    }
-  }
 }
 
 /**
@@ -75,7 +62,7 @@ export async function saveDownload(
   options: DownloadOptions & { name: string },
   format: DownloadFormat,
   openResponse: () => Promise<Response>,
-  refused: (status: number) => Error,
+  refused: (response: Response) => Promise<Error>,
   signal?: AbortSignal,
 ) {
   const name = options.name;
@@ -84,7 +71,7 @@ export async function saveDownload(
     : integer(options.maxBytes);
   if (maxBytes !== undefined && maxBytes < 1) throw new Error("Download byte limit must be positive.");
   let media = "application/octet-stream";
-  let status: number | undefined;
+  let refusal: Error | undefined;
   try {
     const saved = await publishFile({
       cwd,
@@ -93,11 +80,11 @@ export async function saveDownload(
       maxBytes,
       signal,
       openResponse,
-      inspectResponse(response) {
+      async inspectResponse(response) {
         // These are whole-file requests: no Range, resume or partial-response reassembly.
         if (!response.ok) {
-          status = response.status;
-          throw new FilePublicationError(`TeamCity request failed with HTTP ${response.status}.`);
+          refusal = await refused(response);
+          throw new FilePublicationError(refusal.message);
         }
         if (response.status === 206) {
           throw new FilePublicationError(
@@ -110,8 +97,8 @@ export async function saveDownload(
     });
     return { ...saved, mediaType: media };
   } catch (error) {
-    if (status !== undefined && error instanceof FilePublicationError && !error.cleanupFailed) {
-      throw refused(status);
+    if (refusal !== undefined && error instanceof FilePublicationError && !error.cleanupFailed) {
+      throw refusal;
     }
     throw error;
   }

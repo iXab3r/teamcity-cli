@@ -118,7 +118,7 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
       "builds diagnose 101",
       "builds artifacts download 101 dist/app.zip --output app.zip",
     ],
-    version: "0.10.0",
+    version: "0.11.0",
     applicationId: "teamcity-cli",
     permissions: { categories: adminCategories },
     profile: {
@@ -403,11 +403,12 @@ export function teamCityDefinition(runtime?: CliRuntime): CliDefinition {
           (c, { args, options }) => {
             const comment = stringOption(options, "comment");
             return c.cancelQueuedBuild(integerValue(args.id), {
+              fields: fieldsFromOptions(options),
               ...(comment === undefined ? {} : { comment }),
               ...(options.requeue === undefined ? {} : { requeue: options.requeue === "true" }),
             }, nativeInput(options));
           },
-          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again"), jsonOption("--item <json>", "Supply a native body")],
+          [{ flags: "--comment <text>", description: "Explain the cancellation" }, booleanOption("--requeue <boolean>", "Queue the build again"), fieldsOption, jsonOption("--item <json>", "Supply a native body")],
         )),
       ], "Control")),
       command("agents", "Inspect TeamCity build agents", helpLayout([
